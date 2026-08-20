@@ -26,8 +26,11 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   random forest. Live leaderboard with accuracy/F1/ROC-AUC/log-loss (or RMSE/MAE/R²),
   delta vs baseline, training time and inference latency p50/p95. Fully reproducible
   (same seed ⇒ same results), cancellable between models.
-- **Next — Sprint 3**: results & insights (confusion matrix, curves, feature importance,
-  plain-language read, what-if).
+- **Sprint 3 — shipped**: results & insights. Human-phrased confusion matrix, ROC curve,
+  model-agnostic permutation importance, predicted-vs-actual and residuals for regression,
+  a rule-generated plain-language read (FR/EN, no external API), live what-if predictions,
+  and per-model inspection from the leaderboard.
+- **Next**: projects & sharing (local history, exports, data-free share links).
 
 Full roadmap in [PLAN.md](PLAN.md), target analysis in
 [docs/analyse-quantifai.md](docs/analyse-quantifai.md).

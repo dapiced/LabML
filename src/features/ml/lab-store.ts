@@ -6,7 +6,13 @@ import type {
   ExclusionReason,
   TaskInfo,
 } from '@/features/ml/data/types';
-import type { ModelKey, ModelResult, TrainSummary } from '@/features/ml/train/types';
+import type {
+  InsightsPayload,
+  ModelKey,
+  ModelResult,
+  TrainSummary,
+  WhatIfResult,
+} from '@/features/ml/train/types';
 import type { WorkerRequest, WorkerResponse } from '@/features/ml/worker-protocol';
 
 export type LabStatus = 'idle' | 'parsing' | 'ready' | 'error';
@@ -35,12 +41,17 @@ interface LabState {
   modelProgress: { key: ModelKey; index: number; total: number } | null;
   results: ModelResult[];
   summary: TrainSummary | null;
+  /** Insights bundle for the currently inspected model (defaults to the best). */
+  insights: InsightsPayload | null;
+  whatIf: WhatIfResult | null;
   loadFile: (file: File) => void;
   loadDemo: (fileName: string) => void;
   setTarget: (column: string | null) => void;
   toggleColumn: (column: string) => void;
   train: () => void;
   cancelTrain: () => void;
+  selectInsightModel: (model: ModelKey) => void;
+  requestWhatIf: (values: Record<string, string>) => void;
   reset: () => void;
 }
 
@@ -56,6 +67,8 @@ const initialTraining = {
   modelProgress: null,
   results: [],
   summary: null,
+  insights: null,
+  whatIf: null,
 };
 
 const initialData = {
@@ -107,8 +120,21 @@ export const useLabStore = create<LabState>((set, get) => {
           set({ results: [...get().results, message.result] });
         } else if (message.kind === 'train-complete') {
           set({ trainStatus: 'done', modelProgress: null, summary: message.summary });
+          // Fetch insights for the winning model right away.
+          const ok = get().results.filter((r) => r.ok);
+          if (ok.length > 0) {
+            const isClassification = message.summary.taskType !== 'regression';
+            const best = [...ok].sort((a, b) =>
+              isClassification ? b.primary - a.primary : a.primary - b.primary,
+            )[0];
+            send({ kind: 'model-insights', model: best.key });
+          }
         } else if (message.kind === 'train-cancelled') {
           set({ ...initialTraining });
+        } else if (message.kind === 'insights') {
+          set({ insights: message.payload, whatIf: null });
+        } else if (message.kind === 'what-if-result') {
+          set({ whatIf: message.payload });
         } else {
           set({ status: 'error', error: message.message, ...initialTraining });
         }
@@ -175,6 +201,20 @@ export const useLabStore = create<LabState>((set, get) => {
     cancelTrain() {
       if (get().trainStatus !== 'training') return;
       send({ kind: 'cancel-train' });
+    },
+
+    selectInsightModel(model) {
+      const state = get();
+      if (state.trainStatus !== 'done' || state.insights?.model === model) return;
+      if (!state.results.some((r) => r.ok && r.key === model)) return;
+      set({ insights: null, whatIf: null });
+      send({ kind: 'model-insights', model });
+    },
+
+    requestWhatIf(values) {
+      const state = get();
+      if (state.trainStatus !== 'done' || !state.insights) return;
+      send({ kind: 'what-if', model: state.insights.model, values });
     },
 
     reset() {
