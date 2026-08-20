@@ -1,5 +1,12 @@
-import type { ParseResultPayload, TargetAnalysis } from '@/features/ml/data/types';
-import type { ModelKey, ModelResult, TrainConfig, TrainSummary } from '@/features/ml/train/types';
+import type { Cell, ParseResultPayload, TargetAnalysis } from '@/features/ml/data/types';
+import type {
+  InsightsPayload,
+  ModelKey,
+  ModelResult,
+  TrainConfig,
+  TrainSummary,
+  WhatIfResult,
+} from '@/features/ml/train/types';
 
 /** Messages accepted by the data/training worker. */
 export type WorkerRequest =
@@ -7,7 +14,9 @@ export type WorkerRequest =
   | { kind: 'parse-url'; url: string; name: string }
   | { kind: 'analyze-target'; target: string }
   | { kind: 'train'; config: TrainConfig }
-  | { kind: 'cancel-train' };
+  | { kind: 'cancel-train' }
+  | { kind: 'model-insights'; model: ModelKey }
+  | { kind: 'what-if'; model: ModelKey; values: Record<string, Cell> };
 
 /** Messages emitted by the data/training worker. */
 export type WorkerResponse =
@@ -18,4 +27,6 @@ export type WorkerResponse =
   | { kind: 'model-result'; result: ModelResult }
   | { kind: 'train-complete'; summary: TrainSummary }
   | { kind: 'train-cancelled' }
+  | { kind: 'insights'; payload: InsightsPayload }
+  | { kind: 'what-if-result'; payload: WhatIfResult }
   | { kind: 'error'; message: string };

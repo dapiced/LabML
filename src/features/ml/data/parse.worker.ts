@@ -2,7 +2,8 @@
 import Papa from 'papaparse';
 import { profileColumn } from '@/features/ml/data/profile';
 import { analyzeTarget, baselineSuggestions } from '@/features/ml/data/suggest';
-import { runTraining } from '@/features/ml/train/trainer';
+import { computeInsights, computeWhatIf } from '@/features/ml/train/insights';
+import { runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
 import type { Cell, ColumnProfile, ParseResultPayload } from '@/features/ml/data/types';
 import type { WorkerRequest, WorkerResponse } from '@/features/ml/worker-protocol';
 
@@ -16,6 +17,7 @@ let header: string[] = [];
 let columns: Cell[][] = [];
 let rowCount = 0;
 let cancelTraining = false;
+let artifacts: TrainArtifacts | null = null;
 
 function post(message: WorkerResponse) {
   self.postMessage(message);
@@ -64,6 +66,7 @@ function resetState() {
   header = [];
   columns = [];
   rowCount = 0;
+  artifacts = null;
 }
 
 function parseText(text: string, name: string, bytes: number) {
@@ -117,16 +120,30 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       cancelTraining = true;
     } else if (request.kind === 'train') {
       cancelTraining = false;
+      artifacts = null;
       const profiles: ColumnProfile[] = header.map((column, i) =>
         profileColumn(column, columns[i]),
       );
-      const summary = await runTraining(columnsAsMap(), profiles, request.config, {
+      const outcome = await runTraining(columnsAsMap(), profiles, request.config, {
         onModelStart: (key, index, total) => post({ kind: 'model-start', key, index, total }),
         onModelResult: (result) => post({ kind: 'model-result', result }),
         isCancelled: () => cancelTraining,
       });
-      if (summary) post({ kind: 'train-complete', summary });
-      else post({ kind: 'train-cancelled' });
+      if (outcome) {
+        artifacts = outcome.artifacts;
+        post({ kind: 'train-complete', summary: outcome.summary });
+      } else {
+        post({ kind: 'train-cancelled' });
+      }
+    } else if (request.kind === 'model-insights') {
+      if (!artifacts) throw new Error('no-run');
+      post({ kind: 'insights', payload: computeInsights(artifacts, request.model) });
+    } else if (request.kind === 'what-if') {
+      if (!artifacts) throw new Error('no-run');
+      post({
+        kind: 'what-if-result',
+        payload: computeWhatIf(artifacts, request.model, request.values),
+      });
     }
   } catch (error) {
     post({ kind: 'error', message: error instanceof Error ? error.message : String(error) });

@@ -22,6 +22,8 @@ export interface FittedPipeline {
   specs: FeatureSpec[];
   featureNames: string[];
   transform(indices: number[]): number[][];
+  /** Encodes a single synthetic row (the what-if case) with the fitted parameters. */
+  transformRow(record: Record<string, Cell>): number[];
 }
 
 function cellString(value: Cell): string | null {
@@ -101,28 +103,39 @@ export function fitPipeline(
     spec.kind === 'onehot' ? spec.categories.map((c) => `${spec.name}=${c}`) : [spec.name],
   );
 
+  function encodeInto(row: number[], spec: FeatureSpec, raw: string | null): void {
+    if (spec.kind === 'numeric') {
+      const parsed = raw === null ? null : parseNumber(raw);
+      const value = parsed === null ? spec.median : parsed;
+      row.push((value - spec.mean) / spec.std);
+    } else if (spec.kind === 'onehot') {
+      const value = raw ?? spec.mode;
+      for (const category of spec.categories) row.push(value === category ? 1 : 0);
+    } else {
+      const rank = spec.ranks.get(raw ?? spec.mode) ?? spec.ranks.get(spec.mode) ?? 0;
+      row.push((rank - spec.mean) / spec.std);
+    }
+  }
+
   function transform(indices: number[]): number[][] {
     return indices.map((i) => {
       const row: number[] = [];
       for (const spec of specs) {
-        const raw = cellString(columns.get(spec.name)![i]);
-        if (spec.kind === 'numeric') {
-          const parsed = raw === null ? null : parseNumber(raw);
-          const value = parsed === null ? spec.median : parsed;
-          row.push((value - spec.mean) / spec.std);
-        } else if (spec.kind === 'onehot') {
-          const value = raw ?? spec.mode;
-          for (const category of spec.categories) row.push(value === category ? 1 : 0);
-        } else {
-          const rank = spec.ranks.get(raw ?? spec.mode) ?? spec.ranks.get(spec.mode) ?? 0;
-          row.push((rank - spec.mean) / spec.std);
-        }
+        encodeInto(row, spec, cellString(columns.get(spec.name)![i]));
       }
       return row;
     });
   }
 
-  return { specs, featureNames, transform };
+  function transformRow(record: Record<string, Cell>): number[] {
+    const row: number[] = [];
+    for (const spec of specs) {
+      encodeInto(row, spec, cellString(record[spec.name] ?? null));
+    }
+    return row;
+  }
+
+  return { specs, featureNames, transform, transformRow };
 }
 
 /** Rows with a usable (non-missing) target value. */
