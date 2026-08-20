@@ -18,19 +18,19 @@
 3. Tout en bas, choisissez **Create Custom Token** → **Get started**.
 4. Remplissez :
    - **Token name** : `labml-pages-deploy`
-   - **Permissions** : `Account` · `Cloudflare Pages` · `Edit`  *(une seule ligne de permission suffit)*
+   - **Permissions** : `Account` · `Cloudflare Pages` · `Edit` _(une seule ligne de permission suffit)_
    - **Account Resources** : `Include` · votre compte
    - (Optionnel, recommandé) **TTL** : définissez une date d'expiration et renouvelez le token à l'échéance.
 5. **Continue to summary** → vérifiez qu'il n'y a que « Cloudflare Pages: Edit » → **Create Token**.
 6. **Copiez le token immédiatement** : il n'est affiché qu'une seule fois.
 
-> Principe du moindre privilège : ce token ne peut *que* gérer des projets Pages — il ne peut
+> Principe du moindre privilège : ce token ne peut _que_ gérer des projets Pages — il ne peut
 > toucher ni au DNS, ni aux certificats, ni au reste du compte.
 
 ## Étape 3 — Ajouter les deux secrets dans GitHub
 
 1. Ouvrez https://github.com/dapiced/LabML/settings/secrets/actions
-   *(ou : dépôt **LabML** → **Settings** → **Secrets and variables** → **Actions**)*
+   _(ou : dépôt **LabML** → **Settings** → **Secrets and variables** → **Actions**)_
 2. Cliquez sur **New repository secret** :
    - **Name** : `CLOUDFLARE_API_TOKEN` — **Secret** : collez le token de l'étape 2 → **Add secret**
 3. Recommencez :
