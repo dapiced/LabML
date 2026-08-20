@@ -31,18 +31,18 @@
 
 ## 2. Analyse de la cible (le site de référence)
 
-*Note de transparence : l'accès direct à `app.le site de référence.co` est bloqué par la politique réseau de l'environnement d'analyse. Cette synthèse s'appuie sur les sources web publiques ([le site de référence.co](https://le site de référence.co/), [LinkedIn](https://www.linkedin.com/company/le site de référenceco)) et sur les observations fournies dans le brief.*
+_Note de transparence : l'accès direct à `app.le site de référence.co` est bloqué par la politique réseau de l'environnement d'analyse. Cette synthèse s'appuie sur les sources web publiques ([le site de référence.co](https://le site de référence.co/), [LinkedIn](https://www.linkedin.com/company/le site de référenceco)) et sur les observations fournies dans le brief._
 
 **Parcours utilisateur (le "flow" à égaler puis dépasser) :**
 
-| Étape | Comportement le site de référence |
-|---|---|
-| Entrée | Drag & drop d'un CSV (ou format tabulaire), lu localement, **rien n'est envoyé au serveur** |
-| Cible | L'utilisateur choisit la colonne à prédire, ou ML Lab la propose ; suggestions de colonnes à conserver/exclure |
-| Tâche | Détection automatique classification vs régression depuis la colonne cible |
-| Entraînement | Petit ensemble de modèles entraînés côté client, avec un jeu de test mis de côté (holdout) |
-| Résultats | Leaderboard des modèles, métriques **comparées à une baseline naïve**, graphiques, top features, et une lecture en langage naturel ("plain read") |
-| Friction | Zéro : pas de compte, pas de setup, pas de code |
+| Étape        | Comportement le site de référence                                                                                                                            |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Entrée       | Drag & drop d'un CSV (ou format tabulaire), lu localement, **rien n'est envoyé au serveur**                                                       |
+| Cible        | L'utilisateur choisit la colonne à prédire, ou ML Lab la propose ; suggestions de colonnes à conserver/exclure                                    |
+| Tâche        | Détection automatique classification vs régression depuis la colonne cible                                                                        |
+| Entraînement | Petit ensemble de modèles entraînés côté client, avec un jeu de test mis de côté (holdout)                                                        |
+| Résultats    | Leaderboard des modèles, métriques **comparées à une baseline naïve**, graphiques, top features, et une lecture en langage naturel ("plain read") |
+| Friction     | Zéro : pas de compte, pas de setup, pas de code                                                                                                   |
 
 **Design/UX (esprit à capturer) :** interface SaaS épurée et professionnelle — une seule tâche par écran, progression guidée (upload → cible → train → résultats), beaucoup d'espace blanc, hiérarchie typographique claire, résultats vulgarisés pour non-experts.
 
@@ -56,27 +56,27 @@
 
 ### A.1 Stack recommandé
 
-| Couche | Choix recommandé | Alternatives écartées |
-|---|---|---|
-| Framework | **Vite + React 19 + TypeScript strict** (SPA statique) | Next.js (SSR inutile ici : tout le calcul est client ; l'export statique de Next ajoute de la complexité sans bénéfice), Nuxt/SvelteKit (même raison) |
-| Routage | **React Router v7** (mode librairie, code-splitting par route) | TanStack Router (excellent mais plus niche) |
-| UI | **Tailwind CSS v4 + shadcn/ui** (composants copiés dans le repo, personnalisables) + lucide-react | Material UI (identité visuelle trop "Google", bundle plus lourd) |
-| État | **Zustand** (léger, testable) | Redux (surdimensionné) |
-| Graphiques | **Apache ECharts** (canvas, performant sur 100k+ points, tree-shakable, zoom/filtre/export natifs) | Plotly.js (~4 Mo, lourd pour le budget perf), D3 pur (coût de dev élevé) |
-| Parsing | **Papa Parse** (CSV en streaming, supporte les Web Workers) | SheetJS (ajouté en V2 pour .xlsx) |
-| ML classique | **Écosystème ml.js** (ml-cart, ml-random-forest, ml-knn, ml-naivebayes, ml-regression) + implémentations TS maison (régression logistique, GBDT histogramme) | scikit-learn côté serveur (casse la promesse privacy) |
-| Réseaux de neurones | **TensorFlow.js** (MLP, backend WebGPU avec repli WASM) — V2 | — |
-| Inférence modèles pré-entraînés | **ONNX Runtime Web** (module `/ai/vision`) — V3 | — |
-| i18n | **react-i18next** (FR/EN, détection navigateur, lazy loading des ressources) | solutions maison (réinventer la roue) |
-| Persistance | **Dexie.js** (IndexedDB) : projets, runs, modèles | localStorage (limites de taille), backend (privacy) |
-| Partage | **lz-string** : résultats compressés dans le fragment d'URL (`#…`) | Backend de partage (V3 optionnel) |
-| Hébergement | **Cloudflare Pages** (statique + CDN) | Workers Sites (inutile sans logique serveur) |
+| Couche                          | Choix recommandé                                                                                                                                             | Alternatives écartées                                                                                                                                 |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework                       | **Vite + React 19 + TypeScript strict** (SPA statique)                                                                                                       | Next.js (SSR inutile ici : tout le calcul est client ; l'export statique de Next ajoute de la complexité sans bénéfice), Nuxt/SvelteKit (même raison) |
+| Routage                         | **React Router v7** (mode librairie, code-splitting par route)                                                                                               | TanStack Router (excellent mais plus niche)                                                                                                           |
+| UI                              | **Tailwind CSS v4 + shadcn/ui** (composants copiés dans le repo, personnalisables) + lucide-react                                                            | Material UI (identité visuelle trop "Google", bundle plus lourd)                                                                                      |
+| État                            | **Zustand** (léger, testable)                                                                                                                                | Redux (surdimensionné)                                                                                                                                |
+| Graphiques                      | **Apache ECharts** (canvas, performant sur 100k+ points, tree-shakable, zoom/filtre/export natifs)                                                           | Plotly.js (~4 Mo, lourd pour le budget perf), D3 pur (coût de dev élevé)                                                                              |
+| Parsing                         | **Papa Parse** (CSV en streaming, supporte les Web Workers)                                                                                                  | SheetJS (ajouté en V2 pour .xlsx)                                                                                                                     |
+| ML classique                    | **Écosystème ml.js** (ml-cart, ml-random-forest, ml-knn, ml-naivebayes, ml-regression) + implémentations TS maison (régression logistique, GBDT histogramme) | scikit-learn côté serveur (casse la promesse privacy)                                                                                                 |
+| Réseaux de neurones             | **TensorFlow.js** (MLP, backend WebGPU avec repli WASM) — V2                                                                                                 | —                                                                                                                                                     |
+| Inférence modèles pré-entraînés | **ONNX Runtime Web** (module `/ai/vision`) — V3                                                                                                              | —                                                                                                                                                     |
+| i18n                            | **react-i18next** (FR/EN, détection navigateur, lazy loading des ressources)                                                                                 | solutions maison (réinventer la roue)                                                                                                                 |
+| Persistance                     | **Dexie.js** (IndexedDB) : projets, runs, modèles                                                                                                            | localStorage (limites de taille), backend (privacy)                                                                                                   |
+| Partage                         | **lz-string** : résultats compressés dans le fragment d'URL (`#…`)                                                                                           | Backend de partage (V3 optionnel)                                                                                                                     |
+| Hébergement                     | **Cloudflare Pages** (statique + CDN)                                                                                                                        | Workers Sites (inutile sans logique serveur)                                                                                                          |
 
 ### A.2 Justification des choix (le "pourquoi", avec parallèles DevOps)
 
 - **SPA statique plutôt que full-stack.** Toute la valeur (parsing, entraînement, visualisation) s'exécute chez le client : un serveur applicatif n'apporterait que des coûts, une surface d'attaque et une promesse privacy affaiblie. Parallèle infra : c'est l'équivalent d'un site servi par **Azure Static Web Apps + CDN** — zéro serveur à patcher, scaling trivial, coût quasi nul.
 - **Vite + React.** Build rapide, écosystème ML/dataviz JS le plus riche, et la compétence la plus lisible sur un portfolio. TypeScript strict joue le rôle que joue la validation Terraform : les erreurs sont attrapées au "plan", pas à l'"apply".
-- **Web Workers pour l'entraînement.** L'UI ne doit jamais geler pendant un fit. Chaque entraînement part dans un worker dédié (via Comlink) qui publie des événements de progression. Parallèle : c'est votre file de jobs — le worker est un *agent de build*, l'UI est l'orchestrateur qui affiche les logs en temps réel.
+- **Web Workers pour l'entraînement.** L'UI ne doit jamais geler pendant un fit. Chaque entraînement part dans un worker dédié (via Comlink) qui publie des événements de progression. Parallèle : c'est votre file de jobs — le worker est un _agent de build_, l'UI est l'orchestrateur qui affiche les logs en temps réel.
 - **ECharts plutôt que Plotly.** Le budget performance (Lighthouse ≥ 95) est un objectif affiché ; Plotly seul le ferait exploser. ECharts offre zoom, brush, filtrage et export PNG demandés dans le brief, pour ~1/5 du poids en imports sélectifs.
 - **shadcn/ui plutôt qu'une lib de composants.** Les composants vivent dans notre repo : identité visuelle propre (exigence du brief), pas de dépendance de style externe, et une vitrine de code lisible.
 
@@ -156,7 +156,7 @@ Chaque section (`/ml`, `/data`, `/ai`) est un **feature folder** chargé paresse
 
 ## B. Développement — phases et contenu fonctionnel
 
-### B.0 Sprint 0 — Fondations (≈ 1 semaine) — *le contenant, et rien que lui*
+### B.0 Sprint 0 — Fondations (≈ 1 semaine) — _le contenant, et rien que lui_
 
 - Scaffold Vite + React + TS strict, ESLint (flat config) + Prettier + Husky/lint-staged.
 - Design system : tokens (couleurs, typo, espacements), **deux thèmes clair/sombre avec bascule utilisateur persistée** (défaut = préférence système), composants de base.
@@ -165,7 +165,7 @@ Chaque section (`/ml`, `/data`, `/ai`) est un **feature folder** chargé paresse
 - CI/CD complet (section C) + domaine `app.dominicdapice.com` en ligne.
 - **Definition of done :** l'app est déployée, Lighthouse ≥ 95, le pipeline CI bloque lint/type/test.
 
-### B.1 Sprint 1 — Données (≈ 1–2 semaines) — *première vraie valeur utilisateur*
+### B.1 Sprint 1 — Données (≈ 1–2 semaines) — _première vraie valeur utilisateur_
 
 - Upload drag & drop CSV (Papa Parse en streaming dans un worker, jusqu'à ~500 Mo).
 - **Datasets de démo intégrés** (Iris, Titanic, California Housing) → essai en un clic, friction zéro comme le site de référence.
@@ -175,7 +175,7 @@ Chaque section (`/ml`, `/data`, `/ai`) est un **feature folder** chargé paresse
 - Suggestions intelligentes : exclusion des colonnes ID/constantes/quasi-vides, **alerte de fuite de cible** (colonne trop corrélée à la cible).
 - **DoD :** un visiteur charge un CSV et comprend ses données sans rien installer.
 
-### B.2 Sprint 2 — Moteur d'entraînement (≈ 2 semaines) — *le cœur*
+### B.2 Sprint 2 — Moteur d'entraînement (≈ 2 semaines) — _le cœur_
 
 - Pipeline de préprocessing déclaratif : imputation (médiane/mode), encodage (one-hot / ordinal selon cardinalité), standardisation, tout **appris sur le train uniquement** (pas de fuite).
 - Split train/test stratifié (80/20, seed fixe reproductible).
@@ -207,13 +207,13 @@ Chaque section (`/ml`, `/data`, `/ai`) est un **feature folder** chargé paresse
 ### B.5 Sprint 5 — Qualité & polish (≈ 1 semaine)
 
 - Accessibilité WCAG AA (navigation clavier, aria, contrastes vérifiés dans les deux thèmes, axe-core en CI).
-- **PWA hors-ligne** (vite-plugin-pwa) : la démo ultime de la promesse privacy — *coupez le Wi-Fi, tout fonctionne encore*.
+- **PWA hors-ligne** (vite-plugin-pwa) : la démo ultime de la promesse privacy — _coupez le Wi-Fi, tout fonctionne encore_.
 - Budgets Lighthouse en CI, **revue complète des traductions FR/EN** (y compris les interprétations en langage naturel générées, produites dans les deux langues), page "Comment ça marche / Confidentialité".
 
 ### B.6 V2 / V3 — extensions (post-MVP, priorisées en section D)
 
 - **V2 :** MLP TensorFlow.js (WebGPU→WASM), GBDT histogramme TS maison (esprit LightGBM), recherche d'hyperparamètres (random search à budget temps), SHAP approché (Kernel SHAP échantillonné), PDP/ICE, import .xlsx/.parquet.
-- **V3 :** `/ai/vision` (ONNX Runtime Web + modèles pré-entraînés type MobileNet), `/ai/chat` (LLM via proxy Cloudflare Worker — seules les *questions et statistiques agrégées* sortent, jamais les données brutes, avec consentement explicite), module `/data`, export ONNX, auth GitHub OAuth si des fonctionnalités le justifient.
+- **V3 :** `/ai/vision` (ONNX Runtime Web + modèles pré-entraînés type MobileNet), `/ai/chat` (LLM via proxy Cloudflare Worker — seules les _questions et statistiques agrégées_ sortent, jamais les données brutes, avec consentement explicite), module `/data`, export ONNX, auth GitHub OAuth si des fonctionnalités le justifient.
 
 ---
 
@@ -254,30 +254,30 @@ deploy.yml (après CI verte)
 
 ### D.1 Les 3 améliorations "signature" (ADN MLOps du portfolio)
 
-1. **Observabilité de run intégrée.** Le leaderboard affiche pour chaque modèle : temps d'entraînement, **latence d'inférence p50/p95** (mesurée sur le jeu de test), mémoire estimée, backend de calcul (WASM/WebGPU). Un non-initié voit les scores ; un recruteur voit un réflexe Grafana/App Insights appliqué au ML. *(Sprint 2–3, coût marginal faible.)*
-2. **Pipeline as code + reproductibilité.** Chaque run est défini par une **config déclarative** (JSON : seed, split, préprocessing, modèles, hyperparamètres) visualisable via un bouton "Voir le pipeline", ré-exécutable à l'identique, et exportable en **script Python scikit-learn équivalent**. C'est Terraform appliqué au ML : le run est le `apply` d'un plan versionné. *(Config dès le Sprint 2 ; bouton + export Python en Sprint 4/V2.)*
-3. **Registre de modèles local avec lineage.** Les modèles sauvegardés portent version, stade (dev/staging/prod), config d'origine et hash du schéma de données ; comparaison diff entre deux runs et **alerte de dérive de schéma** quand un nouveau CSV du même projet ne correspond plus. MLflow-like, 100 % dans IndexedDB. *(Sprint 4 pour la base, V2 pour la dérive.)*
+1. **Observabilité de run intégrée.** Le leaderboard affiche pour chaque modèle : temps d'entraînement, **latence d'inférence p50/p95** (mesurée sur le jeu de test), mémoire estimée, backend de calcul (WASM/WebGPU). Un non-initié voit les scores ; un recruteur voit un réflexe Grafana/App Insights appliqué au ML. _(Sprint 2–3, coût marginal faible.)_
+2. **Pipeline as code + reproductibilité.** Chaque run est défini par une **config déclarative** (JSON : seed, split, préprocessing, modèles, hyperparamètres) visualisable via un bouton "Voir le pipeline", ré-exécutable à l'identique, et exportable en **script Python scikit-learn équivalent**. C'est Terraform appliqué au ML : le run est le `apply` d'un plan versionné. _(Config dès le Sprint 2 ; bouton + export Python en Sprint 4/V2.)_
+3. **Registre de modèles local avec lineage.** Les modèles sauvegardés portent version, stade (dev/staging/prod), config d'origine et hash du schéma de données ; comparaison diff entre deux runs et **alerte de dérive de schéma** quand un nouveau CSV du même projet ne correspond plus. MLflow-like, 100 % dans IndexedDB. _(Sprint 4 pour la base, V2 pour la dérive.)_
 
 ### D.2 Priorisation des améliorations du brief (section 4 du prompt)
 
-| Amélioration demandée | Priorité | Où |
-|---|---|---|
-| Graphiques interactifs (zoom, filtre, export) | **MVP** | Sprints 1–3 (ECharts) |
-| Gestion de projets (historique local) | **MVP** | Sprint 4 (IndexedDB) |
-| Partage sans données | **MVP** | Sprint 4 (fragment URL) |
-| Export modèle (JSON) + rapports (HTML/PDF) | **MVP** | Sprint 4 |
-| Thème clair/sombre au choix de l'utilisateur | **MVP** (requis ferme) | Sprint 0 |
-| Interface bilingue FR/EN | **MVP** (requis ferme) | Sprints 0 → 5 |
-| Animations fluides, WCAG | **MVP** | Sprints 0 + 5 |
-| Interprétabilité simplifiée (importance, lecture NL) | **MVP** | Sprint 3 |
-| Réseaux de neurones (TensorFlow.js) | V2 | MLP après le zoo classique |
-| Modèles boostés (esprit XGBoost/LightGBM) | V2 | GBDT TS maison ; port WASM à évaluer |
-| SHAP/LIME approchés, PDP/ICE | V2 | après permutation importance |
-| AutoML + hyperparamètres | V2 | random search à budget |
-| Export ONNX / PMML | V3 | non trivial en navigateur, à réévaluer |
-| Chat IA sur les données | V3 | proxy Worker + consentement explicite |
-| Vision par ordinateur | V3 | ONNX Runtime Web, `/ai/vision` |
-| Authentification | V3 | seulement si un besoin réel émerge |
+| Amélioration demandée                                | Priorité               | Où                                     |
+| ---------------------------------------------------- | ---------------------- | -------------------------------------- |
+| Graphiques interactifs (zoom, filtre, export)        | **MVP**                | Sprints 1–3 (ECharts)                  |
+| Gestion de projets (historique local)                | **MVP**                | Sprint 4 (IndexedDB)                   |
+| Partage sans données                                 | **MVP**                | Sprint 4 (fragment URL)                |
+| Export modèle (JSON) + rapports (HTML/PDF)           | **MVP**                | Sprint 4                               |
+| Thème clair/sombre au choix de l'utilisateur         | **MVP** (requis ferme) | Sprint 0                               |
+| Interface bilingue FR/EN                             | **MVP** (requis ferme) | Sprints 0 → 5                          |
+| Animations fluides, WCAG                             | **MVP**                | Sprints 0 + 5                          |
+| Interprétabilité simplifiée (importance, lecture NL) | **MVP**                | Sprint 3                               |
+| Réseaux de neurones (TensorFlow.js)                  | V2                     | MLP après le zoo classique             |
+| Modèles boostés (esprit XGBoost/LightGBM)            | V2                     | GBDT TS maison ; port WASM à évaluer   |
+| SHAP/LIME approchés, PDP/ICE                         | V2                     | après permutation importance           |
+| AutoML + hyperparamètres                             | V2                     | random search à budget                 |
+| Export ONNX / PMML                                   | V3                     | non trivial en navigateur, à réévaluer |
+| Chat IA sur les données                              | V3                     | proxy Worker + consentement explicite  |
+| Vision par ordinateur                                | V3                     | ONNX Runtime Web, `/ai/vision`         |
+| Authentification                                     | V3                     | seulement si un besoin réel émerge     |
 
 **Logique de priorisation :** le MVP doit battre le site de référence sur son propre terrain (parcours tabulaire + confiance + persistance + partage) avant d'élargir la surface. Chaque item V2/V3 est une brique indépendante grâce au découpage par features.
 
@@ -286,7 +286,7 @@ deploy.yml (après CI verte)
 ## E. Sécurité & confidentialité
 
 - **Garantie "les données ne quittent pas le navigateur", vérifiable :**
-  - CSP stricte via `_headers` : `default-src 'self'` — le navigateur *interdit* tout appel réseau vers des tiers ; fonts et assets self-hostés. La promesse n'est pas un texte marketing, elle est **observable dans l'onglet Réseau** (et on le dira tel quel sur la page Confidentialité).
+  - CSP stricte via `_headers` : `default-src 'self'` — le navigateur _interdit_ tout appel réseau vers des tiers ; fonts et assets self-hostés. La promesse n'est pas un texte marketing, elle est **observable dans l'onglet Réseau** (et on le dira tel quel sur la page Confidentialité).
   - Aucune télémétrie par défaut ; au plus, Cloudflare Web Analytics (sans cookies, agrégé) — et uniquement si vous le décidez.
   - PWA hors-ligne = preuve par l'usage.
 - **En-têtes** : `Strict-Transport-Security`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` ; COOP/COEP seulement si on active le multithread WASM (SharedArrayBuffer) en V2.
@@ -307,7 +307,7 @@ deploy.yml (après CI verte)
 - **README** : pitch, capture, badges CI, quickstart 3 commandes.
 - **docs/ARCHITECTURE.md** + **ADRs** (`docs/adr/`) : chaque choix structurant tracé (framework, ECharts, moteur ML…) — le réflexe RFC/design-doc que les équipes attendent d'un tech lead.
 - **Guide utilisateur intégré** à l'app (page "Comment ça marche") plutôt qu'un wiki externe.
-- **Maintenance** : Renovate (mises à jour groupées hebdo), CHANGELOG en versionnage sémantique, monitoring léger (Cloudflare Analytics + error boundary avec rapport d'erreur *copiable manuellement* par l'utilisateur — pas d'envoi automatique, cohérence privacy).
+- **Maintenance** : Renovate (mises à jour groupées hebdo), CHANGELOG en versionnage sémantique, monitoring léger (Cloudflare Analytics + error boundary avec rapport d'erreur _copiable manuellement_ par l'utilisateur — pas d'envoi automatique, cohérence privacy).
 
 ---
 
@@ -315,15 +315,15 @@ deploy.yml (après CI verte)
 
 **Décisions validées le 20/08/2026 :**
 
-| # | Décision | Choix validé |
-|---|---|---|
-| 1 | Framework | **Vite + React + TypeScript** (SPA statique) |
-| 2 | UI / design system | **Tailwind CSS v4 + shadcn/ui** |
-| 3 | Exécution ML (MVP) | **100 % navigateur** (Azure réservé aux extensions V3) |
-| 4 | Déploiement | **GitHub Actions + wrangler** (previews par PR) |
-| 5 | Langues | **Bilingue FR/EN** dès le Sprint 0 (addendum) |
-| 6 | Thèmes | **Clair + sombre au choix de l'utilisateur** (addendum) |
-| 7 | Palette | **Sarcelle/teal profond + accent cuivre — aucun jaune/ambre** (identité volontairement distincte de le site de référence) |
+| #   | Décision           | Choix validé                                                                                                   |
+| --- | ------------------ | -------------------------------------------------------------------------------------------------------------- |
+| 1   | Framework          | **Vite + React + TypeScript** (SPA statique)                                                                   |
+| 2   | UI / design system | **Tailwind CSS v4 + shadcn/ui**                                                                                |
+| 3   | Exécution ML (MVP) | **100 % navigateur** (Azure réservé aux extensions V3)                                                         |
+| 4   | Déploiement        | **GitHub Actions + wrangler** (previews par PR)                                                                |
+| 5   | Langues            | **Bilingue FR/EN** dès le Sprint 0 (addendum)                                                                  |
+| 6   | Thèmes             | **Clair + sombre au choix de l'utilisateur** (addendum)                                                        |
+| 7   | Palette            | **Sarcelle/teal profond + accent cuivre — aucun jaune/ambre** (identité volontairement distincte de le site de référence) |
 
 **Questions encore ouvertes (non bloquantes pour le Sprint 0) :**
 
@@ -335,5 +335,5 @@ deploy.yml (après CI verte)
 1. **Vous** : valider/amender les réponses aux questions H1–H6.
 2. **Moi** : Sprint 0 — scaffold complet + design system + shell + CI/CD (PR dédiée, avec preview).
 3. **Vous** : créer le projet Cloudflare Pages + token (guide fourni), ajouter les 2 secrets GitHub.
-4. **Moi** : Sprints 1 → 2 dans la foulée — l'application devient *réellement* un ML Lab (upload → profilage → entraînement → leaderboard), puis Sprints 3 → 5.
+4. **Moi** : Sprints 1 → 2 dans la foulée — l'application devient _réellement_ un ML Lab (upload → profilage → entraînement → leaderboard), puis Sprints 3 → 5.
 5. Revue ensemble à chaque fin de sprint sur l'URL de preview.
