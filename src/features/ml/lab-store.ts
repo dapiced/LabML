@@ -5,11 +5,15 @@ import type {
   ColumnProfile,
   ExclusionReason,
   TaskInfo,
-  WorkerRequest,
-  WorkerResponse,
 } from '@/features/ml/data/types';
+import type { ModelKey, ModelResult, TrainSummary } from '@/features/ml/train/types';
+import type { WorkerRequest, WorkerResponse } from '@/features/ml/worker-protocol';
 
 export type LabStatus = 'idle' | 'parsing' | 'ready' | 'error';
+export type TrainStatus = 'idle' | 'training' | 'done';
+
+export const TRAIN_SEED = 42;
+export const TEST_RATIO = 0.2;
 
 interface LabState {
   status: LabStatus;
@@ -27,10 +31,16 @@ interface LabState {
   leaks: ColumnSuggestion[];
   /** Manual include/exclude decisions that override the suggestions. */
   overrides: Record<string, 'include' | 'exclude'>;
+  trainStatus: TrainStatus;
+  modelProgress: { key: ModelKey; index: number; total: number } | null;
+  results: ModelResult[];
+  summary: TrainSummary | null;
   loadFile: (file: File) => void;
   loadDemo: (fileName: string) => void;
   setTarget: (column: string | null) => void;
   toggleColumn: (column: string) => void;
+  train: () => void;
+  cancelTrain: () => void;
   reset: () => void;
 }
 
@@ -40,6 +50,13 @@ function terminateWorker() {
   worker?.terminate();
   worker = null;
 }
+
+const initialTraining = {
+  trainStatus: 'idle' as TrainStatus,
+  modelProgress: null,
+  results: [],
+  summary: null,
+};
 
 const initialData = {
   status: 'idle' as LabStatus,
@@ -54,6 +71,7 @@ const initialData = {
   targetUnsupported: null,
   leaks: [],
   overrides: {},
+  ...initialTraining,
 };
 
 export const useLabStore = create<LabState>((set, get) => {
@@ -80,8 +98,19 @@ export const useLabStore = create<LabState>((set, get) => {
             targetUnsupported: message.payload.unsupportedReason ?? null,
             leaks: message.payload.suggestions,
           });
+        } else if (message.kind === 'model-start') {
+          set({
+            trainStatus: 'training',
+            modelProgress: { key: message.key, index: message.index, total: message.total },
+          });
+        } else if (message.kind === 'model-result') {
+          set({ results: [...get().results, message.result] });
+        } else if (message.kind === 'train-complete') {
+          set({ trainStatus: 'done', modelProgress: null, summary: message.summary });
+        } else if (message.kind === 'train-cancelled') {
+          set({ ...initialTraining });
         } else {
-          set({ status: 'error', error: message.message });
+          set({ status: 'error', error: message.message, ...initialTraining });
         }
       };
       worker.onerror = () => {
@@ -96,7 +125,7 @@ export const useLabStore = create<LabState>((set, get) => {
 
     loadFile(file) {
       terminateWorker();
-      set({ ...initialData, status: 'parsing', meta: null });
+      set({ ...initialData, status: 'parsing' });
       send({ kind: 'parse-file', file });
     },
 
@@ -107,7 +136,13 @@ export const useLabStore = create<LabState>((set, get) => {
     },
 
     setTarget(column) {
-      set({ target: column, task: null, targetUnsupported: null, leaks: [] });
+      set({
+        target: column,
+        task: null,
+        targetUnsupported: null,
+        leaks: [],
+        ...initialTraining,
+      });
       if (column) send({ kind: 'analyze-target', target: column });
     },
 
@@ -120,7 +155,26 @@ export const useLabStore = create<LabState>((set, get) => {
       } else {
         overrides[column] = excluded ? 'include' : 'exclude';
       }
-      set({ overrides });
+      // Changing the feature set invalidates any existing leaderboard.
+      set({ overrides, ...initialTraining });
+    },
+
+    train() {
+      const state = get();
+      if (!state.target || !state.task || state.trainStatus === 'training') return;
+      const features = state.profiles
+        .map((p) => p.name)
+        .filter((name) => name !== state.target && effectiveExclusion(state, name) === null);
+      set({ ...initialTraining, trainStatus: 'training' });
+      send({
+        kind: 'train',
+        config: { target: state.target, features, seed: TRAIN_SEED, testRatio: TEST_RATIO },
+      });
+    },
+
+    cancelTrain() {
+      if (get().trainStatus !== 'training') return;
+      send({ kind: 'cancel-train' });
     },
 
     reset() {
