@@ -1,6 +1,7 @@
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Eyebrow } from '@/components/ui/eyebrow';
+import { ExportBar } from '@/features/ml/components/ExportBar';
 import { ConfusionMatrix } from '@/features/ml/components/insights/ConfusionMatrix';
 import { ImportanceBars } from '@/features/ml/components/insights/ImportanceBars';
 import { PlainRead } from '@/features/ml/components/insights/PlainRead';
@@ -40,6 +41,8 @@ export function InsightsSection() {
       </div>
 
       <PlainRead />
+
+      <ExportBar />
 
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         {insights.classes && insights.confusion && (

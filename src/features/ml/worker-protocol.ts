@@ -16,7 +16,9 @@ export type WorkerRequest =
   | { kind: 'train'; config: TrainConfig }
   | { kind: 'cancel-train' }
   | { kind: 'model-insights'; model: ModelKey }
-  | { kind: 'what-if'; model: ModelKey; values: Record<string, Cell> };
+  | { kind: 'what-if'; model: ModelKey; values: Record<string, Cell> }
+  | { kind: 'export-model'; model: ModelKey }
+  | { kind: 'export-predictions'; model: ModelKey };
 
 /** Messages emitted by the data/training worker. */
 export type WorkerResponse =
@@ -29,4 +31,6 @@ export type WorkerResponse =
   | { kind: 'train-cancelled' }
   | { kind: 'insights'; payload: InsightsPayload }
   | { kind: 'what-if-result'; payload: WhatIfResult }
+  | { kind: 'model-json'; model: ModelKey; json: string | null }
+  | { kind: 'predictions-csv'; model: ModelKey; csv: string }
   | { kind: 'error'; message: string };
