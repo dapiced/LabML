@@ -165,6 +165,36 @@
         "naiveBayes": "Naive Bayes gaussien",
         "tree": "Arbre de décision",
         "forest": "Forêt aléatoire"
+      },
+      "insights": {
+        "title": "Insights",
+        "loading": "Analyse du modèle gagnant…",
+        "selectHint": "Cliquez une ligne du leaderboard pour inspecter un autre modèle.",
+        "inspectRow": "Inspecter ce modèle",
+        "confusionTitle": "Matrice de confusion",
+        "predicted": "prédit",
+        "actual": "réel",
+        "rocTitle": "Courbe ROC",
+        "fpr": "taux de faux positifs",
+        "tpr": "taux de vrais positifs",
+        "importanceTitle": "Variables décisives",
+        "importanceHintClassification": "Baisse d'accuracy quand la colonne est mélangée (importance par permutation, agnostique au modèle).",
+        "importanceHintRegression": "Hausse du RMSE quand la colonne est mélangée (importance par permutation, agnostique au modèle).",
+        "scatterTitle": "Prédit vs réel",
+        "actualShort": "réel",
+        "predictedShort": "prédit",
+        "residualsTitle": "Résidus",
+        "residualsHint": "réel − prédit",
+        "readTitle": "Lecture en clair",
+        "readAccuracy": "{{model}} prédit correctement {{accuracy}} % des {{rows}} lignes de test mises de côté.",
+        "readBaseline": "C'est {{delta}} points au-dessus de la baseline naïve ({{baseline}} %) : le modèle a appris un vrai signal.",
+        "readRecall": "Il retrouve {{recall}} % des cas réellement « {{label}} ».",
+        "readRegression": "Les prédictions de {{model}} s'écartent en moyenne de {{mae}} sur les {{rows}} lignes de test mises de côté.",
+        "readVariance": "Il explique {{r2}} % de la variance de la cible.",
+        "readDrivers": "Les colonnes les plus décisives sont : {{columns}}.",
+        "whatIfTitle": "Et si…",
+        "whatIfHint": "Modifiez les valeurs et regardez la prédiction du modèle changer en direct — calculée localement, comme tout le reste.",
+        "whatIfPrediction": "Prédiction"
       }
     },
     "roadmap": {
@@ -172,7 +202,7 @@
       "sprint0": "Fondations — livrées",
       "sprint1": "Moteur de données : upload, profilage, cible — livré",
       "sprint2": "Moteur d'entraînement et leaderboard — livré",
-      "sprint3": "Résultats, explications et what-if — prochaine étape"
+      "sprint3": "Résultats, explications et what-if — livré"
     }
   },
   "data": {

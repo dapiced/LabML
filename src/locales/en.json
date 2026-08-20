@@ -165,6 +165,36 @@
         "naiveBayes": "Gaussian Naive Bayes",
         "tree": "Decision tree",
         "forest": "Random forest"
+      },
+      "insights": {
+        "title": "Insights",
+        "loading": "Analyzing the winning model…",
+        "selectHint": "Click any leaderboard row to inspect another model.",
+        "inspectRow": "Inspect this model",
+        "confusionTitle": "Confusion matrix",
+        "predicted": "predicted",
+        "actual": "actual",
+        "rocTitle": "ROC curve",
+        "fpr": "false-positive rate",
+        "tpr": "true-positive rate",
+        "importanceTitle": "Top drivers",
+        "importanceHintClassification": "Accuracy drop when the column is shuffled (permutation importance, model-agnostic).",
+        "importanceHintRegression": "RMSE increase when the column is shuffled (permutation importance, model-agnostic).",
+        "scatterTitle": "Predicted vs actual",
+        "actualShort": "actual",
+        "predictedShort": "predicted",
+        "residualsTitle": "Residuals",
+        "residualsHint": "actual − predicted",
+        "readTitle": "Plain read",
+        "readAccuracy": "{{model}} gets {{accuracy}}% of the {{rows}} held-out test rows right.",
+        "readBaseline": "That is {{delta}} points above the naive baseline ({{baseline}}%), so the model has learned real signal.",
+        "readRecall": "It catches {{recall}}% of the actual \"{{label}}\" cases.",
+        "readRegression": "{{model}}'s predictions are off by {{mae}} on average across the {{rows}} held-out test rows.",
+        "readVariance": "It explains {{r2}}% of the variance of the target.",
+        "readDrivers": "The most decisive columns are: {{columns}}.",
+        "whatIfTitle": "What if…",
+        "whatIfHint": "Edit the values and watch the model's live prediction — computed locally, like everything else.",
+        "whatIfPrediction": "Prediction"
       }
     },
     "roadmap": {
@@ -172,7 +202,7 @@
       "sprint0": "Foundations — shipped",
       "sprint1": "Data engine: upload, profiling, target — shipped",
       "sprint2": "Training engine and leaderboard — shipped",
-      "sprint3": "Results, explanations and what-if — next"
+      "sprint3": "Results, explanations and what-if — shipped"
     }
   },
   "data": {
