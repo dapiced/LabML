@@ -14,6 +14,18 @@ export const router = createBrowserRouter([
         lazy: async () => ({ Component: (await import('@/features/ml/pages/MlHomePage')).default }),
       },
       {
+        path: 'ml/run/:id',
+        lazy: async () => ({
+          Component: (await import('@/features/ml/pages/StoredRunPage')).default,
+        }),
+      },
+      {
+        path: 'ml/share',
+        lazy: async () => ({
+          Component: (await import('@/features/ml/pages/SharedRunPage')).default,
+        }),
+      },
+      {
         path: 'data',
         lazy: async () => ({ Component: (await import('@/features/data/DataPage')).default }),
       },

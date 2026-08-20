@@ -3,10 +3,11 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { LabSection } from '@/features/ml/components/LabSection';
+import { RunsHistory } from '@/features/ml/components/RunsHistory';
 
 const STEP_KEYS = ['upload', 'target', 'train', 'read'] as const;
-const ROADMAP_KEYS = ['sprint0', 'sprint1', 'sprint2', 'sprint3'] as const;
-const SHIPPED_SPRINTS = 4; // S0 through S3 are live
+const ROADMAP_KEYS = ['sprint0', 'sprint1', 'sprint2', 'sprint3', 'sprint4', 'sprint5'] as const;
+const SHIPPED_SPRINTS = 5; // S0 through S4 are live
 
 export function MlHomePage() {
   const { t } = useTranslation();
@@ -25,6 +26,8 @@ export function MlHomePage() {
       </section>
 
       <LabSection />
+
+      <RunsHistory />
 
       <section className="grid gap-4 pb-12 sm:grid-cols-2 lg:grid-cols-4">
         {STEP_KEYS.map((key, index) => (
