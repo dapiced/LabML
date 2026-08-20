@@ -70,15 +70,5 @@ export interface ParseResultPayload {
   suggestions: ColumnSuggestion[];
 }
 
-/** Messages accepted by the data worker. */
-export type WorkerRequest =
-  | { kind: 'parse-file'; file: File }
-  | { kind: 'parse-url'; url: string; name: string }
-  | { kind: 'analyze-target'; target: string };
-
-/** Messages emitted by the data worker. */
-export type WorkerResponse =
-  | { kind: 'progress'; rows: number }
-  | { kind: 'parsed'; payload: ParseResultPayload }
-  | { kind: 'target-analyzed'; payload: TargetAnalysis }
-  | { kind: 'error'; message: string };
+// Worker request/response unions live in `@/features/ml/worker-protocol` — they
+// combine parse payloads (here) with training types (`train/types.ts`).

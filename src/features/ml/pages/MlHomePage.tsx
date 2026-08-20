@@ -6,7 +6,7 @@ import { LabSection } from '@/features/ml/components/LabSection';
 
 const STEP_KEYS = ['upload', 'target', 'train', 'read'] as const;
 const ROADMAP_KEYS = ['sprint0', 'sprint1', 'sprint2', 'sprint3'] as const;
-const SHIPPED_SPRINTS = 2; // S0 and S1 are live
+const SHIPPED_SPRINTS = 3; // S0, S1 and S2 are live
 
 export function MlHomePage() {
   const { t } = useTranslation();
