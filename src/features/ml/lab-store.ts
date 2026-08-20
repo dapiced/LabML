@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { db } from '@/features/ml/projects/db';
+import type { RunRecord } from '@/features/ml/projects/types';
 import type {
   ColumnSuggestion,
   DatasetMeta,
@@ -44,6 +46,10 @@ interface LabState {
   /** Insights bundle for the currently inspected model (defaults to the best). */
   insights: InsightsPayload | null;
   whatIf: WhatIfResult | null;
+  /** The auto-saved record of the current run (id set once stored). */
+  currentRun: RunRecord | null;
+  /** File produced by an export action, consumed once by the UI download effect. */
+  exportedFile: { name: string; mime: string; content: string } | null;
   loadFile: (file: File) => void;
   loadDemo: (fileName: string) => void;
   setTarget: (column: string | null) => void;
@@ -52,6 +58,9 @@ interface LabState {
   cancelTrain: () => void;
   selectInsightModel: (model: ModelKey) => void;
   requestWhatIf: (values: Record<string, string>) => void;
+  exportModel: () => void;
+  exportPredictions: () => void;
+  clearExportedFile: () => void;
   reset: () => void;
 }
 
@@ -69,6 +78,8 @@ const initialTraining = {
   summary: null,
   insights: null,
   whatIf: null,
+  currentRun: null,
+  exportedFile: null,
 };
 
 const initialData = {
@@ -133,8 +144,58 @@ export const useLabStore = create<LabState>((set, get) => {
           set({ ...initialTraining });
         } else if (message.kind === 'insights') {
           set({ insights: message.payload, whatIf: null });
+          // First insights after a completed run = winning model → auto-save.
+          const state = get();
+          if (
+            state.trainStatus === 'done' &&
+            state.currentRun === null &&
+            state.meta &&
+            state.target &&
+            state.task &&
+            state.summary
+          ) {
+            const createdAt = Date.now();
+            const record: RunRecord = {
+              name: `${state.meta.name.replace(/\.[a-z]+$/i, '')} · ${state.target}`,
+              createdAt,
+              dataset: {
+                name: state.meta.name,
+                rowCount: state.meta.rowCount,
+                columnCount: state.meta.columnCount,
+              },
+              target: state.target,
+              taskType: state.task.type,
+              seed: state.summary.seed,
+              results: state.results,
+              summary: state.summary,
+              insights: message.payload,
+            };
+            set({ currentRun: record });
+            void db.runs.add(record).then((id) => {
+              const current = get().currentRun;
+              if (current === record) set({ currentRun: { ...record, id } });
+            });
+          }
         } else if (message.kind === 'what-if-result') {
           set({ whatIf: message.payload });
+        } else if (message.kind === 'model-json') {
+          if (message.json !== null) {
+            set({
+              exportedFile: {
+                name: `labml-${message.model}.json`,
+                mime: 'application/json',
+                content: message.json,
+              },
+            });
+          }
+        } else if (message.kind === 'predictions-csv') {
+          set({
+            exportedFile: {
+              name: `labml-${message.model}-predictions.csv`,
+              mime: 'text/csv',
+              content: message.csv,
+            },
+          });
         } else {
           set({ status: 'error', error: message.message, ...initialTraining });
         }
@@ -215,6 +276,22 @@ export const useLabStore = create<LabState>((set, get) => {
       const state = get();
       if (state.trainStatus !== 'done' || !state.insights) return;
       send({ kind: 'what-if', model: state.insights.model, values });
+    },
+
+    exportModel() {
+      const state = get();
+      if (state.trainStatus !== 'done' || !state.insights) return;
+      send({ kind: 'export-model', model: state.insights.model });
+    },
+
+    exportPredictions() {
+      const state = get();
+      if (state.trainStatus !== 'done' || !state.insights) return;
+      send({ kind: 'export-predictions', model: state.insights.model });
+    },
+
+    clearExportedFile() {
+      set({ exportedFile: null });
     },
 
     reset() {

@@ -10,11 +10,13 @@ declare module 'ml-cart' {
     constructor(options?: TreeOptions);
     train(features: number[][], labels: number[]): void;
     predict(features: number[][]): number[];
+    toJSON(): object;
   }
   export class DecisionTreeRegression {
     constructor(options?: TreeOptions);
     train(features: number[][], values: number[]): void;
     predict(features: number[][]): number[];
+    toJSON(): object;
   }
 }
 
@@ -31,10 +33,12 @@ declare module 'ml-random-forest' {
     constructor(options?: RandomForestOptions);
     train(features: number[][], labels: number[]): void;
     predict(features: number[][]): number[];
+    toJSON(): object;
   }
   export class RandomForestRegression {
     constructor(options?: RandomForestOptions);
     train(features: number[][], values: number[]): void;
     predict(features: number[][]): number[];
+    toJSON(): object;
   }
 }
