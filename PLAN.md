@@ -23,6 +23,8 @@
 - Domaine : `app.dominicdapice.com`, routage par chemins (`/ml` d'abord, `/data` et `/ai` ensuite).
 - Infra : GitHub (code + Actions CI/CD) + Cloudflare (DNS, SSL, hébergement).
 - Privacy-first : aucune donnée utilisateur ne quitte le navigateur.
+- **Bilingue français / anglais** dès la première version : sélecteur de langue visible, détection de la langue du navigateur, préférence mémorisée. Toute chaîne de l'UI passe par la couche i18n — aucune chaîne en dur.
+- **Deux thèmes de couleur au choix de l'utilisateur** : clair et sombre, bascule visible dans l'en-tête, préférence mémorisée (défaut = préférence système), contrastes WCAG vérifiés dans les deux thèmes (graphiques ECharts inclus).
 - Responsive, accessible (WCAG), code propre (ESLint/Prettier), open-source.
 
 ---
@@ -65,6 +67,7 @@
 | ML classique | **Écosystème ml.js** (ml-cart, ml-random-forest, ml-knn, ml-naivebayes, ml-regression) + implémentations TS maison (régression logistique, GBDT histogramme) | scikit-learn côté serveur (casse la promesse privacy) |
 | Réseaux de neurones | **TensorFlow.js** (MLP, backend WebGPU avec repli WASM) — V2 | — |
 | Inférence modèles pré-entraînés | **ONNX Runtime Web** (module `/ai/vision`) — V3 | — |
+| i18n | **react-i18next** (FR/EN, détection navigateur, lazy loading des ressources) | solutions maison (réinventer la roue) |
 | Persistance | **Dexie.js** (IndexedDB) : projets, runs, modèles | localStorage (limites de taille), backend (privacy) |
 | Partage | **lz-string** : résultats compressés dans le fragment d'URL (`#…`) | Backend de partage (V3 optionnel) |
 | Hébergement | **Cloudflare Pages** (statique + CDN) | Workers Sites (inutile sans logique serveur) |
@@ -156,7 +159,8 @@ Chaque section (`/ml`, `/data`, `/ai`) est un **feature folder** chargé paresse
 ### B.0 Sprint 0 — Fondations (≈ 1 semaine) — *le contenant, et rien que lui*
 
 - Scaffold Vite + React + TS strict, ESLint (flat config) + Prettier + Husky/lint-staged.
-- Design system : tokens (couleurs, typo, espacements), thème clair/sombre, composants de base.
+- Design system : tokens (couleurs, typo, espacements), **deux thèmes clair/sombre avec bascule utilisateur persistée** (défaut = préférence système), composants de base.
+- **Fondation i18n (react-i18next)** : FR + EN dès le premier écran, sélecteur de langue, détection navigateur, préférence persistée — l'i18n se pose au Sprint 0 car le rétrofit sur une app existante coûte 10× plus cher.
 - Shell : layout, navigation, pages `/`, `/ml`, `/data` (à venir), `/ai` (à venir), page 404.
 - CI/CD complet (section C) + domaine `app.dominicdapice.com` en ligne.
 - **Definition of done :** l'app est déployée, Lighthouse ≥ 95, le pipeline CI bloque lint/type/test.
@@ -202,9 +206,9 @@ Chaque section (`/ml`, `/data`, `/ai`) est un **feature folder** chargé paresse
 
 ### B.5 Sprint 5 — Qualité & polish (≈ 1 semaine)
 
-- Accessibilité WCAG AA (navigation clavier, aria, contrastes, axe-core en CI).
+- Accessibilité WCAG AA (navigation clavier, aria, contrastes vérifiés dans les deux thèmes, axe-core en CI).
 - **PWA hors-ligne** (vite-plugin-pwa) : la démo ultime de la promesse privacy — *coupez le Wi-Fi, tout fonctionne encore*.
-- Budgets Lighthouse en CI, i18n prêt (EN/FR), page "Comment ça marche / Confidentialité".
+- Budgets Lighthouse en CI, **revue complète des traductions FR/EN** (y compris les interprétations en langage naturel générées, produites dans les deux langues), page "Comment ça marche / Confidentialité".
 
 ### B.6 V2 / V3 — extensions (post-MVP, priorisées en section D)
 
@@ -262,7 +266,9 @@ deploy.yml (après CI verte)
 | Gestion de projets (historique local) | **MVP** | Sprint 4 (IndexedDB) |
 | Partage sans données | **MVP** | Sprint 4 (fragment URL) |
 | Export modèle (JSON) + rapports (HTML/PDF) | **MVP** | Sprint 4 |
-| Thème clair/sombre, animations, WCAG | **MVP** | Sprints 0 + 5 |
+| Thème clair/sombre au choix de l'utilisateur | **MVP** (requis ferme) | Sprint 0 |
+| Interface bilingue FR/EN | **MVP** (requis ferme) | Sprints 0 → 5 |
+| Animations fluides, WCAG | **MVP** | Sprints 0 + 5 |
 | Interprétabilité simplifiée (importance, lecture NL) | **MVP** | Sprint 3 |
 | Réseaux de neurones (TensorFlow.js) | V2 | MLP après le zoo classique |
 | Modèles boostés (esprit XGBoost/LightGBM) | V2 | GBDT TS maison ; port WASM à évaluer |
@@ -307,12 +313,13 @@ deploy.yml (après CI verte)
 
 ## H. Questions avant de coder
 
+*Déjà actés (addendum du 20/08) : interface **bilingue FR/EN** et **deux thèmes clair/sombre** au choix de l'utilisateur — intégrés comme requis fermes du Sprint 0. Reste une sous-question : **langue par défaut** au premier chargement quand le navigateur n'indique ni FR ni EN (recommandé : anglais, portée internationale du portfolio).*
+
 1. **Framework** : d'accord pour **Vite + React + TypeScript** (SPA statique) plutôt que Next.js ? (Recommandé — justification en A.2.)
 2. **UI** : **Tailwind v4 + shadcn/ui** vous convient, ou préférence Material UI ?
 3. **Exécution ML** : on confirme **100 % navigateur pour le MVP** (Azure réservé à des extensions V3 type AutoML lourd / chat) ? C'est le choix qui préserve la promesse privacy et le coût zéro.
 4. **Déploiement** : pilotage par **GitHub Actions + wrangler** (contrôle CI complet, previews par PR — recommandé pour le profil DevOps) ou intégration Git native de Cloudflare Pages (plus simple, moins de contrôle) ?
-5. **Langue** : interface en anglais par défaut avec i18n FR prêt (portée internationale du portfolio), ou français d'abord ?
-6. **Accès Cloudflare** : vous créerez le projet Pages + le token API (je fournirai la procédure pas à pas), ou souhaitez-vous d'abord un déploiement de validation sur `*.pages.dev` avant de brancher le DNS ?
+5. **Accès Cloudflare** : vous créerez le projet Pages + le token API (je fournirai la procédure pas à pas), ou souhaitez-vous d'abord un déploiement de validation sur `*.pages.dev` avant de brancher le DNS ?
 
 ## I. Prochaines étapes concrètes
 
