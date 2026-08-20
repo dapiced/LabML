@@ -12,10 +12,16 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
 
 ## Status
 
-Sprint 0 — foundations: design system (dual light/dark theme, teal + copper palette),
-bilingual FR/EN interface, path-based routing shell, CI/CD to Cloudflare Pages.
-Next: the data engine (upload, profiling, target selection), then the in-browser training
-engine and leaderboard. Full roadmap in [PLAN.md](PLAN.md), target analysis in
+- **Sprint 0 — shipped**: design system (dual light/dark theme, teal + copper palette),
+  bilingual FR/EN interface, path-based routing shell, CI/CD to Cloudflare Pages.
+- **Sprint 1 — shipped**: the data engine. Drag & drop a CSV (parsed in a Web Worker,
+  never uploaded) or pick a demo dataset (iris, titanic, mpg); per-column type inference
+  and profiling (distributions, missing rates, cardinality); target selection with
+  automatic task detection (binary / multi-class / regression); smart exclusions
+  (identifiers, constants, near-empty columns) and **target-leakage detection**.
+- **Next — Sprint 2**: the in-browser training engine and leaderboard.
+
+Full roadmap in [PLAN.md](PLAN.md), target analysis in
 [docs/analyse-le site de référence.md](docs/analyse-le site de référence.md).
 
 ## Stack
