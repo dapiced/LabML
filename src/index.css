@@ -1,0 +1,81 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/bricolage-grotesque';
+@import '@fontsource-variable/public-sans';
+@import '@fontsource-variable/jetbrains-mono';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * LabML design tokens — decision #7: teal ("sarcelle") + copper, no yellow/amber.
+ * Light is the reference palette; .dark redefines every token.
+ */
+:root {
+  --bg: #f4f7f6;
+  --surface: #fdfefd;
+  --surface-2: #ebf1ef;
+  --ink: #17221f;
+  --muted: #5a6a65;
+  --line: #d6e0dc;
+  --accent: #0b6e5d;
+  --accent-strong: #08574a;
+  --accent-soft: #dcebe6;
+  --accent-contrast: #ffffff;
+  --copper: #a85b28;
+  --copper-soft: #f3e6da;
+  --ok: #1f7a4d;
+}
+
+.dark {
+  --bg: #101816;
+  --surface: #17211e;
+  --surface-2: #1d2926;
+  --ink: #e2ece8;
+  --muted: #93a5a0;
+  --line: #2a3834;
+  --accent: #46bca5;
+  --accent-strong: #6ecdba;
+  --accent-soft: #1b322d;
+  --accent-contrast: #0c1613;
+  --copper: #d9915a;
+  --copper-soft: #33261c;
+  --ok: #4cc98a;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-copper: var(--copper);
+  --color-copper-soft: var(--copper-soft);
+  --color-ok: var(--ok);
+  --font-display: 'Bricolage Grotesque Variable', 'Public Sans Variable', system-ui, sans-serif;
+  --font-body: 'Public Sans Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-bg font-body text-ink antialiased;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
