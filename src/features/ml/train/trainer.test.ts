@@ -37,8 +37,9 @@ describe('runTraining — classification', () => {
 
   it('trains the full zoo, beats the baseline, and reports the run', async () => {
     const { results, callbacks } = collector();
-    const summary = await runTraining(columns, profiles, config, callbacks);
-    expect(summary).not.toBeNull();
+    const outcome = await runTraining(columns, profiles, config, callbacks);
+    expect(outcome).not.toBeNull();
+    const summary = outcome!.summary;
     expect(results).toHaveLength(6);
     expect(results.every((r) => r.ok)).toBe(true);
 
@@ -47,10 +48,12 @@ describe('runTraining — classification', () => {
     const best = Math.max(...results.map((r) => r.metrics.accuracy ?? 0));
     expect(best).toBeGreaterThan(0.9); // the target is separable on f1
 
-    expect(summary!.taskType).toBe('binary');
-    expect(summary!.trainRows + summary!.testRows).toBe(N);
-    expect(summary!.featureColumns).toEqual(['f1', 'f2']);
-    expect(summary!.skippedColumns).toEqual(['note']); // free text is not trainable yet
+    expect(summary.taskType).toBe('binary');
+    expect(summary.trainRows + summary.testRows).toBe(N);
+    expect(summary.featureColumns).toEqual(['f1', 'f2']);
+    expect(summary.skippedColumns).toEqual(['note']); // free text is not trainable yet
+    expect(outcome!.artifacts.models.size).toBe(6);
+    expect(outcome!.artifacts.testY).toHaveLength(summary.testRows);
   });
 
   it('is reproducible: same seed, same metrics', async () => {
@@ -65,8 +68,8 @@ describe('runTraining — classification', () => {
 
   it('stops between models when cancelled', async () => {
     const { results, callbacks } = collector(() => results.length >= 2);
-    const summary = await runTraining(columns, profiles, config, callbacks);
-    expect(summary).toBeNull();
+    const outcome = await runTraining(columns, profiles, config, callbacks);
+    expect(outcome).toBeNull();
     expect(results.length).toBeLessThan(6);
   });
 });
@@ -78,8 +81,8 @@ describe('runTraining — regression', () => {
 
   it('trains the regression zoo and the linear model nails the linear signal', async () => {
     const { results, callbacks } = collector();
-    const summary = await runTraining(columns, profiles, config, callbacks);
-    expect(summary!.taskType).toBe('regression');
+    const outcome = await runTraining(columns, profiles, config, callbacks);
+    expect(outcome!.summary.taskType).toBe('regression');
     expect(results).toHaveLength(5);
     expect(results.every((r) => r.ok)).toBe(true);
     const linear = results.find((r) => r.key === 'linear')!;
