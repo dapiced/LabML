@@ -73,16 +73,72 @@
         "description": "Leaderboard, métriques face à une baseline naïve, graphiques, features décisives et lecture en langage clair."
       }
     },
-    "dropzone": {
-      "title": "La zone de dépôt ouvre avec le Sprint 1",
-      "description": "Lecture des CSV, profilage des colonnes et choix de la cible sont la prochaine étape. Des jeux de données de démonstration seront inclus pour essayer le labo sans aucun fichier.",
-      "demoLabel": "Jeux de démonstration prévus"
+    "lab": {
+      "title": "nouveau run",
+      "noRequests": "exécution locale · aucune requête",
+      "dropTitle": "Déposez un fichier CSV",
+      "dropHint": "ou cliquez pour parcourir — le fichier est lu ici même, dans votre navigateur ; rien n'est téléversé",
+      "demoLabel": "Ou essayez un jeu de démonstration",
+      "demoTask": {
+        "binary": "binaire",
+        "multiclass": "multi-classes",
+        "regression": "régression"
+      },
+      "parsing": "Lecture locale en cours…",
+      "rowsRead": "{{count}} lignes lues",
+      "cancel": "Annuler",
+      "errorTitle": "Fichier illisible",
+      "errorBody": "Le fichier semble vide ou non tabulaire. Essayez un CSV avec une ligne d'en-têtes.",
+      "retry": "Essayer un autre fichier",
+      "rows": "lignes",
+      "columns": "colonnes",
+      "readLocally": "lu localement",
+      "newDataset": "Changer de données",
+      "targetLabel": "Colonne à prédire",
+      "targetPlaceholder": "Choisir la cible…",
+      "targetBadge": "cible",
+      "task": {
+        "binary": "Classification binaire",
+        "multiclass": "Classification multi-classes · {{count}} classes",
+        "regression": "Régression"
+      },
+      "unsupported": {
+        "type": "Cette colonne ne peut pas servir de cible — choisissez une colonne numérique ou catégorielle.",
+        "tooManyClasses": "Trop de classes distinctes pour une cible — choisissez une colonne d'au plus 20 classes.",
+        "empty": "Cette colonne est vide."
+      },
+      "leakAlert": "Fuite de cible : {{columns}} reflète presque parfaitement la cible — écartée automatiquement.",
+      "columnsTitle": "Colonnes",
+      "includedSummary": "{{included}} colonnes sur {{total}} conservées pour l'entraînement",
+      "distinct": "{{count}} valeurs distinctes",
+      "missingShort": "{{percent}} % manquants",
+      "median": "médiane",
+      "type": {
+        "numeric": "numérique",
+        "categorical": "catégorielle",
+        "boolean": "booléenne",
+        "date": "date",
+        "text": "texte",
+        "id": "identifiant"
+      },
+      "reason": {
+        "id": "id écarté",
+        "constant": "constante",
+        "nearEmpty": "quasi vide",
+        "leak": "fuite de cible",
+        "manual": "écartée"
+      },
+      "setTarget": "Définir comme cible",
+      "include": "Réintégrer",
+      "exclude": "Écarter",
+      "previewToggle": "Aperçu — {{count}} premières lignes",
+      "trainSoon": "Le moteur d'entraînement arrive avec le Sprint 2"
     },
     "roadmap": {
       "title": "Où en est la construction",
       "sprint0": "Fondations — livrées",
-      "sprint1": "Moteur de données : upload, profilage, cible — prochaine étape",
-      "sprint2": "Moteur d'entraînement et leaderboard",
+      "sprint1": "Moteur de données : upload, profilage, cible — livré",
+      "sprint2": "Moteur d'entraînement et leaderboard — prochaine étape",
       "sprint3": "Résultats, explications et what-if"
     }
   },

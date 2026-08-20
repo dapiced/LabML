@@ -73,16 +73,72 @@
         "description": "Leaderboard, metrics against a naive baseline, plots, top features and a plain read."
       }
     },
-    "dropzone": {
-      "title": "The dropzone opens with Sprint 1",
-      "description": "CSV parsing, column profiling and target selection are the next milestone. Demo datasets will be included so you can try the lab without any file.",
-      "demoLabel": "Planned demo datasets"
+    "lab": {
+      "title": "new run",
+      "noRequests": "runs locally · no requests",
+      "dropTitle": "Drop a CSV file",
+      "dropHint": "or click to browse — the file is read right here in your browser, nothing is uploaded",
+      "demoLabel": "Or try a sample dataset",
+      "demoTask": {
+        "binary": "binary",
+        "multiclass": "multi-class",
+        "regression": "regression"
+      },
+      "parsing": "Reading locally…",
+      "rowsRead": "{{count}} rows read",
+      "cancel": "Cancel",
+      "errorTitle": "Could not read this file",
+      "errorBody": "The file looks empty or not tabular. Try a CSV with a header row.",
+      "retry": "Try another file",
+      "rows": "rows",
+      "columns": "columns",
+      "readLocally": "read locally",
+      "newDataset": "Change dataset",
+      "targetLabel": "Column to predict",
+      "targetPlaceholder": "Choose a target…",
+      "targetBadge": "target",
+      "task": {
+        "binary": "Binary classification",
+        "multiclass": "Multi-class classification · {{count}} classes",
+        "regression": "Regression"
+      },
+      "unsupported": {
+        "type": "This column cannot be a target — pick a numeric or categorical column.",
+        "tooManyClasses": "Too many distinct classes for a target — pick a column with at most 20.",
+        "empty": "This column is empty."
+      },
+      "leakAlert": "Target leakage: {{columns}} almost perfectly mirrors the target — excluded automatically.",
+      "columnsTitle": "Columns",
+      "includedSummary": "{{included}} of {{total}} columns kept for training",
+      "distinct": "{{count}} distinct",
+      "missingShort": "{{percent}}% missing",
+      "median": "median",
+      "type": {
+        "numeric": "numeric",
+        "categorical": "categorical",
+        "boolean": "boolean",
+        "date": "date",
+        "text": "text",
+        "id": "identifier"
+      },
+      "reason": {
+        "id": "dropped id",
+        "constant": "constant",
+        "nearEmpty": "mostly empty",
+        "leak": "target leak",
+        "manual": "excluded"
+      },
+      "setTarget": "Set as target",
+      "include": "Include",
+      "exclude": "Exclude",
+      "previewToggle": "Preview — first {{count}} rows",
+      "trainSoon": "Training engine arrives with Sprint 2"
     },
     "roadmap": {
       "title": "Where the build stands",
       "sprint0": "Foundations — shipped",
-      "sprint1": "Data engine: upload, profiling, target — next",
-      "sprint2": "Training engine and leaderboard",
+      "sprint1": "Data engine: upload, profiling, target — shipped",
+      "sprint2": "Training engine and leaderboard — next",
       "sprint3": "Results, explanations and what-if"
     }
   },
