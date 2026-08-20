@@ -111,10 +111,12 @@ Réseau ; le ton honnête ("honest envelope") ; la voix mono pour tout ce qui es
 | Pas d'observabilité | **Latence p50/p95, temps d'entraînement, backend de calcul** par modèle |
 | Interprétabilité : importance seulement | + permutation importance, PDP/ICE, what-if (Sprints 3, V2) |
 
-**Identité visuelle : distincte assumée.** QuantifAI = ambre `#ffbf00` sur crème chaud clair.
-LabML gardera *les patterns* (eyebrows mono, cartes douces, baseline honnête, surlignage
-d'accent) mais avec **sa propre palette** (dominante sarcelle/teal profond + accent cuivre,
-déclinée clair **et** sombre) et sa propre typographie — à fixer au design system du Sprint 0.
+**Identité visuelle : distincte assumée — décision validée le 20/08/2026.** QuantifAI = ambre
+`#ffbf00` sur crème chaud clair ; **LabML n'utilisera aucun jaune/ambre** (requis ferme).
+Palette retenue : **dominante sarcelle/teal profond + accent cuivre**, déclinée clair **et**
+sombre. LabML garde *les patterns* qui fonctionnent (eyebrows mono, cartes douces, baseline
+honnête, surlignage d'accent) mais avec cette palette et sa propre typographie — valeurs
+exactes des tokens fixées au design system du Sprint 0.
 
 ## 7. Captures
 

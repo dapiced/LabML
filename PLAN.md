@@ -323,6 +323,7 @@ deploy.yml (après CI verte)
 | 4 | Déploiement | **GitHub Actions + wrangler** (previews par PR) |
 | 5 | Langues | **Bilingue FR/EN** dès le Sprint 0 (addendum) |
 | 6 | Thèmes | **Clair + sombre au choix de l'utilisateur** (addendum) |
+| 7 | Palette | **Sarcelle/teal profond + accent cuivre — aucun jaune/ambre** (identité volontairement distincte de QuantifAI) |
 
 **Questions encore ouvertes (non bloquantes pour le Sprint 0) :**
 
