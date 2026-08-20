@@ -31,6 +31,30 @@ export interface ModelResult {
   inferP95Ms: number;
 }
 
+export interface InsightsPayload {
+  model: ModelKey;
+  /** Class labels, classification only. */
+  classes?: string[];
+  /** Confusion matrix indexed [true][predicted], classification only. */
+  confusion?: number[][];
+  /** ROC curve, binary classification with probabilistic models only. */
+  roc?: { points: { fpr: number; tpr: number }[]; auc: number };
+  /** (actual, predicted) sample, regression only. */
+  scatter?: { actual: number; predicted: number }[];
+  /** Residuals histogram, regression only. */
+  residuals?: { counts: number[]; min: number; max: number };
+  /** Permutation importance per source column, sorted descending. */
+  importance: { column: string; value: number }[];
+}
+
+export interface WhatIfResult {
+  model: ModelKey;
+  /** Predicted class label or formatted numeric value. */
+  prediction: string;
+  /** Class probabilities, when the model provides them. */
+  probabilities?: { label: string; p: number }[];
+}
+
 export interface TrainSummary {
   task: TaskInfo;
   taskType: TaskType;

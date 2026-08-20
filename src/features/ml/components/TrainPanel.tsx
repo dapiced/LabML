@@ -2,6 +2,7 @@ import { Loader2, Play, RotateCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Leaderboard } from '@/features/ml/components/Leaderboard';
+import { InsightsSection } from '@/features/ml/components/insights/InsightsSection';
 import { TEST_RATIO, TRAIN_SEED, useLabStore } from '@/features/ml/lab-store';
 
 export function TrainPanel() {
@@ -53,6 +54,8 @@ export function TrainPanel() {
       </div>
 
       <Leaderboard />
+
+      <InsightsSection />
 
       {trainStatus === 'done' && (
         <p className="text-xs text-muted">{t('ml.lab.reproducibleNote')}</p>
