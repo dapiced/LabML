@@ -1,19 +1,19 @@
-import { FileUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
+import { LabSection } from '@/features/ml/components/LabSection';
 
 const STEP_KEYS = ['upload', 'target', 'train', 'read'] as const;
-const DEMO_DATASETS = ['iris.csv', 'titanic.csv', 'housing.csv'];
 const ROADMAP_KEYS = ['sprint0', 'sprint1', 'sprint2', 'sprint3'] as const;
+const SHIPPED_SPRINTS = 2; // S0 and S1 are live
 
 export function MlHomePage() {
   const { t } = useTranslation();
 
   return (
     <div className="mx-auto max-w-6xl px-4">
-      <section className="py-16 sm:py-20">
+      <section className="py-12 sm:py-16">
         <Eyebrow>{t('ml.eyebrow')}</Eyebrow>
         <h1 className="mt-3 max-w-3xl font-display text-3xl font-bold text-balance sm:text-5xl">
           {t('ml.titlePre')}{' '}
@@ -23,6 +23,8 @@ export function MlHomePage() {
         </h1>
         <p className="mt-5 max-w-2xl text-lg text-muted">{t('ml.lede')}</p>
       </section>
+
+      <LabSection />
 
       <section className="grid gap-4 pb-12 sm:grid-cols-2 lg:grid-cols-4">
         {STEP_KEYS.map((key, index) => (
@@ -34,35 +36,19 @@ export function MlHomePage() {
         ))}
       </section>
 
-      <section className="grid gap-4 pb-20 lg:grid-cols-[3fr_2fr]">
-        <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-line bg-surface p-10 text-center">
-          <FileUp className="h-8 w-8 text-accent" aria-hidden="true" />
-          <h2 className="font-display text-xl font-semibold">{t('ml.dropzone.title')}</h2>
-          <p className="max-w-md text-sm text-muted">{t('ml.dropzone.description')}</p>
-          <div className="flex flex-col items-center gap-2 pt-2">
-            <Eyebrow>{t('ml.dropzone.demoLabel')}</Eyebrow>
-            <div className="flex flex-wrap justify-center gap-2">
-              {DEMO_DATASETS.map((name) => (
-                <span
-                  key={name}
-                  className="rounded-md border border-line bg-surface-2 px-2 py-1 font-mono text-xs text-muted"
-                >
-                  {name}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
+      <section className="pb-20">
         <Card>
           <Eyebrow>{t('ml.roadmap.title')}</Eyebrow>
-          <ul className="mt-4 flex flex-col gap-3">
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
             {ROADMAP_KEYS.map((key, index) => (
               <li key={key} className="flex items-start gap-3 text-sm">
-                <Badge variant={index === 0 ? 'accent' : 'outline'} className="mt-0.5 shrink-0">
+                <Badge
+                  variant={index < SHIPPED_SPRINTS ? 'accent' : 'outline'}
+                  className="mt-0.5 shrink-0"
+                >
                   S{index}
                 </Badge>
-                <span className={index === 0 ? 'text-ink' : 'text-muted'}>
+                <span className={index < SHIPPED_SPRINTS ? 'text-ink' : 'text-muted'}>
                   {t(`ml.roadmap.${key}`)}
                 </span>
               </li>
