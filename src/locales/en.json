@@ -1,0 +1,106 @@
+{
+  "common": {
+    "appName": "LabML",
+    "tagline": "ML in your browser",
+    "nav": {
+      "home": "Home",
+      "mlLab": "ML Lab",
+      "data": "Data",
+      "ai": "AI"
+    },
+    "soon": "Soon",
+    "theme": {
+      "toggle": "Change theme",
+      "light": "Light theme",
+      "dark": "Dark theme",
+      "system": "Follow system theme"
+    },
+    "language": {
+      "label": "Language",
+      "en": "English",
+      "fr": "Français"
+    },
+    "privacyStrip": "Your data never leaves your browser — verify it yourself in the Network tab.",
+    "footer": {
+      "copyright": "© 2026 Dominic Dapice",
+      "openSource": "Open source",
+      "sourceCode": "Source code"
+    }
+  },
+  "home": {
+    "eyebrow": "app.dominicdapice.com",
+    "titlePre": "A machine learning lab,",
+    "titleHighlight": "entirely in your browser.",
+    "lede": "Drop a dataset, pick what to predict, and train a set of models on your own machine. No account, no upload, no setup — and every run is scored against an honest baseline.",
+    "openLab": "Open the ML Lab",
+    "modules": {
+      "ml": {
+        "title": "ML Lab",
+        "description": "Train and compare classification and regression models on tabular data, with metrics, plots and plain-language explanations."
+      },
+      "data": {
+        "title": "Data",
+        "description": "Data pipelines and engineering tools — profiling, transformations, quality checks."
+      },
+      "ai": {
+        "title": "AI",
+        "description": "Deep learning and generative modules — vision, chat over your data."
+      }
+    },
+    "statusTitle": "Build status",
+    "statusBody": "Foundations are live: design system, dual theme, French/English, routing and CI/CD. The training engine lands next."
+  },
+  "ml": {
+    "eyebrow": "ML LAB",
+    "titlePre": "From a CSV to a leaderboard,",
+    "titleHighlight": "without your data leaving the tab.",
+    "lede": "The lab reads your file locally, works out the task, trains a set of models and holds back part of the data to test them honestly.",
+    "steps": {
+      "upload": {
+        "title": "Drop a dataset",
+        "description": "Drag in a CSV — it is read right here in the browser, nothing is sent anywhere."
+      },
+      "target": {
+        "title": "Pick a target",
+        "description": "Choose the column to predict; the lab suggests which columns to keep."
+      },
+      "train": {
+        "title": "Train models",
+        "description": "One click. Several models are trained in parallel workers, with live progress."
+      },
+      "read": {
+        "title": "Read the results",
+        "description": "Leaderboard, metrics against a naive baseline, plots, top features and a plain read."
+      }
+    },
+    "dropzone": {
+      "title": "The dropzone opens with Sprint 1",
+      "description": "CSV parsing, column profiling and target selection are the next milestone. Demo datasets will be included so you can try the lab without any file.",
+      "demoLabel": "Planned demo datasets"
+    },
+    "roadmap": {
+      "title": "Where the build stands",
+      "sprint0": "Foundations — shipped",
+      "sprint1": "Data engine: upload, profiling, target — next",
+      "sprint2": "Training engine and leaderboard",
+      "sprint3": "Results, explanations and what-if"
+    }
+  },
+  "data": {
+    "eyebrow": "DATA",
+    "title": "Data pipelines, coming later.",
+    "lede": "This section will host data engineering tools: profiling, transformations and quality checks — built with the same privacy-first rules as the ML Lab.",
+    "backHome": "Back to home"
+  },
+  "ai": {
+    "eyebrow": "AI",
+    "title": "Deep learning modules, coming later.",
+    "lede": "Planned here: an image classification playground running on ONNX Runtime Web, and a chat over your data with explicit consent for anything that leaves the browser.",
+    "backHome": "Back to home"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "lede": "This address does not exist. The lab, however, does.",
+    "backHome": "Back to home"
+  }
+}

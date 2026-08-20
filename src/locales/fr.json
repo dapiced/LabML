@@ -1,0 +1,106 @@
+{
+  "common": {
+    "appName": "LabML",
+    "tagline": "Le ML dans votre navigateur",
+    "nav": {
+      "home": "Accueil",
+      "mlLab": "ML Lab",
+      "data": "Data",
+      "ai": "IA"
+    },
+    "soon": "Bientôt",
+    "theme": {
+      "toggle": "Changer de thème",
+      "light": "Thème clair",
+      "dark": "Thème sombre",
+      "system": "Suivre le thème du système"
+    },
+    "language": {
+      "label": "Langue",
+      "en": "English",
+      "fr": "Français"
+    },
+    "privacyStrip": "Vos données ne quittent jamais votre navigateur — vérifiez-le vous-même dans l'onglet Réseau.",
+    "footer": {
+      "copyright": "© 2026 Dominic Dapice",
+      "openSource": "Open source",
+      "sourceCode": "Code source"
+    }
+  },
+  "home": {
+    "eyebrow": "app.dominicdapice.com",
+    "titlePre": "Un laboratoire de machine learning,",
+    "titleHighlight": "entièrement dans votre navigateur.",
+    "lede": "Déposez un jeu de données, choisissez quoi prédire, et entraînez plusieurs modèles sur votre propre machine. Sans compte, sans upload, sans installation — et chaque run est comparé à une baseline honnête.",
+    "openLab": "Ouvrir le ML Lab",
+    "modules": {
+      "ml": {
+        "title": "ML Lab",
+        "description": "Entraînez et comparez des modèles de classification et de régression sur données tabulaires : métriques, graphiques et explications en langage clair."
+      },
+      "data": {
+        "title": "Data",
+        "description": "Pipelines et ingénierie de données — profilage, transformations, contrôles de qualité."
+      },
+      "ai": {
+        "title": "IA",
+        "description": "Modules de deep learning et d'IA générative — vision, chat sur vos données."
+      }
+    },
+    "statusTitle": "État du chantier",
+    "statusBody": "Les fondations sont en ligne : design system, double thème, français/anglais, routage et CI/CD. Le moteur d'entraînement arrive juste après."
+  },
+  "ml": {
+    "eyebrow": "ML LAB",
+    "titlePre": "D'un CSV à un leaderboard,",
+    "titleHighlight": "sans que vos données quittent l'onglet.",
+    "lede": "Le labo lit votre fichier localement, détecte la tâche, entraîne plusieurs modèles et met de côté une partie des données pour les tester honnêtement.",
+    "steps": {
+      "upload": {
+        "title": "Déposez un jeu de données",
+        "description": "Glissez un CSV — il est lu ici même, dans le navigateur ; rien n'est envoyé nulle part."
+      },
+      "target": {
+        "title": "Choisissez la cible",
+        "description": "Désignez la colonne à prédire ; le labo suggère les colonnes à conserver."
+      },
+      "train": {
+        "title": "Entraînez les modèles",
+        "description": "Un clic. Plusieurs modèles s'entraînent dans des workers parallèles, avec progression en direct."
+      },
+      "read": {
+        "title": "Lisez les résultats",
+        "description": "Leaderboard, métriques face à une baseline naïve, graphiques, features décisives et lecture en langage clair."
+      }
+    },
+    "dropzone": {
+      "title": "La zone de dépôt ouvre avec le Sprint 1",
+      "description": "Lecture des CSV, profilage des colonnes et choix de la cible sont la prochaine étape. Des jeux de données de démonstration seront inclus pour essayer le labo sans aucun fichier.",
+      "demoLabel": "Jeux de démonstration prévus"
+    },
+    "roadmap": {
+      "title": "Où en est la construction",
+      "sprint0": "Fondations — livrées",
+      "sprint1": "Moteur de données : upload, profilage, cible — prochaine étape",
+      "sprint2": "Moteur d'entraînement et leaderboard",
+      "sprint3": "Résultats, explications et what-if"
+    }
+  },
+  "data": {
+    "eyebrow": "DATA",
+    "title": "Les pipelines de données, pour plus tard.",
+    "lede": "Cette section accueillera les outils d'ingénierie de données : profilage, transformations et contrôles de qualité — avec les mêmes règles privacy-first que le ML Lab.",
+    "backHome": "Retour à l'accueil"
+  },
+  "ai": {
+    "eyebrow": "IA",
+    "title": "Les modules de deep learning, pour plus tard.",
+    "lede": "Au programme : un terrain de jeu de classification d'images sur ONNX Runtime Web, et un chat sur vos données avec consentement explicite pour tout ce qui sortirait du navigateur.",
+    "backHome": "Retour à l'accueil"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "lede": "Cette adresse n'existe pas. Le labo, lui, existe bel et bien.",
+    "backHome": "Retour à l'accueil"
+  }
+}
