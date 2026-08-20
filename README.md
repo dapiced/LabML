@@ -19,7 +19,15 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   and profiling (distributions, missing rates, cardinality); target selection with
   automatic task detection (binary / multi-class / regression); smart exclusions
   (identifiers, constants, near-empty columns) and **target-leakage detection**.
-- **Next — Sprint 2**: the in-browser training engine and leaderboard.
+- **Sprint 2 — shipped**: the in-browser training engine. Leakage-free preprocessing
+  pipeline (imputation, one-hot/ordinal encoding, standardization — fitted on the train
+  split only), seeded stratified 80/20 split, and a model zoo trained in the Web Worker:
+  naive baseline, logistic/linear regression, k-NN, Gaussian Naive Bayes, decision tree,
+  random forest. Live leaderboard with accuracy/F1/ROC-AUC/log-loss (or RMSE/MAE/R²),
+  delta vs baseline, training time and inference latency p50/p95. Fully reproducible
+  (same seed ⇒ same results), cancellable between models.
+- **Next — Sprint 3**: results & insights (confusion matrix, curves, feature importance,
+  plain-language read, what-if).
 
 Full roadmap in [PLAN.md](PLAN.md), target analysis in
 [docs/analyse-le site de référence.md](docs/analyse-le site de référence.md).

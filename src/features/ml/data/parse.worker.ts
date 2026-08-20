@@ -2,13 +2,9 @@
 import Papa from 'papaparse';
 import { profileColumn } from '@/features/ml/data/profile';
 import { analyzeTarget, baselineSuggestions } from '@/features/ml/data/suggest';
-import type {
-  Cell,
-  ColumnProfile,
-  ParseResultPayload,
-  WorkerRequest,
-  WorkerResponse,
-} from '@/features/ml/data/types';
+import { runTraining } from '@/features/ml/train/trainer';
+import type { Cell, ColumnProfile, ParseResultPayload } from '@/features/ml/data/types';
+import type { WorkerRequest, WorkerResponse } from '@/features/ml/worker-protocol';
 
 const PREVIEW_ROWS = 50;
 const PROGRESS_EVERY = 5000;
@@ -19,6 +15,7 @@ const PROGRESS_EVERY = 5000;
 let header: string[] = [];
 let columns: Cell[][] = [];
 let rowCount = 0;
+let cancelTraining = false;
 
 function post(message: WorkerResponse) {
   self.postMessage(message);
@@ -116,6 +113,20 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         kind: 'target-analyzed',
         payload: analyzeTarget(request.target, columnsAsMap(), profiles),
       });
+    } else if (request.kind === 'cancel-train') {
+      cancelTraining = true;
+    } else if (request.kind === 'train') {
+      cancelTraining = false;
+      const profiles: ColumnProfile[] = header.map((column, i) =>
+        profileColumn(column, columns[i]),
+      );
+      const summary = await runTraining(columnsAsMap(), profiles, request.config, {
+        onModelStart: (key, index, total) => post({ kind: 'model-start', key, index, total }),
+        onModelResult: (result) => post({ kind: 'model-result', result }),
+        isCancelled: () => cancelTraining,
+      });
+      if (summary) post({ kind: 'train-complete', summary });
+      else post({ kind: 'train-cancelled' });
     }
   } catch (error) {
     post({ kind: 'error', message: error instanceof Error ? error.message : String(error) });

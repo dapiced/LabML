@@ -132,14 +132,47 @@
       "include": "Include",
       "exclude": "Exclude",
       "previewToggle": "Preview — first {{count}} rows",
-      "trainSoon": "Training engine arrives with Sprint 2"
+      "trainButton": "Train models",
+      "trainAgain": "Train again",
+      "trainingPreparing": "Preparing the run…",
+      "trainingModel": "Training {{name}} ({{index}}/{{total}})…",
+      "trainConfig": "seed {{seed}} · split {{split}} · trained in your browser",
+      "reproducibleNote": "Same data, same seed, same results — every run is reproducible by construction.",
+      "leaderboard": {
+        "model": "Model",
+        "accuracy": "Accuracy",
+        "rmse": "RMSE",
+        "delta": "Δ baseline",
+        "f1": "F1",
+        "auc": "ROC-AUC",
+        "logLoss": "Log-loss",
+        "mae": "MAE",
+        "r2": "R²",
+        "trainTime": "Train",
+        "inference": "Infer p50",
+        "inferenceTitle": "p95: {{value}} ms per prediction",
+        "best": "best",
+        "baselineTag": "baseline",
+        "failed": "failed",
+        "runInfo": "seed {{seed}} · {{train}} train rows · {{test}} test rows · {{features}} features after encoding",
+        "skipped": "skipped (type not trainable yet): {{columns}}"
+      },
+      "models": {
+        "baseline": "Naive baseline",
+        "linear": "Linear regression",
+        "logistic": "Logistic regression",
+        "knn": "k-nearest neighbors",
+        "naiveBayes": "Gaussian Naive Bayes",
+        "tree": "Decision tree",
+        "forest": "Random forest"
+      }
     },
     "roadmap": {
       "title": "Where the build stands",
       "sprint0": "Foundations — shipped",
       "sprint1": "Data engine: upload, profiling, target — shipped",
-      "sprint2": "Training engine and leaderboard — next",
-      "sprint3": "Results, explanations and what-if"
+      "sprint2": "Training engine and leaderboard — shipped",
+      "sprint3": "Results, explanations and what-if — next"
     }
   },
   "data": {
