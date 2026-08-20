@@ -3,6 +3,7 @@ import Papa from 'papaparse';
 import { profileColumn } from '@/features/ml/data/profile';
 import { analyzeTarget, baselineSuggestions } from '@/features/ml/data/suggest';
 import { computeInsights, computeWhatIf } from '@/features/ml/train/insights';
+import { buildPredictionsCsv, serializeModel } from '@/features/ml/train/serialize';
 import { runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
 import type { Cell, ColumnProfile, ParseResultPayload } from '@/features/ml/data/types';
 import type { WorkerRequest, WorkerResponse } from '@/features/ml/worker-protocol';
@@ -143,6 +144,20 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       post({
         kind: 'what-if-result',
         payload: computeWhatIf(artifacts, request.model, request.values),
+      });
+    } else if (request.kind === 'export-model') {
+      if (!artifacts) throw new Error('no-run');
+      post({
+        kind: 'model-json',
+        model: request.model,
+        json: serializeModel(artifacts, request.model),
+      });
+    } else if (request.kind === 'export-predictions') {
+      if (!artifacts) throw new Error('no-run');
+      post({
+        kind: 'predictions-csv',
+        model: request.model,
+        csv: buildPredictionsCsv(artifacts, request.model),
       });
     }
   } catch (error) {
