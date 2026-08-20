@@ -18,6 +18,22 @@ export interface TrainerCallbacks {
   isCancelled(): boolean;
 }
 
+/** Everything kept in worker memory after a run, for insights and what-if. */
+export interface TrainArtifacts {
+  models: Map<ModelKey, TrainedModel>;
+  pipeline: ReturnType<typeof fitPipeline>;
+  testX: number[][];
+  testY: number[];
+  classes: string[];
+  isClassification: boolean;
+  seed: number;
+}
+
+export interface TrainOutcome {
+  summary: TrainSummary;
+  artifacts: TrainArtifacts;
+}
+
 const LATENCY_SAMPLE = 200;
 const TRAINABLE_TYPES = new Set(['numeric', 'categorical', 'boolean']);
 
@@ -49,7 +65,7 @@ export async function runTraining(
   profiles: ColumnProfile[],
   config: TrainConfig,
   callbacks: TrainerCallbacks,
-): Promise<TrainSummary | null> {
+): Promise<TrainOutcome | null> {
   const startedAt = performance.now();
   const targetProfile = profiles.find((p) => p.name === config.target);
   const targetValues = columns.get(config.target);
@@ -94,6 +110,7 @@ export async function runTraining(
   const testY = test.map(encode);
 
   const zoo = modelZoo(isClassification ? 'classification' : 'regression');
+  const models = new Map<ModelKey, TrainedModel>();
   const context = {
     task: isClassification ? ('classification' as const) : ('regression' as const),
     classCount: classes.length,
@@ -111,6 +128,7 @@ export async function runTraining(
       const trainStart = performance.now();
       const model = def.train(trainX, trainY, context);
       const trainMs = performance.now() - trainStart;
+      models.set(def.key, model);
       const predictions = model.predict(testX);
 
       const metrics: MetricMap = {};
@@ -166,14 +184,25 @@ export async function runTraining(
   }
 
   return {
-    task,
-    taskType: task.type,
-    seed: config.seed,
-    trainRows: train.length,
-    testRows: test.length,
-    featureCount: pipeline.featureNames.length,
-    featureColumns,
-    skippedColumns,
-    totalMs: performance.now() - startedAt,
+    summary: {
+      task,
+      taskType: task.type,
+      seed: config.seed,
+      trainRows: train.length,
+      testRows: test.length,
+      featureCount: pipeline.featureNames.length,
+      featureColumns,
+      skippedColumns,
+      totalMs: performance.now() - startedAt,
+    },
+    artifacts: {
+      models,
+      pipeline,
+      testX,
+      testY,
+      classes,
+      isClassification,
+      seed: config.seed,
+    },
   };
 }

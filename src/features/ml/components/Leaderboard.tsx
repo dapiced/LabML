@@ -1,3 +1,4 @@
+import { Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { useLabStore } from '@/features/ml/lab-store';
@@ -23,6 +24,8 @@ export function Leaderboard() {
   const results = useLabStore((s) => s.results);
   const summary = useLabStore((s) => s.summary);
   const task = useLabStore((s) => s.task);
+  const insights = useLabStore((s) => s.insights);
+  const selectInsightModel = useLabStore((s) => s.selectInsightModel);
   if (results.length === 0 || !task) return null;
 
   const isClassification = task.type !== 'regression';
@@ -82,8 +85,10 @@ export function Leaderboard() {
           {sorted.map((result, rank) => (
             <tr
               key={result.key}
+              onClick={() => selectInsightModel(result.key)}
+              title={t('ml.lab.insights.inspectRow')}
               className={cn(
-                'border-t border-line',
+                'cursor-pointer border-t border-line transition-colors hover:bg-surface-2',
                 result.key === bestKey && 'bg-accent-soft/50',
                 result.key === 'baseline' && 'text-muted',
               )}
@@ -95,6 +100,9 @@ export function Leaderboard() {
                   {result.key === bestKey && <Badge>{t('ml.lab.leaderboard.best')}</Badge>}
                   {result.key === 'baseline' && (
                     <Badge variant="outline">{t('ml.lab.leaderboard.baselineTag')}</Badge>
+                  )}
+                  {insights?.model === result.key && (
+                    <Eye className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
                   )}
                 </span>
               </td>
