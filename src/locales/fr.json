@@ -132,14 +132,47 @@
       "include": "Réintégrer",
       "exclude": "Écarter",
       "previewToggle": "Aperçu — {{count}} premières lignes",
-      "trainSoon": "Le moteur d'entraînement arrive avec le Sprint 2"
+      "trainButton": "Entraîner les modèles",
+      "trainAgain": "Ré-entraîner",
+      "trainingPreparing": "Préparation du run…",
+      "trainingModel": "Entraînement de {{name}} ({{index}}/{{total}})…",
+      "trainConfig": "seed {{seed}} · split {{split}} · entraîné dans votre navigateur",
+      "reproducibleNote": "Mêmes données, même seed, mêmes résultats — chaque run est reproductible par construction.",
+      "leaderboard": {
+        "model": "Modèle",
+        "accuracy": "Accuracy",
+        "rmse": "RMSE",
+        "delta": "Δ baseline",
+        "f1": "F1",
+        "auc": "ROC-AUC",
+        "logLoss": "Log-loss",
+        "mae": "MAE",
+        "r2": "R²",
+        "trainTime": "Entraîn.",
+        "inference": "Infér. p50",
+        "inferenceTitle": "p95 : {{value}} ms par prédiction",
+        "best": "best",
+        "baselineTag": "baseline",
+        "failed": "échec",
+        "runInfo": "seed {{seed}} · {{train}} lignes d'entraînement · {{test}} lignes de test · {{features}} variables après encodage",
+        "skipped": "ignorées (type non entraînable pour l'instant) : {{columns}}"
+      },
+      "models": {
+        "baseline": "Baseline naïve",
+        "linear": "Régression linéaire",
+        "logistic": "Régression logistique",
+        "knn": "k plus proches voisins",
+        "naiveBayes": "Naive Bayes gaussien",
+        "tree": "Arbre de décision",
+        "forest": "Forêt aléatoire"
+      }
     },
     "roadmap": {
       "title": "Où en est la construction",
       "sprint0": "Fondations — livrées",
       "sprint1": "Moteur de données : upload, profilage, cible — livré",
-      "sprint2": "Moteur d'entraînement et leaderboard — prochaine étape",
-      "sprint3": "Résultats, explications et what-if"
+      "sprint2": "Moteur d'entraînement et leaderboard — livré",
+      "sprint3": "Résultats, explications et what-if — prochaine étape"
     }
   },
   "data": {
