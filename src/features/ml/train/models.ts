@@ -7,6 +7,8 @@ export interface TrainedModel {
   predict(X: number[][]): number[];
   /** Class probabilities (n × k) — only for models that can produce them. */
   predictProba?(X: number[][]): number[][];
+  /** Serializable parameters for export — absent when not exportable (k-NN). */
+  toJSON?(): unknown;
 }
 
 export interface ModelContext {
@@ -31,7 +33,10 @@ const baseline: ModelDef = {
   train(_X, y, ctx) {
     if (ctx.task === 'regression') {
       const mean = y.reduce((a, v) => a + v, 0) / (y.length || 1);
-      return { predict: (X) => X.map(() => mean) };
+      return {
+        predict: (X) => X.map(() => mean),
+        toJSON: () => ({ kind: 'baseline', task: 'regression', mean }),
+      };
     }
     const counts = new Array<number>(ctx.classCount).fill(0);
     for (const label of y) counts[label] += 1;
@@ -40,6 +45,7 @@ const baseline: ModelDef = {
     return {
       predict: (X) => X.map(() => majority),
       predictProba: (X) => X.map(() => [...frequencies]),
+      toJSON: () => ({ kind: 'baseline', task: 'classification', majority, frequencies }),
     };
   },
 };
@@ -94,6 +100,7 @@ const linear: ModelDef = {
     return {
       predict: (rows) =>
         rows.map((row) => withBias(row).reduce((acc, v, j) => acc + v * weights[j], 0)),
+      toJSON: () => ({ kind: 'linear', intercept: weights[0], weights: weights.slice(1) }),
     };
   },
 };
@@ -149,6 +156,8 @@ const logistic: ModelDef = {
     return {
       predict: (rows2) => proba(rows2).map((p) => p.indexOf(Math.max(...p))),
       predictProba: proba,
+      // Per class: [bias, ...feature weights].
+      toJSON: () => ({ kind: 'logistic', weights }),
     };
   },
 };
@@ -240,6 +249,7 @@ const naiveBayes: ModelDef = {
     return {
       predict: (rows) => proba(rows).map((p) => p.indexOf(Math.max(...p))),
       predictProba: proba,
+      toJSON: () => ({ kind: 'naiveBayes', logPriors: priors, means, variances }),
     };
   },
 };
@@ -256,7 +266,10 @@ const tree: ModelDef = {
         minNumSamples: 3,
       });
       model.train(X, y);
-      return { predict: (rows) => model.predict(rows) };
+      return {
+        predict: (rows) => model.predict(rows),
+        toJSON: () => ({ kind: 'tree', model: model.toJSON() }),
+      };
     }
     const model = new DecisionTreeClassifier({
       gainFunction: 'gini',
@@ -264,7 +277,10 @@ const tree: ModelDef = {
       minNumSamples: 3,
     });
     model.train(X, y);
-    return { predict: (rows) => model.predict(rows) };
+    return {
+      predict: (rows) => model.predict(rows),
+      toJSON: () => ({ kind: 'tree', model: model.toJSON() }),
+    };
   },
 };
 
@@ -275,11 +291,17 @@ const forest: ModelDef = {
     if (ctx.task === 'regression') {
       const model = new RandomForestRegression(options);
       model.train(X, y);
-      return { predict: (rows) => model.predict(rows) };
+      return {
+        predict: (rows) => model.predict(rows),
+        toJSON: () => ({ kind: 'forest', model: model.toJSON() }),
+      };
     }
     const model = new RandomForestClassifier(options);
     model.train(X, y);
-    return { predict: (rows) => model.predict(rows) };
+    return {
+      predict: (rows) => model.predict(rows),
+      toJSON: () => ({ kind: 'forest', model: model.toJSON() }),
+    };
   },
 };
 

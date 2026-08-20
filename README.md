@@ -30,7 +30,11 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   model-agnostic permutation importance, predicted-vs-actual and residuals for regression,
   a rule-generated plain-language read (FR/EN, no external API), live what-if predictions,
   and per-model inspection from the leaderboard.
-- **Next**: projects & sharing (local history, exports, data-free share links).
+- **Sprint 4 — shipped**: projects, export & sharing. Local run history (IndexedDB —
+  metrics only, never the data) with rename/delete/compare, exports (model parameters as
+  JSON, test predictions as CSV, self-contained HTML report), and data-free share links
+  carried in the URL fragment.
+- **Next — Sprint 5**: polish (WCAG AA pass, offline PWA, Lighthouse budgets).
 
 Full roadmap in [PLAN.md](PLAN.md), target analysis in
 [docs/analyse-le site de référence.md](docs/analyse-le site de référence.md).
