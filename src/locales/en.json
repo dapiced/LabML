@@ -195,14 +195,48 @@
         "whatIfTitle": "What if…",
         "whatIfHint": "Edit the values and watch the model's live prediction — computed locally, like everything else.",
         "whatIfPrediction": "Prediction"
-      }
+      },
+      "export": {
+        "model": "Model (JSON)",
+        "predictions": "Predictions (CSV)",
+        "report": "Report (HTML)",
+        "share": "Copy share link",
+        "copied": "Link copied!",
+        "knnNote": "k-NN cannot be exported — it memorizes the training data.",
+        "localNote": "generated locally"
+      },
+      "runs": {
+        "title": "Run history",
+        "note": "Stored in your browser (IndexedDB) — metrics only, never your data.",
+        "empty": "No runs yet — train some models above.",
+        "rename": "Rename",
+        "delete": "Delete",
+        "compare": "Compare",
+        "backToLab": "Back to the lab",
+        "notFound": "Run not found.",
+        "fields": {
+          "dataset": "Dataset",
+          "target": "Target",
+          "bestModel": "Best model",
+          "primary": "Score",
+          "rows": "Rows",
+          "seed": "Seed"
+        }
+      },
+      "share": {
+        "note": "This link carries only metrics and charts — never the original data. It lives in the URL fragment, which browsers do not send to any server.",
+        "invalid": "Invalid or incomplete share link."
+      },
+      "reportFooter": "Generated locally by LabML — no data ever left the browser."
     },
     "roadmap": {
       "title": "Where the build stands",
       "sprint0": "Foundations — shipped",
       "sprint1": "Data engine: upload, profiling, target — shipped",
       "sprint2": "Training engine and leaderboard — shipped",
-      "sprint3": "Results, explanations and what-if — shipped"
+      "sprint3": "Results, explanations and what-if — shipped",
+      "sprint4": "Projects, export & data-free sharing — shipped",
+      "sprint5": "Polish: accessibility, offline PWA, budgets — next"
     }
   },
   "data": {

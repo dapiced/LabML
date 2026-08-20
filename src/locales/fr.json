@@ -195,14 +195,48 @@
         "whatIfTitle": "Et si…",
         "whatIfHint": "Modifiez les valeurs et regardez la prédiction du modèle changer en direct — calculée localement, comme tout le reste.",
         "whatIfPrediction": "Prédiction"
-      }
+      },
+      "export": {
+        "model": "Modèle (JSON)",
+        "predictions": "Prédictions (CSV)",
+        "report": "Rapport (HTML)",
+        "share": "Copier le lien de partage",
+        "copied": "Lien copié !",
+        "knnNote": "k-NN n'est pas exportable — il mémorise les données d'entraînement.",
+        "localNote": "généré localement"
+      },
+      "runs": {
+        "title": "Historique des runs",
+        "note": "Conservé dans votre navigateur (IndexedDB) — métriques uniquement, jamais vos données.",
+        "empty": "Aucun run pour l'instant — entraînez des modèles ci-dessus.",
+        "rename": "Renommer",
+        "delete": "Supprimer",
+        "compare": "Comparer",
+        "backToLab": "Retour au labo",
+        "notFound": "Run introuvable.",
+        "fields": {
+          "dataset": "Dataset",
+          "target": "Cible",
+          "bestModel": "Meilleur modèle",
+          "primary": "Score",
+          "rows": "Lignes",
+          "seed": "Seed"
+        }
+      },
+      "share": {
+        "note": "Ce lien ne transporte que les métriques et graphiques — jamais les données d'origine. Il vit dans le fragment d'URL, que les navigateurs n'envoient à aucun serveur.",
+        "invalid": "Lien de partage invalide ou incomplet."
+      },
+      "reportFooter": "Généré localement par LabML — aucune donnée n'a quitté le navigateur."
     },
     "roadmap": {
       "title": "Où en est la construction",
       "sprint0": "Fondations — livrées",
       "sprint1": "Moteur de données : upload, profilage, cible — livré",
       "sprint2": "Moteur d'entraînement et leaderboard — livré",
-      "sprint3": "Résultats, explications et what-if — livré"
+      "sprint3": "Résultats, explications et what-if — livré",
+      "sprint4": "Projets, export & partage sans données — livré",
+      "sprint5": "Qualité : accessibilité, PWA hors-ligne, budgets — prochaine étape"
     }
   },
   "data": {
