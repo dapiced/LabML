@@ -311,15 +311,23 @@ deploy.yml (après CI verte)
 
 ---
 
-## H. Questions avant de coder
+## H. Décisions de cadrage
 
-*Déjà actés (addendum du 20/08) : interface **bilingue FR/EN** et **deux thèmes clair/sombre** au choix de l'utilisateur — intégrés comme requis fermes du Sprint 0. Reste une sous-question : **langue par défaut** au premier chargement quand le navigateur n'indique ni FR ni EN (recommandé : anglais, portée internationale du portfolio).*
+**Décisions validées le 20/08/2026 :**
 
-1. **Framework** : d'accord pour **Vite + React + TypeScript** (SPA statique) plutôt que Next.js ? (Recommandé — justification en A.2.)
-2. **UI** : **Tailwind v4 + shadcn/ui** vous convient, ou préférence Material UI ?
-3. **Exécution ML** : on confirme **100 % navigateur pour le MVP** (Azure réservé à des extensions V3 type AutoML lourd / chat) ? C'est le choix qui préserve la promesse privacy et le coût zéro.
-4. **Déploiement** : pilotage par **GitHub Actions + wrangler** (contrôle CI complet, previews par PR — recommandé pour le profil DevOps) ou intégration Git native de Cloudflare Pages (plus simple, moins de contrôle) ?
-5. **Accès Cloudflare** : vous créerez le projet Pages + le token API (je fournirai la procédure pas à pas), ou souhaitez-vous d'abord un déploiement de validation sur `*.pages.dev` avant de brancher le DNS ?
+| # | Décision | Choix validé |
+|---|---|---|
+| 1 | Framework | **Vite + React + TypeScript** (SPA statique) |
+| 2 | UI / design system | **Tailwind CSS v4 + shadcn/ui** |
+| 3 | Exécution ML (MVP) | **100 % navigateur** (Azure réservé aux extensions V3) |
+| 4 | Déploiement | **GitHub Actions + wrangler** (previews par PR) |
+| 5 | Langues | **Bilingue FR/EN** dès le Sprint 0 (addendum) |
+| 6 | Thèmes | **Clair + sombre au choix de l'utilisateur** (addendum) |
+
+**Questions encore ouvertes (non bloquantes pour le Sprint 0) :**
+
+1. **Langue par défaut** quand le navigateur n'indique ni FR ni EN (recommandé : anglais, portée internationale du portfolio).
+2. **Accès Cloudflare** : création du projet Pages + token API de votre côté (procédure pas à pas fournie au Sprint 0), ou d'abord une validation sur `*.pages.dev` avant de brancher le DNS ?
 
 ## I. Prochaines étapes concrètes
 
