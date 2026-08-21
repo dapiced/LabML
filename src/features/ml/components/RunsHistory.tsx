@@ -110,6 +110,14 @@ export function RunsHistory() {
                       {t(`ml.lab.models.${best.key}`)} · {best.primary.toFixed(3)}
                     </span>
                   )}
+                  {run.artifacts &&
+                    (['tuning', 'explanation', 'exploration', 'forecast'] as const)
+                      .filter((kind) => run.artifacts?.[kind])
+                      .map((kind) => (
+                        <Badge key={kind} variant="outline" className="text-[0.62rem]">
+                          {t(`ml.lab.runArtifacts.chip.${kind}`)}
+                        </Badge>
+                      ))}
                   <span className="ml-auto flex items-center gap-1">
                     <button
                       type="button"

@@ -330,6 +330,15 @@
           "seed": "Seed"
         }
       },
+      "runArtifacts": {
+        "hint": "Ces analyses ont été lancées après l’entraînement et sauvegardées avec le run — elles voyagent avec l’historique local, le rapport HTML et les liens de partage, jamais avec les données.",
+        "chip": {
+          "tuning": "tuning",
+          "explanation": "Shapley",
+          "exploration": "groupes",
+          "forecast": "prévision"
+        }
+      },
       "share": {
         "note": "Ce lien ne transporte que les métriques et graphiques — jamais les données d'origine. Il vit dans le fragment d'URL, que les navigateurs n'envoient à aucun serveur.",
         "invalid": "Lien de partage invalide ou incomplet."
@@ -353,7 +362,8 @@
       "v8": "V8 séries temporelles : prévision Holt-Winters, backtest à origine glissante — livré",
       "v9": "V9 vitesse & confort : coquille statique /ml, toast de mise à jour PWA, webcam vision — livré",
       "v10": "V10 Data Studio 2 : recettes rejouables, types forcés, décomposition de dates — livré",
-      "v11": "V11 MLOps : contrôle de dérive — diff de schéma, PSI par colonne, catégories nouvelles/disparues — livré"
+      "v11": "V11 MLOps : contrôle de dérive — diff de schéma, PSI par colonne, catégories nouvelles/disparues — livré",
+      "v13": "V13 runs complets : tuning, Shapley, groupes et prévisions survivent dans l’historique, les rapports et les liens — livré"
     }
   },
   "data": {
