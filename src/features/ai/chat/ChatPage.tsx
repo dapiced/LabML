@@ -394,6 +394,9 @@ export function ChatPage() {
           <p className="max-w-3xl text-sm leading-relaxed text-muted">
             {t('ai.chat.honesty.body')}
           </p>
+          <p className="max-w-3xl text-sm leading-relaxed font-medium text-accent-strong">
+            {t('ai.chat.honesty.coming')}
+          </p>
         </Card>
       </section>
 
