@@ -711,7 +711,8 @@
       "thinking": "Calcul…",
       "honesty": {
         "title": "Honnête par construction",
-        "body": "Cet assistant est un interpréteur local déterministe — pas un modèle de langage. Il ne calcule que ce qu'il comprend entièrement, le dit quand ce n'est pas le cas, et ni vos données ni vos questions ne quittent le navigateur. Un assistant génératif exigerait un modèle derrière une API — un serveur et une clé secrète qui ne doit jamais être embarquée dans un navigateur — et n'arriverait ici qu'avec un proxy côté serveur et un écran de consentement explicite."
+        "body": "Cet assistant est un interpréteur local déterministe — pas un modèle de langage. Il ne calcule que ce qu'il comprend entièrement, le dit quand ce n'est pas le cas, et ni vos données ni vos questions ne quittent le navigateur. Un assistant génératif exigerait un modèle derrière une API — un serveur et une clé secrète qui ne doit jamais être embarquée dans un navigateur — et n'arriverait ici qu'avec un proxy côté serveur et un écran de consentement explicite.",
+        "coming": "Bientôt : un vrai modèle de langage — petit, ouvert et exécuté entièrement dans votre navigateur, avec les mêmes règles de confidentialité. L'interpréteur déterministe restera le repli honnête."
       },
       "backToAi": "Retour aux modules IA"
     },
