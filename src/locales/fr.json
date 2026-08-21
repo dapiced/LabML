@@ -404,7 +404,8 @@
       "v13": "V13 runs complets : tuning, Shapley, groupes et prévisions survivent dans l’historique, les rapports et les liens — livré",
       "v14": "V14 prérendu généralisé : coquilles statiques pour chaque section, Lighthouse /ml 0,86 → 0,99 en conditions réelles — livré",
       "v15": "V15 MLOps : scorer un nouveau lot — prédictions dans le navigateur, métriques test vs lot honnêtes — livré",
-      "v16": "V16 déséquilibre : précision-rappel, seuil de décision chiffré par les coûts, calibration — livré"
+      "v16": "V16 déséquilibre : précision-rappel, seuil de décision chiffré par les coûts, calibration — livré",
+      "v17": "V17 Data Studio 3 : jointures avec orphelines nommées, anomalies par isolation forest seedée dans la recette — livré"
     }
   },
   "data": {
@@ -424,6 +425,24 @@
     "error": "Ce fichier n'a pas pu être lu ({{detail}}). Essayez un CSV, TSV ou Excel avec une ligne d'en-têtes.",
     "restart": "Recommencer",
     "loaded": "{{rows}} lignes · {{columns}} colonnes",
+    "join": {
+      "title": "Joindre un second fichier",
+      "hint": "Enrichissez {{name}} avec les colonnes d’un autre fichier, appariées sur une colonne clé commune. La correspondance est exacte après retrait des espaces — une clé sale devient une orpheline, jamais un silence. Le résultat joint devient LE dataset : rapport qualité, recette, dérive et ML Lab repartent de lui.",
+      "browse": "Joindre un fichier…",
+      "demoTag": "catalogue",
+      "parsing": "Lecture…",
+      "keyLabel": "Colonne clé",
+      "apply": "Joindre",
+      "noKey": "Aucun nom de colonne en commun entre les deux fichiers — la clé doit exister des deux côtés.",
+      "verdict": "{{other}} joint sur « {{key}} » : {{matched}} lignes sur {{total}} appariées, {{columns}} colonnes ajoutées.",
+      "orphans_one": "{{count}} ligne sans correspondance — clé orpheline : {{keys}}.",
+      "orphans_other": "{{count}} lignes sans correspondance — clés orphelines : {{keys}}.",
+      "duplicates_one": "{{count}} clé en double dans le fichier joint (la première occurrence gagne).",
+      "duplicates_other": "{{count}} clés en double dans le fichier joint (la première occurrence gagne).",
+      "unused_one": "{{count}} ligne du fichier joint n’a rien apparié.",
+      "unused_other": "{{count}} lignes du fichier joint n’ont rien apparié.",
+      "note": "Jointure gauche : chaque ligne d’origine survit ; les lignes sans correspondance gardent leurs nouvelles colonnes vides. Les orphelines dues aux clés sales (casse, espaces) sont un constat de nettoyage — fusionnez les variantes dans la recette ci-dessous."
+    },
     "score": {
       "before": "Avant",
       "after": "Après nettoyage",
@@ -481,7 +500,8 @@
         "dropDuplicates": "Supprimer les lignes dupliquées",
         "dropStructural": "Supprimer les colonnes constantes et quasi vides",
         "clipOutliers": "Écrêter les valeurs aberrantes aux bornes de Tukey",
-        "deriveDates": "Décomposer les colonnes de dates (année, mois, jour de semaine)"
+        "deriveDates": "Décomposer les colonnes de dates (année, mois, jour de semaine)",
+        "dropAnomalies": "Exclure les anomalies multivariées (isolation forest seedée)"
       },
       "missing": {
         "label": "Valeurs manquantes",

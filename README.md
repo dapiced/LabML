@@ -160,12 +160,24 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   thresholding delivers the same decision-level control without touching
   eight hand-written models.
 
+- **V17 (Data Studio 3: joins & anomalies) — shipped**: the everyday
+  enrichment gesture. **Left-join a second file** on a shared key column —
+  matching is exact after trimming, so a messy key becomes a **named
+  orphan**, never a silent miss; match rate, duplicate keys and unused rows
+  are all reported, and the joined result **becomes the dataset** (quality
+  report, recipe, drift and the ML Lab all continue from it). Plus
+  **multivariate anomaly detection** as a replayable recipe step: a
+  hand-written, seeded **isolation forest** (100 trees, exact c(n)
+  correction) flags the odd row _combinations_ that univariate Tukey fences
+  cannot see. Demo pair included (`cafe-sales.csv` + `cafe-products.csv`:
+  116/118 matched, the two messy `latte` variants surface as orphans, and
+  5 multivariate anomalies drop).
+
 **Cap 3 is complete** (V11 drift · V13 complete runs · V14 prerender).
-**Cap 4 is underway**: V15 batch scoring and V16 imbalance tools shipped;
-next are V17 (Data Studio joins & multivariate anomalies) and V18
-(per-segment analysis). V12 (an optional generative chat behind a
-server-side key proxy — never an API key in the browser) stays on hold as
-a product decision.
+**Cap 4 is underway**: V15 batch scoring, V16 imbalance tools and V17
+joins & anomalies shipped; V18 (per-segment analysis) remains. V12 (an
+optional generative chat behind a server-side key proxy — never an API key
+in the browser) stays on hold as a product decision.
 
 Full roadmap in [PLAN.md](PLAN.md).
 
