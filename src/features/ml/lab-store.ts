@@ -14,6 +14,7 @@ import type { SegmentAnalysis } from '@/features/ml/train/segments';
 import type { ThresholdAnalysis } from '@/features/ml/train/threshold-analysis';
 import type { UncertaintyAnalysis } from '@/features/ml/train/uncertainty';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
+import type { LearningCurveOutcome } from '@/features/ml/train/learning-curve';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
 import type { ForecastPayload } from '@/features/ml/timeseries/run';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
@@ -60,6 +61,10 @@ interface LabState {
   tuneStatus: 'idle' | 'running' | 'done';
   tuneProgress: { done: number; total: number; bestCv: number | null } | null;
   tuneOutcome: TuneOutcome | null;
+  curveStatus: 'idle' | 'running' | 'done';
+  curveProgress: { done: number; total: number } | null;
+  /** null after a run = the worker refused (named): no curve theater. */
+  curveOutcome: LearningCurveOutcome | null;
   exploreStatus: 'idle' | 'running' | 'done';
   exploration: ExplorationPayload | null;
   forecastStatus: 'idle' | 'running' | 'done' | 'error';
@@ -106,6 +111,8 @@ interface LabState {
   requestExplanation: (values: Record<string, string>) => void;
   tune: (model: TunableKey) => void;
   cancelTune: () => void;
+  learningCurve: (model: ModelKey) => void;
+  cancelCurve: () => void;
   explore: () => void;
   forecast: (dateColumn: string, valueColumn: string) => void;
   scoreBatch: (file: File) => void;
@@ -137,6 +144,9 @@ const initialTraining = {
   tuneStatus: 'idle' as const,
   tuneProgress: null,
   tuneOutcome: null,
+  curveStatus: 'idle' as const,
+  curveProgress: null,
+  curveOutcome: null as LearningCurveOutcome | null,
   exploreStatus: 'idle' as const,
   exploration: null,
   forecastStatus: 'idle' as const,
@@ -370,6 +380,13 @@ export const useLabStore = create<LabState>((set, get) => {
           attachArtifact({ tuning: message.payload });
         } else if (message.kind === 'tune-cancelled') {
           set({ tuneStatus: 'idle', tuneProgress: null });
+        } else if (message.kind === 'curve-progress') {
+          set({ curveProgress: { done: message.done, total: message.total } });
+        } else if (message.kind === 'curve-complete') {
+          set({ curveStatus: 'done', curveProgress: null, curveOutcome: message.payload });
+          if (message.payload) attachArtifact({ learningCurve: message.payload });
+        } else if (message.kind === 'curve-cancelled') {
+          set({ curveStatus: 'idle', curveProgress: null });
         } else if (message.kind === 'explore-result') {
           set({ exploreStatus: 'done', exploration: message.payload });
           attachArtifact({ exploration: message.payload });
@@ -608,6 +625,25 @@ export const useLabStore = create<LabState>((set, get) => {
     cancelTune() {
       if (get().tuneStatus !== 'running') return;
       send({ kind: 'cancel-tune' });
+    },
+
+    learningCurve(model) {
+      const state = get();
+      if (!state.target || state.trainStatus !== 'done' || state.curveStatus === 'running') return;
+      const features = state.profiles
+        .map((p) => p.name)
+        .filter((name) => name !== state.target && effectiveExclusion(state, name) === null);
+      set({ curveStatus: 'running', curveProgress: null, curveOutcome: null });
+      send({
+        kind: 'learning-curve',
+        model,
+        config: { target: state.target, features, seed: TRAIN_SEED, testRatio: TEST_RATIO },
+      });
+    },
+
+    cancelCurve() {
+      if (get().curveStatus !== 'running') return;
+      send({ kind: 'cancel-curve' });
     },
 
     explore() {

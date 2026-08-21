@@ -145,6 +145,20 @@ function makeArtifacts(): RunArtifacts {
         decisive: true,
       },
     },
+    learningCurve: {
+      model: 'gbdt',
+      isClassification: true,
+      metricLabel: 'accuracy',
+      testRows: 24,
+      trainRows: 96,
+      points: [
+        { rows: 24, metric: 0.71, lo: 0.55, hi: 0.83, trainMs: 4 },
+        { rows: 48, metric: 0.83, lo: 0.68, hi: 0.93, trainMs: 7 },
+        { rows: 96, metric: 0.92, lo: 0.8, hi: 0.98, trainMs: 12 },
+      ],
+      verdict: { kind: 'climbing', gain: 0.09, lo: 0.01, hi: 0.17, winShare: 0.97 },
+      totalMs: 40,
+    },
     segments: {
       model: 'logistic',
       isClassification: true,
@@ -273,6 +287,7 @@ describe('report generation', () => {
     expect(html).not.toContain('<script');
     // No artifacts → no artifact sections.
     expect(html).not.toContain('ml.lab.tuning.title');
+    expect(html).not.toContain('ml.lab.curve.title');
     expect(html).not.toContain('ml.lab.forecast.title');
   });
 
@@ -283,6 +298,8 @@ describe('report generation', () => {
     expect(html).toContain('k = 5');
     expect(html).toContain('ml.lab.insights.explainTitleClass(yes)');
     expect(html).toContain('ml.lab.explore.title');
+    expect(html).toContain('ml.lab.curve.title');
+    expect(html).toContain('ml.lab.curve.climbing(48|96|0.090|0.010|0.170)');
     expect(html).toContain('ml.lab.explore.traitNumeric(f1|30|60)');
     expect(html).toContain('ml.lab.forecast.title');
     expect(html).toContain('ml.lab.forecast.methods.holtWinters');

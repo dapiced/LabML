@@ -13,6 +13,12 @@ test('iris: an opted-in dataset survives reload, reopens, and links its runs', a
   await page.selectOption('#target-select', 'species');
   await page.getByTestId('train-button').click();
   await expect(page.getByTestId('train-again')).toBeVisible({ timeout: 60000 });
+  // The auto-save fires when the insights arrive, a beat AFTER training ends:
+  // wait for the history entry (live-queried from Dexie) before wiping the
+  // page, or the reload can abort the in-flight IndexedDB write.
+  await expect(
+    page.getByTestId('runs-history').getByRole('link', { name: 'iris · species' }),
+  ).toBeVisible({ timeout: 15000 });
 
   // Reload: memory is wiped, the browser copy survives.
   await page.reload();
