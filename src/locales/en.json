@@ -330,6 +330,15 @@
           "seed": "Seed"
         }
       },
+      "runArtifacts": {
+        "hint": "These analyses were run after training and saved with the run — they travel with the local history, the HTML report and share links, never with the data.",
+        "chip": {
+          "tuning": "tuning",
+          "explanation": "Shapley",
+          "exploration": "groups",
+          "forecast": "forecast"
+        }
+      },
       "share": {
         "note": "This link carries only metrics and charts — never the original data. It lives in the URL fragment, which browsers do not send to any server.",
         "invalid": "Invalid or incomplete share link."
@@ -353,7 +362,8 @@
       "v8": "V8 time series: Holt-Winters forecasting, rolling-origin backtest — shipped",
       "v9": "V9 speed & comfort: static /ml shell, PWA update toast, webcam vision — shipped",
       "v10": "V10 Data Studio 2: replayable recipes, forced types, date expansion — shipped",
-      "v11": "V11 MLOps: drift check — schema diff, per-column PSI, new/vanished categories — shipped"
+      "v11": "V11 MLOps: drift check — schema diff, per-column PSI, new/vanished categories — shipped",
+      "v13": "V13 complete runs: tuning, Shapley, groups and forecasts now survive in history, reports and share links — shipped"
     }
   },
   "data": {

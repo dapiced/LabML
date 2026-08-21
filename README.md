@@ -117,11 +117,19 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   drifted demo batch (`cafe-sales-june.csv`) is included; the comparison file
   is parsed in the browser like everything else.
 
-**Cap 2 is complete** (V7–V10). **Cap 3 is underway**: V11 drift check shipped;
-next candidates are an **optional generative chat** behind a server-side key
-proxy with explicit consent (never an API key in the browser), **complete runs**
-(tuning, Shapley, exploration and forecasts joining the history/report/share
-flow), and **generalized prerendering** (the last Lighthouse gap).
+- **V13 (complete runs) — shipped**: the analyses launched after training now
+  **survive the run**. Hyperparameter search results, the latest Shapley
+  what-if explanation, discovered groups and time-series forecasts attach to
+  the saved run record — they show up in the local history (with chips), on
+  the stored-run page, inside the **HTML report** and in **share links**
+  (v2 payloads, with point clouds downsampled so URLs stay short; v1 links
+  still decode). Metrics and summaries only — never the data.
+
+**Cap 2 is complete** (V7–V10). **Cap 3 is underway**: V11 drift check and
+V13 complete runs shipped. V12 (an optional generative chat behind a
+server-side key proxy with explicit consent — never an API key in the
+browser) is on hold as a product decision; **generalized prerendering**
+(the last Lighthouse gap) remains as V14.
 
 Full roadmap in [PLAN.md](PLAN.md), target analysis in
 [docs/analyse-le site de référence.md](docs/analyse-le site de référence.md).
