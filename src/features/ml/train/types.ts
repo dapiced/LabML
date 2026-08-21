@@ -29,6 +29,13 @@ export interface ModelResult {
   trainMs: number;
   inferP50Ms: number;
   inferP95Ms: number;
+  /**
+   * V25: rows this model actually trained on. Slow families train on an
+   * ANNOUNCED seeded sample of the train split (see MODEL_TRAIN_CAPS) —
+   * the leaderboard shows this number whenever it is below trainRows.
+   * Absent on runs stored before V25 and on failed models.
+   */
+  trainedRows?: number;
 }
 
 export interface InsightsPayload {
@@ -81,4 +88,10 @@ export interface TrainSummary {
   /** Source columns skipped for their type — dates and identifiers (V24 made text trainable). */
   skippedColumns: string[];
   totalMs: number;
+  /**
+   * V25: usable rows in the dataset when it exceeded the announced global cap
+   * (100 000) and train/test were drawn from a seeded stratified sample.
+   * Absent when every usable row was used — sampling is never silent.
+   */
+  sampledFrom?: number;
 }

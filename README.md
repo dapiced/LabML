@@ -85,10 +85,15 @@ The project follows three non-negotiable principles:
   pipeline inside each fold; forecast backtests never peek at the future.
 - **Determinism.** A single seed drives splits, model initialization, search, sampling
   and resampling — runs are exactly reproducible, and the test suite depends on it.
+- **Scale, honestly.** 100k–1M-row files train comfortably: past 100 000 usable rows an
+  **announced** seeded stratified sample takes over (never silent — the leaderboard says
+  so), slow model families train on measured, announced caps scored against the same
+  full test set, and parsing refuses past a named 20M-cell memory budget instead of
+  letting the tab die.
 - **Performance.** Every section serves a prerendered static shell (hero paints before
   JavaScript); Lighthouse mobile ≈ 0.99 on `/ml` under real throttling. Heavy
   dependencies (Dexie, SheetJS, ONNX Runtime) load lazily.
-- **Quality bar.** 276 unit tests, 52 Playwright end-to-end tests (including offline PWA,
+- **Quality bar.** 283 unit tests, 54 Playwright end-to-end tests (including offline PWA,
   fake-webcam and axe-core WCAG A/AA accessibility checks), strict TypeScript, ESLint,
   Prettier, and Lighthouse budgets — all enforced in CI.
 

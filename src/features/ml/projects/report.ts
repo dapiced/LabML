@@ -333,14 +333,30 @@ export function buildReportHtml(record: RunRecord, t: Translate, lang: string): 
     ? (['accuracy', 'f1', 'auc', 'logLoss'] as const)
     : (['rmse', 'mae', 'r2'] as const);
 
+  const summary = record.summary;
   const leaderboardRows = sorted
-    .map(
-      (r, i) => `<tr${i === 0 ? ' class="best"' : ''}>
+    .map((r, i) => {
+      // V25: a capped family's announced sample rides along in the report too.
+      const capped =
+        r.trainedRows !== undefined && r.trainedRows < summary.trainRows
+          ? ` <small>(${esc(t('ml.lab.leaderboard.trainedOn', { rows: r.trainedRows.toLocaleString(lang) }))})</small>`
+          : '';
+      return `<tr${i === 0 ? ' class="best"' : ''}>
         <td>${i + 1}</td><td>${esc(t(`ml.lab.models.${r.key}`))}</td>
         ${metricKeys.map((k) => `<td>${fmt(r.metrics[k])}</td>`).join('')}
-        <td>${r.trainMs.toFixed(1)} ms</td></tr>`,
-    )
+        <td>${r.trainMs.toFixed(1)} ms${capped}</td></tr>`;
+    })
     .join('\n');
+
+  const sampledNote =
+    summary.sampledFrom !== undefined
+      ? `<p class="meta">${esc(
+          t('ml.lab.leaderboard.sampledFrom', {
+            cap: (summary.trainRows + summary.testRows).toLocaleString(lang),
+            from: summary.sampledFrom.toLocaleString(lang),
+          }),
+        )}</p>`
+      : '';
 
   const confusion =
     record.insights.confusion && record.insights.classes
@@ -413,6 +429,7 @@ ${read ? `<div class="read">${esc(read)}</div>` : ''}
     .join('')}<th>${esc(t('ml.lab.leaderboard.trainTime'))}</th></tr>
 ${leaderboardRows}
 </table>
+${sampledNote}
 ${confusion}
 ${importance}
 ${words}
