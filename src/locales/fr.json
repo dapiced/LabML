@@ -111,7 +111,7 @@
     "lab": {
       "title": "nouveau run",
       "noRequests": "exécution locale · aucune requête",
-      "dropTitle": "Déposez un fichier CSV",
+      "dropTitle": "Déposez un fichier CSV ou Excel",
       "dropHint": "ou cliquez pour parcourir — le fichier est lu ici même, dans votre navigateur ; rien n'est téléversé",
       "demoLabel": "Ou essayez un jeu de démonstration",
       "demoTask": {
@@ -199,7 +199,9 @@
         "knn": "k plus proches voisins",
         "naiveBayes": "Naive Bayes gaussien",
         "tree": "Arbre de décision",
-        "forest": "Forêt aléatoire"
+        "forest": "Forêt aléatoire",
+        "gbdt": "Gradient boosting",
+        "mlp": "Réseau de neurones (MLP)"
       },
       "insights": {
         "title": "Insights",
@@ -227,6 +229,8 @@
         "readRegression": "Les prédictions de {{model}} s'écartent en moyenne de {{mae}} sur les {{rows}} lignes de test mises de côté.",
         "readVariance": "Il explique {{r2}} % de la variance de la cible.",
         "readDrivers": "Les colonnes les plus décisives sont : {{columns}}.",
+        "pdpTitle": "Dépendance partielle",
+        "pdpHint": "Prédiction moyenne du modèle quand cette colonne parcourt sa plage, tout le reste inchangé.",
         "whatIfTitle": "Et si…",
         "whatIfHint": "Modifiez les valeurs et regardez la prédiction du modèle changer en direct — calculée localement, comme tout le reste.",
         "whatIfPrediction": "Prédiction"
@@ -271,7 +275,8 @@
       "sprint2": "Moteur d'entraînement et leaderboard — livré",
       "sprint3": "Résultats, explications et what-if — livré",
       "sprint4": "Projets, export & partage sans données — livré",
-      "sprint5": "Qualité : WCAG AA, PWA hors-ligne, budgets Lighthouse — livré"
+      "sprint5": "Qualité : WCAG AA, PWA hors-ligne, budgets Lighthouse — livré",
+      "v2": "Modèles V2 : gradient boosting, réseau de neurones, dépendance partielle, import Excel — livré"
     }
   },
   "data": {

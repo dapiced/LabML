@@ -1,7 +1,7 @@
 import type { TaskInfo, TaskType } from '@/features/ml/data/types';
 
 export type ModelKey =
-  'baseline' | 'linear' | 'logistic' | 'knn' | 'naiveBayes' | 'tree' | 'forest';
+  'baseline' | 'linear' | 'logistic' | 'knn' | 'naiveBayes' | 'tree' | 'forest' | 'gbdt' | 'mlp';
 
 export interface TrainConfig {
   target: string;
@@ -45,6 +45,12 @@ export interface InsightsPayload {
   residuals?: { counts: number[]; min: number; max: number };
   /** Permutation importance per source column, sorted descending. */
   importance: { column: string; value: number }[];
+  /**
+   * Partial dependence of the prediction on the top numeric columns
+   * (binary classification: mean probability of the positive class;
+   * regression: mean prediction). x is in the column's original scale.
+   */
+  pdp?: { column: string; points: { x: number; y: number }[] }[];
 }
 
 export interface WhatIfResult {
