@@ -5,6 +5,7 @@ import type { ForecastPayload } from '@/features/ml/timeseries/run';
 import type { BatchScore } from '@/features/ml/train/score';
 import type { SegmentAnalysis } from '@/features/ml/train/segments';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
+import type { LearningCurveOutcome } from '@/features/ml/train/learning-curve';
 import type { ThresholdAnalysis } from '@/features/ml/train/threshold-analysis';
 import type { UncertaintyAnalysis } from '@/features/ml/train/uncertainty';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
@@ -32,6 +33,9 @@ export type WorkerRequest =
   | { kind: 'explain'; model: ModelKey; values: Record<string, Cell> }
   | { kind: 'tune'; model: TunableKey; config: TrainConfig }
   | { kind: 'cancel-tune' }
+  // v26: learning curve — retrain on growing seeded prefixes of the train split.
+  | { kind: 'learning-curve'; model: ModelKey; config: TrainConfig }
+  | { kind: 'cancel-curve' }
   | { kind: 'explore'; features: string[]; seed: number }
   | { kind: 'forecast'; dateColumn: string; valueColumn: string }
   | { kind: 'export-model'; model: ModelKey }
@@ -61,6 +65,10 @@ export type WorkerResponse =
   | { kind: 'tune-progress'; done: number; total: number; bestCv: number | null }
   | { kind: 'tune-complete'; payload: TuneOutcome }
   | { kind: 'tune-cancelled' }
+  | { kind: 'curve-progress'; done: number; total: number }
+  // null = refused by name (baseline, or a ladder with a single rung).
+  | { kind: 'curve-complete'; payload: LearningCurveOutcome | null }
+  | { kind: 'curve-cancelled' }
   | { kind: 'explore-result'; payload: ExplorationPayload }
   | { kind: 'forecast-result'; payload: ForecastPayload }
   | { kind: 'model-json'; model: ModelKey; json: string | null }

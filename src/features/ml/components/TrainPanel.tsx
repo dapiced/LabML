@@ -6,6 +6,7 @@ import { BatchScorePanel } from '@/features/ml/components/BatchScorePanel';
 import { SegmentsPanel } from '@/features/ml/components/SegmentsPanel';
 import { ThresholdPanel } from '@/features/ml/components/ThresholdPanel';
 import { UncertaintyPanel } from '@/features/ml/components/UncertaintyPanel';
+import { LearningCurvePanel } from '@/features/ml/components/LearningCurvePanel';
 import { TuningPanel } from '@/features/ml/components/TuningPanel';
 import { InsightsSection } from '@/features/ml/components/insights/InsightsSection';
 import { TEST_RATIO, TRAIN_SEED, useLabStore } from '@/features/ml/lab-store';
@@ -63,6 +64,8 @@ export function TrainPanel() {
       <UncertaintyPanel />
 
       <TuningPanel />
+
+      <LearningCurvePanel />
 
       <InsightsSection />
 
