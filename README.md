@@ -1,7 +1,5 @@
 # LabML
 
-[![CI](https://github.com/dapiced/LabML/actions/workflows/ci.yml/badge.svg)](https://github.com/dapiced/LabML/actions/workflows/ci.yml)
-
 **EN** — A privacy-first machine learning lab that runs entirely in your browser: drop a CSV,
 pick a target, train and compare models — your data never leaves your machine.
 **FR** — Un laboratoire de machine learning privacy-first qui tourne entièrement dans votre
@@ -145,8 +143,7 @@ generalized prerender shipped. V12 (an optional generative chat behind a
 server-side key proxy with explicit consent — never an API key in the
 browser) stays on hold as a product decision.
 
-Full roadmap in [PLAN.md](PLAN.md), target analysis in
-[docs/analyse-quantifai.md](docs/analyse-quantifai.md).
+Full roadmap in [PLAN.md](PLAN.md).
 
 ## Stack
 
@@ -170,4 +167,4 @@ production. Required repo secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_I
 
 ## License
 
-[MIT](LICENSE) © Dominic Dapice
+[MIT](LICENSE) © Dominic D'Apice
