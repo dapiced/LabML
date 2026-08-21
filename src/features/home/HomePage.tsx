@@ -1,10 +1,8 @@
-import { ArrowRight, Braces, Database, FlaskConical } from 'lucide-react';
+import { Braces, Database, FlaskConical } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
-import { cn } from '@/lib/utils';
 
 export function HomePage() {
   const { t } = useTranslation();
@@ -20,12 +18,6 @@ export function HomePage() {
           </span>
         </h1>
         <p className="mt-6 max-w-2xl text-lg text-muted">{t('home.lede')}</p>
-        <div className="mt-8">
-          <Link to="/ml" className={cn(buttonVariants({ size: 'lg' }))}>
-            {t('home.openLab')}
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
-        </div>
       </section>
 
       <section className="grid gap-4 pb-16 sm:grid-cols-3">
