@@ -9,16 +9,43 @@ import { VitePWA } from 'vite-plugin-pwa';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 /**
+ * A prerendered route: its static shell (index.html + the page hero injected
+ * into #root) paints as soon as the CSS arrives, and React simply replaces it
+ * on mount — same markup, no hydration involved. `facade` is the route's lazy
+ * chunk, modulepreloaded from the shell so it downloads with the entry.
+ */
+interface ShellRoute {
+  dir: string;
+  /** Key prefix into en.json (dot path) holding eyebrow/lede + title keys. */
+  prefix: string;
+  /** Pages titled titlePre + highlighted span; the rest use a plain `title`. */
+  highlight?: boolean;
+  facade: string;
+}
+
+const SHELL_ROUTES: ShellRoute[] = [
+  { dir: 'ml', prefix: 'ml', highlight: true, facade: 'features/ml/pages/MlHomePage' },
+  { dir: 'data', prefix: 'data', facade: 'features/data/DataPage' },
+  { dir: 'ai', prefix: 'ai', facade: 'features/ai/AiPage' },
+  { dir: 'ai/vision', prefix: 'ai.vision', facade: 'features/ai/vision/VisionPage' },
+  { dir: 'ai/chat', prefix: 'ai.chat', facade: 'features/ai/chat/ChatPage' },
+  { dir: 'about', prefix: 'about', facade: 'features/about/AboutPage' },
+];
+
+/**
  * Lazy routes normally load in a second network phase after the entry has
  * executed. Injecting modulepreload hints for the main routes' chunk graphs
  * lets the browser fetch them in parallel with the entry — the waterfall
- * collapses without giving up code splitting.
+ * collapses without giving up code splitting. The root index.html (also the
+ * SPA fallback) keeps the home + /ml facades; every prerendered shell carries
+ * its own facade instead. Dynamic routes (/ml/run/:id, /ml/share) stay on the
+ * fallback — a shell would show the wrong content there.
  */
-function preloadRouteChunks(targets: string[]): Plugin {
+function prerenderShells(rootTargets: string[]): Plugin {
   let outDir = 'dist';
-  let files: string[] = [];
+  const facadeFiles = new Map<string, string>();
   return {
-    name: 'labml-preload-route-chunks',
+    name: 'labml-prerender-shells',
     apply: 'build',
     configResolved(config) {
       outDir = config.build.outDir;
@@ -26,44 +53,91 @@ function preloadRouteChunks(targets: string[]): Plugin {
     generateBundle(_, bundle) {
       // Facade chunks only: preloading their whole import graphs competes
       // with the entry for bandwidth and makes first paint WORSE (measured).
-      files = Object.values(bundle)
-        .filter(
-          (entry) =>
-            entry.type === 'chunk' &&
-            entry.facadeModuleId !== null &&
-            targets.some((target) => entry.facadeModuleId!.includes(target)),
-        )
-        .map((chunk) => chunk.fileName);
+      const wanted = [...rootTargets, ...SHELL_ROUTES.map((route) => route.facade)];
+      for (const entry of Object.values(bundle)) {
+        if (entry.type !== 'chunk' || entry.facadeModuleId === null) continue;
+        const target = wanted.find((t) => entry.facadeModuleId!.includes(t));
+        if (target) facadeFiles.set(target, entry.fileName);
+      }
     },
     closeBundle() {
+      const preload = (target: string) => {
+        const file = facadeFiles.get(target);
+        return file ? `    <link rel="modulepreload" crossorigin href="/${file}">\n` : '';
+      };
       const htmlPath = join(outDir, 'index.html');
-      const links = files
-        .map((file) => `    <link rel="modulepreload" crossorigin href="/${file}">`)
-        .join('\n');
-      const html = readFileSync(htmlPath, 'utf8').replace('</head>', `${links}\n  </head>`);
-      writeFileSync(htmlPath, html);
+      let base = readFileSync(htmlPath, 'utf8');
 
-      // Static shell for /ml: the hero paints as soon as the CSS arrives and
-      // React simply replaces it on mount (same markup, no hydration involved).
-      // Cloudflare Pages serves exact files before the SPA fallback, so only
-      // first visits to /ml get this head start — measured LCP driver was 87%
-      // render delay without it.
-      const en = JSON.parse(readFileSync('src/locales/en.json', 'utf8')) as {
-        ml: { eyebrow: string; titlePre: string; titleHighlight: string; lede: string };
+      // Inline the (single, ~9 KB gzipped) stylesheet: the last render-blocking
+      // request disappears, so the shells paint on HTML arrival. The CSP
+      // already allows 'unsafe-inline' for styles.
+      const cssTag = base.match(/<link rel="stylesheet"[^>]*href="\/(assets\/[^"]+\.css)"[^>]*>/);
+      if (cssTag) {
+        let css = readFileSync(join(outDir, cssTag[1]), 'utf8');
+        // Both latin text subsets ride INSIDE the CSS as data: URIs: hero and
+        // lede paint once, in their final fonts, with no network race at all.
+        // Anything else loses — painted in a fallback first, the text reflows
+        // when the real font lands: the app's identical h1 then registered as
+        // a new, later LCP candidate, and the lede's reflow scored CLS 0.063
+        // (both measured). Costs ~90 KB per HTML; needs font-src data: in the
+        // CSP. The mono font (code accents) keeps its swap — it shapes no
+        // above-the-fold layout.
+        // A data: font still decodes ASYNCHRONOUSLY: with swap, a throttled
+        // first frame can beat the decode and paint the fallback (measured —
+        // the lede reflowed 4→3 lines). block makes the text wait out the
+        // few-ms decode instead: one paint, final font, and no network is
+        // involved so the block period never actually shows.
+        css = css.replace(
+          /(@font-face\{[^}]*font-display:)swap([^}]*(?:bricolage-grotesque|public-sans)-latin-wght[^}]*\})/g,
+          (_, head: string, tail: string) => `${head}block${tail}`,
+        );
+        for (const face of [
+          ...css.matchAll(/\/assets\/(?:bricolage-grotesque|public-sans)-latin-wght[^)]+\.woff2/g),
+        ]) {
+          const woff2 = readFileSync(join(outDir, face[0].slice(1))).toString('base64');
+          css = css.replace(face[0], () => `data:font/woff2;base64,${woff2}`);
+        }
+        // The shells reserve the header's exact footprint so the app's mount
+        // shifts nothing; heights match the real header at both breakpoints.
+        css += '#shell-header{height:105px}@media (min-width:640px){#shell-header{height:65px}}';
+        base = base.replace(cssTag[0], () => `<style>${css}</style>`);
+      }
+
+      writeFileSync(
+        htmlPath,
+        base.replace('</head>', () => `${rootTargets.map(preload).join('')}  </head>`),
+      );
+
+      const en = JSON.parse(readFileSync('src/locales/en.json', 'utf8')) as Record<string, unknown>;
+      const key = (path: string): string => {
+        const value = path
+          .split('.')
+          .reduce<unknown>((node, part) => (node as Record<string, unknown>)?.[part], en);
+        if (typeof value !== 'string') throw new Error(`shell key missing: ${path}`);
+        return value;
       };
       const esc = (s: string) =>
         s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/'/g, '&#39;');
-      const hero =
-        `<div class="mx-auto max-w-6xl px-4"><section class="py-12 sm:py-16">` +
-        `<p class="font-mono text-xs font-semibold tracking-[0.18em] text-copper uppercase">${esc(en.ml.eyebrow)}</p>` +
-        `<h1 class="mt-3 max-w-3xl font-display text-3xl font-bold text-balance sm:text-5xl">${esc(en.ml.titlePre)} ` +
-        `<span class="bg-accent-soft box-decoration-clone px-1 text-accent-strong">${esc(en.ml.titleHighlight)}</span></h1>` +
-        `<p class="mt-5 max-w-2xl text-lg text-muted">${esc(en.ml.lede)}</p></section></div>`;
-      mkdirSync(join(outDir, 'ml'), { recursive: true });
-      writeFileSync(
-        join(outDir, 'ml', 'index.html'),
-        html.replace('<div id="root"></div>', `<div id="root">${hero}</div>`),
-      );
+
+      // Cloudflare Pages serves exact files before the SPA fallback, so only
+      // direct visits get this head start — measured LCP driver on /ml was
+      // 87% render delay without it.
+      for (const route of SHELL_ROUTES) {
+        const title = route.highlight
+          ? `${esc(key(`${route.prefix}.titlePre`))} <span class="bg-accent-soft box-decoration-clone px-1 text-accent-strong">${esc(key(`${route.prefix}.titleHighlight`))}</span>`
+          : esc(key(`${route.prefix}.title`));
+        const hero =
+          `<div id="shell-header" class="border-b border-line"></div>` +
+          `<div class="mx-auto max-w-6xl px-4"><section class="py-12 sm:py-16">` +
+          `<p class="font-mono text-xs font-semibold tracking-[0.18em] text-copper uppercase">${esc(key(`${route.prefix}.eyebrow`))}</p>` +
+          `<h1 class="mt-3 max-w-3xl font-display text-3xl font-bold text-balance sm:text-5xl">${title}</h1>` +
+          `<p class="mt-5 max-w-2xl text-lg text-muted">${esc(key(`${route.prefix}.lede`))}</p></section></div>`;
+        const shell = base
+          .replace('</head>', () => `${preload(route.facade)}  </head>`)
+          .replace('<div id="root"></div>', () => `<div id="root">${hero}</div>`);
+        mkdirSync(join(outDir, route.dir), { recursive: true });
+        writeFileSync(join(outDir, route.dir, 'index.html'), shell);
+      }
     },
   };
 }
@@ -72,7 +146,7 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    preloadRouteChunks(['features/home/HomePage', 'features/ml/pages/MlHomePage']),
+    prerenderShells(['features/home/HomePage', 'features/ml/pages/MlHomePage']),
     // ONNX Runtime's WASM binaries are self-hosted under /ort/ (strict CSP:
     // nothing may load from a CDN).
     viteStaticCopy({
