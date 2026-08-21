@@ -184,9 +184,21 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   straight at deck C and Cherbourg passengers — and at the leaked `alive`
   column, sliced despite being excluded from training.
 
+- **V19 (persistent projects) — shipped**: an opted-in dataset now
+  **survives the reload**. One click keeps the current file in the browser
+  (lz-string compressed, IndexedDB — nothing ever leaves the machine, and
+  share links never carry data), under an **explicit 50 MB budget**: a file
+  that does not fit is refused by name with the numbers, never trimmed
+  silently. Kept datasets are listed under the run history (reopen /
+  forget), runs trained on a kept dataset are **linked to it** — a stored
+  run offers "reopen this run's data", and retraining is identical
+  (seed 42). Forgetting is explicit and immediate.
+
 **Cap 3 is complete** (V11 drift · V13 complete runs · V14 prerender).
 **Cap 4 is complete**: V15 batch scoring, V16 imbalance tools, V17
-joins & anomalies and V18 per-segment analysis all shipped. V12 (an
+joins & anomalies and V18 per-segment analysis all shipped.
+**Cap 5 is underway**: V19 persistent projects shipped; V20 (honest
+uncertainty), V21 (run comparison) and V22 (model import) remain. V12 (an
 optional generative chat behind a server-side key proxy — never an API key
 in the browser) stays on hold as a product decision.
 

@@ -180,6 +180,15 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const text = await response.text();
       parseText(text, request.name, text.length);
+    } else if (request.kind === 'parse-text') {
+      parseText(request.text, request.name, request.text.length);
+    } else if (request.kind === 'export-dataset') {
+      if (header.length === 0) throw new Error('no-data');
+      const rows: string[][] = [header];
+      for (let r = 0; r < rowCount; r++) {
+        rows.push(header.map((_, c) => columns[c][r] ?? ''));
+      }
+      post({ kind: 'dataset-csv', csv: Papa.unparse(rows, { newline: '\n' }) });
     } else if (request.kind === 'analyze-target') {
       const profiles: ColumnProfile[] = header.map((column, i) =>
         profileColumn(column, columns[i]),
