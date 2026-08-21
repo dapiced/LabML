@@ -347,6 +347,32 @@
         "intervalsOverlap": "Les intervalles se recouvrent — sur ces jeux de test, l'écart entre les deux runs peut être du bruit.",
         "intervalsNote": "Chaque intervalle vient du tirage de test de son propre run (v20). Deux runs ne sont jamais appariés — à lire comme une indication, pas un test."
       },
+      "imported": {
+        "title": "Réutiliser un modèle exporté",
+        "hint": "Déjà entraîné ici ? Déposez le modèle exporté (.json) — il score de nouveaux fichiers sans réentraîner. Tout reste dans votre navigateur.",
+        "browse": "Importer un modèle (.json)",
+        "loading": "Lecture…",
+        "clear": "Retirer le modèle importé",
+        "targetBadge": "prédit {{target}}",
+        "summary": "variables : {{features}} · entraîné sur {{source}} · exporté le {{date}}",
+        "scoreCta": "Scorer un CSV avec ce modèle",
+        "scoring": "Scoring…",
+        "scoreHint": "Le fichier doit porter les colonnes de variables ci-dessus ; une colonne cible est optionnelle et ne sert qu'à la comparaison honnête.",
+        "verdict": "{{name}} — {{rows}} lignes scorées par {{model}}.",
+        "colReference": "Run d'origine (test)",
+        "note": "La colonne de référence est le jeu de test du run exportateur — un tirage différent de ce fichier. Lisez les écarts comme des signaux, pas des verdicts.",
+        "errors": {
+          "invalid-json": "Ce fichier n'est pas du JSON valide.",
+          "not-labml": "Ce JSON n'a pas été exporté par LabML.",
+          "unsupported-version": "Le format v{{detail}} précède la réimportation — ré-exportez le modèle depuis un run récent.",
+          "bad-manifest": "Le manifeste est incomplet — cet export ne peut pas prédire de façon fiable.",
+          "unsupported-kind": "Famille de modèle inconnue dans cet export.",
+          "no-model": "Importez un modèle avant de scorer.",
+          "empty": "Le fichier est vide.",
+          "missingColumns": "Il manque des colonnes requises au fichier : {{detail}}.",
+          "generic": "Le fichier n'a pas pu être traité."
+        }
+      },
       "datasets": {
         "keepButton": "Conserver dans ce navigateur",
         "keeping": "Conservation…",

@@ -1,6 +1,6 @@
 import { DecisionTreeClassifier, DecisionTreeRegression } from 'ml-cart';
 import { RandomForestClassifier, RandomForestRegression } from 'ml-random-forest';
-import { trainGbdtClassifier, trainGbdtRegressor, GBDT_DEFAULTS } from '@/features/ml/train/gbdt';
+import { trainGbdtClassifier, trainGbdtRegressor } from '@/features/ml/train/gbdt';
 import { trainMlp } from '@/features/ml/train/mlp';
 import { mulberry32, shuffleInPlace } from '@/features/ml/train/random';
 import type { ModelKey } from '@/features/ml/train/types';
@@ -337,12 +337,15 @@ const gbdt: ModelDef = {
       const model = trainGbdtRegressor(X, y);
       return {
         predict: (rows) => model.predictRaw(rows),
+        // Bin edges and learning rate ride along — trees split on BIN indices,
+        // so without them the export cannot predict (v22 import needs both).
         toJSON: () => ({
           kind: 'gbdt',
           task: 'regression',
-          params: GBDT_DEFAULTS,
+          learningRate: model.params.learningRate,
           baseScore: model.baseScore,
           trees: model.trees,
+          edges: model.binning.edges,
         }),
       };
     }
@@ -353,8 +356,12 @@ const gbdt: ModelDef = {
       toJSON: () => ({
         kind: 'gbdt',
         task: 'classification',
-        params: GBDT_DEFAULTS,
-        boosters: model.boosters.map((b) => ({ baseScore: b.baseScore, trees: b.trees })),
+        learningRate: model.boosters[0].params.learningRate,
+        boosters: model.boosters.map((b) => ({
+          baseScore: b.baseScore,
+          trees: b.trees,
+          edges: b.binning.edges,
+        })),
       }),
     };
   },
