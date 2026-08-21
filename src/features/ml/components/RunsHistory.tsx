@@ -200,6 +200,7 @@ export function RunsHistory() {
                         'batchScore',
                         'threshold',
                         'segments',
+                        'uncertainty',
                       ] as const
                     )
                       .filter((kind) => run.artifacts?.[kind])

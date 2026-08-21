@@ -316,6 +316,15 @@
         "small_other": "{{count}} tranches de moins de {{min}} lignes de test écartées.",
         "note": "Un écart est une piste à creuser, pas un verdict — une petite tranche bouge pour une seule ligne difficile aussi bien que pour une vraie faiblesse. Un écart sur une colonne hors variables signifie que le modèle la retrouve par des proxys."
       },
+      "uncertainty": {
+        "title": "Ces chiffres sont-ils solides ?",
+        "badge": "IC 95 % · {{resamples}} rééchantillonnages",
+        "hint": "Le jeu de test ({{rows}} lignes) est rééchantillonné par bootstrap et le {{metric}} de chaque modèle est recalculé à chaque fois — l'intervalle est là où la métrique tombe 95 fois sur 100. Un intervalle large est une information, pas un défaut.",
+        "interval": "Intervalle 95 %",
+        "verdictReal": "{{winner}} bat {{against}} : Δ {{metric}} = {{delta}} [{{lo}} ; {{hi}}] — l'écart survit au rééchantillonnage ({{share}} % des rééchantillonnages). Probablement réel.",
+        "verdictNoise": "{{winner}} vs {{against}} : Δ {{metric}} = {{delta}} [{{lo}} ; {{hi}}] — l'intervalle traverse zéro. Peut-être du bruit : sur ce jeu de test, le gagnant n'est pas prouvé meilleur.",
+        "note": "Les rééchantillonnages tirent des mêmes {{rows}} lignes de test (seed {{seed}}, partagés entre modèles pour des comparaisons appariées). Ces intervalles mesurent la sensibilité au tirage du test — pas la variance d'entraînement."
+      },
       "datasets": {
         "keepButton": "Conserver dans ce navigateur",
         "keeping": "Conservation…",
@@ -402,7 +411,8 @@
           "forecast": "prévision",
           "batchScore": "nouveau lot",
           "threshold": "seuil",
-          "segments": "segments"
+          "segments": "segments",
+          "uncertainty": "intervalles"
         }
       },
       "share": {

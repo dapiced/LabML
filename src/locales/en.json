@@ -316,6 +316,15 @@
         "small_other": "{{count}} slices with fewer than {{min}} test rows excluded.",
         "note": "A gap is a finding to investigate, not a verdict — a small slice moves for one hard row as easily as for a real weakness. A gap on a column outside the features means the model reaches it through proxies."
       },
+      "uncertainty": {
+        "title": "How solid are these numbers?",
+        "badge": "95% CI · {{resamples}} resamples",
+        "hint": "The test set ({{rows}} rows) is bootstrap-resampled and each model's {{metric}} is recomputed every time — the interval is where the metric lands 95 times out of 100. A wide interval is information, not a defect.",
+        "interval": "95% interval",
+        "verdictReal": "{{winner}} beats {{against}}: Δ {{metric}} = {{delta}} [{{lo}} ; {{hi}}] — the gap survives resampling ({{share}}% of resamples). Probably real.",
+        "verdictNoise": "{{winner}} vs {{against}}: Δ {{metric}} = {{delta}} [{{lo}} ; {{hi}}] — the interval crosses zero. Possibly noise: on this test set, the winner is not proven better.",
+        "note": "Resamples are drawn from the same {{rows}} test rows (seed {{seed}}, shared across models so comparisons are paired). These intervals measure sensitivity to the test draw — not training variance."
+      },
       "datasets": {
         "keepButton": "Keep in this browser",
         "keeping": "Keeping…",
@@ -402,7 +411,8 @@
           "forecast": "forecast",
           "batchScore": "new batch",
           "threshold": "threshold",
-          "segments": "segments"
+          "segments": "segments",
+          "uncertainty": "intervals"
         }
       },
       "share": {
