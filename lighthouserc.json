@@ -3,10 +3,11 @@
     "collect": {
       "staticDistDir": "./dist",
       "isSinglePageApplication": true,
-      "url": ["http://localhost/index.html", "http://localhost/ml"],
+      "url": ["http://localhost/index.html", "http://localhost/ml/"],
       "numberOfRuns": 1,
       "settings": {
-        "chromeFlags": "--no-sandbox --headless=new"
+        "chromeFlags": "--no-sandbox --headless=new",
+        "throttlingMethod": "devtools"
       }
     },
     "assert": {
