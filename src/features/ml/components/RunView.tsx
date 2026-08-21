@@ -5,6 +5,7 @@ import { Eyebrow } from '@/components/ui/eyebrow';
 import { LeaderboardTable } from '@/features/ml/components/LeaderboardTable';
 import { ConfusionMatrix } from '@/features/ml/components/insights/ConfusionMatrix';
 import { ImportanceBars } from '@/features/ml/components/insights/ImportanceBars';
+import { PdpChart } from '@/features/ml/components/insights/PdpChart';
 import {
   ResidualsChart,
   ScatterPlot,
@@ -59,6 +60,9 @@ export function RunView({ record }: { record: RunRecord }) {
         {insights.scatter && <ScatterPlot points={insights.scatter} />}
         {insights.residuals && <ResidualsChart residuals={insights.residuals} />}
         <ImportanceBars importance={insights.importance} isClassification={isClassification} />
+        {insights.pdp?.map(({ column, points }) => (
+          <PdpChart key={column} column={column} points={points} />
+        ))}
       </div>
     </div>
   );

@@ -28,6 +28,14 @@ test('mpg demo: continuous target is detected as regression', async ({ page }) =
   await expect(page.getByTestId('task-badge')).toHaveText('Regression');
 });
 
+test('uploading an Excel file works like a CSV', async ({ page }) => {
+  await page.goto('/ml');
+  await page.locator('input[type="file"]').setInputFiles('e2e/fixtures/pets.xlsx');
+  await expect(page.getByText('12 rows · 4 columns')).toBeVisible({ timeout: 20000 });
+  await page.selectOption('#target-select', 'species');
+  await expect(page.getByTestId('task-badge')).toHaveText('Binary classification');
+});
+
 test('uploading a CSV excludes identifiers and constants automatically', async ({ page }) => {
   await page.goto('/ml');
   await page.locator('input[type="file"]').setInputFiles('e2e/fixtures/pets.csv');

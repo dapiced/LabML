@@ -20,7 +20,7 @@ test('the whole lab works offline after the first visit', async ({ page, context
   await page.selectOption('#target-select', 'species');
   await page.getByTestId('train-button').click();
   await expect(page.getByTestId('train-again')).toBeVisible({ timeout: 60000 });
-  await expect(page.getByTestId('leaderboard').locator('tbody tr')).toHaveCount(6);
+  await expect(page.getByTestId('leaderboard').locator('tbody tr')).toHaveCount(8);
 
   await context.setOffline(false);
 });
