@@ -10,7 +10,8 @@
     />
     <meta name="theme-color" content="#0b6e5d" />
     <title>LabML</title>
-    <script src="/theme-init.js"></script>
+    <!-- Anti-flash theme boot, inlined; its sha256 hash is allow-listed in the CSP. -->
+    <script>(function(){try{var s=localStorage.getItem('labml-theme');var d=s==='dark'||(s!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',d)}catch(e){}})();</script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { db } from '@/features/ml/projects/db';
 import type { RunRecord } from '@/features/ml/projects/types';
 import type {
   ColumnSuggestion,
@@ -197,10 +196,13 @@ export const useLabStore = create<LabState>((set, get) => {
               insights: message.payload,
             };
             set({ currentRun: record });
-            void db.runs.add(record).then((id) => {
-              const current = get().currentRun;
-              if (current === record) set({ currentRun: { ...record, id } });
-            });
+            // Dexie is loaded on demand so /ml renders without it.
+            void import('@/features/ml/projects/db').then(({ db }) =>
+              db.runs.add(record).then((id) => {
+                const current = get().currentRun;
+                if (current === record) set({ currentRun: { ...record, id } });
+              }),
+            );
           }
         } else if (message.kind === 'what-if-result') {
           set({ whatIf: message.payload, explanation: null });
