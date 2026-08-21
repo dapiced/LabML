@@ -27,6 +27,7 @@ export function ColumnCard({ profile }: { profile: ColumnProfile }) {
 
   return (
     <div
+      data-testid={`column-card-${profile.name}`}
       className={cn(
         'flex flex-col gap-2.5 rounded-2xl border bg-surface p-4 shadow-sm transition-colors',
         isTarget ? 'border-accent ring-1 ring-accent' : 'border-line',

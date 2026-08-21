@@ -22,6 +22,12 @@ export const router = createBrowserRouter([
         }),
       },
       {
+        path: 'ml/compare/:a/:b',
+        lazy: async () => ({
+          Component: (await import('@/features/ml/pages/MlComparePage')).default,
+        }),
+      },
+      {
         path: 'ml/share',
         lazy: async () => ({
           Component: (await import('@/features/ml/pages/SharedRunPage')).default,

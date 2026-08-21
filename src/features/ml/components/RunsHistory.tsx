@@ -1,14 +1,16 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Check, FolderOpen, HardDrive, Pencil, Trash2 } from 'lucide-react';
+import { Check, FolderOpen, GitCompareArrows, HardDrive, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { Badge } from '@/components/ui/badge';
+import { buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { db } from '@/features/ml/projects/db';
 import { formatSize } from '@/features/ml/projects/dataset-storage';
 import { useLabStore } from '@/features/ml/lab-store';
+import { cn } from '@/lib/utils';
 import type { RunRecord } from '@/features/ml/projects/types';
 
 /** Datasets kept in the browser (v19) — reopen or forget, all local. */
@@ -239,48 +241,15 @@ export function RunsHistory() {
         )}
 
         {compared.length === 2 && (
-          <div className="mt-4 overflow-x-auto rounded-xl border border-line" data-testid="compare">
-            <table className="w-full text-left text-sm tabular-nums">
-              <thead>
-                <tr className="bg-surface-2 font-mono text-[0.68rem] tracking-wider uppercase">
-                  <th className="px-3 py-2 font-medium">{t('ml.lab.runs.compare')}</th>
-                  {compared.map((run) => (
-                    <th key={run.id} className="px-3 py-2 font-medium">
-                      {run.name}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {(
-                  [
-                    ['dataset', (r: RunRecord) => r.dataset.name],
-                    ['target', (r: RunRecord) => r.target],
-                    [
-                      'bestModel',
-                      (r: RunRecord) => {
-                        const best = bestOf(r);
-                        return best ? t(`ml.lab.models.${best.key}`) : '—';
-                      },
-                    ],
-                    ['primary', (r: RunRecord) => bestOf(r)?.primary.toFixed(3) ?? '—'],
-                    ['rows', (r: RunRecord) => r.dataset.rowCount.toLocaleString(lang)],
-                    ['seed', (r: RunRecord) => String(r.seed)],
-                  ] as const
-                ).map(([key, render]) => (
-                  <tr key={key} className="border-t border-line">
-                    <th className="px-3 py-2 text-left font-mono text-[0.68rem] text-muted uppercase">
-                      {t(`ml.lab.runs.fields.${key}`)}
-                    </th>
-                    {compared.map((run) => (
-                      <td key={run.id} className="px-3 py-2">
-                        {render(run)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="mt-4">
+            <Link
+              to={`/ml/compare/${compared[0].id}/${compared[1].id}`}
+              data-testid="compare-open"
+              className={cn(buttonVariants({ size: 'sm' }))}
+            >
+              <GitCompareArrows className="h-4 w-4" aria-hidden="true" />
+              {t('ml.lab.compare.open', { a: compared[0].name, b: compared[1].name })}
+            </Link>
           </div>
         )}
       </Card>
