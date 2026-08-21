@@ -8,7 +8,8 @@ import { runExploration } from '@/features/ml/unsupervised/explore';
 import { runForecast } from '@/features/ml/timeseries/run';
 import { buildPredictionsCsv, serializeModel } from '@/features/ml/train/serialize';
 import { explainPrediction } from '@/features/ml/train/shapley';
-import { scoreBatch } from '@/features/ml/train/score';
+import { deserializeModel, type ImportedModel } from '@/features/ml/train/deserialize';
+import { scoreBatch, scoreRows } from '@/features/ml/train/score';
 import { analyzeSegments } from '@/features/ml/train/segments';
 import { analyzeThresholds } from '@/features/ml/train/threshold-analysis';
 import { analyzeUncertainty, type ModelLosses } from '@/features/ml/train/uncertainty';
@@ -33,6 +34,10 @@ let artifacts: TrainArtifacts | null = null;
 let lastTarget: string | null = null;
 /** Feature columns of the last training — segment analysis flags them. */
 let lastFeatureColumns: string[] = [];
+/** Name of the parsed dataset — the model export manifest carries it. */
+let datasetName = '';
+/** v22: a model rebuilt from an export — fully independent of any run. */
+let imported: ImportedModel | null = null;
 
 function post(message: WorkerResponse) {
   self.postMessage(message);
@@ -122,6 +127,7 @@ function finishParse(name: string, bytes: number) {
     post({ kind: 'error', message: 'empty' });
     return;
   }
+  datasetName = name;
   post({ kind: 'parsed', payload: buildResult(name, bytes) });
 }
 
@@ -167,6 +173,33 @@ async function handleScoreBatch(source: File | string, name: string, model: Mode
     });
   } catch (error) {
     post({ kind: 'batch-error', message: error instanceof Error ? error.message : String(error) });
+  }
+}
+
+async function handleScoreImported(source: File | string, name: string) {
+  try {
+    if (!imported) throw new Error('no-model');
+    const batch = await parseBatch(source);
+    post({
+      kind: 'imported-scored',
+      payload: scoreRows(
+        {
+          model: imported.model,
+          specs: imported.specs,
+          transformRow: imported.transformRow,
+          classes: imported.manifest.classes,
+          isClassification: imported.manifest.isClassification,
+        },
+        imported.manifest.model,
+        imported.manifest.testMetrics,
+        imported.manifest.target,
+        name,
+        batch.header,
+        batch.cols,
+      ),
+    });
+  } catch (error) {
+    post({ kind: 'import-error', message: error instanceof Error ? error.message : String(error) });
   }
 }
 
@@ -279,11 +312,15 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         ),
       });
     } else if (request.kind === 'export-model') {
-      if (!artifacts) throw new Error('no-run');
+      if (!artifacts || !lastTarget) throw new Error('no-run');
       post({
         kind: 'model-json',
         model: request.model,
-        json: serializeModel(artifacts, request.model),
+        json: serializeModel(artifacts, request.model, {
+          target: lastTarget,
+          datasetName,
+          rowCount,
+        }),
       });
     } else if (request.kind === 'export-predictions') {
       if (!artifacts) throw new Error('no-run');
@@ -327,6 +364,23 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           request.model,
         ),
       });
+    } else if (request.kind === 'load-model') {
+      try {
+        imported = deserializeModel(request.text);
+        post({ kind: 'model-loaded', manifest: imported.manifest });
+      } catch (error) {
+        imported = null;
+        post({
+          kind: 'import-error',
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    } else if (request.kind === 'score-imported-file') {
+      await handleScoreImported(request.file, request.file.name);
+    } else if (request.kind === 'score-imported-url') {
+      const response = await fetch(request.url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      await handleScoreImported(await response.text(), request.name);
     } else if (request.kind === 'score-batch-file') {
       await handleScoreBatch(request.file, request.file.name, request.model);
     } else if (request.kind === 'score-batch-url') {
