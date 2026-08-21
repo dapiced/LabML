@@ -45,6 +45,7 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'en';
   const { tuning, explanation, exploration, forecast, batchScore, threshold, segments } = artifacts;
+  const { uncertainty } = artifacts;
   if (
     !tuning &&
     !explanation &&
@@ -52,7 +53,8 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
     !forecast &&
     !batchScore &&
     !threshold &&
-    !segments
+    !segments &&
+    !uncertainty
   ) {
     return null;
   }
@@ -224,6 +226,66 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
               TP {threshold.chosen.tp} · FP {threshold.chosen.fp} · FN {threshold.chosen.fn} · TN{' '}
               {threshold.chosen.tn}
             </p>
+          </ArtifactCard>
+        )}
+
+        {uncertainty && (
+          <ArtifactCard title={t('ml.lab.uncertainty.title')}>
+            <p className="text-xs text-muted">
+              {t('ml.lab.uncertainty.hint', {
+                metric: t(`ml.lab.leaderboard.${uncertainty.metricLabel}`),
+                rows: uncertainty.testRows.toLocaleString(lang),
+              })}
+            </p>
+            <table className="w-full max-w-md text-left text-xs">
+              <thead>
+                <tr className="border-b border-line text-muted">
+                  <th className="py-1 pr-3 font-normal">{t('ml.lab.leaderboard.model')}</th>
+                  <th className="py-1 pr-3 font-normal">
+                    {t(`ml.lab.leaderboard.${uncertainty.metricLabel}`)}
+                  </th>
+                  <th className="py-1 font-normal">{t('ml.lab.uncertainty.interval')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {uncertainty.intervals.map((interval, index) => (
+                  <tr
+                    key={interval.model}
+                    className={`border-b border-line last:border-b-0 ${
+                      index === 0 ? 'font-semibold' : ''
+                    }`}
+                  >
+                    <td className="py-1 pr-3">{t(`ml.lab.models.${interval.model}`)}</td>
+                    <td className="py-1 pr-3 font-mono tabular-nums">
+                      {interval.point.toFixed(3)}
+                    </td>
+                    <td className="py-1 font-mono tabular-nums text-muted">
+                      [{interval.lo.toFixed(3)} ; {interval.hi.toFixed(3)}]
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {uncertainty.verdict && (
+              <p className="text-xs">
+                {t(
+                  uncertainty.verdict.decisive
+                    ? 'ml.lab.uncertainty.verdictReal'
+                    : 'ml.lab.uncertainty.verdictNoise',
+                  {
+                    winner: t(`ml.lab.models.${uncertainty.verdict.winner}`),
+                    against: t(`ml.lab.models.${uncertainty.verdict.against}`),
+                    metric: t(`ml.lab.leaderboard.${uncertainty.metricLabel}`),
+                    delta: `${uncertainty.verdict.delta >= 0 ? '+' : ''}${uncertainty.verdict.delta.toFixed(3)}`,
+                    lo: `${uncertainty.verdict.lo >= 0 ? '+' : ''}${uncertainty.verdict.lo.toFixed(3)}`,
+                    hi: `${uncertainty.verdict.hi >= 0 ? '+' : ''}${uncertainty.verdict.hi.toFixed(3)}`,
+                    share: (uncertainty.verdict.winShare * 100).toLocaleString(lang, {
+                      maximumFractionDigits: 1,
+                    }),
+                  },
+                )}
+              </p>
+            )}
           </ArtifactCard>
         )}
 

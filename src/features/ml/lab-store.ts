@@ -11,6 +11,7 @@ import { thresholdMetrics } from '@/features/ml/train/threshold';
 import type { BatchScore } from '@/features/ml/train/score';
 import type { SegmentAnalysis } from '@/features/ml/train/segments';
 import type { ThresholdAnalysis } from '@/features/ml/train/threshold-analysis';
+import type { UncertaintyAnalysis } from '@/features/ml/train/uncertainty';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
 import type { ForecastPayload } from '@/features/ml/timeseries/run';
@@ -70,6 +71,8 @@ interface LabState {
   thresholdChoice: { threshold: number; costFp: number; costFn: number };
   /** Per-segment metrics of the inspected model — null when nothing sliceable. */
   segmentAnalysis: SegmentAnalysis | null;
+  /** Leaderboard-wide 95% intervals — belongs to the run, not the inspected model. */
+  uncertaintyAnalysis: UncertaintyAnalysis | null;
   /** The auto-saved record of the current run (id set once stored). */
   currentRun: RunRecord | null;
   /** Local id of the stored copy of the CURRENT dataset — null if not kept. */
@@ -134,6 +137,7 @@ const initialTraining = {
   thresholdAnalysis: null as ThresholdAnalysis | null,
   thresholdChoice: { threshold: 0.5, costFp: 1, costFn: 1 },
   segmentAnalysis: null as SegmentAnalysis | null,
+  uncertaintyAnalysis: null as UncertaintyAnalysis | null,
   currentRun: null,
   exportedFile: null,
 };
@@ -285,6 +289,8 @@ export const useLabStore = create<LabState>((set, get) => {
               isClassification ? b.primary - a.primary : a.primary - b.primary,
             )[0];
             send({ kind: 'model-insights', model: best.key });
+            // Leaderboard-wide intervals ride along with every completed run.
+            send({ kind: 'uncertainty-analysis' });
           }
         } else if (message.kind === 'train-cancelled') {
           set({ ...initialTraining });
@@ -375,6 +381,11 @@ export const useLabStore = create<LabState>((set, get) => {
           set({ segmentAnalysis: message.payload });
           if (message.payload) {
             attachArtifact({ segments: message.payload });
+          }
+        } else if (message.kind === 'uncertainty-result') {
+          set({ uncertaintyAnalysis: message.payload });
+          if (message.payload) {
+            attachArtifact({ uncertainty: message.payload });
           }
         } else if (message.kind === 'model-json') {
           if (message.json !== null) {

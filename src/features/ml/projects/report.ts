@@ -192,6 +192,47 @@ function artifactSections(record: RunRecord, t: Translate, lang: string): string
     )}</td><td>${fmt(th.chosen.f1)}</td><td>${th.chosen.cost}</td></tr></table>`);
   }
 
+  if (artifacts.uncertainty) {
+    const unc = artifacts.uncertainty;
+    const metricName = t(`ml.lab.leaderboard.${unc.metricLabel}`);
+    const sg = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(3)}`;
+    const verdictLine = unc.verdict
+      ? `<p class="meta">${esc(
+          t(
+            unc.verdict.decisive
+              ? 'ml.lab.uncertainty.verdictReal'
+              : 'ml.lab.uncertainty.verdictNoise',
+            {
+              winner: t(`ml.lab.models.${unc.verdict.winner}`),
+              against: t(`ml.lab.models.${unc.verdict.against}`),
+              metric: metricName,
+              delta: sg(unc.verdict.delta),
+              lo: sg(unc.verdict.lo),
+              hi: sg(unc.verdict.hi),
+              share: (unc.verdict.winShare * 100).toLocaleString(lang, {
+                maximumFractionDigits: 1,
+              }),
+            },
+          ),
+        )}</p>`
+      : '';
+    sections.push(`<h2>${esc(t('ml.lab.uncertainty.title'))}</h2>
+    <p class="meta">${esc(
+      t('ml.lab.uncertainty.hint', { metric: metricName, rows: unc.testRows.toLocaleString(lang) }),
+    )}</p>
+    <table><tr><th>${esc(t('ml.lab.leaderboard.model'))}</th><th>${esc(metricName)}</th><th>${esc(
+      t('ml.lab.uncertainty.interval'),
+    )}</th></tr>
+    ${unc.intervals
+      .map(
+        (interval, index) =>
+          `<tr${index === 0 ? ' class="best"' : ''}><td>${esc(t(`ml.lab.models.${interval.model}`))}</td>` +
+          `<td>${fmt(interval.point)}</td><td>[${fmt(interval.lo)} ; ${fmt(interval.hi)}]</td></tr>`,
+      )
+      .join('\n')}</table>
+    ${verdictLine}`);
+  }
+
   if (artifacts.segments) {
     const seg = artifacts.segments;
     const metricName = t(`ml.lab.leaderboard.${seg.metricLabel}`);
