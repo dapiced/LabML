@@ -173,9 +173,20 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   116/118 matched, the two messy `latte` variants surface as orphans, and
   5 multivariate anomalies drop).
 
+- **V18 (per-segment analysis) — shipped**: "where does my model fail?".
+  After training, the held-out test set is **sliced by every categorical
+  column** — including columns kept _out_ of the features, where proxy
+  effects hide — and the inspected model's metric (accuracy or RMSE) is
+  recomputed per slice, with the **delta against the overall metric**
+  shown worst-first. Slices under 8 test rows are excluded and counted,
+  columns are ranked by their widest gap, and the analysis joins the run
+  record (history, report, share links). On the titanic demo it points
+  straight at deck C and Cherbourg passengers — and at the leaked `alive`
+  column, sliced despite being excluded from training.
+
 **Cap 3 is complete** (V11 drift · V13 complete runs · V14 prerender).
-**Cap 4 is underway**: V15 batch scoring, V16 imbalance tools and V17
-joins & anomalies shipped; V18 (per-segment analysis) remains. V12 (an
+**Cap 4 is complete**: V15 batch scoring, V16 imbalance tools, V17
+joins & anomalies and V18 per-segment analysis all shipped. V12 (an
 optional generative chat behind a server-side key proxy — never an API key
 in the browser) stays on hold as a product decision.
 

@@ -1,38 +1,12 @@
 import { Suspense, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { LabSection } from '@/features/ml/components/LabSection';
 
 const STEP_KEYS = ['upload', 'target', 'train', 'read'] as const;
-const ROADMAP_KEYS = [
-  'sprint0',
-  'sprint1',
-  'sprint2',
-  'sprint3',
-  'sprint4',
-  'sprint5',
-  'v2',
-  'v3',
-  'v4',
-  'v5',
-  'v6',
-  'v7',
-  'v8',
-  'v9',
-  'v10',
-  'v11',
-  'v13',
-  'v14',
-  'v15',
-  'v16',
-  'v17',
-] as const;
 // History (and Dexie with it) loads after first paint — it sits below the fold.
 const RunsHistory = lazy(() => import('@/features/ml/components/RunsHistory'));
-
-const SHIPPED_SPRINTS = 21; // MVP (S0–S5) + V2–V11 + V13–V17 are live (V12 on hold)
 
 export function MlHomePage() {
   const { t } = useTranslation();
@@ -56,7 +30,7 @@ export function MlHomePage() {
         <RunsHistory />
       </Suspense>
 
-      <section className="grid gap-4 pb-12 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-4 pb-20 sm:grid-cols-2 lg:grid-cols-4">
         {STEP_KEYS.map((key, index) => (
           <Card key={key} className="flex flex-col gap-2">
             <span className="font-mono text-sm text-copper">0{index + 1}</span>
@@ -64,27 +38,6 @@ export function MlHomePage() {
             <p className="text-sm text-muted">{t(`ml.steps.${key}.description`)}</p>
           </Card>
         ))}
-      </section>
-
-      <section className="pb-20">
-        <Card>
-          <Eyebrow>{t('ml.roadmap.title')}</Eyebrow>
-          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-            {ROADMAP_KEYS.map((key, index) => (
-              <li key={key} className="flex items-start gap-3 text-sm">
-                <Badge
-                  variant={index < SHIPPED_SPRINTS ? 'accent' : 'outline'}
-                  className="mt-0.5 shrink-0"
-                >
-                  {key.startsWith('v') ? key.toUpperCase() : `S${index}`}
-                </Badge>
-                <span className={index < SHIPPED_SPRINTS ? 'text-ink' : 'text-muted'}>
-                  {t(`ml.roadmap.${key}`)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Card>
       </section>
     </div>
   );

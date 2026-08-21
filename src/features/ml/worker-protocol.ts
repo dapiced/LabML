@@ -2,6 +2,7 @@ import type { Cell, ParseResultPayload, TargetAnalysis } from '@/features/ml/dat
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
 import type { ForecastPayload } from '@/features/ml/timeseries/run';
 import type { BatchScore } from '@/features/ml/train/score';
+import type { SegmentAnalysis } from '@/features/ml/train/segments';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
 import type { ThresholdAnalysis } from '@/features/ml/train/threshold-analysis';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
@@ -32,7 +33,8 @@ export type WorkerRequest =
   | { kind: 'export-predictions'; model: ModelKey }
   | { kind: 'score-batch-file'; file: File; model: ModelKey }
   | { kind: 'score-batch-url'; url: string; name: string; model: ModelKey }
-  | { kind: 'threshold-analysis'; model: ModelKey };
+  | { kind: 'threshold-analysis'; model: ModelKey }
+  | { kind: 'segment-analysis'; model: ModelKey };
 
 /** Messages emitted by the data/training worker. */
 export type WorkerResponse =
@@ -56,6 +58,8 @@ export type WorkerResponse =
   | { kind: 'batch-scored'; payload: BatchScore }
   // null = not applicable (multiclass, regression, or no probabilities).
   | { kind: 'threshold-result'; payload: ThresholdAnalysis | null }
+  // null = nothing sliceable (no categorical column, tiny test set).
+  | { kind: 'segments-result'; payload: SegmentAnalysis | null }
   // Dedicated channel: a bad batch file must not tear down the run state.
   | { kind: 'batch-error'; message: string }
   | { kind: 'error'; message: string };

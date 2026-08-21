@@ -31,6 +31,8 @@ test('mpg: regression leaderboard ranks by RMSE', async ({ page }) => {
 
   const rows = page.getByTestId('leaderboard').locator('tbody tr');
   await expect(rows).toHaveCount(7);
-  await expect(page.getByRole('columnheader', { name: 'RMSE' })).toBeVisible();
+  await expect(
+    page.getByTestId('leaderboard').getByRole('columnheader', { name: 'RMSE' }),
+  ).toBeVisible();
   await expect(page.getByText('best', { exact: true })).toBeVisible();
 });
