@@ -185,8 +185,9 @@ export function deserializeModel(text: string): ImportedModel {
   if (typeof raw !== 'object' || raw === null) throw new Error('invalid-json');
   const data = raw as Record<string, unknown>;
   if (data.app !== 'LabML') throw new Error('not-labml');
-  if (data.formatVersion !== 2) {
-    // v1 exports predate the pipeline manifest — they cannot score a raw CSV.
+  // v2 (v22) and v3 (v24, adds TF-IDF text specs) both carry a full pipeline
+  // manifest, so both stay importable; v1 predates it and cannot score a CSV.
+  if (data.formatVersion !== 2 && data.formatVersion !== 3) {
     throw new Error(`unsupported-version:${String(data.formatVersion ?? '?')}`);
   }
   const parameters = data.parameters as { kind?: string } | undefined;

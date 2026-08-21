@@ -10,8 +10,9 @@ export interface ExportMeta {
 
 /**
  * Self-describing export of a trained model — reusable outside LabML AND
- * re-importable (v22): format v2 carries the fitted pipeline parameters,
+ * re-importable (v22): the format carries the fitted pipeline parameters,
  * the target, and the run's held-out test metrics as an honest reference.
+ * v3 (v24) adds TF-IDF text specs; v2 files stay readable on import.
  * Returns null for models without a serializable form (k-NN).
  */
 export function serializeModel(
@@ -31,7 +32,7 @@ export function serializeModel(
   return JSON.stringify(
     {
       app: 'LabML',
-      formatVersion: 2,
+      formatVersion: 3,
       model: key,
       task: artifacts.isClassification ? 'classification' : 'regression',
       target: meta.target,

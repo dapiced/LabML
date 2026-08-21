@@ -12,6 +12,7 @@ const DEMO_DATASETS = [
   { file: 'fraud.csv', size: '20 KB', task: 'binary' },
   { file: 'mpg.csv', size: '21 KB', task: 'regression' },
   { file: 'energy.csv', size: '5 KB', task: 'timeseries' },
+  { file: 'reviews.csv', size: '28 KB', task: 'text' },
 ] as const;
 
 export function DropZone() {
