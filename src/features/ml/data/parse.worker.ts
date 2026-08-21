@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import Papa from 'papaparse';
+import { MAX_CELLS } from '@/features/ml/data/limits';
 import { profileColumn } from '@/features/ml/data/profile';
 import { analyzeTarget, baselineSuggestions } from '@/features/ml/data/suggest';
 import { computeInsights, computeWhatIf } from '@/features/ml/train/insights';
@@ -27,6 +28,8 @@ const PROGRESS_EVERY = 5000;
 let header: string[] = [];
 let columns: Cell[][] = [];
 let rowCount = 0;
+/** V25 memory guard: set when the stream blew the MAX_CELLS budget. */
+let overflowed = false;
 let cancelTraining = false;
 let cancelTuning = false;
 let artifacts: TrainArtifacts | null = null;
@@ -43,7 +46,8 @@ function post(message: WorkerResponse) {
   self.postMessage(message);
 }
 
-function ingestRows(rows: string[][]) {
+/** Returns false when the MAX_CELLS budget is blown — callers stop the stream. */
+function ingestRows(rows: string[][]): boolean {
   for (const row of rows) {
     if (header.length === 0) {
       header = row.map((cell, i) => (cell.trim() === '' ? `column_${i + 1}` : cell.trim()));
@@ -52,12 +56,18 @@ function ingestRows(rows: string[][]) {
     }
     // Skip fully empty trailing lines.
     if (row.length === 1 && row[0].trim() === '') continue;
+    // V25: named memory guard — refuse past MAX_CELLS instead of dying silently.
+    if ((rowCount + 1) * header.length > MAX_CELLS) {
+      overflowed = true;
+      return false;
+    }
     for (let i = 0; i < header.length; i++) {
       columns[i].push(row[i] ?? null);
     }
     rowCount += 1;
     if (rowCount % PROGRESS_EVERY === 0) post({ kind: 'progress', rows: rowCount });
   }
+  return true;
 }
 
 function buildResult(name: string, bytes: number): ParseResultPayload {
@@ -86,6 +96,7 @@ function resetState() {
   header = [];
   columns = [];
   rowCount = 0;
+  overflowed = false;
   artifacts = null;
 }
 
@@ -104,7 +115,10 @@ function parseFile(file: File) {
   resetState();
   Papa.parse<string[]>(file, {
     skipEmptyLines: true,
-    chunk: (results) => ingestRows(results.data),
+    chunk: (results, parser) => {
+      // Stop reading the file the moment the budget is blown (streaming abort).
+      if (!ingestRows(results.data)) parser.abort();
+    },
     complete: () => finishParse(file.name, file.size),
     error: (error) => post({ kind: 'error', message: error.message }),
   });
@@ -123,6 +137,12 @@ async function parseExcel(file: File) {
 }
 
 function finishParse(name: string, bytes: number) {
+  if (overflowed) {
+    // Named numeric refusal: the UI spells out the budget and where we stopped.
+    post({ kind: 'error', message: `too-large:${rowCount}:${header.length}` });
+    resetState();
+    return;
+  }
   if (header.length === 0 || rowCount === 0) {
     post({ kind: 'error', message: 'empty' });
     return;
