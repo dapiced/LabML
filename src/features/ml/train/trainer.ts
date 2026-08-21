@@ -37,7 +37,9 @@ export interface TrainOutcome {
 }
 
 const LATENCY_SAMPLE = 200;
-const TRAINABLE_TYPES = new Set(['numeric', 'categorical', 'boolean']);
+// 'text' joined the list in V24: free-text columns now enter the pipeline as
+// TF-IDF blocks instead of being skipped. Dates and ids stay out.
+const TRAINABLE_TYPES = new Set(['numeric', 'categorical', 'boolean', 'text']);
 
 /** Lets queued worker messages (e.g. cancellation) run between models. */
 export function yieldToQueue(): Promise<void> {
