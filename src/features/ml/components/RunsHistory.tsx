@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Check, Pencil, Trash2 } from 'lucide-react';
+import { Check, FolderOpen, HardDrive, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -7,7 +7,87 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { db } from '@/features/ml/projects/db';
+import { formatSize } from '@/features/ml/projects/dataset-storage';
+import { useLabStore } from '@/features/ml/lab-store';
 import type { RunRecord } from '@/features/ml/projects/types';
+
+/** Datasets kept in the browser (v19) — reopen or forget, all local. */
+function SavedDatasets() {
+  const { t, i18n } = useTranslation();
+  const lang = i18n.resolvedLanguage ?? 'en';
+  const openDataset = useLabStore((s) => s.openDataset);
+  const forgetDataset = useLabStore((s) => s.forgetDataset);
+  // Project the CSV blobs away so the list never retains them in memory.
+  const datasets = useLiveQuery(async () => {
+    const list = await db.datasets.orderBy('savedAt').reverse().toArray();
+    return list.map((d) => ({
+      id: d.id!,
+      name: d.name,
+      rowCount: d.rowCount,
+      columnCount: d.columnCount,
+      storedBytes: d.storedBytes,
+      savedAt: d.savedAt,
+    }));
+  }, []);
+
+  if (!datasets || datasets.length === 0) return null;
+
+  return (
+    <Card data-testid="saved-datasets">
+      <div className="flex flex-wrap items-baseline gap-3">
+        <Eyebrow>{t('ml.lab.datasets.listTitle')}</Eyebrow>
+        <span className="text-xs text-muted">{t('ml.lab.datasets.listNote')}</span>
+      </div>
+      <ul className="mt-4 flex flex-col">
+        {datasets.map((dataset) => (
+          <li
+            key={dataset.id}
+            className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-line py-2.5 text-sm first:border-t-0"
+          >
+            <HardDrive className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
+            <span className="font-mono font-medium">{dataset.name}</span>
+            <span className="font-mono text-xs text-muted tabular-nums">
+              {dataset.rowCount.toLocaleString(lang)} × {dataset.columnCount} ·{' '}
+              {formatSize(
+                dataset.storedBytes,
+                lang,
+                t('ml.lab.datasets.unitKb'),
+                t('ml.lab.datasets.unitMb'),
+              )}{' '}
+              {t('ml.lab.datasets.stored')}
+            </span>
+            <span className="font-mono text-[0.68rem] text-muted">
+              {new Date(dataset.savedAt).toLocaleString(lang)}
+            </span>
+            <span className="ml-auto flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  openDataset(dataset.id);
+                  window.scrollTo({ top: 0 });
+                }}
+                aria-label={t('ml.lab.datasets.reopen')}
+                title={t('ml.lab.datasets.reopen')}
+                className="rounded p-1.5 text-muted hover:bg-surface-2 hover:text-ink"
+              >
+                <FolderOpen className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => forgetDataset(dataset.id)}
+                aria-label={t('ml.lab.datasets.forget')}
+                title={t('ml.lab.datasets.forget')}
+                className="rounded p-1.5 text-muted hover:bg-copper-soft hover:text-copper"
+              >
+                <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
 
 function bestOf(record: RunRecord) {
   const ok = record.results.filter((r) => r.ok);
@@ -203,6 +283,8 @@ export function RunsHistory() {
           </div>
         )}
       </Card>
+
+      <SavedDatasets />
     </section>
   );
 }

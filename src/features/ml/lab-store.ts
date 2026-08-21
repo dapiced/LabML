@@ -72,10 +72,18 @@ interface LabState {
   segmentAnalysis: SegmentAnalysis | null;
   /** The auto-saved record of the current run (id set once stored). */
   currentRun: RunRecord | null;
+  /** Local id of the stored copy of the CURRENT dataset — null if not kept. */
+  savedDatasetId: number | null;
+  datasetSaving: boolean;
+  /** Refusal detail when a save does not fit the quota — named, never silent. */
+  datasetQuotaError: { usedBytes: number; neededBytes: number; quotaBytes: number } | null;
   /** File produced by an export action, consumed once by the UI download effect. */
   exportedFile: { name: string; mime: string; content: string } | null;
   loadFile: (file: File) => void;
   loadDemo: (fileName: string) => void;
+  saveDataset: () => void;
+  openDataset: (id: number) => void;
+  forgetDataset: (id: number) => void;
   setTarget: (column: string | null) => void;
   toggleColumn: (column: string) => void;
   train: () => void;
@@ -143,6 +151,9 @@ const initialData = {
   targetUnsupported: null,
   leaks: [],
   overrides: {},
+  savedDatasetId: null as number | null,
+  datasetSaving: false,
+  datasetQuotaError: null as LabState['datasetQuotaError'],
   ...initialTraining,
 };
 
@@ -185,6 +196,53 @@ export const useLabStore = create<LabState>((set, get) => {
         costFn: choice.costFn,
       },
     };
+  }
+
+  /**
+   * Store the rebuilt CSV in IndexedDB (v19 opt-in). Everything is dynamic
+   * here — Dexie and lz-string stay out of the initial /ml bundle. Over
+   * quota → a NAMED refusal with the numbers, never a trim or a silent drop.
+   */
+  async function persistDatasetCsv(csv: string) {
+    const meta = get().meta;
+    if (!meta) return;
+    const [{ db }, storage] = await Promise.all([
+      import('@/features/ml/projects/db'),
+      import('@/features/ml/projects/dataset-storage'),
+    ]);
+    const packed = storage.packDataset(csv);
+    // Transient full read: the quota caps the table at ~50 MB compressed.
+    let usedBytes = 0;
+    await db.datasets.each((d) => {
+      usedBytes += d.storedBytes;
+    });
+    if (!storage.fitsQuota(usedBytes, packed.storedBytes)) {
+      set({
+        datasetSaving: false,
+        datasetQuotaError: {
+          usedBytes,
+          neededBytes: packed.storedBytes,
+          quotaBytes: storage.DATASET_QUOTA_BYTES,
+        },
+      });
+      return;
+    }
+    const id = await db.datasets.add({
+      name: meta.name,
+      rowCount: meta.rowCount,
+      columnCount: meta.columnCount,
+      originalBytes: packed.originalBytes,
+      storedBytes: packed.storedBytes,
+      savedAt: Date.now(),
+      csv: packed.csv,
+    });
+    set({ savedDatasetId: id, datasetSaving: false, datasetQuotaError: null });
+    // A run trained on this dataset gets linked, in memory and in Dexie.
+    const current = get().currentRun;
+    if (current) {
+      set({ currentRun: { ...current, datasetId: id } });
+      if (current.id !== undefined) void db.runs.update(current.id, { datasetId: id });
+    }
   }
 
   function send(request: WorkerRequest) {
@@ -260,6 +318,7 @@ export const useLabStore = create<LabState>((set, get) => {
               results: state.results,
               summary: state.summary,
               insights: message.payload,
+              ...(state.savedDatasetId !== null ? { datasetId: state.savedDatasetId } : {}),
             };
             set({ currentRun: record });
             // Dexie is loaded on demand so /ml renders without it.
@@ -327,6 +386,8 @@ export const useLabStore = create<LabState>((set, get) => {
               },
             });
           }
+        } else if (message.kind === 'dataset-csv') {
+          void persistDatasetCsv(message.csv);
         } else if (message.kind === 'predictions-csv') {
           set({
             exportedFile: {
@@ -359,6 +420,37 @@ export const useLabStore = create<LabState>((set, get) => {
       terminateWorker();
       set({ ...initialData, status: 'parsing' });
       send({ kind: 'parse-url', url: `/datasets/${fileName}`, name: fileName });
+    },
+
+    saveDataset() {
+      const state = get();
+      if (state.status !== 'ready' || state.savedDatasetId !== null || state.datasetSaving) return;
+      set({ datasetSaving: true, datasetQuotaError: null });
+      send({ kind: 'export-dataset' });
+    },
+
+    openDataset(id) {
+      terminateWorker();
+      set({ ...initialData, status: 'parsing', savedDatasetId: id });
+      void Promise.all([
+        import('@/features/ml/projects/db'),
+        import('@/features/ml/projects/dataset-storage'),
+      ]).then(async ([{ db }, storage]) => {
+        const stored = await db.datasets.get(id);
+        const text = stored ? storage.unpackDataset(stored.csv) : null;
+        if (!stored || text === null) {
+          set({ status: 'error', error: 'dataset-missing', savedDatasetId: null });
+          return;
+        }
+        send({ kind: 'parse-text', text, name: stored.name });
+      });
+    },
+
+    forgetDataset(id) {
+      void import('@/features/ml/projects/db').then(({ db }) => db.datasets.delete(id));
+      if (get().savedDatasetId === id) {
+        set({ savedDatasetId: null, datasetQuotaError: null });
+      }
     },
 
     setTarget(column) {
