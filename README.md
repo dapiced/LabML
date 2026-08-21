@@ -206,11 +206,22 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   draw (not training variance), tiny test sets are declined instead of
   decorated, and a wide interval is information, not a defect.
 
+- **V21 (run comparison) — shipped**: "did my cleaning help?". Tick two
+  runs in the history and open a **side-by-side diff**: feature changes
+  named as +/− badges, every model's metric in an A/B/Δ table with
+  oriented colors, a **plain-language read** of the best-model move, and —
+  when both runs carry V20 intervals — a **cross-run verdict**: disjoint
+  intervals mean the gap exceeds both uncertainties, overlapping ones
+  mean it could be noise. Honesty first: runs with different targets or
+  task families refuse metric deltas (the config diff still tells the
+  story), and the interval note says it plainly — two runs are never
+  paired, read it as an indication, not a test.
+
 **Cap 3 is complete** (V11 drift · V13 complete runs · V14 prerender).
 **Cap 4 is complete**: V15 batch scoring, V16 imbalance tools, V17
 joins & anomalies and V18 per-segment analysis all shipped.
-**Cap 5 is underway**: V19 persistent projects and V20 honest uncertainty
-shipped; V21 (run comparison) and V22 (model import) remain. V12 (an
+**Cap 5 is underway**: V19 persistent projects, V20 honest uncertainty
+and V21 run comparison shipped; V22 (model import) remains. V12 (an
 optional generative chat behind a server-side key proxy — never an API key
 in the browser) stays on hold as a product decision.
 

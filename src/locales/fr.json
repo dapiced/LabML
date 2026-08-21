@@ -70,7 +70,6 @@
     "titlePre": "Un laboratoire de machine learning,",
     "titleHighlight": "entièrement dans votre navigateur.",
     "lede": "Déposez un jeu de données, choisissez quoi prédire, et entraînez plusieurs modèles sur votre propre machine. Sans compte, sans upload, sans installation — et chaque run est comparé à une baseline honnête.",
-    "openLab": "Ouvrir le ML Lab",
     "modules": {
       "ml": {
         "title": "ML Lab",
@@ -325,6 +324,29 @@
         "verdictNoise": "{{winner}} vs {{against}} : Δ {{metric}} = {{delta}} [{{lo}} ; {{hi}}] — l'intervalle traverse zéro. Peut-être du bruit : sur ce jeu de test, le gagnant n'est pas prouvé meilleur.",
         "note": "Les rééchantillonnages tirent des mêmes {{rows}} lignes de test (seed {{seed}}, partagés entre modèles pour des comparaisons appariées). Ces intervalles mesurent la sensibilité au tirage du test — pas la variance d'entraînement."
       },
+      "compare": {
+        "open": "Comparer ces deux runs",
+        "title": "Comparaison de runs",
+        "sameDataset": "même dataset",
+        "otherDataset": "datasets différents",
+        "sameTarget": "même cible",
+        "otherTarget": "cibles différentes",
+        "notComparable": "Ces runs ne prédisent pas la même chose — les métriques ne se comparent pas. Le diff de configuration ci-dessous raconte quand même l'histoire.",
+        "read": "Le meilleur modèle passe de {{aPrimary}} ({{aModel}}) à {{bPrimary}} ({{bModel}}) — {{metric}} {{delta}}.",
+        "readBetter": "Une amélioration.",
+        "readWorse": "Une régression.",
+        "readEqual": "Aucun changement.",
+        "featuresTitle": "Changements de variables (A → B)",
+        "kept_one": "{{count}} variable conservée des deux côtés",
+        "kept_other": "{{count}} variables conservées des deux côtés",
+        "sameFeatures": "Les deux runs ont entraîné sur les mêmes variables.",
+        "modelsTitle": "{{metric}} par modèle, côte à côte",
+        "delta": "Δ (B − A)",
+        "intervalsTitle": "Intervalles des gagnants (95 %, propres à chaque run)",
+        "intervalsDisjoint": "Les intervalles ne se recouvrent pas — l'écart entre les deux runs dépasse leurs deux incertitudes. Probablement réel.",
+        "intervalsOverlap": "Les intervalles se recouvrent — sur ces jeux de test, l'écart entre les deux runs peut être du bruit.",
+        "intervalsNote": "Chaque intervalle vient du tirage de test de son propre run (v20). Deux runs ne sont jamais appariés — à lire comme une indication, pas un test."
+      },
       "datasets": {
         "keepButton": "Conserver dans ce navigateur",
         "keeping": "Conservation…",
@@ -392,15 +414,7 @@
         "delete": "Supprimer",
         "compare": "Comparer",
         "backToLab": "Retour au labo",
-        "notFound": "Run introuvable.",
-        "fields": {
-          "dataset": "Dataset",
-          "target": "Cible",
-          "bestModel": "Meilleur modèle",
-          "primary": "Score",
-          "rows": "Lignes",
-          "seed": "Seed"
-        }
+        "notFound": "Run introuvable."
       },
       "runArtifacts": {
         "hint": "Ces analyses ont été lancées après l’entraînement et sauvegardées avec le run — elles voyagent avec l’historique local, le rapport HTML et les liens de partage, jamais avec les données.",
