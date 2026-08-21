@@ -26,7 +26,15 @@ async function artifacts(): Promise<TrainArtifacts> {
 describe('serializeModel', () => {
   it('exports self-describing parameters for parametric models', async () => {
     const arts = await artifacts();
-    for (const key of ['baseline', 'logistic', 'naiveBayes', 'tree', 'forest'] as const) {
+    for (const key of [
+      'baseline',
+      'logistic',
+      'naiveBayes',
+      'tree',
+      'forest',
+      'gbdt',
+      'mlp',
+    ] as const) {
       const json = serializeModel(arts, key);
       expect(json, key).not.toBeNull();
       const parsed = JSON.parse(json!);

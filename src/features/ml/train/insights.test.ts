@@ -113,6 +113,12 @@ describe('computeInsights / computeWhatIf', () => {
     expect(insights.roc?.auc).toBeGreaterThan(0.95);
     expect(insights.importance[0].column).toBe('f1');
     expect(insights.scatter).toBeUndefined();
+
+    // Partial dependence: P(yes) must rise as the decisive column grows.
+    const pdp = insights.pdp?.find((entry) => entry.column === 'f1');
+    expect(pdp).toBeDefined();
+    expect(pdp!.points).toHaveLength(20);
+    expect(pdp!.points[19].y - pdp!.points[0].y).toBeGreaterThan(0.5);
   });
 
   it('answers what-if questions with label and sorted probabilities', async () => {
@@ -138,6 +144,14 @@ describe('computeInsights / computeWhatIf', () => {
     expect(insights.scatter!.length).toBeGreaterThan(10);
     expect(insights.residuals!.counts.reduce((a, v) => a + v, 0)).toBe(outcome!.summary.testRows);
     expect(insights.confusion).toBeUndefined();
+
+    // Regression PDP tracks the underlying linear signal (x in original scale).
+    const pdp = insights.pdp?.find((entry) => entry.column === 'f1');
+    expect(pdp).toBeDefined();
+    const slope = (pdp!.points[19].y - pdp!.points[0].y) / (pdp!.points[19].x - pdp!.points[0].x);
+    expect(slope).toBeGreaterThan(2);
+    expect(slope).toBeLessThan(4);
+
     const prediction = Number(
       computeWhatIf(outcome!.artifacts, 'linear', { f1: '100', f2: '3' }).prediction,
     );
