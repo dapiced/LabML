@@ -121,6 +121,53 @@ export function residualsHistogram(
   return { counts, min, max };
 }
 
+const PDP_GRID = 20;
+const PDP_COLUMNS = 2;
+
+/**
+ * Partial dependence on the most important numeric columns: sweep one column
+ * across its observed range while every other feature keeps its real values,
+ * and average the model's prediction at each step.
+ */
+export function partialDependence(
+  model: TrainedModel,
+  pipeline: FittedPipeline,
+  testX: number[][],
+  isClassification: boolean,
+  importance: { column: string; value: number }[],
+): { column: string; points: { x: number; y: number }[] }[] {
+  if (isClassification && !model.predictProba) return [];
+  const blocks = encodedBlocks(pipeline);
+  const numericSpecs = new Map(
+    pipeline.specs.filter((s) => s.kind === 'numeric').map((s) => [s.name, s]),
+  );
+  const chosen = importance
+    .filter((entry) => entry.value > 0 && numericSpecs.has(entry.column))
+    .slice(0, PDP_COLUMNS);
+
+  return chosen.map(({ column }) => {
+    const spec = numericSpecs.get(column)!;
+    const { start } = blocks.find((b) => b.column === column)!;
+    const observed = testX.map((row) => row[start]);
+    const min = Math.min(...observed);
+    const max = Math.max(...observed);
+    const points: { x: number; y: number }[] = [];
+    for (let step = 0; step < PDP_GRID; step++) {
+      const value = min + ((max - min) * step) / (PDP_GRID - 1);
+      const swept = testX.map((row) => {
+        const clone = [...row];
+        clone[start] = value;
+        return clone;
+      });
+      const mean = isClassification
+        ? model.predictProba!(swept).reduce((a, p) => a + (p[1] ?? 0), 0) / swept.length
+        : model.predict(swept).reduce((a, v) => a + v, 0) / swept.length;
+      points.push({ x: value * spec.std + spec.mean, y: mean });
+    }
+    return { column, points };
+  });
+}
+
 /** Full insights bundle for one trained model, computed on the test split. */
 export function computeInsights(artifacts: TrainArtifacts, modelKey: ModelKey): InsightsPayload {
   const model = artifacts.models.get(modelKey);
@@ -149,16 +196,21 @@ export function computeInsights(artifacts: TrainArtifacts, modelKey: ModelKey): 
         model.predictProba(testX).map((p) => p[1]),
       );
       if (roc) payload.roc = roc;
+      const pdp = partialDependence(model, pipeline, testX, true, importance);
+      if (pdp.length > 0) payload.pdp = pdp;
     }
     return payload;
   }
 
-  return {
+  const payload: InsightsPayload = {
     model: modelKey,
     scatter: scatterSample(testY, predictions, seed),
     residuals: residualsHistogram(testY, predictions),
     importance,
   };
+  const pdp = partialDependence(model, pipeline, testX, false, importance);
+  if (pdp.length > 0) payload.pdp = pdp;
+  return payload;
 }
 
 /** Encodes one synthetic row with the fitted pipeline and predicts it. */
