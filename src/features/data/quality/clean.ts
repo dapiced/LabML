@@ -1,3 +1,4 @@
+import { ANOMALY_THRESHOLD, isolationScores } from '@/features/data/quality/isolation';
 import { inferColumnType, isMissing, parseNumber } from '@/features/ml/data/infer';
 import { parseDate } from '@/features/ml/timeseries/series';
 import { duplicateRowIndices, messyGroups, outlierFences } from '@/features/data/quality/checks';
@@ -75,6 +76,7 @@ export function applyRecipe(
     droppedMissingRows: 0,
     clippedCells: 0,
     derivedColumns: [],
+    droppedAnomalyRows: 0,
     rowCount: 0,
     columnCount: 0,
   };
@@ -210,6 +212,24 @@ export function applyRecipe(
           column[r] = formatNumber(fences.high);
           stats.clippedCells += 1;
         }
+      }
+    }
+  }
+
+  // Last step, on the CLEANED data: the seeded isolation forest sees complete
+  // numeric rows (imputed, clipped) and flags multivariate anomalies — the odd
+  // COMBINATIONS the univariate Tukey fences cannot see. Seeded, so replaying
+  // the recipe on the same file drops the same rows, always.
+  if (options.dropAnomalies) {
+    const anomalies = isolationScores(outHeader, columns);
+    if (anomalies) {
+      const keep: number[] = [];
+      for (let r = 0; r < anomalies.scores.length; r++) {
+        if (anomalies.scores[r] > ANOMALY_THRESHOLD) stats.droppedAnomalyRows += 1;
+        else keep.push(r);
+      }
+      if (stats.droppedAnomalyRows > 0) {
+        columns = columns.map((column) => keep.map((r) => column[r]));
       }
     }
   }

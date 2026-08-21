@@ -102,3 +102,32 @@ test('drift check compares a new batch against the loaded reference', async ({ p
   const productRow = result.locator('tr', { hasText: 'product' });
   await expect(productRow).toContainText('Matcha');
 });
+
+test('a catalog joins the dataset and the recipe drops multivariate anomalies', async ({
+  page,
+}) => {
+  await page.goto('/data');
+  await page.getByRole('button', { name: /cafe-sales\.csv/ }).click();
+  await expect(page.getByText('118 rows · 8 columns')).toBeVisible();
+
+  // Join the product catalog on the shared key.
+  await page.getByTestId('join-demo').click();
+  await expect(page.getByTestId('join-ready')).toBeVisible();
+  await expect(page.getByTestId('join-key')).toHaveValue('product');
+  await page.getByTestId('join-apply').click();
+
+  const result = page.getByTestId('join-result');
+  await expect(result).toBeVisible();
+  await expect(result).toContainText('116 of 118 rows matched, 2 columns added');
+  await expect(result).toContainText('+ category');
+  // The messy key variants become named orphans — a finding, not a silence.
+  await expect(page.getByTestId('join-orphans')).toContainText('LATTE');
+
+  // The joined result IS the dataset: shape and recipe restart from it.
+  await expect(page.getByText('118 rows · 10 columns')).toBeVisible();
+  await expect(page.getByTestId('recipe-result')).toContainText('112 rows · 10 columns');
+
+  // The seeded isolation forest drops the 5 multivariate anomalies.
+  await page.getByRole('checkbox', { name: /multivariate anomalies/ }).check();
+  await expect(page.getByTestId('recipe-result')).toContainText('107 rows · 10 columns');
+});
