@@ -26,6 +26,31 @@ export interface FittedPipeline {
   transformRow(record: Record<string, Cell>): number[];
 }
 
+/** JSON-safe form of the fitted parameters (v22 model export). */
+export type PipelineSpecJson =
+  | { kind: 'numeric'; name: string; median: number; mean: number; std: number }
+  | { kind: 'onehot'; name: string; categories: string[]; mode: string }
+  | {
+      kind: 'ordinal';
+      name: string;
+      ranks: [string, number][];
+      mode: string;
+      mean: number;
+      std: number;
+    };
+
+export function specsToJson(specs: FeatureSpec[]): PipelineSpecJson[] {
+  return specs.map((spec) =>
+    spec.kind === 'ordinal' ? { ...spec, ranks: [...spec.ranks.entries()] } : spec,
+  );
+}
+
+export function specsFromJson(specs: PipelineSpecJson[]): FeatureSpec[] {
+  return specs.map((spec) =>
+    spec.kind === 'ordinal' ? { ...spec, ranks: new Map(spec.ranks) } : spec,
+  );
+}
+
 function cellString(value: Cell): string | null {
   return isMissing(value) ? null : (value as string).trim();
 }
@@ -99,34 +124,44 @@ export function fitPipeline(
     }
   }
 
-  const featureNames = specs.flatMap((spec) =>
-    spec.kind === 'onehot' ? spec.categories.map((c) => `${spec.name}=${c}`) : [spec.name],
-  );
-
-  function encodeInto(row: number[], spec: FeatureSpec, raw: string | null): void {
-    if (spec.kind === 'numeric') {
-      const parsed = raw === null ? null : parseNumber(raw);
-      const value = parsed === null ? spec.median : parsed;
-      row.push((value - spec.mean) / spec.std);
-    } else if (spec.kind === 'onehot') {
-      const value = raw ?? spec.mode;
-      for (const category of spec.categories) row.push(value === category ? 1 : 0);
-    } else {
-      const rank = spec.ranks.get(raw ?? spec.mode) ?? spec.ranks.get(spec.mode) ?? 0;
-      row.push((rank - spec.mean) / spec.std);
-    }
-  }
+  const { featureNames, transformRow } = buildRowEncoder(specs);
 
   function transform(indices: number[]): number[][] {
     return indices.map((i) => {
-      const row: number[] = [];
-      for (const spec of specs) {
-        encodeInto(row, spec, cellString(columns.get(spec.name)![i]));
-      }
-      return row;
+      const record: Record<string, Cell> = {};
+      for (const spec of specs) record[spec.name] = columns.get(spec.name)![i];
+      return transformRow(record);
     });
   }
 
+  return { specs, featureNames, transform, transformRow };
+}
+
+function encodeInto(row: number[], spec: FeatureSpec, raw: string | null): void {
+  if (spec.kind === 'numeric') {
+    const parsed = raw === null ? null : parseNumber(raw);
+    const value = parsed === null ? spec.median : parsed;
+    row.push((value - spec.mean) / spec.std);
+  } else if (spec.kind === 'onehot') {
+    const value = raw ?? spec.mode;
+    for (const category of spec.categories) row.push(value === category ? 1 : 0);
+  } else {
+    const rank = spec.ranks.get(raw ?? spec.mode) ?? spec.ranks.get(spec.mode) ?? 0;
+    row.push((rank - spec.mean) / spec.std);
+  }
+}
+
+/**
+ * Row encoder from fitted parameters alone — shared by training and by the
+ * v22 import path, so an imported model encodes EXACTLY like its run did.
+ */
+export function buildRowEncoder(specs: FeatureSpec[]): {
+  featureNames: string[];
+  transformRow(record: Record<string, Cell>): number[];
+} {
+  const featureNames = specs.flatMap((spec) =>
+    spec.kind === 'onehot' ? spec.categories.map((c) => `${spec.name}=${c}`) : [spec.name],
+  );
   function transformRow(record: Record<string, Cell>): number[] {
     const row: number[] = [];
     for (const spec of specs) {
@@ -134,8 +169,7 @@ export function fitPipeline(
     }
     return row;
   }
-
-  return { specs, featureNames, transform, transformRow };
+  return { featureNames, transformRow };
 }
 
 /** Rows with a usable (non-missing) target value. */
