@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { RunRecord } from '@/features/ml/projects/types';
+import type { RunArtifacts, RunRecord } from '@/features/ml/projects/types';
 import type {
   ColumnSuggestion,
   DatasetMeta,
@@ -124,6 +124,23 @@ const initialData = {
 };
 
 export const useLabStore = create<LabState>((set, get) => {
+  /**
+   * Attach a late analysis (tuning, explanation, exploration, forecast) to the
+   * current run so it survives it — in memory and in IndexedDB. Each kind keeps
+   * its latest outcome only. No current run (e.g. exploring without training)
+   * → the panel state still shows it, it just is not part of any record.
+   */
+  function attachArtifact(patch: Partial<RunArtifacts>) {
+    const current = get().currentRun;
+    if (!current) return;
+    const artifacts: RunArtifacts = { ...current.artifacts, ...patch };
+    set({ currentRun: { ...current, artifacts } });
+    if (current.id !== undefined) {
+      const id = current.id;
+      void import('@/features/ml/projects/db').then(({ db }) => db.runs.update(id, { artifacts }));
+    }
+  }
+
   function send(request: WorkerRequest) {
     if (!worker) {
       worker = new Worker(new URL('./data/parse.worker.ts', import.meta.url), { type: 'module' });
@@ -199,8 +216,15 @@ export const useLabStore = create<LabState>((set, get) => {
             // Dexie is loaded on demand so /ml renders without it.
             void import('@/features/ml/projects/db').then(({ db }) =>
               db.runs.add(record).then((id) => {
+                // Match by createdAt: an artifact may have replaced the object
+                // meanwhile — keep it, and persist what it attached.
                 const current = get().currentRun;
-                if (current === record) set({ currentRun: { ...record, id } });
+                if (current && current.createdAt === record.createdAt) {
+                  set({ currentRun: { ...current, id } });
+                  if (current.artifacts) {
+                    void db.runs.update(id, { artifacts: current.artifacts });
+                  }
+                }
               }),
             );
           }
@@ -208,18 +232,22 @@ export const useLabStore = create<LabState>((set, get) => {
           set({ whatIf: message.payload, explanation: null });
         } else if (message.kind === 'explanation') {
           set({ explanation: message.payload });
+          attachArtifact({ explanation: message.payload });
         } else if (message.kind === 'tune-progress') {
           set({
             tuneProgress: { done: message.done, total: message.total, bestCv: message.bestCv },
           });
         } else if (message.kind === 'tune-complete') {
           set({ tuneStatus: 'done', tuneProgress: null, tuneOutcome: message.payload });
+          attachArtifact({ tuning: message.payload });
         } else if (message.kind === 'tune-cancelled') {
           set({ tuneStatus: 'idle', tuneProgress: null });
         } else if (message.kind === 'explore-result') {
           set({ exploreStatus: 'done', exploration: message.payload });
+          attachArtifact({ exploration: message.payload });
         } else if (message.kind === 'forecast-result') {
           set({ forecastStatus: 'done', forecastPayload: message.payload });
+          attachArtifact({ forecast: message.payload });
         } else if (message.kind === 'model-json') {
           if (message.json !== null) {
             set({

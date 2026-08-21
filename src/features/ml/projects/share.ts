@@ -8,7 +8,7 @@ import type { RunRecord, SharePayload } from '@/features/ml/projects/types';
  */
 export function encodeShareFragment(record: RunRecord): string {
   const payload: SharePayload = {
-    v: 1,
+    v: 2,
     name: record.name,
     createdAt: record.createdAt,
     dataset: record.dataset,
@@ -18,6 +18,7 @@ export function encodeShareFragment(record: RunRecord): string {
     results: record.results,
     summary: record.summary,
     insights: trimInsights(record.insights),
+    artifacts: trimArtifacts(record.artifacts),
   };
   return compressToEncodedURIComponent(JSON.stringify(payload));
 }
@@ -27,7 +28,9 @@ export function decodeShareFragment(fragment: string): SharePayload | null {
     const json = decompressFromEncodedURIComponent(fragment);
     if (!json) return null;
     const payload = JSON.parse(json) as SharePayload;
-    if (payload.v !== 1 || !Array.isArray(payload.results) || !payload.summary) return null;
+    // v1 links predate run artifacts and must keep working.
+    if (payload.v !== 1 && payload.v !== 2) return null;
+    if (!Array.isArray(payload.results) || !payload.summary) return null;
     return payload;
   } catch {
     return null;
@@ -43,6 +46,22 @@ function trimInsights(insights: RunRecord['insights']): RunRecord['insights'] {
       : undefined,
     scatter: insights.scatter ? downsample(insights.scatter, 100) : undefined,
   };
+}
+
+/** The point clouds are the only heavy artifact parts — cap them for the URL. */
+function trimArtifacts(artifacts: RunRecord['artifacts']): RunRecord['artifacts'] {
+  if (!artifacts) return undefined;
+  const trimmed: RunRecord['artifacts'] = { ...artifacts };
+  if (artifacts.exploration) {
+    trimmed.exploration = {
+      ...artifacts.exploration,
+      points: downsample(artifacts.exploration.points, 120),
+    };
+  }
+  if (artifacts.forecast) {
+    trimmed.forecast = { ...artifacts.forecast, points: artifacts.forecast.points.slice(-60) };
+  }
+  return trimmed;
 }
 
 function downsample<T>(points: T[], cap: number): T[] {
