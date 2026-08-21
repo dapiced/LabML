@@ -22,6 +22,7 @@ function makeArtifacts(model: TrainedModel, isClassification: boolean): TrainArt
     pipeline,
     testX: pipeline.transform(indices.slice(0, 10)),
     testY: [],
+    testIndices: indices.slice(0, 10),
     classes: isClassification ? ['no', 'yes'] : [],
     isClassification,
     seed: 42,

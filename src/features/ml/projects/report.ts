@@ -192,6 +192,33 @@ function artifactSections(record: RunRecord, t: Translate, lang: string): string
     )}</td><td>${fmt(th.chosen.f1)}</td><td>${th.chosen.cost}</td></tr></table>`);
   }
 
+  if (artifacts.segments) {
+    const seg = artifacts.segments;
+    const metricName = t(`ml.lab.leaderboard.${seg.metricLabel}`);
+    const rows = seg.columns
+      .flatMap((column) =>
+        column.segments.map(
+          (segment) =>
+            `<tr><td>${esc(column.column)}</td><td>${esc(segment.value)}</td><td>${segment.rows}</td>` +
+            `<td>${fmt(segment.metric)}</td><td>${segment.delta >= 0 ? '+' : ''}${segment.delta.toFixed(3)}</td></tr>`,
+        ),
+      )
+      .join('\n');
+    sections.push(`<h2>${esc(t('ml.lab.segments.title'))} — ${esc(t(`ml.lab.models.${seg.model}`))}</h2>
+    <p class="meta">${esc(
+      t('ml.lab.segments.hint', {
+        rows: seg.testRows.toLocaleString(lang),
+        min: seg.minRows,
+      }),
+    )} ${esc(metricName)} ${fmt(seg.overall)}.</p>
+    <table><tr><th>${esc(t('ml.lab.segments.colColumn'))}</th><th>${esc(
+      t('ml.lab.segments.colSegment'),
+    )}</th><th>${esc(t('ml.lab.segments.colRows'))}</th><th>${esc(metricName)}</th><th>${esc(
+      t('ml.lab.segments.colDelta'),
+    )}</th></tr>
+    ${rows}</table>`);
+  }
+
   if (artifacts.batchScore) {
     const batch = artifacts.batchScore;
     const rows = batch.metrics

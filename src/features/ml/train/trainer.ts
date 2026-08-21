@@ -24,6 +24,8 @@ export interface TrainArtifacts {
   pipeline: ReturnType<typeof fitPipeline>;
   testX: number[][];
   testY: number[];
+  /** Original row index of each test position — segment slicing needs it. */
+  testIndices: number[];
   classes: string[];
   isClassification: boolean;
   seed: number;
@@ -260,6 +262,7 @@ export async function runTraining(
       pipeline,
       testX,
       testY,
+      testIndices: test,
       classes,
       isClassification,
       seed: config.seed,

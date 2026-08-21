@@ -9,6 +9,7 @@ import type {
 } from '@/features/ml/data/types';
 import { thresholdMetrics } from '@/features/ml/train/threshold';
 import type { BatchScore } from '@/features/ml/train/score';
+import type { SegmentAnalysis } from '@/features/ml/train/segments';
 import type { ThresholdAnalysis } from '@/features/ml/train/threshold-analysis';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
@@ -67,6 +68,8 @@ interface LabState {
   /** Binary + probabilistic models only — null otherwise. */
   thresholdAnalysis: ThresholdAnalysis | null;
   thresholdChoice: { threshold: number; costFp: number; costFn: number };
+  /** Per-segment metrics of the inspected model — null when nothing sliceable. */
+  segmentAnalysis: SegmentAnalysis | null;
   /** The auto-saved record of the current run (id set once stored). */
   currentRun: RunRecord | null;
   /** File produced by an export action, consumed once by the UI download effect. */
@@ -122,6 +125,7 @@ const initialTraining = {
   batchError: null,
   thresholdAnalysis: null as ThresholdAnalysis | null,
   thresholdChoice: { threshold: 0.5, costFp: 1, costFn: 1 },
+  segmentAnalysis: null as SegmentAnalysis | null,
   currentRun: null,
   exportedFile: null,
 };
@@ -230,6 +234,7 @@ export const useLabStore = create<LabState>((set, get) => {
           set({ insights: message.payload, whatIf: null });
           // Imbalance tools ride along; the worker answers null when N/A.
           send({ kind: 'threshold-analysis', model: message.payload.model });
+          send({ kind: 'segment-analysis', model: message.payload.model });
           // First insights after a completed run = winning model → auto-save.
           const state = get();
           if (
@@ -306,6 +311,11 @@ export const useLabStore = create<LabState>((set, get) => {
           set({ thresholdAnalysis: message.payload, thresholdChoice: choice });
           if (message.payload) {
             attachArtifact({ threshold: thresholdArtifact(message.payload, choice) });
+          }
+        } else if (message.kind === 'segments-result') {
+          set({ segmentAnalysis: message.payload });
+          if (message.payload) {
+            attachArtifact({ segments: message.payload });
           }
         } else if (message.kind === 'model-json') {
           if (message.json !== null) {
@@ -397,7 +407,7 @@ export const useLabStore = create<LabState>((set, get) => {
       const state = get();
       if (state.trainStatus !== 'done' || state.insights?.model === model) return;
       if (!state.results.some((r) => r.ok && r.key === model)) return;
-      // Batch score and threshold analysis belong to the previous model.
+      // Batch score, threshold and segment analyses belong to the previous model.
       set({
         insights: null,
         whatIf: null,
@@ -407,6 +417,7 @@ export const useLabStore = create<LabState>((set, get) => {
         batchError: null,
         thresholdAnalysis: null,
         thresholdChoice: { threshold: 0.5, costFp: 1, costFn: 1 },
+        segmentAnalysis: null,
       });
       send({ kind: 'model-insights', model });
     },
