@@ -711,7 +711,8 @@
       "thinking": "Computing…",
       "honesty": {
         "title": "Honest by design",
-        "body": "This assistant is a deterministic local interpreter — not a language model. It only computes what it fully understands, says so when it does not, and neither your data nor your questions ever leave the browser. A generative assistant would need a model behind an API — a server and a secret key that must never ship in a browser — and would only land here with a server-side proxy and an explicit consent screen."
+        "body": "This assistant is a deterministic local interpreter — not a language model. It only computes what it fully understands, says so when it does not, and neither your data nor your questions ever leave the browser. A generative assistant would need a model behind an API — a server and a secret key that must never ship in a browser — and would only land here with a server-side proxy and an explicit consent screen.",
+        "coming": "Coming soon: a real language model — small, open and running entirely in your browser, under the same privacy rules. The deterministic interpreter stays as the honest fallback."
       },
       "backToAi": "Back to AI modules"
     },
