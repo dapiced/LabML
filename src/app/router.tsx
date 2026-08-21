@@ -34,6 +34,12 @@ export const router = createBrowserRouter([
         lazy: async () => ({ Component: (await import('@/features/ai/AiPage')).default }),
       },
       {
+        path: 'ai/vision',
+        lazy: async () => ({
+          Component: (await import('@/features/ai/vision/VisionPage')).default,
+        }),
+      },
+      {
         path: 'about',
         lazy: async () => ({ Component: (await import('@/features/about/AboutPage')).default }),
       },

@@ -4,11 +4,25 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    // ONNX Runtime's WASM binaries are self-hosted under /ort/ (strict CSP:
+    // nothing may load from a CDN).
+    viteStaticCopy({
+      // Only the plain SIMD build: the jsep/jspi/asyncify variants weigh 15–27 MB
+      // each and one of them exceeds Cloudflare Pages' 25 MB per-file limit.
+      targets: [
+        {
+          src: 'node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.{wasm,mjs}',
+          dest: 'ort',
+          rename: { stripBase: true },
+        },
+      ],
+    }),
     // Offline-first PWA — the strongest proof that nothing needs a server.
     VitePWA({
       registerType: 'autoUpdate',
@@ -37,8 +51,18 @@ export default defineConfig({
       workbox: {
         // Demo datasets included: the lab trains fully offline.
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,csv}'],
+        // The vision model and ONNX runtime are cached on first use instead of
+        // being precached — they would bloat the install for non-vision users.
+        globIgnores: ['models/**', 'ort/**'],
         navigateFallback: '/index.html',
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        runtimeCaching: [
+          {
+            urlPattern: /\/(models|ort)\//,
+            handler: 'CacheFirst',
+            options: { cacheName: 'labml-vision', expiration: { maxEntries: 12 } },
+          },
+        ],
       },
     }),
   ],
