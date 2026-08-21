@@ -98,6 +98,32 @@ function makeArtifacts(): RunArtifacts {
       rowsUsed: 120,
       seed: 42,
     },
+    threshold: {
+      model: 'logistic',
+      positiveClass: 'yes',
+      positiveRate: 0.08,
+      averagePrecision: 0.74,
+      brier: 0.06,
+      prPoints: [
+        { recall: 0.5, precision: 1, threshold: 0.9 },
+        { recall: 1, precision: 0.6, threshold: 0.3 },
+      ],
+      calibrationBins: [{ meanPredicted: 0.1, observedRate: 0.08, count: 50 }],
+      chosen: {
+        threshold: 0.3,
+        tp: 8,
+        fp: 5,
+        fn: 0,
+        tn: 87,
+        precision: 0.615,
+        recall: 1,
+        f1: 0.762,
+        accuracy: 0.95,
+        cost: 5,
+        costFp: 1,
+        costFn: 10,
+      },
+    },
     batchScore: {
       fileName: 'field.csv',
       model: 'logistic',
@@ -156,6 +182,7 @@ describe('share link codec', () => {
     expect(decoded.artifacts?.exploration?.clusters).toHaveLength(2);
     expect(decoded.artifacts?.forecast?.winner.key).toBe('holtWinters');
     expect(decoded.artifacts?.batchScore?.fileName).toBe('field.csv');
+    expect(decoded.artifacts?.threshold?.chosen.threshold).toBe(0.3);
     // Oversized point clouds are downsampled / tailed, never dropped.
     expect(decoded.artifacts!.exploration!.points.length).toBeLessThanOrEqual(121);
     expect(decoded.artifacts!.exploration!.points.length).toBeGreaterThan(50);
@@ -218,6 +245,8 @@ describe('report generation', () => {
     expect(html).toContain('ml.lab.forecast.methods.holtWinters');
     expect(html).toContain('ml.lab.batch.title');
     expect(html).toContain('field.csv');
+    expect(html).toContain('ml.lab.threshold.title');
+    expect(html).toContain('0.30');
     expect(html).not.toContain('<script');
   });
 });
