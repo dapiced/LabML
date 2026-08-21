@@ -138,10 +138,22 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   (a shell there would flash the wrong hero on dynamic routes and share
   links).
 
-**Cap 3 is complete**: V11 drift check, V13 complete runs and V14
-generalized prerender shipped. V12 (an optional generative chat behind a
-server-side key proxy with explicit consent — never an API key in the
-browser) stays on hold as a product decision.
+- **V15 (score a new batch) — shipped**: the production gesture that closes
+  the MLOps loop. After a run, drop a **new file** and the inspected model
+  scores it in the browser: predictions for every row (exportable CSV that
+  keeps all original columns), and when the file carries the target column,
+  an **honest test-vs-batch metrics comparison** — labels never seen in
+  training are predicted but kept out of the metrics, and counted. Schema
+  is validated (missing feature columns are named), a drifted demo batch
+  (`iris-field.csv`) shows the drop live, and the score joins the run
+  record (history, report, share links) like every other artifact.
+
+**Cap 3 is complete** (V11 drift · V13 complete runs · V14 prerender).
+**Cap 4 is underway**: V15 batch scoring shipped; next are V16 (imbalanced
+classes & decision thresholds), V17 (Data Studio joins & multivariate
+anomalies) and V18 (per-segment analysis). V12 (an optional generative chat
+behind a server-side key proxy — never an API key in the browser) stays on
+hold as a product decision.
 
 Full roadmap in [PLAN.md](PLAN.md).
 

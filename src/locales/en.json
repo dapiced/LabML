@@ -264,6 +264,25 @@
         "paramsHeader": "parameters",
         "note": "The winner is chosen by cross-validation, never by peeking at the test set — so the test delta can be negative. That is honest evaluation, not a bug."
       },
+      "batch": {
+        "title": "Score a new batch",
+        "hint": "The production gesture: drop a new file and {{model}} scores it right here — predictions for every row, and if the file carries the target column, an honest comparison against the held-out test set. Nothing is uploaded.",
+        "browse": "Score a new file…",
+        "demoTag": "field batch",
+        "scoring": "Scoring…",
+        "verdict": "{{name}}: {{rows}} rows scored by {{model}}.",
+        "missingColumns": "This file is missing feature columns the model needs: {{list}}.",
+        "error": "This file could not be scored ({{detail}}).",
+        "colMetric": "metric",
+        "colTest": "test set",
+        "colBatch": "new batch",
+        "colDelta": "delta",
+        "unknownLabels_one": "{{count}} row carries a label never seen in training — predicted, but kept out of the metrics.",
+        "unknownLabels_other": "{{count}} rows carry labels never seen in training — predicted, but kept out of the metrics.",
+        "noTarget": "No target column in this file — predictions only, no metrics to compare.",
+        "downloadCsv": "Download the predictions (CSV)",
+        "note": "A drop against the test set is a signal, not a bug: the world moved. Check the input drift in the Data Studio (PSI) to see which columns shifted."
+      },
       "insights": {
         "title": "Insights",
         "loading": "Analyzing the winning model…",
@@ -333,7 +352,8 @@
           "tuning": "tuning",
           "explanation": "Shapley",
           "exploration": "groups",
-          "forecast": "forecast"
+          "forecast": "forecast",
+          "batchScore": "new batch"
         }
       },
       "share": {
@@ -361,7 +381,8 @@
       "v10": "V10 Data Studio 2: replayable recipes, forced types, date expansion — shipped",
       "v11": "V11 MLOps: drift check — schema diff, per-column PSI, new/vanished categories — shipped",
       "v13": "V13 complete runs: tuning, Shapley, groups and forecasts now survive in history, reports and share links — shipped",
-      "v14": "V14 generalized prerender: static shells for every section, /ml Lighthouse 0.86 → 0.99 under real throttling — shipped"
+      "v14": "V14 generalized prerender: static shells for every section, /ml Lighthouse 0.86 → 0.99 under real throttling — shipped",
+      "v15": "V15 MLOps: score a new batch — predictions in the browser, honest test-vs-batch metrics — shipped"
     }
   },
   "data": {

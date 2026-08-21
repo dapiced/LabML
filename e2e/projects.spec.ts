@@ -112,3 +112,26 @@ test('late analyses survive the run: tuning and groups join history and share li
   await expect(page.getByTestId('run-artifacts')).toContainText(/k = \d+/);
   await expect(page.getByTestId('run-artifacts')).toContainText('Group 1');
 });
+
+test('a new batch is scored by the inspected model and joins the run record', async ({ page }) => {
+  await trainIris(page);
+
+  // The field batch drifts a little on purpose: metrics compare honestly.
+  await page.getByTestId('batch-demo').click();
+  const result = page.getByTestId('batch-result');
+  await expect(result).toBeVisible({ timeout: 30000 });
+  await expect(result).toContainText('iris-field.csv: 30 rows scored');
+  await expect(result).toContainText('Accuracy');
+
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download the predictions (CSV)' }).click();
+  expect((await download).suggestedFilename()).toBe('iris-field-scored.csv');
+
+  // The score survives the run: stored page shows the comparison card.
+  const history = page.getByTestId('runs-history');
+  await history.getByRole('link', { name: 'iris · species' }).click();
+  const artifacts = page.getByTestId('run-artifacts');
+  await expect(artifacts).toBeVisible();
+  await expect(artifacts).toContainText('iris-field.csv');
+  await expect(artifacts).toContainText('new batch');
+});

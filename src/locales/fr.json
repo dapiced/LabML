@@ -264,6 +264,25 @@
         "paramsHeader": "paramètres",
         "note": "Le gagnant est choisi par validation croisée, jamais en regardant le jeu de test — le delta sur le test peut donc être négatif. C'est une évaluation honnête, pas un bug."
       },
+      "batch": {
+        "title": "Scorer un nouveau lot",
+        "hint": "Le geste production : déposez un nouveau fichier et {{model}} le score ici même — prédictions pour chaque ligne, et si le fichier porte la colonne cible, comparaison honnête avec le jeu de test. Rien n’est envoyé.",
+        "browse": "Scorer un nouveau fichier…",
+        "demoTag": "lot terrain",
+        "scoring": "Scoring…",
+        "verdict": "{{name}} : {{rows}} lignes scorées par {{model}}.",
+        "missingColumns": "Ce fichier n’a pas les colonnes de variables dont le modèle a besoin : {{list}}.",
+        "error": "Ce fichier n’a pas pu être scoré ({{detail}}).",
+        "colMetric": "métrique",
+        "colTest": "jeu de test",
+        "colBatch": "nouveau lot",
+        "colDelta": "écart",
+        "unknownLabels_one": "{{count}} ligne porte une étiquette jamais vue à l’entraînement — prédite, mais exclue des métriques.",
+        "unknownLabels_other": "{{count}} lignes portent des étiquettes jamais vues à l’entraînement — prédites, mais exclues des métriques.",
+        "noTarget": "Pas de colonne cible dans ce fichier — prédictions seulement, pas de métriques à comparer.",
+        "downloadCsv": "Télécharger les prédictions (CSV)",
+        "note": "Une baisse par rapport au jeu de test est un signal, pas un bug : le monde a bougé. Vérifiez la dérive des entrées dans le Data Studio (PSI) pour voir quelles colonnes ont glissé."
+      },
       "insights": {
         "title": "Insights",
         "loading": "Analyse du modèle gagnant…",
@@ -333,7 +352,8 @@
           "tuning": "tuning",
           "explanation": "Shapley",
           "exploration": "groupes",
-          "forecast": "prévision"
+          "forecast": "prévision",
+          "batchScore": "nouveau lot"
         }
       },
       "share": {
@@ -361,7 +381,8 @@
       "v10": "V10 Data Studio 2 : recettes rejouables, types forcés, décomposition de dates — livré",
       "v11": "V11 MLOps : contrôle de dérive — diff de schéma, PSI par colonne, catégories nouvelles/disparues — livré",
       "v13": "V13 runs complets : tuning, Shapley, groupes et prévisions survivent dans l’historique, les rapports et les liens — livré",
-      "v14": "V14 prérendu généralisé : coquilles statiques pour chaque section, Lighthouse /ml 0,86 → 0,99 en conditions réelles — livré"
+      "v14": "V14 prérendu généralisé : coquilles statiques pour chaque section, Lighthouse /ml 0,86 → 0,99 en conditions réelles — livré",
+      "v15": "V15 MLOps : scorer un nouveau lot — prédictions dans le navigateur, métriques test vs lot honnêtes — livré"
     }
   },
   "data": {
