@@ -83,7 +83,7 @@
       }
     },
     "statusTitle": "Build status",
-    "statusBody": "The ML Lab is complete — training, insights, export, offline PWA — and the first AI module, image classification, is live. Data pipelines land next."
+    "statusBody": "The three modules are live: the ML Lab (training, insights, export, offline PWA), AI vision (on-device image classification) and the Data Studio (quality report, cleaning, hand-off to the lab)."
   },
   "ml": {
     "eyebrow": "ML LAB",
@@ -277,14 +277,112 @@
       "sprint4": "Projects, export & data-free sharing — shipped",
       "sprint5": "Polish: WCAG AA, offline PWA, Lighthouse budgets — shipped",
       "v2": "V2 models: gradient boosting, neural network, partial dependence, Excel import — shipped",
-      "v3": "V3 vision: image classification on your device (SqueezeNet · ONNX Runtime Web) — shipped"
+      "v3": "V3 vision: image classification on your device (SqueezeNet · ONNX Runtime Web) — shipped",
+      "v4": "V4 Data Studio: quality report, cleaning recipe and hand-off to the lab — shipped"
     }
   },
   "data": {
-    "eyebrow": "DATA",
-    "title": "Data pipelines, coming later.",
-    "lede": "This section will host data engineering tools: profiling, transformations and quality checks — built with the same privacy-first rules as the ML Lab.",
-    "backHome": "Back to home"
+    "eyebrow": "DATA STUDIO",
+    "title": "Diagnose and clean a dataset, without uploading it.",
+    "lede": "Drop a file: the studio measures its quality — missing values, duplicates, inconsistent spellings, outliers — then repairs it with a transparent recipe. Entirely in your browser, like the rest of LabML.",
+    "drop": {
+      "title": "Drop a CSV or Excel file",
+      "hint": "or click to browse — .csv, .tsv, .xlsx. Read locally in a Web Worker, never uploaded."
+    },
+    "demoLabel": "Or audit a demo dataset",
+    "demo": {
+      "cafe": "deliberately messy",
+      "titanic": "real missing values"
+    },
+    "parsing": "Reading… {{rows}} rows",
+    "error": "This file could not be read ({{detail}}). Try a CSV, TSV or Excel file with a header row.",
+    "restart": "Start over",
+    "loaded": "{{rows}} rows · {{columns}} columns",
+    "score": {
+      "before": "Before",
+      "after": "After cleaning",
+      "bands": {
+        "good": "Good",
+        "fair": "Needs attention",
+        "poor": "Poor"
+      }
+    },
+    "issues": {
+      "title": "What the studio found",
+      "none": "Nothing to report: no missing cells, duplicates, spelling variants or outliers. This dataset is ready.",
+      "missing": {
+        "title_one": "{{count, number}} missing cell",
+        "title_other": "{{count, number}} missing cells",
+        "body": "Empty cells and tokens like “NA” or “?”. Models cannot use them as-is: fill them or drop the rows."
+      },
+      "duplicates": {
+        "title_one": "{{count, number}} duplicate row",
+        "title_other": "{{count, number}} duplicate rows",
+        "body": "Rows identical to an earlier row. They double-count observations and can leak between train and test splits."
+      },
+      "messy": {
+        "title_one": "{{count, number}} inconsistent spelling",
+        "title_other": "{{count, number}} inconsistent spellings",
+        "body": "The same category written several ways (case, stray spaces). Left as-is, each spelling counts as a different category."
+      },
+      "outliers": {
+        "title_one": "{{count, number}} outlier value",
+        "title_other": "{{count, number}} outlier values",
+        "body": "Values outside the Tukey fences (1.5 × IQR) of their column — often typos or unit mix-ups. Check before clamping."
+      },
+      "structural": {
+        "title_one": "{{count, number}} column to review",
+        "title_other": "{{count, number}} columns to review",
+        "body": "Constant or near-empty columns carry no signal; identifiers are flagged for information and never dropped automatically.",
+        "constant": "constant",
+        "nearEmpty": "near-empty",
+        "id": "identifier"
+      }
+    },
+    "recipe": {
+      "title": "Cleaning recipe",
+      "applying": "Applying…",
+      "toggles": {
+        "trimWhitespace": "Trim stray whitespace",
+        "mergeVariants": "Merge spelling variants to the most frequent form",
+        "dropDuplicates": "Drop duplicate rows",
+        "dropStructural": "Drop constant and near-empty columns",
+        "clipOutliers": "Clamp outliers to the Tukey fences"
+      },
+      "missing": {
+        "label": "Missing values",
+        "impute": "Fill in (median / most frequent)",
+        "dropRows": "Drop the rows",
+        "keep": "Keep as-is"
+      },
+      "effects": {
+        "cells_one": "{{count, number}} cell affected",
+        "cells_other": "{{count, number}} cells affected",
+        "rows_one": "{{count, number}} row removed",
+        "rows_other": "{{count, number}} rows removed",
+        "columns_one": "{{count, number}} column removed",
+        "columns_other": "{{count, number}} columns removed",
+        "columnsList_one": "{{count, number}} column removed: {{columns}}",
+        "columnsList_other": "{{count, number}} columns removed: {{columns}}"
+      },
+      "result": "After cleaning: {{rows}} rows · {{columns}} columns."
+    },
+    "preview": {
+      "title": "Preview",
+      "before": "Before",
+      "after": "After",
+      "note_one": "First row shown — missing cells appear as “—”.",
+      "note_other": "First {{count}} rows shown — missing cells appear as “—”."
+    },
+    "export": {
+      "lab": "Open in the ML Lab",
+      "csv": "Download the cleaned CSV",
+      "recipe": "Download the recipe (JSON)"
+    },
+    "privacy": {
+      "title": "Nothing leaves your browser",
+      "body": "The file is parsed and cleaned inside a Web Worker; the page only ever receives the quality report, counters and a few preview rows. Exports are generated locally, and “Open in the ML Lab” hands the cleaned dataset to the lab in memory — no server is involved at any point, as the strict Content-Security-Policy of this site enforces."
+    }
   },
   "ai": {
     "eyebrow": "AI",

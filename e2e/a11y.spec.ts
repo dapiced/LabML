@@ -32,6 +32,16 @@ test('ai hub and vision playground pass WCAG A/AA checks', async ({ page }) => {
   await expectNoViolations(page);
 });
 
+test('data studio passes WCAG A/AA checks, idle and with the demo audited', async ({ page }) => {
+  await page.goto('/data');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expectNoViolations(page);
+
+  await page.getByRole('button', { name: /cafe-sales\.csv/ }).click();
+  await expect(page.getByTestId('recipe-result')).toBeVisible();
+  await expectNoViolations(page);
+});
+
 test('ml lab passes WCAG A/AA checks, idle and with data loaded', async ({ page }) => {
   await page.goto('/ml');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
