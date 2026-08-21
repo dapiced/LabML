@@ -203,6 +203,18 @@
         "gbdt": "Gradient boosting",
         "mlp": "Neural network (MLP)"
       },
+      "explore": {
+        "title": "Explore without a target",
+        "hint": "No column to predict? The lab can group similar rows on its own: seeded k-means (k = 2–5, chosen by silhouette) on the same encoded features, projected in 2D by PCA — hand-written, deterministic, in your browser.",
+        "start": "Find groups",
+        "running": "Clustering…",
+        "summary": "{{k}} groups · silhouette {{silhouette}} (tried k = {{tried}}) · {{rows}} rows · the two PCA axes carry {{p1}} % + {{p2}} % of the variance",
+        "clusterName": "Group {{id}}",
+        "clusterSize": "{{count}} rows · {{share}} %",
+        "traitNumeric": "{{column}}: {{clusterMean}} on average (vs {{overallMean}} overall)",
+        "traitCategorical": "{{column}}: {{share}} % “{{value}}” (vs {{overallShare}} % overall)",
+        "note": "Groups are a reading aid, not a ground truth: k-means favors roundish groups of similar size. Same data, same seed — same groups, always."
+      },
       "tuning": {
         "title": "Hyperparameter search",
         "hint": "Seeded random search: up to {{budget}} configurations scored by {{folds}}-fold cross-validation on the training split only — the held-out test set is scored exactly once, at the end.",
@@ -300,7 +312,8 @@
       "v3": "V3 vision: image classification on your device (SqueezeNet · ONNX Runtime Web) — shipped",
       "v4": "V4 Data Studio: quality report, cleaning recipe and hand-off to the lab — shipped",
       "v5": "V5 lab upgrades: hyperparameter search (CV) and Shapley explanations — shipped",
-      "v6": "V6 data assistant: FR/EN questions answered locally, no LLM — shipped"
+      "v6": "V6 data assistant: FR/EN questions answered locally, no LLM — shipped",
+      "v7": "V7 exploration: k-means + PCA + group profiles, no target needed — shipped"
     }
   },
   "data": {
