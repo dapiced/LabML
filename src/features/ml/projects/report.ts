@@ -233,6 +233,50 @@ function artifactSections(record: RunRecord, t: Translate, lang: string): string
     ${verdictLine}`);
   }
 
+  if (artifacts.learningCurve) {
+    const curve = artifacts.learningCurve;
+    const metricName = t(`ml.lab.leaderboard.${curve.metricLabel}`);
+    const last = curve.points[curve.points.length - 1];
+    const previous = curve.points[curve.points.length - 2];
+    const verdictText =
+      curve.verdict.kind === 'climbing'
+        ? t('ml.lab.curve.climbing', {
+            from: previous.rows.toLocaleString(lang),
+            to: last.rows.toLocaleString(lang),
+            gain: fmt(curve.verdict.gain),
+            lo: fmt(curve.verdict.lo),
+            hi: fmt(curve.verdict.hi),
+          })
+        : t('ml.lab.curve.plateau', {
+            from: previous.rows.toLocaleString(lang),
+            to: last.rows.toLocaleString(lang),
+            gain: fmt(curve.verdict.gain),
+          });
+    const capText =
+      curve.cappedAt !== undefined
+        ? ` ${t(curve.verdict.kind === 'climbing' ? 'ml.lab.curve.capCost' : 'ml.lab.curve.capFree', { cap: curve.cappedAt.toLocaleString(lang) })}`
+        : '';
+    sections.push(`<h2>${esc(t('ml.lab.curve.title'))}</h2>
+    <p class="meta">${esc(
+      t('ml.lab.curve.axis', {
+        model: t(`ml.lab.models.${curve.model}`),
+        metric: metricName,
+        test: curve.testRows.toLocaleString(lang),
+      }),
+    )}</p>
+    <table><tr><th>${esc(t('ml.lab.curve.colRows'))}</th><th>${esc(metricName)}</th><th>${esc(
+      t('ml.lab.uncertainty.interval'),
+    )}</th></tr>
+    ${curve.points
+      .map(
+        (point, index) =>
+          `<tr${index === curve.points.length - 1 ? ' class="best"' : ''}><td>${point.rows.toLocaleString(lang)}</td>` +
+          `<td>${fmt(point.metric)}</td><td>[${fmt(point.lo)} ; ${fmt(point.hi)}]</td></tr>`,
+      )
+      .join('\n')}</table>
+    <p class="meta">${esc(verdictText + capText)}</p>`);
+  }
+
   if (artifacts.segments) {
     const seg = artifacts.segments;
     const metricName = t(`ml.lab.leaderboard.${seg.metricLabel}`);

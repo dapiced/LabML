@@ -203,6 +203,7 @@ export function RunsHistory() {
                         'threshold',
                         'segments',
                         'uncertainty',
+                        'learningCurve',
                       ] as const
                     )
                       .filter((kind) => run.artifacts?.[kind])

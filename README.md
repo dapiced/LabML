@@ -42,6 +42,7 @@ The project follows three non-negotiable principles:
 | Where it fails | **Per-segment analysis**: the test set sliced by every categorical column — including excluded ones, where proxy effects hide — worst gaps first                                                                                                                                                        |
 | Imbalance      | Precision-recall curve (AP), calibration curve (Brier), **cost-priced decision threshold** with the optimal cut computed by exhaustive sweep                                                                                                                                                            |
 | Tuning         | Seeded random search scored by stratified 3-fold cross-validation, pipeline refitted inside each fold — the test set is scored exactly once                                                                                                                                                             |
+| More data?     | **Learning curve** on demand: one model retrained on growing seeded nested fractions, 95% bootstrap band, plain verdict — still climbing (collect more rows) or flattened (work on features) — including whether an announced training cap costs accuracy                                               |
 | No target?     | Seeded k-means (k chosen by silhouette) + power-iteration PCA projection, groups described in plain language; date column? **Holt-Winters forecasting** validated by rolling-origin backtest                                                                                                            |
 | MLOps loop     | Score a **new batch** with honest test-vs-batch metrics; **compare two runs** side by side with cross-run uncertainty verdicts; **export a model as JSON and re-import it later** — the exact predictor is rebuilt (byte-identical predictions) and scores any CSV without retraining                   |
 | Persistence    | Local run history with attached artifacts, opted-in dataset storage (compressed, explicit 50 MB budget), self-contained HTML reports, data-free share links                                                                                                                                             |
@@ -93,7 +94,7 @@ The project follows three non-negotiable principles:
 - **Performance.** Every section serves a prerendered static shell (hero paints before
   JavaScript); Lighthouse mobile ≈ 0.99 on `/ml` under real throttling. Heavy
   dependencies (Dexie, SheetJS, ONNX Runtime) load lazily.
-- **Quality bar.** 283 unit tests, 54 Playwright end-to-end tests (including offline PWA,
+- **Quality bar.** 293 unit tests, 55 Playwright end-to-end tests (including offline PWA,
   fake-webcam and axe-core WCAG A/AA accessibility checks), strict TypeScript, ESLint,
   Prettier, and Lighthouse budgets — all enforced in CI.
 
