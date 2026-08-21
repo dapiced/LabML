@@ -44,8 +44,10 @@ function TraitLine({ trait }: { trait: ClusterTrait }) {
 export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'en';
-  const { tuning, explanation, exploration, forecast, batchScore } = artifacts;
-  if (!tuning && !explanation && !exploration && !forecast && !batchScore) return null;
+  const { tuning, explanation, exploration, forecast, batchScore, threshold } = artifacts;
+  if (!tuning && !explanation && !exploration && !forecast && !batchScore && !threshold) {
+    return null;
+  }
   const score = (v: number) =>
     v.toLocaleString(lang, { minimumFractionDigits: 3, maximumFractionDigits: 3 });
   const tuningDelta =
@@ -170,6 +172,50 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
                 </li>
               ))}
             </ul>
+          </ArtifactCard>
+        )}
+
+        {threshold && (
+          <ArtifactCard title={t('ml.lab.threshold.title')}>
+            <p className="text-xs text-muted">
+              {t('ml.lab.threshold.hint', {
+                positive: threshold.positiveClass,
+                rate: (threshold.positiveRate * 100).toLocaleString(lang, {
+                  maximumFractionDigits: 1,
+                }),
+              })}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline">AP {threshold.averagePrecision.toFixed(3)}</Badge>
+              <Badge variant="outline">Brier {threshold.brier.toFixed(3)}</Badge>
+              <Badge variant="outline" className="font-mono">
+                {t('ml.lab.threshold.threshold')} = {threshold.chosen.threshold.toFixed(2)}
+              </Badge>
+              <Badge variant="outline" className="font-mono">
+                FP {threshold.chosen.costFp} · FN {threshold.chosen.costFn}
+              </Badge>
+            </div>
+            <table className="w-full max-w-sm text-left text-xs">
+              <tbody>
+                {(
+                  [
+                    ['precision', threshold.chosen.precision.toFixed(3)],
+                    ['recall', threshold.chosen.recall.toFixed(3)],
+                    ['f1', threshold.chosen.f1.toFixed(3)],
+                    ['cost', String(threshold.chosen.cost)],
+                  ] as const
+                ).map(([key, value]) => (
+                  <tr key={key} className="border-b border-line last:border-b-0">
+                    <td className="py-1 pr-3">{t(`ml.lab.threshold.${key}`)}</td>
+                    <td className="py-1 font-mono tabular-nums">{value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="font-mono text-[0.68rem] text-muted">
+              TP {threshold.chosen.tp} · FP {threshold.chosen.fp} · FN {threshold.chosen.fn} · TN{' '}
+              {threshold.chosen.tn}
+            </p>
           </ArtifactCard>
         )}
 

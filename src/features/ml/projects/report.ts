@@ -173,6 +173,25 @@ function artifactSections(record: RunRecord, t: Translate, lang: string): string
       .join('\n')}</table>`);
   }
 
+  if (artifacts.threshold) {
+    const th = artifacts.threshold;
+    sections.push(`<h2>${esc(t('ml.lab.threshold.title'))} — ${esc(t(`ml.lab.models.${th.model}`))}</h2>
+    <p class="meta">${esc(
+      t('ml.lab.threshold.hint', {
+        positive: th.positiveClass,
+        rate: (th.positiveRate * 100).toLocaleString(lang, { maximumFractionDigits: 1 }),
+      }),
+    )}</p>
+    <table><tr><th>AP</th><th>Brier</th><th>${esc(t('ml.lab.threshold.threshold'))}</th><th>FP/FN</th>
+    <th>${esc(t('ml.lab.threshold.precision'))}</th><th>${esc(t('ml.lab.threshold.recall'))}</th><th>F1</th><th>${esc(
+      t('ml.lab.threshold.cost'),
+    )}</th></tr>
+    <tr><td>${fmt(th.averagePrecision)}</td><td>${fmt(th.brier)}</td><td>${th.chosen.threshold.toFixed(2)}</td>
+    <td>${th.chosen.costFp} / ${th.chosen.costFn}</td><td>${fmt(th.chosen.precision)}</td><td>${fmt(
+      th.chosen.recall,
+    )}</td><td>${fmt(th.chosen.f1)}</td><td>${th.chosen.cost}</td></tr></table>`);
+  }
+
   if (artifacts.batchScore) {
     const batch = artifacts.batchScore;
     const rows = batch.metrics

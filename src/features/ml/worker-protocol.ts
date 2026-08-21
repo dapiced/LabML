@@ -3,6 +3,7 @@ import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
 import type { ForecastPayload } from '@/features/ml/timeseries/run';
 import type { BatchScore } from '@/features/ml/train/score';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
+import type { ThresholdAnalysis } from '@/features/ml/train/threshold-analysis';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
 import type {
   InsightsPayload,
@@ -30,7 +31,8 @@ export type WorkerRequest =
   | { kind: 'export-model'; model: ModelKey }
   | { kind: 'export-predictions'; model: ModelKey }
   | { kind: 'score-batch-file'; file: File; model: ModelKey }
-  | { kind: 'score-batch-url'; url: string; name: string; model: ModelKey };
+  | { kind: 'score-batch-url'; url: string; name: string; model: ModelKey }
+  | { kind: 'threshold-analysis'; model: ModelKey };
 
 /** Messages emitted by the data/training worker. */
 export type WorkerResponse =
@@ -52,6 +54,8 @@ export type WorkerResponse =
   | { kind: 'model-json'; model: ModelKey; json: string | null }
   | { kind: 'predictions-csv'; model: ModelKey; csv: string }
   | { kind: 'batch-scored'; payload: BatchScore }
+  // null = not applicable (multiclass, regression, or no probabilities).
+  | { kind: 'threshold-result'; payload: ThresholdAnalysis | null }
   // Dedicated channel: a bad batch file must not tear down the run state.
   | { kind: 'batch-error'; message: string }
   | { kind: 'error'; message: string };
