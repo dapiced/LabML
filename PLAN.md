@@ -396,3 +396,21 @@ dans le temps, et le comprendre plus finement.
 Seule la V12 reste en attente d'une décision produit. La section « Where
 the build stands » de /ml a été retirée à la même date (demande du
 propriétaire) — l'historique des vagues vit ici et dans le README.
+
+## M. Cap 5 — plan d'amélioration post-Cap 4 (21/08/2026)
+
+**Bilan du Cap 4** : V15 (scorer un lot), V16 (déséquilibre & seuils), V17
+(jointures & anomalies), V18 (analyse par segments) — livrées et vérifiées
+en production le 21/08/2026. Fil conducteur du Cap 5 : le projet complet —
+il survit, il se mesure, il se compare, il se réutilise.
+
+| Vague            | Contenu                                                                                                                                                                                                                                                                                                                                                                                                                     | Pourquoi                                                                       |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **V19 — livrée** | **Projets persistants** : le dataset rejoint le projet, opt-in (« conserver dans ce navigateur ») — CSV compressé lz-string dans IndexedDB, budget explicite 50 Mo (refus nommé avec les chiffres, jamais de coupe silencieuse), liste conservés (rouvrir/oublier) sous l'historique, runs liés au dataset conservé (« rouvrir les données de ce run »), réentraînement identique (seed 42). Rien dans les liens de partage | Un refresh effaçait tout ; les « projets » ne sont réels que s'ils survivent   |
+| V20              | **Incertitude honnête** : bootstrap seedé des paires y/ŷ du jeu de test → IC 95 % sur chaque métrique du leaderboard, verdict apparié « le gagnant bat-il vraiment la baseline, ou c'est du bruit ? », persisté dans le run et le rapport                                                                                                                                                                                   | `0,82` sur 178 lignes n'est pas `0,82` ; dire ce que le chiffre ne dit pas     |
+| V21              | **Comparer deux runs** : depuis l'historique, diff côte à côte (dataset, variables ajoutées/retirées, leaderboard, segments) avec deltas chiffrés et l'incertitude de V20, lecture en clair                                                                                                                                                                                                                                 | « Mon nettoyage a-t-il servi ? » — le geste itératif central du ML             |
+| V22              | **Le modèle revient** : le JSON exporté gagne un manifeste (variables, pipeline, classes, seed, version) et devient importable — déposer un modèle + un CSV → scorer sans réentraîner, erreurs nommées                                                                                                                                                                                                                      | Ferme la dernière boucle : entraîner aujourd'hui, revenir dans un mois, scorer |
+
+Écarté pour l'instant (Cap 6 possible) : colonnes texte (TF-IDF maison),
+courbes d'apprentissage, passage à l'échelle 1M lignes (typed arrays),
+seuils multiclasse. La V12 reste en attente d'une décision produit.

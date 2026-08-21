@@ -59,6 +59,11 @@ export interface RunRecord {
   insights: InsightsPayload;
   /** Analyses that joined the run after training (v13+ records). */
   artifacts?: RunArtifacts;
+  /**
+   * Local id of the dataset copy kept in the browser (v19), when the user
+   * opted in — never part of share links, meaningless outside this browser.
+   */
+  datasetId?: number;
 }
 
 /** v1 links carried no artifacts; v2 added them. Both still decode. */
