@@ -124,6 +124,26 @@ function makeArtifacts(): RunArtifacts {
         costFn: 10,
       },
     },
+    segments: {
+      model: 'logistic',
+      isClassification: true,
+      metricLabel: 'accuracy',
+      overall: 0.9,
+      testRows: 24,
+      minRows: 8,
+      columns: [
+        {
+          column: 'group',
+          inFeatures: false,
+          segments: [
+            { value: 'A', rows: 10, metric: 0.7, delta: -0.2 },
+            { value: 'B', rows: 14, metric: 1, delta: 0.1 },
+          ],
+          spread: 0.2,
+          smallSegments: 1,
+        },
+      ],
+    },
     batchScore: {
       fileName: 'field.csv',
       model: 'logistic',
@@ -183,6 +203,7 @@ describe('share link codec', () => {
     expect(decoded.artifacts?.forecast?.winner.key).toBe('holtWinters');
     expect(decoded.artifacts?.batchScore?.fileName).toBe('field.csv');
     expect(decoded.artifacts?.threshold?.chosen.threshold).toBe(0.3);
+    expect(decoded.artifacts?.segments?.columns[0].segments[0].value).toBe('A');
     // Oversized point clouds are downsampled / tailed, never dropped.
     expect(decoded.artifacts!.exploration!.points.length).toBeLessThanOrEqual(121);
     expect(decoded.artifacts!.exploration!.points.length).toBeGreaterThan(50);
@@ -247,6 +268,8 @@ describe('report generation', () => {
     expect(html).toContain('field.csv');
     expect(html).toContain('ml.lab.threshold.title');
     expect(html).toContain('0.30');
+    expect(html).toContain('ml.lab.segments.title');
+    expect(html).toContain('-0.200');
     expect(html).not.toContain('<script');
   });
 });
