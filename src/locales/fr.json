@@ -22,10 +22,11 @@
       "fr": "Français"
     },
     "pwa": {
-      "offlineReady": "LabML est prêt à fonctionner hors-ligne — jeux de données et modèles compris.",
+      "offlineReady": "LabML est maintenant enregistré dans ce navigateur : tout — jeux de démo et modèles de vision compris — continue de fonctionner même sans connexion.",
       "updateAvailable": "Une nouvelle version de LabML est disponible.",
       "reload": "Recharger",
-      "dismiss": "Plus tard"
+      "dismiss": "Plus tard",
+      "gotIt": "OK"
     },
     "privacyStrip": "Vos données ne quittent jamais votre navigateur — vérifiez-le vous-même dans l'onglet Réseau.",
     "footer": {
@@ -624,7 +625,7 @@
     "hub": {
       "vision": {
         "title": "Terrain de jeu vision",
-        "description": "Classez une photo avec un vrai réseau de neurones convolutif — SqueezeNet sur ONNX Runtime Web — exécuté dans un Web Worker, sur votre machine.",
+        "description": "Classez une photo, trouvez chaque objet et localisez les visages avec trois vrais réseaux de neurones sur ONNX Runtime Web — exécutés dans un Web Worker, sur votre machine.",
         "cta": "Ouvrir le terrain de jeu vision"
       },
       "chat": {
@@ -705,9 +706,9 @@
     "vision": {
       "eyebrow": "IA · VISION",
       "title": "Que voit un réseau de neurones ?",
-      "lede": "Déposez une photo : SqueezeNet, un réseau convolutif à 1 000 classes, s'exécute localement via ONNX Runtime Web (WebAssembly). L'image ne quitte jamais votre navigateur.",
-      "loading": "Téléchargement du modèle (~5 Mo, une seule fois — il est ensuite mis en cache, hors-ligne compris)…",
-      "ready": "Modèle chargé en {{ms}} ms",
+      "lede": "Déposez une photo : trois réseaux de neurones auto-hébergés — un classificateur EfficientNet-Lite4 (1 000 classes), un détecteur d'objets YOLOX-Nano (80 sortes de choses) et un détecteur de visages UltraFace — s'exécutent localement via ONNX Runtime Web (WebAssembly). L'image ne quitte jamais votre navigateur.",
+      "loading": "Téléchargement des trois modèles (~19 Mo, une seule fois — ils sont ensuite mis en cache, hors-ligne compris)…",
+      "ready": "Modèles chargés en {{ms}} ms",
       "error": "Le modèle n'a pas pu être chargé ou exécuté. Rechargez la page et vérifiez votre connexion pour le premier téléchargement.",
       "drop": {
         "title": "Déposez une image ici",
@@ -721,16 +722,25 @@
         "error": "Caméra indisponible ou permission refusée — le dépôt de fichier ci-dessus fonctionne toujours."
       },
       "results": {
-        "title": "Top 5 des prédictions",
+        "title": "Ce que les réseaux voient",
         "inferMs": "inférence {{ms}} ms",
         "working": "Le réseau regarde votre image…",
-        "empty": "Les prédictions apparaîtront ici dès que vous déposerez une image.",
-        "note": "SqueezeNet a été entraîné sur ImageNet (1 000 classes du quotidien, 2012). Il répond toujours par sa classe la plus proche — même sur une image qu'il ne comprend pas — et ne connaît ni visages ni documents.",
-        "preview": "Image analysée"
+        "empty": "L'analyse apparaîtra ici dès que vous déposerez une image.",
+        "note": "EfficientNet-Lite4 (77,6 % top-1 ImageNet) répond toujours par la plus proche de ses 1 000 classes — même sur une image qu'il ne comprend pas — et ses noms de classes restent en anglais.",
+        "preview": "Image analysée",
+        "subject": "Sujet principal — top 5 ImageNet",
+        "annotated": "Image analysée avec boîtes de détection",
+        "objectsNone": "Aucun objet détecté — rien au-dessus de la barre de confiance de 35 %.",
+        "objectCount_one": "{{count}} objet détecté",
+        "objectCount_other": "{{count}} objets détectés",
+        "facesNone": "Aucun visage détecté.",
+        "faceCount_one": "{{count}} visage détecté",
+        "faceCount_other": "{{count}} visages détectés",
+        "detNote": "La détection dit où, pas qui : YOLOX-Nano connaît les 80 classes COCO du quotidien (barre de confiance à 35 %), UltraFace ne fait que localiser des visages — aucun des deux ne reconnaît personne, et rien ne quitte l'onglet."
       },
       "how": {
         "title": "Comment ça marche — et pourquoi c'est privé",
-        "body": "L'image est redimensionnée en 224 × 224 pixels dans un canvas, normalisée avec les statistiques d'ImageNet, puis confiée à un Web Worker où ONNX Runtime exécute le réseau en WebAssembly. Modèle et runtime sont servis par ce site lui-même : la Content-Security-Policy stricte interdit toujours tout appel tiers, la photo ne peut donc pas quitter l'onglet."
+        "body": "La photo est préparée dans des canvas (recadrage centré 224², letterbox 416² et cadre 320×240), puis confiée à un Web Worker où ONNX Runtime exécute les trois réseaux en WebAssembly ; le calcul des boîtes — grilles, IoU, suppression non maximale — est écrit à la main et testé unitairement. Modèles et runtime sont servis par ce site lui-même : la Content-Security-Policy stricte interdit toujours tout appel tiers, la photo ne peut donc pas quitter l'onglet."
       },
       "backToAi": "Retour aux modules IA"
     }
