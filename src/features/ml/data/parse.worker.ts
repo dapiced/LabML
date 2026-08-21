@@ -4,6 +4,7 @@ import { MAX_CELLS } from '@/features/ml/data/limits';
 import { profileColumn } from '@/features/ml/data/profile';
 import { analyzeTarget, baselineSuggestions } from '@/features/ml/data/suggest';
 import { computeInsights, computeWhatIf } from '@/features/ml/train/insights';
+import { runLearningCurve } from '@/features/ml/train/learning-curve';
 import { runSearch } from '@/features/ml/train/search';
 import { runExploration } from '@/features/ml/unsupervised/explore';
 import { runForecast } from '@/features/ml/timeseries/run';
@@ -32,6 +33,7 @@ let rowCount = 0;
 let overflowed = false;
 let cancelTraining = false;
 let cancelTuning = false;
+let cancelCurve = false;
 let artifacts: TrainArtifacts | null = null;
 /** Target column of the last training — batch metrics need it by name. */
 let lastTarget: string | null = null;
@@ -287,6 +289,26 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         kind: 'explanation',
         payload: explainPrediction(artifacts, request.model, request.values),
       });
+    } else if (request.kind === 'cancel-curve') {
+      cancelCurve = true;
+    } else if (request.kind === 'learning-curve') {
+      cancelCurve = false;
+      if (!artifacts) throw new Error('no-run');
+      const profiles: ColumnProfile[] = header.map((column, i) =>
+        profileColumn(column, columns[i]),
+      );
+      const outcome = await runLearningCurve(
+        columnsAsMap(),
+        profiles,
+        request.config,
+        request.model,
+        {
+          onProgress: (done, total) => post({ kind: 'curve-progress', done, total }),
+          isCancelled: () => cancelCurve,
+        },
+      );
+      if (cancelCurve) post({ kind: 'curve-cancelled' });
+      else post({ kind: 'curve-complete', payload: outcome });
     } else if (request.kind === 'cancel-tune') {
       cancelTuning = true;
     } else if (request.kind === 'tune') {
