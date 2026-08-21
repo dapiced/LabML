@@ -129,6 +129,8 @@
       "cancel": "Cancel",
       "errorTitle": "Could not read this file",
       "errorBody": "The file looks empty or not tabular. Try a CSV with a header row.",
+      "errorTooLargeTitle": "File too large for browser memory",
+      "errorTooLarge": "This file exceeds the {{max}}-cell budget (rows × columns) the lab holds in memory — reading stopped, on purpose, at {{rows}} rows × {{cols}} columns. Split the file or drop columns, then try again.",
       "retry": "Try another file",
       "rows": "rows",
       "columns": "columns",
@@ -195,7 +197,10 @@
         "baselineTag": "baseline",
         "failed": "failed",
         "runInfo": "seed {{seed}} · {{train}} train rows · {{test}} test rows · {{features}} features after encoding",
-        "skipped": "skipped (dates and identifiers are not features): {{columns}}"
+        "skipped": "skipped (dates and identifiers are not features): {{columns}}",
+        "trainedOn": "sample: {{rows}} rows",
+        "trainedOnTitle": "Trained on an announced seeded sample of {{rows}} of the {{total}} training rows — never silently. The score comes from the same full test set as every other model.",
+        "sampledFrom": "announced sample: {{cap}} of {{from}} usable rows (seeded, stratified)"
       },
       "models": {
         "baseline": "Naive baseline",
@@ -263,7 +268,8 @@
         "trials_one": "Top {{count}} configuration",
         "trials_other": "Top {{count}} configurations",
         "paramsHeader": "parameters",
-        "note": "The winner is chosen by cross-validation, never by peeking at the test set — so the test delta can be negative. That is honest evaluation, not a bug."
+        "note": "The winner is chosen by cross-validation, never by peeking at the test set — so the test delta can be negative. That is honest evaluation, not a bug.",
+        "sampled": "Search ran on an announced seeded sample of {{rows}} of {{from}} training rows — the same rows the leaderboard model trained on."
       },
       "batch": {
         "title": "Score a new batch",

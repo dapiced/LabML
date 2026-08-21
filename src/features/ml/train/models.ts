@@ -2,7 +2,6 @@ import { DecisionTreeClassifier, DecisionTreeRegression } from 'ml-cart';
 import { RandomForestClassifier, RandomForestRegression } from 'ml-random-forest';
 import { trainGbdtClassifier, trainGbdtRegressor } from '@/features/ml/train/gbdt';
 import { trainMlp } from '@/features/ml/train/mlp';
-import { mulberry32, shuffleInPlace } from '@/features/ml/train/random';
 import type { ModelKey } from '@/features/ml/train/types';
 
 export interface TrainedModel {
@@ -24,9 +23,24 @@ export interface ModelDef {
   train(X: number[][], y: number[], ctx: ModelContext): TrainedModel;
 }
 
-/** Largest training set k-NN keeps in memory; larger sets are subsampled (seeded). */
-const KNN_MAX_TRAIN = 5000;
 const KNN_K = 5;
+
+/**
+ * V25: measured per-family training caps (rows). Slow families train on an
+ * ANNOUNCED seeded sample of the train split — never silently: the trainer
+ * records the exact row count on every result and the leaderboard shows it.
+ * Numbers come from the V25 benchmarks (worst measured cases, PLAN.md § N):
+ * every demo dataset sits below every cap, so nothing existing changes.
+ */
+export const MODEL_TRAIN_CAPS: Partial<Record<ModelKey, number>> = {
+  knn: 5_000, // O(n²) distances at prediction time — was a SILENT internal cap before V25
+  forest: 1_000, // 40 unbounded trees: ~25 s at 1 000 rows in the worst measured case
+  tree: 2_000, // one unbounded tree: ~2.3 s at 2 000 rows
+  logistic: 20_000, // batch gradient descent: ~9 s at 20 000 rows
+  linear: 20_000, // normal equations are O(n·d²) — wide text blocks make n matter
+  mlp: 20_000, // ~11 s at 20 000 rows
+  gbdt: 50_000, // histogram boosting scales best: ~10 s at 50 000 rows
+};
 
 // --- Baseline -------------------------------------------------------------
 
@@ -173,16 +187,10 @@ export function trainKnn(
   ctx: ModelContext,
   kWanted: number,
 ): TrainedModel {
-  let trainX = X;
-  let trainY = y;
-  if (X.length > KNN_MAX_TRAIN) {
-    const indices = shuffleInPlace(
-      X.map((_, i) => i),
-      mulberry32(ctx.seed),
-    ).slice(0, KNN_MAX_TRAIN);
-    trainX = indices.map((i) => X[i]);
-    trainY = indices.map((i) => y[i]);
-  }
+  // V25: no silent subsample here any more — callers (trainer, search) cap the
+  // training set through the announced mechanism before this function runs.
+  const trainX = X;
+  const trainY = y;
   const k = Math.min(kWanted, trainX.length);
 
   function neighbors(row: number[]): number[] {

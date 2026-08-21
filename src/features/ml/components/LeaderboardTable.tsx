@@ -34,7 +34,8 @@ export function LeaderboardTable({
   inspectedModel,
   onSelectModel,
 }: LeaderboardTableProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.resolvedLanguage ?? 'en';
   const isClassification = taskType !== 'regression';
   const ok = results.filter((r) => r.ok);
   const failed = results.filter((r) => !r.ok);
@@ -142,6 +143,21 @@ export function LeaderboardTable({
               ))}
               <td className="px-3 py-2 font-mono text-xs whitespace-nowrap">
                 {formatMs(result.trainMs)} ms
+                {summary !== null &&
+                  result.trainedRows !== undefined &&
+                  result.trainedRows < summary.trainRows && (
+                    <span
+                      className="block text-[0.62rem] text-muted"
+                      title={t('ml.lab.leaderboard.trainedOnTitle', {
+                        rows: result.trainedRows.toLocaleString(lang),
+                        total: summary.trainRows.toLocaleString(lang),
+                      })}
+                    >
+                      {t('ml.lab.leaderboard.trainedOn', {
+                        rows: result.trainedRows.toLocaleString(lang),
+                      })}
+                    </span>
+                  )}
               </td>
               <td
                 className="px-3 py-2 font-mono text-xs whitespace-nowrap"
@@ -177,6 +193,16 @@ export function LeaderboardTable({
             test: summary.testRows,
             features: summary.featureCount,
           })}
+          {summary.sampledFrom !== undefined && (
+            <>
+              {' '}
+              ·{' '}
+              {t('ml.lab.leaderboard.sampledFrom', {
+                cap: (summary.trainRows + summary.testRows).toLocaleString(lang),
+                from: summary.sampledFrom.toLocaleString(lang),
+              })}
+            </>
+          )}
           {summary.skippedColumns.length > 0 && (
             <>
               {' '}
