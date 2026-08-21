@@ -203,6 +203,22 @@
         "gbdt": "Gradient boosting",
         "mlp": "Neural network (MLP)"
       },
+      "tuning": {
+        "title": "Hyperparameter search",
+        "hint": "Seeded random search: up to {{budget}} configurations scored by {{folds}}-fold cross-validation on the training split only — the held-out test set is scored exactly once, at the end.",
+        "model": "Model",
+        "start": "Search",
+        "cancel": "Stop",
+        "starting": "Preparing the folds…",
+        "progress": "Fold {{done}} / {{total}}",
+        "cvScore": "Cross-validation:",
+        "testScore": "Test ({{metric}}):",
+        "delta": "vs default:",
+        "trials_one": "Top {{count}} configuration",
+        "trials_other": "Top {{count}} configurations",
+        "paramsHeader": "parameters",
+        "note": "The winner is chosen by cross-validation, never by peeking at the test set — so the test delta can be negative. That is honest evaluation, not a bug."
+      },
       "insights": {
         "title": "Insights",
         "loading": "Analyzing the winning model…",
@@ -233,7 +249,11 @@
         "pdpHint": "Average model prediction as this column sweeps its range, everything else unchanged.",
         "whatIfTitle": "What if…",
         "whatIfHint": "Edit the values and watch the model's live prediction — computed locally, like everything else.",
-        "whatIfPrediction": "Prediction"
+        "whatIfPrediction": "Prediction",
+        "explainButton": "Why this prediction?",
+        "explainTitle": "What pushes the value up or down, versus a typical row",
+        "explainTitleClass": "What pushes toward or away from “{{class}}”, versus a typical row",
+        "explainNote": "Shapley values estimated by permutation sampling ({{permutations}} permutations × {{references}} reference rows, seeded). The bars sum exactly to the gap between this prediction and the reference average."
       },
       "export": {
         "model": "Model (JSON)",
@@ -278,7 +298,8 @@
       "sprint5": "Polish: WCAG AA, offline PWA, Lighthouse budgets — shipped",
       "v2": "V2 models: gradient boosting, neural network, partial dependence, Excel import — shipped",
       "v3": "V3 vision: image classification on your device (SqueezeNet · ONNX Runtime Web) — shipped",
-      "v4": "V4 Data Studio: quality report, cleaning recipe and hand-off to the lab — shipped"
+      "v4": "V4 Data Studio: quality report, cleaning recipe and hand-off to the lab — shipped",
+      "v5": "V5 lab upgrades: hyperparameter search (CV) and Shapley explanations — shipped"
     }
   },
   "data": {

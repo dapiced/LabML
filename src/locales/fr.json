@@ -203,6 +203,22 @@
         "gbdt": "Gradient boosting",
         "mlp": "Réseau de neurones (MLP)"
       },
+      "tuning": {
+        "title": "Recherche d'hyperparamètres",
+        "hint": "Random search seedée : jusqu'à {{budget}} configurations notées par validation croisée à {{folds}} plis sur le split d'entraînement uniquement — le jeu de test mis de côté n'est évalué qu'une seule fois, à la fin.",
+        "model": "Modèle",
+        "start": "Rechercher",
+        "cancel": "Arrêter",
+        "starting": "Préparation des plis…",
+        "progress": "Pli {{done}} / {{total}}",
+        "cvScore": "Validation croisée :",
+        "testScore": "Test ({{metric}}) :",
+        "delta": "vs défaut :",
+        "trials_one": "Top {{count}} configuration",
+        "trials_other": "Top {{count}} configurations",
+        "paramsHeader": "paramètres",
+        "note": "Le gagnant est choisi par validation croisée, jamais en regardant le jeu de test — le delta sur le test peut donc être négatif. C'est une évaluation honnête, pas un bug."
+      },
       "insights": {
         "title": "Insights",
         "loading": "Analyse du modèle gagnant…",
@@ -233,7 +249,11 @@
         "pdpHint": "Prédiction moyenne du modèle quand cette colonne parcourt sa plage, tout le reste inchangé.",
         "whatIfTitle": "Et si…",
         "whatIfHint": "Modifiez les valeurs et regardez la prédiction du modèle changer en direct — calculée localement, comme tout le reste.",
-        "whatIfPrediction": "Prédiction"
+        "whatIfPrediction": "Prédiction",
+        "explainButton": "Pourquoi cette prédiction ?",
+        "explainTitle": "Ce qui tire la valeur vers le haut ou le bas, par rapport à une ligne typique",
+        "explainTitleClass": "Ce qui pousse vers « {{class}} » ou l'en éloigne, par rapport à une ligne typique",
+        "explainNote": "Valeurs de Shapley estimées par échantillonnage de permutations ({{permutations}} permutations × {{references}} lignes de référence, seedé). Les barres somment exactement à l'écart entre cette prédiction et la moyenne de référence."
       },
       "export": {
         "model": "Modèle (JSON)",
@@ -278,7 +298,8 @@
       "sprint5": "Qualité : WCAG AA, PWA hors-ligne, budgets Lighthouse — livré",
       "v2": "Modèles V2 : gradient boosting, réseau de neurones, dépendance partielle, import Excel — livré",
       "v3": "V3 vision : classification d'images sur votre appareil (SqueezeNet · ONNX Runtime Web) — livré",
-      "v4": "V4 Data Studio : rapport de qualité, recette de nettoyage et passerelle vers le labo — livré"
+      "v4": "V4 Data Studio : rapport de qualité, recette de nettoyage et passerelle vers le labo — livré",
+      "v5": "V5 labo affûté : recherche d'hyperparamètres (CV) et explications de Shapley — livré"
     }
   },
   "data": {
