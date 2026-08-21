@@ -1,7 +1,6 @@
-import { ArrowRight, MessageSquareLock, ScanEye } from 'lucide-react';
+import { ArrowRight, MessagesSquare, ScanEye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
 
@@ -38,12 +37,20 @@ export function AiPage() {
         </Card>
 
         <Card className="flex flex-col gap-3">
-          <MessageSquareLock className="h-6 w-6 text-copper" aria-hidden="true" />
-          <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
-            {t('ai.hub.chat.title')}
-            <Badge variant="copper">{t('common.soon')}</Badge>
+          <MessagesSquare className="h-6 w-6 text-accent" aria-hidden="true" />
+          <h2 className="font-display text-xl font-semibold">
+            <Link to="/ai/chat" className="hover:underline">
+              {t('ai.hub.chat.title')}
+            </Link>
           </h2>
           <p className="text-sm text-muted">{t('ai.hub.chat.description')}</p>
+          <Link
+            to="/ai/chat"
+            className="mt-auto inline-flex w-fit items-center gap-2 text-sm font-medium text-accent-strong hover:underline"
+          >
+            {t('ai.hub.chat.cta')}
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
         </Card>
       </section>
     </div>

@@ -40,6 +40,12 @@ export const router = createBrowserRouter([
         }),
       },
       {
+        path: 'ai/chat',
+        lazy: async () => ({
+          Component: (await import('@/features/ai/chat/ChatPage')).default,
+        }),
+      },
+      {
         path: 'about',
         lazy: async () => ({ Component: (await import('@/features/about/AboutPage')).default }),
       },
