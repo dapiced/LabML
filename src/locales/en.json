@@ -83,7 +83,7 @@
       }
     },
     "statusTitle": "Build status",
-    "statusBody": "Foundations are live: design system, dual theme, French/English, routing and CI/CD. The training engine lands next."
+    "statusBody": "The ML Lab is complete — training, insights, export, offline PWA — and the first AI module, image classification, is live. Data pipelines land next."
   },
   "ml": {
     "eyebrow": "ML LAB",
@@ -276,7 +276,8 @@
       "sprint3": "Results, explanations and what-if — shipped",
       "sprint4": "Projects, export & data-free sharing — shipped",
       "sprint5": "Polish: WCAG AA, offline PWA, Lighthouse budgets — shipped",
-      "v2": "V2 models: gradient boosting, neural network, partial dependence, Excel import — shipped"
+      "v2": "V2 models: gradient boosting, neural network, partial dependence, Excel import — shipped",
+      "v3": "V3 vision: image classification on your device (SqueezeNet · ONNX Runtime Web) — shipped"
     }
   },
   "data": {
@@ -287,9 +288,45 @@
   },
   "ai": {
     "eyebrow": "AI",
-    "title": "Deep learning modules, coming later.",
-    "lede": "Planned here: an image classification playground running on ONNX Runtime Web, and a chat over your data with explicit consent for anything that leaves the browser.",
-    "backHome": "Back to home"
+    "title": "Deep learning, still in your browser.",
+    "lede": "Neural modules built on the same rule as the lab: the model comes to your data — never the other way around.",
+    "hub": {
+      "vision": {
+        "title": "Vision playground",
+        "description": "Classify a photo with a real convolutional network — SqueezeNet on ONNX Runtime Web — running in a Web Worker on your machine.",
+        "cta": "Open the vision playground"
+      },
+      "chat": {
+        "title": "Chat over your data",
+        "description": "A conversational assistant needs a language model behind an API — that means a server and a secret key, which must never ship in a browser. This module will only land with a server-side proxy and an explicit consent screen for anything that leaves your machine."
+      }
+    },
+    "vision": {
+      "eyebrow": "AI · VISION",
+      "title": "What does a neural network see?",
+      "lede": "Drop a photo: SqueezeNet, a 1,000-class convolutional network, runs locally through ONNX Runtime Web (WebAssembly). The image never leaves your browser.",
+      "loading": "Downloading the model (~5 MB, once — it is then cached, offline included)…",
+      "ready": "Model loaded in {{ms}} ms",
+      "error": "The model could not be loaded or run. Reload the page and check your connection for the first download.",
+      "drop": {
+        "title": "Drop an image here",
+        "hint": "or click to browse — JPEG, PNG, WebP… It is processed locally, nothing is uploaded.",
+        "browse": "Choose an image"
+      },
+      "results": {
+        "title": "Top 5 predictions",
+        "inferMs": "inference {{ms}} ms",
+        "working": "The network is looking at your image…",
+        "empty": "Predictions will appear here once you drop an image.",
+        "note": "SqueezeNet was trained on ImageNet (1,000 everyday classes, 2012). It always answers with its closest class — even on an image it does not understand — and knows nothing about faces or documents.",
+        "preview": "Analyzed image"
+      },
+      "how": {
+        "title": "How it works — and why it is private",
+        "body": "The image is resized to 224 × 224 pixels in a canvas, normalized with ImageNet statistics, then handed to a Web Worker where ONNX Runtime executes the network in WebAssembly. Model and runtime are served by this site itself: the strict Content-Security-Policy still forbids any third-party call, so the photo cannot leave the tab."
+      },
+      "backToAi": "Back to AI modules"
+    }
   },
   "notFound": {
     "title": "Page not found",
