@@ -283,6 +283,26 @@
         "downloadCsv": "Download the predictions (CSV)",
         "note": "A drop against the test set is a signal, not a bug: the world moved. Check the input drift in the Data Studio (PSI) to see which columns shifted."
       },
+      "threshold": {
+        "title": "Decision threshold & imbalance",
+        "hint": "Only {{rate}} % of rows are “{{positive}}”: accuracy flatters any model here. The precision-recall curve tells the truth, the calibration curve says whether the probabilities can be trusted — and the threshold is YOUR decision, priced by your costs.",
+        "prTitle": "Precision-recall (dashes: random)",
+        "calibrationTitle": "Calibration (dashes: perfect)",
+        "recall": "recall",
+        "precision": "precision",
+        "predictedProb": "predicted probability",
+        "observedRate": "observed rate",
+        "threshold": "Decision threshold",
+        "costFp": "False alarm cost (FP)",
+        "costFn": "Missed case cost (FN)",
+        "bestForCosts": "Best for these costs: {{threshold}}",
+        "atChosen": "at {{threshold}}",
+        "atDefault": "at 0.50",
+        "f1": "F1",
+        "accuracy": "accuracy",
+        "cost": "total cost",
+        "note": "A probability is not a decision. Above the threshold the row is flagged “positive” — moving it trades false alarms against missed cases, and the right trade depends on what each mistake costs YOU. The dot on the curve is your current choice; it is saved with the run."
+      },
       "insights": {
         "title": "Insights",
         "loading": "Analyzing the winning model…",
@@ -353,7 +373,8 @@
           "explanation": "Shapley",
           "exploration": "groups",
           "forecast": "forecast",
-          "batchScore": "new batch"
+          "batchScore": "new batch",
+          "threshold": "threshold"
         }
       },
       "share": {
@@ -382,7 +403,8 @@
       "v11": "V11 MLOps: drift check — schema diff, per-column PSI, new/vanished categories — shipped",
       "v13": "V13 complete runs: tuning, Shapley, groups and forecasts now survive in history, reports and share links — shipped",
       "v14": "V14 generalized prerender: static shells for every section, /ml Lighthouse 0.86 → 0.99 under real throttling — shipped",
-      "v15": "V15 MLOps: score a new batch — predictions in the browser, honest test-vs-batch metrics — shipped"
+      "v15": "V15 MLOps: score a new batch — predictions in the browser, honest test-vs-batch metrics — shipped",
+      "v16": "V16 imbalance: precision-recall, cost-priced decision threshold, calibration — shipped"
     }
   },
   "data": {

@@ -9,6 +9,7 @@ import { runForecast } from '@/features/ml/timeseries/run';
 import { buildPredictionsCsv, serializeModel } from '@/features/ml/train/serialize';
 import { explainPrediction } from '@/features/ml/train/shapley';
 import { scoreBatch } from '@/features/ml/train/score';
+import { analyzeThresholds } from '@/features/ml/train/threshold-analysis';
 import { runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
 import type { Cell, ColumnProfile, ParseResultPayload } from '@/features/ml/data/types';
 import type { ModelKey } from '@/features/ml/train/types';
@@ -277,6 +278,9 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         model: request.model,
         csv: buildPredictionsCsv(artifacts, request.model),
       });
+    } else if (request.kind === 'threshold-analysis') {
+      if (!artifacts) throw new Error('no-run');
+      post({ kind: 'threshold-result', payload: analyzeThresholds(artifacts, request.model) });
     } else if (request.kind === 'score-batch-file') {
       await handleScoreBatch(request.file, request.file.name, request.model);
     } else if (request.kind === 'score-batch-url') {

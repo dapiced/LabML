@@ -7,7 +7,9 @@ import type {
   ExclusionReason,
   TaskInfo,
 } from '@/features/ml/data/types';
+import { thresholdMetrics } from '@/features/ml/train/threshold';
 import type { BatchScore } from '@/features/ml/train/score';
+import type { ThresholdAnalysis } from '@/features/ml/train/threshold-analysis';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
 import type { ForecastPayload } from '@/features/ml/timeseries/run';
@@ -62,6 +64,9 @@ interface LabState {
   batchStatus: 'idle' | 'scoring' | 'done' | 'error';
   batchResult: BatchScore | null;
   batchError: string | null;
+  /** Binary + probabilistic models only — null otherwise. */
+  thresholdAnalysis: ThresholdAnalysis | null;
+  thresholdChoice: { threshold: number; costFp: number; costFn: number };
   /** The auto-saved record of the current run (id set once stored). */
   currentRun: RunRecord | null;
   /** File produced by an export action, consumed once by the UI download effect. */
@@ -81,6 +86,9 @@ interface LabState {
   forecast: (dateColumn: string, valueColumn: string) => void;
   scoreBatch: (file: File) => void;
   scoreBatchDemo: (fileName: string) => void;
+  chooseThreshold: (
+    partial: Partial<{ threshold: number; costFp: number; costFn: number }>,
+  ) => void;
   exportModel: () => void;
   exportPredictions: () => void;
   clearExportedFile: () => void;
@@ -112,6 +120,8 @@ const initialTraining = {
   batchStatus: 'idle' as const,
   batchResult: null,
   batchError: null,
+  thresholdAnalysis: null as ThresholdAnalysis | null,
+  thresholdChoice: { threshold: 0.5, costFp: 1, costFn: 1 },
   currentRun: null,
   exportedFile: null,
 };
@@ -148,6 +158,29 @@ export const useLabStore = create<LabState>((set, get) => {
       const id = current.id;
       void import('@/features/ml/projects/db').then(({ db }) => db.runs.update(id, { artifacts }));
     }
+  }
+
+  /** The persisted form of the analysis + the user's current cut. */
+  function thresholdArtifact(
+    analysis: ThresholdAnalysis,
+    choice: { threshold: number; costFp: number; costFn: number },
+  ) {
+    const y = analysis.pairs.map(([, label]) => label);
+    const p = analysis.pairs.map(([proba]) => proba);
+    return {
+      model: analysis.model,
+      positiveClass: analysis.positiveClass,
+      positiveRate: analysis.pr.positiveRate,
+      averagePrecision: analysis.pr.averagePrecision,
+      brier: analysis.calibration.brier,
+      prPoints: analysis.pr.points,
+      calibrationBins: analysis.calibration.bins,
+      chosen: {
+        ...thresholdMetrics(y, p, choice.threshold, choice.costFp, choice.costFn),
+        costFp: choice.costFp,
+        costFn: choice.costFn,
+      },
+    };
   }
 
   function send(request: WorkerRequest) {
@@ -195,6 +228,8 @@ export const useLabStore = create<LabState>((set, get) => {
           set({ ...initialTraining });
         } else if (message.kind === 'insights') {
           set({ insights: message.payload, whatIf: null });
+          // Imbalance tools ride along; the worker answers null when N/A.
+          send({ kind: 'threshold-analysis', model: message.payload.model });
           // First insights after a completed run = winning model → auto-save.
           const state = get();
           if (
@@ -266,6 +301,12 @@ export const useLabStore = create<LabState>((set, get) => {
           attachArtifact({ batchScore: artifact as Omit<BatchScore, 'csv' | 'preview'> });
         } else if (message.kind === 'batch-error') {
           set({ batchStatus: 'error', batchResult: null, batchError: message.message });
+        } else if (message.kind === 'threshold-result') {
+          const choice = { threshold: 0.5, costFp: 1, costFn: 1 };
+          set({ thresholdAnalysis: message.payload, thresholdChoice: choice });
+          if (message.payload) {
+            attachArtifact({ threshold: thresholdArtifact(message.payload, choice) });
+          }
         } else if (message.kind === 'model-json') {
           if (message.json !== null) {
             set({
@@ -356,7 +397,7 @@ export const useLabStore = create<LabState>((set, get) => {
       const state = get();
       if (state.trainStatus !== 'done' || state.insights?.model === model) return;
       if (!state.results.some((r) => r.ok && r.key === model)) return;
-      // The batch score belongs to the previously inspected model.
+      // Batch score and threshold analysis belong to the previous model.
       set({
         insights: null,
         whatIf: null,
@@ -364,6 +405,8 @@ export const useLabStore = create<LabState>((set, get) => {
         batchStatus: 'idle',
         batchResult: null,
         batchError: null,
+        thresholdAnalysis: null,
+        thresholdChoice: { threshold: 0.5, costFp: 1, costFn: 1 },
       });
       send({ kind: 'model-insights', model });
     },
@@ -422,6 +465,14 @@ export const useLabStore = create<LabState>((set, get) => {
         return;
       set({ batchStatus: 'scoring', batchResult: null, batchError: null });
       send({ kind: 'score-batch-file', file, model: state.insights.model });
+    },
+
+    chooseThreshold(partial) {
+      const state = get();
+      if (!state.thresholdAnalysis) return;
+      const choice = { ...state.thresholdChoice, ...partial };
+      set({ thresholdChoice: choice });
+      attachArtifact({ threshold: thresholdArtifact(state.thresholdAnalysis, choice) });
     },
 
     scoreBatchDemo(fileName) {
