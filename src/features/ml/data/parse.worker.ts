@@ -9,6 +9,7 @@ import { runForecast } from '@/features/ml/timeseries/run';
 import { buildPredictionsCsv, serializeModel } from '@/features/ml/train/serialize';
 import { explainPrediction } from '@/features/ml/train/shapley';
 import { scoreBatch } from '@/features/ml/train/score';
+import { analyzeSegments } from '@/features/ml/train/segments';
 import { analyzeThresholds } from '@/features/ml/train/threshold-analysis';
 import { runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
 import type { Cell, ColumnProfile, ParseResultPayload } from '@/features/ml/data/types';
@@ -29,6 +30,8 @@ let cancelTuning = false;
 let artifacts: TrainArtifacts | null = null;
 /** Target column of the last training — batch metrics need it by name. */
 let lastTarget: string | null = null;
+/** Feature columns of the last training — segment analysis flags them. */
+let lastFeatureColumns: string[] = [];
 
 function post(message: WorkerResponse) {
   self.postMessage(message);
@@ -201,6 +204,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       });
       if (outcome) {
         artifacts = outcome.artifacts;
+        lastFeatureColumns = outcome.summary.featureColumns;
         post({ kind: 'train-complete', summary: outcome.summary });
       } else {
         post({ kind: 'train-cancelled' });
@@ -281,6 +285,24 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     } else if (request.kind === 'threshold-analysis') {
       if (!artifacts) throw new Error('no-run');
       post({ kind: 'threshold-result', payload: analyzeThresholds(artifacts, request.model) });
+    } else if (request.kind === 'segment-analysis') {
+      if (!artifacts || !lastTarget) throw new Error('no-run');
+      const model = artifacts.models.get(request.model);
+      if (!model) throw new Error('model-not-found');
+      post({
+        kind: 'segments-result',
+        payload: analyzeSegments(
+          header,
+          columns,
+          artifacts.testIndices,
+          artifacts.testY,
+          model.predict(artifacts.testX),
+          artifacts.isClassification,
+          lastTarget,
+          lastFeatureColumns,
+          request.model,
+        ),
+      });
     } else if (request.kind === 'score-batch-file') {
       await handleScoreBatch(request.file, request.file.name, request.model);
     } else if (request.kind === 'score-batch-url') {
