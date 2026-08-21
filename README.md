@@ -47,8 +47,15 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   hand-written deterministic **neural network (MLP)** (seeded He init, full-batch Adam),
   **partial-dependence plots** on the top numeric drivers, and **Excel (.xlsx) import**
   (SheetJS, lazy-loaded). The zoo is now 8 classification / 7 regression models.
-- Candidate next steps: hyperparameter search, SHAP-style explanations, and the
-  `/data` and `/ai` sections (TensorFlow.js/ONNX Runtime for vision).
+- **V3 (vision) — shipped**: the `/ai` section opens with an on-device **image
+  classification playground** — SqueezeNet (1,000 ImageNet classes) executed by
+  **ONNX Runtime Web** (WebAssembly) in a Web Worker. Model and runtime are
+  self-hosted so the strict CSP still allows zero third-party calls, and both are
+  runtime-cached by the service worker (works offline after first use). The photo
+  never leaves the browser.
+- Candidate next steps: hyperparameter search, SHAP-style explanations, the `/data`
+  section, and `/ai` chat (requires a server-side key proxy — never an API key in
+  the browser).
 
 Full roadmap in [PLAN.md](PLAN.md), target analysis in
 [docs/analyse-le site de référence.md](docs/analyse-le site de référence.md).
