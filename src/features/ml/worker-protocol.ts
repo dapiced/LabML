@@ -1,4 +1,6 @@
 import type { Cell, ParseResultPayload, TargetAnalysis } from '@/features/ml/data/types';
+import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
+import type { ShapleyExplanation } from '@/features/ml/train/shapley';
 import type {
   InsightsPayload,
   ModelKey,
@@ -17,6 +19,9 @@ export type WorkerRequest =
   | { kind: 'cancel-train' }
   | { kind: 'model-insights'; model: ModelKey }
   | { kind: 'what-if'; model: ModelKey; values: Record<string, Cell> }
+  | { kind: 'explain'; model: ModelKey; values: Record<string, Cell> }
+  | { kind: 'tune'; model: TunableKey; config: TrainConfig }
+  | { kind: 'cancel-tune' }
   | { kind: 'export-model'; model: ModelKey }
   | { kind: 'export-predictions'; model: ModelKey };
 
@@ -31,6 +36,10 @@ export type WorkerResponse =
   | { kind: 'train-cancelled' }
   | { kind: 'insights'; payload: InsightsPayload }
   | { kind: 'what-if-result'; payload: WhatIfResult }
+  | { kind: 'explanation'; payload: ShapleyExplanation }
+  | { kind: 'tune-progress'; done: number; total: number; bestCv: number | null }
+  | { kind: 'tune-complete'; payload: TuneOutcome }
+  | { kind: 'tune-cancelled' }
   | { kind: 'model-json'; model: ModelKey; json: string | null }
   | { kind: 'predictions-csv'; model: ModelKey; csv: string }
   | { kind: 'error'; message: string };

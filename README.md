@@ -60,8 +60,15 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   duplicates/columns, impute median/mode or drop rows, clamp outliers) applied live
   in a Web Worker with per-option counters; exports (cleaned CSV, recipe JSON) and a
   one-click **hand-off to the ML Lab**.
-- Candidate next steps: hyperparameter search, SHAP-style explanations, and `/ai`
-  chat (requires a server-side key proxy — never an API key in the browser).
+- **V5 (lab upgrades) — shipped**: **hyperparameter search** — seeded random search
+  (up to 16 configurations) scored by stratified 3-fold cross-validation on the
+  training split only, pipeline refitted inside each fold (no leakage), the held-out
+  test set scored exactly once; and **Shapley explanations** for any what-if
+  prediction — interventional permutation sampling (8 permutations × 24 reference
+  rows, one-hot blocks grouped by source column) with the efficiency property holding
+  exactly: the bars sum to prediction − baseline.
+- Candidate next steps: `/ai` chat (requires a server-side key proxy — never an API
+  key in the browser).
 
 Full roadmap in [PLAN.md](PLAN.md), target analysis in
 [docs/analyse-quantifai.md](docs/analyse-quantifai.md).

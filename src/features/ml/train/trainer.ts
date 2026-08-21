@@ -38,35 +38,33 @@ const LATENCY_SAMPLE = 200;
 const TRAINABLE_TYPES = new Set(['numeric', 'categorical', 'boolean']);
 
 /** Lets queued worker messages (e.g. cancellation) run between models. */
-function yieldToQueue(): Promise<void> {
+export function yieldToQueue(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
-function percentile(sorted: number[], p: number): number {
-  if (sorted.length === 0) return 0;
-  const index = Math.min(sorted.length - 1, Math.floor(p * sorted.length));
-  return sorted[index];
+/** The task, feature set and seeded train/test split — deterministic per config. */
+export interface PreparedData {
+  task: NonNullable<ReturnType<typeof detectTask>>;
+  isClassification: boolean;
+  classes: string[];
+  featureColumns: string[];
+  skippedColumns: string[];
+  train: number[];
+  test: number[];
+  /** Stratification labels aligned with `train` (null for regression). */
+  trainLabels: (string | null)[] | null;
+  encode(i: number): number;
 }
 
-function measureLatency(model: TrainedModel, X: number[][]): { p50: number; p95: number } {
-  const sample = X.slice(0, LATENCY_SAMPLE);
-  const timings: number[] = [];
-  for (const row of sample) {
-    const start = performance.now();
-    model.predict([row]);
-    timings.push(performance.now() - start);
-  }
-  timings.sort((a, b) => a - b);
-  return { p50: percentile(timings, 0.5), p95: percentile(timings, 0.95) };
-}
-
-export async function runTraining(
+/**
+ * Everything up to the split, shared by training and hyperparameter search so
+ * both see the exact same rows (the search never touches the test indices).
+ */
+export function prepareData(
   columns: Map<string, Cell[]>,
   profiles: ColumnProfile[],
   config: TrainConfig,
-  callbacks: TrainerCallbacks,
-): Promise<TrainOutcome | null> {
-  const startedAt = performance.now();
+): PreparedData {
   const targetProfile = profiles.find((p) => p.name === config.target);
   const targetValues = columns.get(config.target);
   if (!targetProfile || !targetValues) throw new Error('target-not-found');
@@ -101,11 +99,94 @@ export async function runTraining(
     : null;
   const { train, test } = splitIndices(rows, stratifyLabels, config.testRatio, config.seed);
 
+  const trainLabels = isClassification
+    ? train.map((i) => (isMissing(targetValues[i]) ? null : (targetValues[i] as string).trim()))
+    : null;
+
+  return {
+    task,
+    isClassification,
+    classes,
+    featureColumns,
+    skippedColumns,
+    train,
+    test,
+    trainLabels,
+    encode: (i: number): number =>
+      isClassification ? labelOf(i) : (parseNumber((targetValues[i] as string).trim()) as number),
+  };
+}
+
+/** The run's metric block for one model on one evaluation set. */
+export function scoreModel(
+  model: TrainedModel,
+  X: number[][],
+  y: number[],
+  isClassification: boolean,
+  classCount: number,
+): { metrics: MetricMap; primary: number } {
+  const predictions = model.predict(X);
+  const metrics: MetricMap = {};
+  let primary: number;
+  if (isClassification) {
+    metrics.accuracy = accuracy(y, predictions);
+    const prf = macroPrf(y, predictions, classCount);
+    metrics.precision = prf.precision;
+    metrics.recall = prf.recall;
+    metrics.f1 = prf.f1;
+    if (model.predictProba) {
+      const probabilities = model.predictProba(X);
+      metrics.logLoss = logLoss(y, probabilities);
+      if (classCount === 2) {
+        const auc = rocAuc(
+          y,
+          probabilities.map((p) => p[1]),
+        );
+        if (auc !== null) metrics.auc = auc;
+      }
+    }
+    primary = metrics.accuracy;
+  } else {
+    metrics.rmse = rmse(y, predictions);
+    metrics.mae = mae(y, predictions);
+    metrics.r2 = r2(y, predictions);
+    primary = metrics.rmse;
+  }
+  return { metrics, primary };
+}
+
+function percentile(sorted: number[], p: number): number {
+  if (sorted.length === 0) return 0;
+  const index = Math.min(sorted.length - 1, Math.floor(p * sorted.length));
+  return sorted[index];
+}
+
+function measureLatency(model: TrainedModel, X: number[][]): { p50: number; p95: number } {
+  const sample = X.slice(0, LATENCY_SAMPLE);
+  const timings: number[] = [];
+  for (const row of sample) {
+    const start = performance.now();
+    model.predict([row]);
+    timings.push(performance.now() - start);
+  }
+  timings.sort((a, b) => a - b);
+  return { p50: percentile(timings, 0.5), p95: percentile(timings, 0.95) };
+}
+
+export async function runTraining(
+  columns: Map<string, Cell[]>,
+  profiles: ColumnProfile[],
+  config: TrainConfig,
+  callbacks: TrainerCallbacks,
+): Promise<TrainOutcome | null> {
+  const startedAt = performance.now();
+  const prepared = prepareData(columns, profiles, config);
+  const { task, isClassification, classes, featureColumns, skippedColumns, train, test, encode } =
+    prepared;
+
   const pipeline = fitPipeline(columns, profiles, featureColumns, train);
   const trainX = pipeline.transform(train);
   const testX = pipeline.transform(test);
-  const encode = (i: number): number =>
-    isClassification ? labelOf(i) : (parseNumber((targetValues[i] as string).trim()) as number);
   const trainY = train.map(encode);
   const testY = test.map(encode);
 
@@ -129,34 +210,13 @@ export async function runTraining(
       const model = def.train(trainX, trainY, context);
       const trainMs = performance.now() - trainStart;
       models.set(def.key, model);
-      const predictions = model.predict(testX);
-
-      const metrics: MetricMap = {};
-      let primary: number;
-      if (isClassification) {
-        metrics.accuracy = accuracy(testY, predictions);
-        const prf = macroPrf(testY, predictions, classes.length);
-        metrics.precision = prf.precision;
-        metrics.recall = prf.recall;
-        metrics.f1 = prf.f1;
-        if (model.predictProba) {
-          const probabilities = model.predictProba(testX);
-          metrics.logLoss = logLoss(testY, probabilities);
-          if (classes.length === 2) {
-            const auc = rocAuc(
-              testY,
-              probabilities.map((p) => p[1]),
-            );
-            if (auc !== null) metrics.auc = auc;
-          }
-        }
-        primary = metrics.accuracy;
-      } else {
-        metrics.rmse = rmse(testY, predictions);
-        metrics.mae = mae(testY, predictions);
-        metrics.r2 = r2(testY, predictions);
-        primary = metrics.rmse;
-      }
+      const { metrics, primary } = scoreModel(
+        model,
+        testX,
+        testY,
+        isClassification,
+        classes.length,
+      );
 
       const latency = measureLatency(model, testX);
       callbacks.onModelResult({

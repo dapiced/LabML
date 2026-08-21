@@ -3,7 +3,9 @@ import Papa from 'papaparse';
 import { profileColumn } from '@/features/ml/data/profile';
 import { analyzeTarget, baselineSuggestions } from '@/features/ml/data/suggest';
 import { computeInsights, computeWhatIf } from '@/features/ml/train/insights';
+import { runSearch } from '@/features/ml/train/search';
 import { buildPredictionsCsv, serializeModel } from '@/features/ml/train/serialize';
+import { explainPrediction } from '@/features/ml/train/shapley';
 import { runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
 import type { Cell, ColumnProfile, ParseResultPayload } from '@/features/ml/data/types';
 import type { WorkerRequest, WorkerResponse } from '@/features/ml/worker-protocol';
@@ -18,6 +20,7 @@ let header: string[] = [];
 let columns: Cell[][] = [];
 let rowCount = 0;
 let cancelTraining = false;
+let cancelTuning = false;
 let artifacts: TrainArtifacts | null = null;
 
 function post(message: WorkerResponse) {
@@ -158,6 +161,33 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         kind: 'what-if-result',
         payload: computeWhatIf(artifacts, request.model, request.values),
       });
+    } else if (request.kind === 'explain') {
+      if (!artifacts) throw new Error('no-run');
+      post({
+        kind: 'explanation',
+        payload: explainPrediction(artifacts, request.model, request.values),
+      });
+    } else if (request.kind === 'cancel-tune') {
+      cancelTuning = true;
+    } else if (request.kind === 'tune') {
+      cancelTuning = false;
+      if (!artifacts) throw new Error('no-run');
+      const profiles: ColumnProfile[] = header.map((column, i) =>
+        profileColumn(column, columns[i]),
+      );
+      const outcome = await runSearch(
+        columnsAsMap(),
+        profiles,
+        request.config,
+        request.model,
+        artifacts.models.get(request.model) ?? null,
+        {
+          onProgress: (done, total, bestCv) => post({ kind: 'tune-progress', done, total, bestCv }),
+          isCancelled: () => cancelTuning,
+        },
+      );
+      if (outcome) post({ kind: 'tune-complete', payload: outcome });
+      else post({ kind: 'tune-cancelled' });
     } else if (request.kind === 'export-model') {
       if (!artifacts) throw new Error('no-run');
       post({
