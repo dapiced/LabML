@@ -23,11 +23,12 @@ const ROADMAP_KEYS = [
   'v9',
   'v10',
   'v11',
+  'v13',
 ] as const;
 // History (and Dexie with it) loads after first paint — it sits below the fold.
 const RunsHistory = lazy(() => import('@/features/ml/components/RunsHistory'));
 
-const SHIPPED_SPRINTS = 16; // MVP (S0–S5) + V2–V11 are live: Cap 3 underway
+const SHIPPED_SPRINTS = 17; // MVP (S0–S5) + V2–V11 + V13 are live (V12 on hold)
 
 export function MlHomePage() {
   const { t } = useTranslation();
