@@ -36,11 +36,12 @@ describe('ReloadPrompt', () => {
     expect(updateServiceWorker).toHaveBeenCalledWith(true);
   });
 
-  it('announces offline readiness and can be dismissed', async () => {
+  it('announces offline readiness and closes on OK (no pending action)', async () => {
     const { setOfflineReady, setNeedRefresh } = arm(true, false);
     render(<ReloadPrompt />);
-    expect(screen.getByTestId('pwa-toast').textContent).toContain('offline');
-    await userEvent.click(screen.getByRole('button', { name: /later/i }));
+    expect(screen.getByTestId('pwa-toast').textContent).toContain('without a connection');
+    // Purely informational: the button says OK, not "Later".
+    await userEvent.click(screen.getByRole('button', { name: /ok/i }));
     expect(setOfflineReady).toHaveBeenCalledWith(false);
     expect(setNeedRefresh).toHaveBeenCalledWith(false);
   });
