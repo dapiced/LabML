@@ -70,7 +70,6 @@
     "titlePre": "A machine learning lab,",
     "titleHighlight": "entirely in your browser.",
     "lede": "Drop a dataset, pick what to predict, and train a set of models on your own machine. No account, no upload, no setup — and every run is scored against an honest baseline.",
-    "openLab": "Open the ML Lab",
     "modules": {
       "ml": {
         "title": "ML Lab",
@@ -325,6 +324,29 @@
         "verdictNoise": "{{winner}} vs {{against}}: Δ {{metric}} = {{delta}} [{{lo}} ; {{hi}}] — the interval crosses zero. Possibly noise: on this test set, the winner is not proven better.",
         "note": "Resamples are drawn from the same {{rows}} test rows (seed {{seed}}, shared across models so comparisons are paired). These intervals measure sensitivity to the test draw — not training variance."
       },
+      "compare": {
+        "open": "Compare these two runs",
+        "title": "Run comparison",
+        "sameDataset": "same dataset",
+        "otherDataset": "different datasets",
+        "sameTarget": "same target",
+        "otherTarget": "different targets",
+        "notComparable": "These runs predict different things — the metrics do not compare. The configuration diff below still tells the story.",
+        "read": "The best model goes from {{aPrimary}} ({{aModel}}) to {{bPrimary}} ({{bModel}}) — {{metric}} {{delta}}.",
+        "readBetter": "An improvement.",
+        "readWorse": "A regression.",
+        "readEqual": "No change.",
+        "featuresTitle": "Feature changes (A → B)",
+        "kept_one": "{{count}} feature kept on both sides",
+        "kept_other": "{{count}} features kept on both sides",
+        "sameFeatures": "Both runs trained on the same features.",
+        "modelsTitle": "{{metric}} per model, side by side",
+        "delta": "Δ (B − A)",
+        "intervalsTitle": "Winner intervals (95%, from each run)",
+        "intervalsDisjoint": "The intervals do not overlap — the gap between the two runs exceeds both uncertainties. Probably real.",
+        "intervalsOverlap": "The intervals overlap — on these test sets, the gap between the two runs could be noise.",
+        "intervalsNote": "Each interval comes from its own run's test draw (v20). Two runs are never paired — read this as an indication, not a test."
+      },
       "datasets": {
         "keepButton": "Keep in this browser",
         "keeping": "Keeping…",
@@ -392,15 +414,7 @@
         "delete": "Delete",
         "compare": "Compare",
         "backToLab": "Back to the lab",
-        "notFound": "Run not found.",
-        "fields": {
-          "dataset": "Dataset",
-          "target": "Target",
-          "bestModel": "Best model",
-          "primary": "Score",
-          "rows": "Rows",
-          "seed": "Seed"
-        }
+        "notFound": "Run not found."
       },
       "runArtifacts": {
         "hint": "These analyses were run after training and saved with the run — they travel with the local history, the HTML report and share links, never with the data.",
