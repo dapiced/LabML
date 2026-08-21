@@ -5,6 +5,7 @@ import type { BatchScore } from '@/features/ml/train/score';
 import type { SegmentAnalysis } from '@/features/ml/train/segments';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
 import type { ThresholdAnalysis } from '@/features/ml/train/threshold-analysis';
+import type { UncertaintyAnalysis } from '@/features/ml/train/uncertainty';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
 import type {
   InsightsPayload,
@@ -37,7 +38,8 @@ export type WorkerRequest =
   | { kind: 'score-batch-file'; file: File; model: ModelKey }
   | { kind: 'score-batch-url'; url: string; name: string; model: ModelKey }
   | { kind: 'threshold-analysis'; model: ModelKey }
-  | { kind: 'segment-analysis'; model: ModelKey };
+  | { kind: 'segment-analysis'; model: ModelKey }
+  | { kind: 'uncertainty-analysis' };
 
 /** Messages emitted by the data/training worker. */
 export type WorkerResponse =
@@ -65,6 +67,8 @@ export type WorkerResponse =
   | { kind: 'threshold-result'; payload: ThresholdAnalysis | null }
   // null = nothing sliceable (no categorical column, tiny test set).
   | { kind: 'segments-result'; payload: SegmentAnalysis | null }
+  // null = tiny test set — no interval theater.
+  | { kind: 'uncertainty-result'; payload: UncertaintyAnalysis | null }
   // Dedicated channel: a bad batch file must not tear down the run state.
   | { kind: 'batch-error'; message: string }
   | { kind: 'error'; message: string };

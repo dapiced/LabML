@@ -11,6 +11,7 @@ import { explainPrediction } from '@/features/ml/train/shapley';
 import { scoreBatch } from '@/features/ml/train/score';
 import { analyzeSegments } from '@/features/ml/train/segments';
 import { analyzeThresholds } from '@/features/ml/train/threshold-analysis';
+import { analyzeUncertainty, type ModelLosses } from '@/features/ml/train/uncertainty';
 import { runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
 import type { Cell, ColumnProfile, ParseResultPayload } from '@/features/ml/data/types';
 import type { ModelKey } from '@/features/ml/train/types';
@@ -294,6 +295,20 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     } else if (request.kind === 'threshold-analysis') {
       if (!artifacts) throw new Error('no-run');
       post({ kind: 'threshold-result', payload: analyzeThresholds(artifacts, request.model) });
+    } else if (request.kind === 'uncertainty-analysis') {
+      if (!artifacts) throw new Error('no-run');
+      const art = artifacts;
+      const entries: ModelLosses[] = [...art.models.entries()].map(([model, trained]) => {
+        const yhat = trained.predict(art.testX);
+        const values = art.isClassification
+          ? yhat.map((p, i) => (p === art.testY[i] ? 1 : 0))
+          : yhat.map((p, i) => (p - art.testY[i]) ** 2);
+        return { model, values };
+      });
+      post({
+        kind: 'uncertainty-result',
+        payload: analyzeUncertainty(entries, art.isClassification, art.seed),
+      });
     } else if (request.kind === 'segment-analysis') {
       if (!artifacts || !lastTarget) throw new Error('no-run');
       const model = artifacts.models.get(request.model);

@@ -124,6 +124,26 @@ function makeArtifacts(): RunArtifacts {
         costFn: 10,
       },
     },
+    uncertainty: {
+      isClassification: true,
+      metricLabel: 'accuracy',
+      testRows: 24,
+      resamples: 1000,
+      seed: 42,
+      intervals: [
+        { model: 'logistic', point: 0.92, lo: 0.83, hi: 0.98 },
+        { model: 'baseline', point: 0.5, lo: 0.35, hi: 0.65 },
+      ],
+      verdict: {
+        winner: 'logistic',
+        against: 'baseline',
+        delta: 0.42,
+        lo: 0.21,
+        hi: 0.58,
+        winShare: 0.998,
+        decisive: true,
+      },
+    },
     segments: {
       model: 'logistic',
       isClassification: true,
@@ -204,6 +224,7 @@ describe('share link codec', () => {
     expect(decoded.artifacts?.batchScore?.fileName).toBe('field.csv');
     expect(decoded.artifacts?.threshold?.chosen.threshold).toBe(0.3);
     expect(decoded.artifacts?.segments?.columns[0].segments[0].value).toBe('A');
+    expect(decoded.artifacts?.uncertainty?.verdict?.decisive).toBe(true);
     // Oversized point clouds are downsampled / tailed, never dropped.
     expect(decoded.artifacts!.exploration!.points.length).toBeLessThanOrEqual(121);
     expect(decoded.artifacts!.exploration!.points.length).toBeGreaterThan(50);
@@ -270,6 +291,9 @@ describe('report generation', () => {
     expect(html).toContain('0.30');
     expect(html).toContain('ml.lab.segments.title');
     expect(html).toContain('-0.200');
+    expect(html).toContain('ml.lab.uncertainty.title');
+    expect(html).toContain('[0.830 ; 0.980]');
+    expect(html).toContain('ml.lab.uncertainty.verdictReal');
     expect(html).not.toContain('<script');
   });
 });
