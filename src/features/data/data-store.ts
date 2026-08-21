@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { DEFAULT_RECIPE, parseRecipeFile } from '@/features/data/quality/types';
 import type { CleanStats, QualityReport, RecipeOptions } from '@/features/data/quality/types';
 import type { DriftReport } from '@/features/data/quality/drift';
+import type { JoinStats } from '@/features/data/quality/join';
 import type { DatasetMeta } from '@/features/ml/data/types';
 import type { DataWorkerRequest, DataWorkerResponse } from '@/features/data/data-protocol';
 
@@ -39,6 +40,13 @@ interface DataState {
   driftStatus: 'idle' | 'parsing' | 'done';
   driftReport: DriftReport | null;
   compareMeta: DatasetMeta | null;
+  joinStatus: 'idle' | 'parsing' | 'ready' | 'done';
+  /** Second file parsed and waiting for a key: name, rows, candidate keys. */
+  joinCandidate: { name: string; rows: number; candidates: string[] } | null;
+  joinStats: JoinStats | null;
+  loadJoinFile: (file: File) => void;
+  loadJoinDemo: (fileName: string) => void;
+  applyJoin: (key: string) => void;
   loadFile: (file: File) => void;
   loadDemo: (fileName: string) => void;
   setOptions: (partial: Partial<RecipeOptions>) => void;
@@ -80,6 +88,9 @@ const initialData = {
   driftStatus: 'idle' as const,
   driftReport: null,
   compareMeta: null,
+  joinStatus: 'idle' as const,
+  joinCandidate: null,
+  joinStats: null,
 };
 
 export const useDataStore = create<DataState>((set, get) => {
@@ -111,6 +122,34 @@ export const useDataStore = create<DataState>((set, get) => {
           });
         } else if (message.kind === 'drift') {
           set({ driftStatus: 'done', driftReport: message.payload, compareMeta: message.meta });
+        } else if (message.kind === 'join-ready') {
+          set({
+            joinStatus: 'ready',
+            joinCandidate: {
+              name: message.name,
+              rows: message.rows,
+              candidates: message.candidates,
+            },
+          });
+        } else if (message.kind === 'joined') {
+          // The joined data IS the dataset now: report, recipe and drift all
+          // restart from it — same handler shape as a fresh parse.
+          set({
+            status: 'ready',
+            meta: message.payload.meta,
+            report: message.payload.report,
+            preview: message.payload.preview,
+            columnTypes: message.payload.columnTypes,
+            rowsParsed: message.payload.meta.rowCount,
+            applying: true,
+            joinStatus: 'done',
+            joinCandidate: null,
+            joinStats: message.stats,
+            driftStatus: 'idle',
+            driftReport: null,
+            compareMeta: null,
+          });
+          send({ kind: 'apply', options: get().options });
         } else if (message.kind === 'csv') {
           if (message.purpose === 'lab') {
             set({ labHandoff: { name: message.name, content: message.content } });
@@ -151,15 +190,45 @@ export const useDataStore = create<DataState>((set, get) => {
       send({ kind: 'apply', options });
     },
 
+    loadJoinFile(file) {
+      if (get().status !== 'ready') return;
+      set({ joinStatus: 'parsing', joinCandidate: null, joinStats: null });
+      send({ kind: 'parse-join-file', file });
+    },
+
+    loadJoinDemo(fileName) {
+      if (get().status !== 'ready') return;
+      set({ joinStatus: 'parsing', joinCandidate: null, joinStats: null });
+      send({ kind: 'parse-join-url', url: `/datasets/${fileName}`, name: fileName });
+    },
+
+    applyJoin(key) {
+      if (get().joinStatus !== 'ready') return;
+      send({ kind: 'apply-join', key });
+    },
+
     loadCompareFile(file) {
       if (get().status !== 'ready') return;
-      set({ driftStatus: 'parsing', driftReport: null, compareMeta: null });
+      // A drift compare cancels any join waiting for its key (worker too).
+      set({
+        driftStatus: 'parsing',
+        driftReport: null,
+        compareMeta: null,
+        joinStatus: 'idle',
+        joinCandidate: null,
+      });
       send({ kind: 'parse-compare-file', file });
     },
 
     loadCompareDemo(fileName) {
       if (get().status !== 'ready') return;
-      set({ driftStatus: 'parsing', driftReport: null, compareMeta: null });
+      set({
+        driftStatus: 'parsing',
+        driftReport: null,
+        compareMeta: null,
+        joinStatus: 'idle',
+        joinCandidate: null,
+      });
       send({ kind: 'parse-compare-url', url: `/datasets/${fileName}`, name: fileName });
     },
 

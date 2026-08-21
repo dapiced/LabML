@@ -72,6 +72,8 @@ export interface RecipeOptions {
   clipOutliers: boolean;
   /** Expand every date column into `_year`, `_month` and `_weekday` columns. */
   deriveDates: boolean;
+  /** Drop rows the seeded isolation forest flags as multivariate anomalies. */
+  dropAnomalies: boolean;
   /** Per-column type overrides; absent columns keep their inferred type. */
   types: Record<string, ForcedType>;
 }
@@ -85,6 +87,7 @@ export interface CleanStats {
   droppedMissingRows: number;
   clippedCells: number;
   derivedColumns: string[];
+  droppedAnomalyRows: number;
   /** Shape after cleaning. */
   rowCount: number;
   columnCount: number;
@@ -98,6 +101,7 @@ export const DEFAULT_RECIPE: RecipeOptions = {
   missing: 'impute',
   clipOutliers: false,
   deriveDates: false,
+  dropAnomalies: false,
   types: {},
 };
 
@@ -110,6 +114,7 @@ const BOOLEAN_KEYS = [
   'dropStructural',
   'clipOutliers',
   'deriveDates',
+  'dropAnomalies',
 ] as const;
 
 /**

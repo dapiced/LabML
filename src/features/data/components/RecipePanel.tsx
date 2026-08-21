@@ -15,6 +15,7 @@ const TOGGLES: ToggleKey[] = [
   'dropStructural',
   'clipOutliers',
   'deriveDates',
+  'dropAnomalies',
 ];
 
 /** The cleaning recipe: options on the left, their live effect on the right. */
@@ -56,6 +57,8 @@ export function RecipePanel() {
               columns: stats.derivedColumns.join(', '),
             })
           : t('data.recipe.effects.columnsAddedNone');
+      case 'dropAnomalies':
+        return t('data.recipe.effects.rows', { count: stats.droppedAnomalyRows });
     }
   };
 
