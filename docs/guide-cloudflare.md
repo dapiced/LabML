@@ -29,8 +29,7 @@
 
 ## Étape 3 — Ajouter les deux secrets dans GitHub
 
-1. Ouvrez https://github.com/dapiced/LabML/settings/secrets/actions
-   _(ou : dépôt **LabML** → **Settings** → **Secrets and variables** → **Actions**)_
+1. Ouvrez le dépôt **LabML** sur GitHub → **Settings** → **Secrets and variables** → **Actions**
 2. Cliquez sur **New repository secret** :
    - **Name** : `CLOUDFLARE_API_TOKEN` — **Secret** : collez le token de l'étape 2 → **Add secret**
 3. Recommencez :
