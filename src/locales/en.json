@@ -121,7 +121,8 @@
         "binary": "binary",
         "multiclass": "multi-class",
         "regression": "regression",
-        "timeseries": "time series"
+        "timeseries": "time series",
+        "text": "text"
       },
       "parsing": "Reading locally…",
       "rowsRead": "{{count}} rows read",
@@ -194,7 +195,7 @@
         "baselineTag": "baseline",
         "failed": "failed",
         "runInfo": "seed {{seed}} · {{train}} train rows · {{test}} test rows · {{features}} features after encoding",
-        "skipped": "skipped (type not trainable yet): {{columns}}"
+        "skipped": "skipped (dates and identifiers are not features): {{columns}}"
       },
       "models": {
         "baseline": "Naive baseline",
@@ -422,7 +423,12 @@
         "explainButton": "Why this prediction?",
         "explainTitle": "What pushes the value up or down, versus a typical row",
         "explainTitleClass": "What pushes toward or away from “{{class}}”, versus a typical row",
-        "explainNote": "Shapley values estimated by permutation sampling ({{permutations}} permutations × {{references}} reference rows, seeded). The bars sum exactly to the gap between this prediction and the reference average."
+        "explainNote": "Shapley values estimated by permutation sampling ({{permutations}} permutations × {{references}} reference rows, seeded). The bars sum exactly to the gap between this prediction and the reference average.",
+        "wordsTitle": "Words that move the answer",
+        "wordsHintClassification": "Average shift of the predicted probability of “{{class}}” when the word is erased from the reviews containing it — right pushes up, left pushes down.",
+        "wordsHintRegression": "Average shift of the prediction when the word is erased from the texts containing it — right pushes up, left pushes down.",
+        "wordsNote": "One word at a time, on the held-out test rows. A review says the same thing several ways, so erasing one word rarely flips a prediction on its own.",
+        "wordsRowTitle": "“{{term}}” in {{column}} · {{rows}} test rows · {{effect}}"
       },
       "export": {
         "model": "Model (JSON)",

@@ -51,11 +51,103 @@ export function encodedBlocks(
   const blocks: { column: string; start: number; width: number }[] = [];
   let cursor = 0;
   for (const spec of pipeline.specs) {
-    const width = spec.kind === 'onehot' ? spec.categories.length : 1;
+    // A text column owns its whole TF-IDF block: counting it as one column
+    // would shift every block after it and permute the wrong features.
+    const width =
+      spec.kind === 'onehot'
+        ? spec.categories.length
+        : spec.kind === 'text'
+          ? spec.terms.length
+          : 1;
     blocks.push({ column: spec.name, start: cursor, width });
     cursor += width;
   }
   return blocks;
+}
+
+/** Words scored per text column: enough to read, few enough to stay fast. */
+const WORD_CANDIDATES = 40;
+/** A word seen in fewer test rows than this cannot be measured honestly. */
+const MIN_WORD_TEST_ROWS = 3;
+
+/**
+ * Signed word effects by occlusion: for each candidate word, take the test
+ * rows that actually contain it, erase THAT word from them (its TF-IDF weight
+ * goes to zero, the rest of the review untouched), re-predict, and average the
+ * shift. The sign is the point — "broken" pushes the prediction down, "parfait"
+ * pushes it up — which permutation importance cannot tell you.
+ *
+ * Occlusion is used here rather than the permutation method above because a
+ * review vocabulary is redundant: shuffling one word out of "arrived broken,
+ * asking for a refund" changes nothing, so every word would score ~0.
+ *
+ * Deliberate limits: only binary classification with probabilities (shift of
+ * p(positive class)) and regression (shift of the prediction) have a single
+ * axis to project onto — multiclass is skipped rather than faked. Candidates
+ * are the most present words in the test split, capped at WORD_CANDIDATES.
+ */
+export function wordEffects(
+  model: TrainedModel,
+  pipeline: FittedPipeline,
+  testX: number[][],
+  isClassification: boolean,
+  classCount: number,
+  top = 12,
+): { column: string; term: string; effect: number; rows: number }[] {
+  const canProject = isClassification
+    ? classCount === 2 && typeof model.predictProba === 'function'
+    : true;
+  if (!canProject) return [];
+
+  const textBlocks = encodedBlocks(pipeline).filter(
+    (block) => pipeline.specs.find((spec) => spec.name === block.column)?.kind === 'text',
+  );
+  if (textBlocks.length === 0) return [];
+
+  /** The model's answer on one axis: p(positive class), or the prediction. */
+  const project = (rows: number[][]): number[] =>
+    isClassification ? model.predictProba!(rows).map((p) => p[1] ?? 0) : model.predict(rows);
+
+  const scored: { column: string; term: string; effect: number; rows: number }[] = [];
+  for (const { column, start, width } of textBlocks) {
+    const spec = pipeline.specs.find((s) => s.name === column);
+    if (spec?.kind !== 'text') continue;
+
+    const present: { offset: number; rows: number[] }[] = [];
+    for (let j = 0; j < width; j++) {
+      const rows: number[] = [];
+      for (let r = 0; r < testX.length; r++) if (testX[r][start + j] !== 0) rows.push(r);
+      if (rows.length >= MIN_WORD_TEST_ROWS) present.push({ offset: j, rows });
+    }
+    const candidates = present
+      .sort((a, b) => b.rows.length - a.rows.length || a.offset - b.offset)
+      .slice(0, WORD_CANDIDATES);
+
+    for (const { offset, rows } of candidates) {
+      const withWord = rows.map((r) => testX[r]);
+      const without = withWord.map((row) => {
+        const clone = [...row];
+        clone[start + offset] = 0;
+        return clone;
+      });
+      const before = project(withWord);
+      const after = project(without);
+      // Positive = keeping the word pushes the answer up.
+      let shift = 0;
+      for (let i = 0; i < before.length; i++) shift += before[i] - after[i];
+      scored.push({
+        column,
+        term: spec.terms[offset],
+        effect: shift / rows.length,
+        rows: rows.length,
+      });
+    }
+  }
+
+  return scored
+    .filter((entry) => entry.effect !== 0)
+    .sort((a, b) => Math.abs(b.effect) - Math.abs(a.effect) || a.term.localeCompare(b.term))
+    .slice(0, top);
 }
 
 /**
@@ -182,6 +274,7 @@ export function computeInsights(artifacts: TrainArtifacts, modelKey: ModelKey): 
     isClassification,
     seed,
   ).slice(0, 10);
+  const words = wordEffects(model, pipeline, testX, isClassification, classes.length);
 
   if (isClassification) {
     const payload: InsightsPayload = {
@@ -189,6 +282,7 @@ export function computeInsights(artifacts: TrainArtifacts, modelKey: ModelKey): 
       classes,
       confusion: confusionMatrix(testY, predictions, classes.length),
       importance,
+      ...(words.length > 0 ? { words } : {}),
     };
     if (classes.length === 2 && model.predictProba) {
       const roc = rocCurve(
@@ -207,6 +301,7 @@ export function computeInsights(artifacts: TrainArtifacts, modelKey: ModelKey): 
     scatter: scatterSample(testY, predictions, seed),
     residuals: residualsHistogram(testY, predictions),
     importance,
+    ...(words.length > 0 ? { words } : {}),
   };
   const pdp = partialDependence(model, pipeline, testX, false, importance);
   if (pdp.length > 0) payload.pdp = pdp;

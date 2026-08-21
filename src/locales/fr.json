@@ -121,7 +121,8 @@
         "binary": "binaire",
         "multiclass": "multi-classes",
         "regression": "régression",
-        "timeseries": "série temporelle"
+        "timeseries": "série temporelle",
+        "text": "texte"
       },
       "parsing": "Lecture locale en cours…",
       "rowsRead": "{{count}} lignes lues",
@@ -194,7 +195,7 @@
         "baselineTag": "baseline",
         "failed": "échec",
         "runInfo": "seed {{seed}} · {{train}} lignes d'entraînement · {{test}} lignes de test · {{features}} variables après encodage",
-        "skipped": "ignorées (type non entraînable pour l'instant) : {{columns}}"
+        "skipped": "écartées (dates et identifiants ne sont pas des variables) : {{columns}}"
       },
       "models": {
         "baseline": "Baseline naïve",
@@ -422,7 +423,12 @@
         "explainButton": "Pourquoi cette prédiction ?",
         "explainTitle": "Ce qui tire la valeur vers le haut ou le bas, par rapport à une ligne typique",
         "explainTitleClass": "Ce qui pousse vers « {{class}} » ou l'en éloigne, par rapport à une ligne typique",
-        "explainNote": "Valeurs de Shapley estimées par échantillonnage de permutations ({{permutations}} permutations × {{references}} lignes de référence, seedé). Les barres somment exactement à l'écart entre cette prédiction et la moyenne de référence."
+        "explainNote": "Valeurs de Shapley estimées par échantillonnage de permutations ({{permutations}} permutations × {{references}} lignes de référence, seedé). Les barres somment exactement à l'écart entre cette prédiction et la moyenne de référence.",
+        "wordsTitle": "Les mots qui font bouger la réponse",
+        "wordsHintClassification": "Décalage moyen de la probabilité prédite de « {{class}} » quand le mot est effacé des avis qui le contiennent — à droite il pousse vers le haut, à gauche vers le bas.",
+        "wordsHintRegression": "Décalage moyen de la prédiction quand le mot est effacé des textes qui le contiennent — à droite il pousse vers le haut, à gauche vers le bas.",
+        "wordsNote": "Un mot à la fois, sur les lignes de test mises de côté. Un avis dit la même chose de plusieurs façons : effacer un seul mot renverse rarement une prédiction à lui seul.",
+        "wordsRowTitle": "« {{term}} » dans {{column}} · {{rows}} lignes de test · {{effect}}"
       },
       "export": {
         "model": "Modèle (JSON)",

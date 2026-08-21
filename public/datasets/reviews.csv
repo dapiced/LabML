@@ -1,0 +1,241 @@
+order_id,channel,days_to_delivery,order_value,review,satisfied
+A1000,web,5,82.72,Shipping was quick and the quality is excellent. Would order again.,yes
+A1001,store,3,71.77,Delivery was fast and the quality is excellent. Would order again.,yes
+A1002,phone,6,54.33,Livré à la mauvaise adresse et il ne fonctionne pas du tout. Toujours pas de remboursement.,no
+A1003,phone,3,91.38,Trois semaines d'attente et le produit est tombé en panne. Toujours pas de remboursement.,no
+A1004,phone,8,83.87,Shipping took forever and the product stopped working. Asking for a refund now.,no
+A1005,web,7,9.0,Delivery was late and the wrong item was inside. Support never answered.,no
+A1006,web,3,86.98,Réception sans problème et tout fonctionne comme décrit. Je recommanderais volontiers.,yes
+A1007,mobile app,2,77.59,Fast shipping and the quality is excellent. Would order again.,yes
+A1008,web,8,23.18,Delivered to the wrong address and the product stopped working. Support never answered.,no
+A1009,store,4,47.05,Arrivé fêlé et rien ne fonctionne comme décrit. Le service n'a jamais répondu.,no
+A1010,store,4,111.64,Livré en avance et la taille est parfaite. Rien à redire.,yes
+A1011,mobile app,6,77.04,Arrivé cassé et il a cassé après deux jours. Je demande un remboursement.,no
+A1012,web,1,52.9,Delivery was fast and the build quality feels premium. Support was helpful too.,yes
+A1013,mobile app,4,44.83,Package arrived on time and the material feels solid. Great value for the price.,yes
+A1014,phone,6,36.39,Arrived cracked and nothing works as described. Would not order again.,no
+A1015,web,4,34.76,Arrived two days early and the quality is excellent. Great value for the price.,yes
+A1016,web,5,51.2,Delivery was fast and everything works as described. Excellent overall.,yes
+A1017,mobile app,4,56.35,Livraison rapide et la matière semble solide. Rien à redire.,yes
+A1018,store,6,26.12,Le carton était abîmé et la qualité est mauvaise. Je ne recommanderai pas.,no
+A1019,mobile app,7,86.75,The box was damaged and it broke after two days. Asking for a refund now.,no
+A1020,web,5,136.58,Fast shipping and it works exactly as expected. Very happy with this order.,yes
+A1021,store,9,123.9,"Ordered on Monday, arrived Wednesday and the quality is excellent. Nothing to complain about.",yes
+A1022,store,7,90.23,"Commandé lundi, reçu mercredi et la qualité est excellente. Très content de cette commande.",yes
+A1023,web,8,90.0,Fast shipping and it works exactly as expected. Very happy with this order.,yes
+A1024,web,5,102.56,"Commandé lundi, reçu mercredi et la qualité est excellente. Le service a bien répondu.",yes
+A1025,web,3,41.44,Expédition interminable et le produit est tombé en panne. Toujours pas de remboursement.,yes
+A1026,mobile app,1,79.01,Arrived broken and the material feels cheap. Asking for a refund now.,no
+A1027,store,2,80.78,Trois semaines d'attente et il ne fonctionne pas du tout. Mes courriels sont restés sans réponse.,no
+A1028,store,1,58.95,Livraison rapide et la taille est parfaite. Je recommande sans hésiter.,no
+A1029,mobile app,7,81.28,Arrived broken and the product stopped working. Would not order again.,no
+A1030,phone,2,48.67,Expédition interminable et la qualité est mauvaise. Je ne recommanderai pas.,no
+A1031,store,4,87.81,Fast shipping and everything works as described. Would order again.,yes
+A1032,mobile app,3,45.37,Livraison en retard et le produit est tombé en panne. Je demande un remboursement.,no
+A1033,phone,3,84.85,Shipping was quick and the product works perfectly. Would order again.,yes
+A1034,web,4,38.81,Arrived cracked and it broke after two days. Still waiting for a refund.,no
+A1035,phone,2,64.15,Delivery was fast and the product works perfectly. Recommend it without hesitation.,yes
+A1036,store,5,137.56,Trois semaines d'attente et il a cassé après deux jours. Je demande un remboursement.,yes
+A1037,store,2,54.26,Shipping was quick and the material feels solid. Would order again.,yes
+A1038,store,7,78.46,Fast shipping and the quality is excellent. Nothing to complain about.,yes
+A1039,web,6,59.78,Réception sans problème et la matière semble solide. Très content de cette commande.,yes
+A1040,mobile app,5,9.0,Livré à la mauvaise adresse et la matière semble bon marché. Je ne recommanderai pas.,no
+A1041,mobile app,5,45.14,The box was damaged and the product stopped working. Support never answered.,no
+A1042,store,9,80.15,Livraison en retard et la matière semble bon marché. Mes courriels sont restés sans réponse.,no
+A1043,web,7,74.91,Livré à la mauvaise adresse et la qualité est mauvaise. Le service n'a jamais répondu.,no
+A1044,web,2,19.78,Fast shipping and the fit is perfect. Support was helpful too.,yes
+A1045,phone,9,81.62,Arrivé cassé et il a cassé après deux jours. Très déçu de cette commande.,no
+A1046,mobile app,6,80.41,Livraison en retard et la matière semble bon marché. Je ne recommanderai pas.,no
+A1047,phone,2,125.6,Livré en avance et tout fonctionne comme décrit. Rien à redire.,yes
+A1048,store,5,87.01,Waited three weeks and the material feels cheap. Terrible experience overall.,no
+A1049,mobile app,1,103.62,Shipping took forever and it broke after two days. Very disappointed with this order.,no
+A1050,mobile app,1,88.1,Arrivé fêlé et rien ne fonctionne comme décrit. Je demande un remboursement.,no
+A1051,phone,1,119.67,Fast shipping and it works exactly as expected. Nothing to complain about.,yes
+A1052,store,8,67.84,Livraison rapide et le produit fonctionne parfaitement. Je recommanderais volontiers.,yes
+A1053,web,3,92.19,Arrivé cassé et ce n'était pas le bon article. Expérience désastreuse.,no
+A1054,store,7,125.13,Delivery was late and it does not work at all. Asking for a refund now.,no
+A1055,phone,6,96.92,Réception sans problème et le produit fonctionne parfaitement. Le service a bien répondu.,yes
+A1056,store,8,52.14,Shipping took forever and it does not work at all. Terrible experience overall.,no
+A1057,store,6,14.58,The box was damaged and the material feels cheap. Very disappointed with this order.,no
+A1058,web,4,99.01,Delivery was fast and it works exactly as expected. Great value for the price.,yes
+A1059,store,5,102.27,Livré en avance et la qualité est excellente. Je recommande sans hésiter.,yes
+A1060,store,1,48.68,"Commandé lundi, reçu mercredi et la finition est soignée. Parfait dans l'ensemble.",yes
+A1061,mobile app,10,12.85,Waited three weeks and it does not work at all. Asking for a refund now.,no
+A1062,mobile app,2,110.77,"Ordered on Monday, arrived Wednesday and the product works perfectly. Support was helpful too.",yes
+A1063,web,9,49.83,Shipping took forever and it broke after two days. Still waiting for a refund.,no
+A1064,phone,4,98.66,"Ordered on Monday, arrived Wednesday and the quality is excellent. Very happy with this order.",yes
+A1065,web,4,84.4,Delivered ahead of schedule and the material feels solid. Support was helpful too.,no
+A1066,mobile app,5,69.72,Fast shipping and the product works perfectly. Excellent overall.,no
+A1067,store,3,74.45,Arrivé deux jours en avance et la qualité est excellente. Je recommanderais volontiers.,yes
+A1068,mobile app,10,61.21,Arrived broken and it broke after two days. Would not order again.,no
+A1069,mobile app,1,9.0,Delivery was fast and everything works as described. Nothing to complain about.,yes
+A1070,web,5,47.97,Arrivé fêlé et la qualité est mauvaise. Toujours pas de remboursement.,no
+A1071,phone,3,84.56,Delivery was late and nothing works as described. Would not order again.,no
+A1072,mobile app,8,61.6,"Commandé lundi, reçu mercredi et le produit fonctionne parfaitement. Le service a bien répondu.",yes
+A1073,store,7,37.17,Arrivé fêlé et rien ne fonctionne comme décrit. Je ne recommanderai pas.,no
+A1074,mobile app,6,60.83,Waited three weeks and it does not work at all. Support never answered.,no
+A1075,mobile app,11,82.5,Arrived cracked and the material feels cheap. Very disappointed with this order.,no
+A1076,mobile app,7,45.86,Expédition très rapide et la taille est parfaite. Je recommande sans hésiter.,yes
+A1077,store,6,106.05,Le carton était abîmé et il a cassé après deux jours. Mes courriels sont restés sans réponse.,no
+A1078,phone,4,116.27,Arrived two days early and the build quality feels premium. Recommend it without hesitation.,yes
+A1079,mobile app,3,79.36,Trois semaines d'attente et rien ne fonctionne comme décrit. Expérience désastreuse.,no
+A1080,phone,7,117.87,Livré à la mauvaise adresse et ce n'était pas le bon article. Le service n'a jamais répondu.,no
+A1081,phone,6,76.57,Waited three weeks and the quality is poor. Very disappointed with this order.,no
+A1082,web,1,33.79,Expédition très rapide et il fonctionne exactement comme prévu. Je recommanderais volontiers.,yes
+A1083,web,6,67.08,"Ordered on Monday, arrived Wednesday and everything works as described. Would order again.",yes
+A1084,phone,3,56.14,Delivery was fast and the fit is perfect. Recommend it without hesitation.,yes
+A1085,store,1,39.13,Colis arrivé à temps et la matière semble solide. Le service a bien répondu.,yes
+A1086,web,3,111.29,Delivered ahead of schedule and the fit is perfect. Support was helpful too.,yes
+A1087,mobile app,6,82.85,Arrived two days early and everything works as described. Recommend it without hesitation.,yes
+A1088,store,6,77.04,Colis arrivé à temps et la finition est soignée. Excellent rapport qualité prix.,yes
+A1089,store,1,40.78,Expédition très rapide et la matière semble solide. Parfait dans l'ensemble.,yes
+A1090,phone,5,80.2,Arrivé deux jours en avance et tout fonctionne comme décrit. Parfait dans l'ensemble.,yes
+A1091,web,7,59.54,Expédition très rapide et il fonctionne exactement comme prévu. Le service a bien répondu.,yes
+A1092,web,5,85.13,Arrived cracked and nothing works as described. Would not order again.,no
+A1093,store,6,53.44,Waited three weeks and it broke after two days. Still waiting for a refund.,no
+A1094,store,7,9.0,Package arrived on time and the build quality feels premium. Recommend it without hesitation.,yes
+A1095,store,3,90.5,Livré à la mauvaise adresse et la qualité est mauvaise. Très déçu de cette commande.,no
+A1096,web,5,86.89,The box was damaged and the product stopped working. Very disappointed with this order.,no
+A1097,store,1,67.16,"Ordered on Monday, arrived Wednesday and the product works perfectly. Would order again.",yes
+A1098,mobile app,1,89.61,Package arrived on time and the quality is excellent. Great value for the price.,yes
+A1099,store,12,123.7,Delivery was fast and the fit is perfect. Support was helpful too.,yes
+A1100,store,4,117.29,Arrived broken and the material feels cheap. Terrible experience overall.,no
+A1101,mobile app,5,109.78,Package arrived on time and the quality is excellent. Support was helpful too.,yes
+A1102,web,1,116.62,Delivered ahead of schedule and the material feels solid. Support was helpful too.,yes
+A1103,phone,2,73.11,Colis arrivé à temps et la taille est parfaite. Je recommande sans hésiter.,yes
+A1104,store,11,10.38,Le carton était abîmé et la matière semble bon marché. Très déçu de cette commande.,no
+A1105,mobile app,1,83.21,Livraison en retard et rien ne fonctionne comme décrit. Expérience désastreuse.,no
+A1106,store,8,27.39,Package arrived on time and the fit is perfect. Great value for the price.,yes
+A1107,store,9,95.7,Réception sans problème et il fonctionne exactement comme prévu. Je recommanderais volontiers.,yes
+A1108,store,1,56.38,Delivered to the wrong address and the wrong item was inside. Emails went unanswered.,no
+A1109,web,3,49.37,Delivery was fast and the quality is excellent. Recommend it without hesitation.,yes
+A1110,web,5,82.68,Livré en avance et il fonctionne exactement comme prévu. Parfait dans l'ensemble.,yes
+A1111,mobile app,3,81.47,Trois semaines d'attente et rien ne fonctionne comme décrit. Très déçu de cette commande.,no
+A1112,mobile app,3,39.86,Réception sans problème et la finition est soignée. Rien à redire.,yes
+A1113,mobile app,7,52.08,Shipping was quick and it works exactly as expected. Very happy with this order.,yes
+A1114,phone,10,61.14,Expédition interminable et rien ne fonctionne comme décrit. Expérience désastreuse.,no
+A1115,phone,2,91.19,"Commandé lundi, reçu mercredi et le produit fonctionne parfaitement. Je recommanderais volontiers.",yes
+A1116,web,1,53.63,Le carton était abîmé et rien ne fonctionne comme décrit. Toujours pas de remboursement.,no
+A1117,mobile app,7,32.91,Delivered to the wrong address and nothing works as described. Emails went unanswered.,no
+A1118,web,5,57.24,Arrived cracked and it does not work at all. Terrible experience overall.,no
+A1119,store,8,120.35,Colis arrivé à temps et tout fonctionne comme décrit. Je recommande sans hésiter.,yes
+A1120,store,2,71.73,Colis arrivé à temps et tout fonctionne comme décrit. Rien à redire.,yes
+A1121,mobile app,10,122.98,Delivered ahead of schedule and everything works as described. Excellent overall.,yes
+A1122,phone,4,67.4,The box was damaged and it does not work at all. Emails went unanswered.,no
+A1123,phone,4,101.3,Fast shipping and it works exactly as expected. Recommend it without hesitation.,yes
+A1124,store,2,108.33,Livraison rapide et la taille est parfaite. Rien à redire.,yes
+A1125,web,5,74.32,"Ordered on Monday, arrived Wednesday and the product works perfectly. Would order again.",yes
+A1126,store,1,125.1,Arrivé cassé et la matière semble bon marché. Je demande un remboursement.,no
+A1127,phone,8,36.12,The box was damaged and the wrong item was inside. Still waiting for a refund.,no
+A1128,phone,5,61.18,"Commandé lundi, reçu mercredi et la finition est soignée. Je recommanderais volontiers.",yes
+A1129,web,1,84.42,Livraison rapide et la matière semble solide. Parfait dans l'ensemble.,yes
+A1130,mobile app,6,126.24,Arrivé deux jours en avance et la matière semble solide. Rien à redire.,yes
+A1131,mobile app,4,70.68,Delivered ahead of schedule and the quality is excellent. Excellent overall.,yes
+A1132,mobile app,4,66.19,Delivered ahead of schedule and the quality is excellent. Very happy with this order.,no
+A1133,store,4,35.39,Shipping was quick and the product works perfectly. Would order again.,yes
+A1134,phone,1,70.26,Colis arrivé à temps et le produit fonctionne parfaitement. Le service a bien répondu.,no
+A1135,store,2,98.47,Delivery was late and the material feels cheap. Emails went unanswered.,no
+A1136,phone,7,101.9,Colis arrivé à temps et la qualité est excellente. Très content de cette commande.,yes
+A1137,mobile app,4,63.57,Trois semaines d'attente et la matière semble bon marché. Je ne recommanderai pas.,no
+A1138,store,3,80.96,Le carton était abîmé et rien ne fonctionne comme décrit. Mes courriels sont restés sans réponse.,no
+A1139,web,9,95.19,Arrivé deux jours en avance et il fonctionne exactement comme prévu. Le service a bien répondu.,yes
+A1140,web,1,52.08,Arrived two days early and the fit is perfect. Very happy with this order.,yes
+A1141,phone,6,67.08,Livré à la mauvaise adresse et la matière semble bon marché. Mes courriels sont restés sans réponse.,no
+A1142,phone,1,78.49,Arrivé cassé et la qualité est mauvaise. Expérience désastreuse.,no
+A1143,web,9,9.0,Arrivé deux jours en avance et la matière semble solide. Le service a bien répondu.,yes
+A1144,phone,7,114.33,Arrived cracked and nothing works as described. Still waiting for a refund.,no
+A1145,web,3,81.69,Arrivé deux jours en avance et la taille est parfaite. Je recommande sans hésiter.,yes
+A1146,web,2,96.26,"Commandé lundi, reçu mercredi et la finition est soignée. Le service a bien répondu.",yes
+A1147,store,3,50.77,Delivered ahead of schedule and the fit is perfect. Very happy with this order.,yes
+A1148,store,6,92.86,Arrived two days early and the material feels solid. Nothing to complain about.,yes
+A1149,mobile app,6,78.85,Arrived two days early and the build quality feels premium. Nothing to complain about.,yes
+A1150,mobile app,4,53.35,Delivery was fast and the product works perfectly. Support was helpful too.,yes
+A1151,store,2,101.76,Delivered to the wrong address and nothing works as described. Still waiting for a refund.,no
+A1152,store,2,96.24,Shipping took forever and the material feels cheap. Would not order again.,no
+A1153,web,7,13.37,Réception sans problème et la taille est parfaite. Le service a bien répondu.,yes
+A1154,mobile app,9,35.92,Expédition interminable et le produit est tombé en panne. Je demande un remboursement.,no
+A1155,mobile app,8,56.5,Expédition interminable et il a cassé après deux jours. Le service n'a jamais répondu.,no
+A1156,store,7,113.48,Arrivé deux jours en avance et la qualité est excellente. Rien à redire.,no
+A1157,phone,9,54.26,Shipping took forever and the material feels cheap. Terrible experience overall.,no
+A1158,web,1,80.22,Arrived broken and the material feels cheap. Still waiting for a refund.,no
+A1159,web,9,91.82,"Commandé lundi, reçu mercredi et la finition est soignée. Très content de cette commande.",no
+A1160,mobile app,9,58.06,"Ordered on Monday, arrived Wednesday and the fit is perfect. Nothing to complain about.",no
+A1161,web,9,110.9,Arrivé deux jours en avance et le produit fonctionne parfaitement. Le service a bien répondu.,yes
+A1162,phone,8,69.93,Arrived two days early and it works exactly as expected. Support was helpful too.,yes
+A1163,phone,4,63.13,"Commandé lundi, reçu mercredi et la matière semble solide. Excellent rapport qualité prix.",yes
+A1164,mobile app,4,130.59,Livré en avance et la finition est soignée. Excellent rapport qualité prix.,yes
+A1165,web,10,62.64,Arrivé cassé et rien ne fonctionne comme décrit. Très déçu de cette commande.,no
+A1166,web,7,105.62,Réception sans problème et tout fonctionne comme décrit. Parfait dans l'ensemble.,yes
+A1167,store,1,140.74,Shipping was quick and the product works perfectly. Great value for the price.,yes
+A1168,web,6,60.51,Arrivé cassé et le produit est tombé en panne. Très déçu de cette commande.,no
+A1169,mobile app,4,84.49,Shipping took forever and the quality is poor. Would not order again.,no
+A1170,store,4,104.42,Shipping was quick and it works exactly as expected. Recommend it without hesitation.,yes
+A1171,store,6,60.82,Réception sans problème et la matière semble solide. Le service a bien répondu.,yes
+A1172,mobile app,2,80.73,"Ordered on Monday, arrived Wednesday and the fit is perfect. Nothing to complain about.",yes
+A1173,web,3,67.31,"Ordered on Monday, arrived Wednesday and the material feels solid. Great value for the price.",yes
+A1174,mobile app,7,97.72,Trois semaines d'attente et la matière semble bon marché. Je ne recommanderai pas.,no
+A1175,web,3,89.59,Delivery was late and the material feels cheap. Still waiting for a refund.,no
+A1176,phone,1,29.04,Livraison rapide et la matière semble solide. Je recommande sans hésiter.,yes
+A1177,web,3,40.53,Delivered ahead of schedule and the quality is excellent. Excellent overall.,no
+A1178,mobile app,2,52.11,Arrivé deux jours en avance et la taille est parfaite. Je recommande sans hésiter.,yes
+A1179,store,3,64.47,"Commandé lundi, reçu mercredi et il fonctionne exactement comme prévu. Parfait dans l'ensemble.",yes
+A1180,phone,4,47.59,Package arrived on time and the fit is perfect. Would order again.,no
+A1181,web,1,67.83,Livré en avance et il fonctionne exactement comme prévu. Très content de cette commande.,yes
+A1182,phone,4,77.43,Livré en avance et la finition est soignée. Excellent rapport qualité prix.,yes
+A1183,phone,5,45.14,Livraison en retard et il ne fonctionne pas du tout. Je ne recommanderai pas.,yes
+A1184,mobile app,7,67.88,Delivered ahead of schedule and it works exactly as expected. Support was helpful too.,yes
+A1185,phone,7,122.65,Le carton était abîmé et le produit est tombé en panne. Très déçu de cette commande.,no
+A1186,phone,4,122.18,Delivered ahead of schedule and the fit is perfect. Support was helpful too.,yes
+A1187,store,6,92.26,Fast shipping and everything works as described. Great value for the price.,yes
+A1188,web,1,73.06,Arrived two days early and the build quality feels premium. Recommend it without hesitation.,yes
+A1189,phone,1,64.56,Package arrived on time and the material feels solid. Would order again.,yes
+A1190,phone,2,83.27,Le carton était abîmé et la qualité est mauvaise. Expérience désastreuse.,no
+A1191,mobile app,8,91.41,Fast shipping and the material feels solid. Very happy with this order.,yes
+A1192,phone,3,77.9,Package arrived on time and it works exactly as expected. Excellent overall.,yes
+A1193,web,2,9.0,Livraison en retard et il a cassé après deux jours. Le service n'a jamais répondu.,no
+A1194,mobile app,3,147.04,"Ordered on Monday, arrived Wednesday and everything works as described. Recommend it without hesitation.",no
+A1195,phone,5,25.76,Package arrived on time and the product works perfectly. Great value for the price.,yes
+A1196,store,7,45.73,Arrived broken and the product stopped working. Support never answered.,no
+A1197,phone,5,81.0,Delivered to the wrong address and nothing works as described. Terrible experience overall.,no
+A1198,mobile app,6,37.57,Arrived cracked and the wrong item was inside. Support never answered.,no
+A1199,mobile app,1,62.42,"Ordered on Monday, arrived Wednesday and the product works perfectly. Great value for the price.",yes
+A1200,web,3,36.06,Shipping was quick and the build quality feels premium. Recommend it without hesitation.,yes
+A1201,mobile app,3,47.04,Livraison rapide et la finition est soignée. Le service a bien répondu.,yes
+A1202,mobile app,6,40.39,Package arrived on time and the material feels solid. Very happy with this order.,yes
+A1203,phone,7,53.23,Trois semaines d'attente et il a cassé après deux jours. Très déçu de cette commande.,no
+A1204,mobile app,1,40.9,Colis arrivé à temps et le produit fonctionne parfaitement. Rien à redire.,yes
+A1205,web,6,68.0,Shipping took forever and nothing works as described. Emails went unanswered.,no
+A1206,web,6,109.91,Expédition interminable et rien ne fonctionne comme décrit. Expérience désastreuse.,no
+A1207,phone,1,77.8,Waited three weeks and the wrong item was inside. Very disappointed with this order.,no
+A1208,phone,3,74.0,Arrived broken and the material feels cheap. Asking for a refund now.,no
+A1209,phone,6,93.14,Delivered ahead of schedule and everything works as described. Support was helpful too.,yes
+A1210,store,6,86.2,"Commandé lundi, reçu mercredi et la qualité est excellente. Je recommanderais volontiers.",yes
+A1211,mobile app,10,52.61,Arrivé cassé et il ne fonctionne pas du tout. Très déçu de cette commande.,no
+A1212,mobile app,11,82.49,"Ordered on Monday, arrived Wednesday and everything works as described. Support was helpful too.",yes
+A1213,phone,1,38.81,Livraison rapide et tout fonctionne comme décrit. Le service a bien répondu.,yes
+A1214,store,5,21.54,The box was damaged and the quality is poor. Very disappointed with this order.,no
+A1215,phone,9,87.84,Trois semaines d'attente et il a cassé après deux jours. Très déçu de cette commande.,no
+A1216,phone,8,67.32,Shipping took forever and the product stopped working. Support never answered.,no
+A1217,mobile app,1,69.98,Arrived two days early and the quality is excellent. Nothing to complain about.,no
+A1218,phone,3,49.64,Shipping took forever and the material feels cheap. Support never answered.,no
+A1219,store,3,52.17,Arrivé fêlé et il ne fonctionne pas du tout. Très déçu de cette commande.,no
+A1220,phone,3,84.61,Delivered ahead of schedule and the product works perfectly. Great value for the price.,yes
+A1221,mobile app,4,58.52,Arrived cracked and the wrong item was inside. Still waiting for a refund.,no
+A1222,mobile app,5,21.06,Arrived broken and it broke after two days. Terrible experience overall.,no
+A1223,mobile app,3,83.32,Livraison en retard et la qualité est mauvaise. Toujours pas de remboursement.,no
+A1224,mobile app,5,61.28,Le carton était abîmé et il ne fonctionne pas du tout. Mes courriels sont restés sans réponse.,no
+A1225,phone,5,89.04,The box was damaged and it broke after two days. Asking for a refund now.,no
+A1226,mobile app,3,35.86,Delivered to the wrong address and the wrong item was inside. Terrible experience overall.,no
+A1227,store,5,25.54,Shipping was quick and the quality is excellent. Great value for the price.,yes
+A1228,store,3,110.06,Réception sans problème et il fonctionne exactement comme prévu. Excellent rapport qualité prix.,yes
+A1229,store,13,91.54,Delivered to the wrong address and the quality is poor. Very disappointed with this order.,yes
+A1230,mobile app,1,55.26,Arrived broken and the quality is poor. Emails went unanswered.,no
+A1231,web,4,39.67,Arrivé cassé et la qualité est mauvaise. Toujours pas de remboursement.,no
+A1232,mobile app,4,68.97,"Commandé lundi, reçu mercredi et le produit fonctionne parfaitement. Je recommande sans hésiter.",yes
+A1233,web,8,145.46,Le carton était abîmé et la matière semble bon marché. Expérience désastreuse.,no
+A1234,mobile app,4,13.68,Package arrived on time and the quality is excellent. Nothing to complain about.,no
+A1235,phone,6,53.28,Livraison en retard et il ne fonctionne pas du tout. Je demande un remboursement.,no
+A1236,store,6,60.22,Package arrived on time and the fit is perfect. Very happy with this order.,yes
+A1237,store,5,85.73,Package arrived on time and the build quality feels premium. Great value for the price.,yes
+A1238,mobile app,6,34.41,Delivery was late and the wrong item was inside. Very disappointed with this order.,no
+A1239,mobile app,4,70.77,The box was damaged and it does not work at all. Asking for a refund now.,no
