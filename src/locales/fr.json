@@ -271,6 +271,25 @@
         "note": "Le gagnant est choisi par validation croisée, jamais en regardant le jeu de test — le delta sur le test peut donc être négatif. C'est une évaluation honnête, pas un bug.",
         "sampled": "Recherche menée sur un échantillon seedé annoncé de {{rows}} lignes sur {{from}} d'entraînement — les mêmes lignes que le modèle du classement."
       },
+      "curve": {
+        "title": "Plus de données aideraient-elles ?",
+        "hint": "La courbe d'apprentissage réentraîne un modèle sur des fractions seedées croissantes du split d'entraînement — les mêmes échantillons imbriqués que les caps annoncés — et évalue chaque taille sur le même jeu de test complet, avec une bande bootstrap à 95 %. Si la courbe monte encore au bord droit, collecter plus de lignes en vaut la peine ; si elle est plate, travaillez plutôt les variables ou le modèle.",
+        "model": "Modèle",
+        "start": "Tracer la courbe",
+        "cancel": "Annuler",
+        "starting": "Préparation de l'échelle…",
+        "progress": "Point {{done}} / {{total}} — réentraînement…",
+        "refused": "Pas de courbe ici : le jeu de données n'offre qu'une seule taille d'entraînement (ou le modèle est la baseline, plate par définition).",
+        "axis": "{{model}} — {{metric}} selon les lignes d'entraînement · chaque point évalué sur les mêmes {{test}} lignes de test",
+        "climbing": "La courbe monte encore : le dernier palier ({{from}} → {{to}} lignes) gagne {{gain}} [{{lo}} ; {{hi}}], et le gain survit au rééchantillonnage. Plus de données aideraient probablement ce modèle.",
+        "plateau": "La courbe plafonne : le dernier palier ({{from}} → {{to}} lignes) n'apporte aucun gain décisif ({{gain}}). Collecter plus de lignes n'est probablement pas la priorité — travaillez plutôt les variables ou le modèle.",
+        "capCost": "La courbe s'arrête au cap d'entraînement annoncé de {{cap}} lignes — et elle montait encore : ce cap coûte un peu de précision à ce modèle.",
+        "capFree": "La courbe s'arrête au cap d'entraînement annoncé de {{cap}} lignes — elle plafonnait déjà : le cap ne coûte rien ici.",
+        "pointsTable_one": "{{count}} point, en chiffres",
+        "pointsTable_other": "{{count}} points, en chiffres",
+        "colRows": "lignes d'entraînement",
+        "note": "Chaque point réentraîne de zéro sur un préfixe seedé imbriqué des {{trainRows}} lignes d'entraînement (les petites tailles sont des sous-ensembles des grandes) et le pipeline est réajusté sur ce préfixe seulement. La bande est l'intervalle bootstrap à 95 % sur le tirage du test — sensibilité au jeu de test, pas variance d'entraînement. Le verdict ne juge que le dernier palier."
+      },
       "batch": {
         "title": "Scorer un nouveau lot",
         "hint": "Le geste production : déposez un nouveau fichier et {{model}} le score ici même — prédictions pour chaque ligne, et si le fichier porte la colonne cible, comparaison honnête avec le jeu de test. Rien n’est envoyé.",
@@ -465,7 +484,8 @@
           "batchScore": "nouveau lot",
           "threshold": "seuil",
           "segments": "segments",
-          "uncertainty": "intervalles"
+          "uncertainty": "intervalles",
+          "learningCurve": "courbe d'apprentissage"
         }
       },
       "share": {
