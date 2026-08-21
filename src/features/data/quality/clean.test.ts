@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyRecipe, formatNumber } from './clean';
 import type { Cell } from '@/features/ml/data/types';
-import { DEFAULT_RECIPE, type RecipeOptions } from './types';
+import { DEFAULT_RECIPE, parseRecipeFile, type RecipeOptions } from './types';
 
 const KEEP_ALL: RecipeOptions = {
   trimWhitespace: false,
@@ -10,6 +10,8 @@ const KEEP_ALL: RecipeOptions = {
   dropStructural: false,
   missing: 'keep',
   clipOutliers: false,
+  deriveDates: false,
+  types: {},
 };
 
 function dataset(): { header: string[]; columns: Cell[][] } {
@@ -123,6 +125,98 @@ describe('applyRecipe', () => {
     for (const column of result.columns) {
       for (const cell of column) expect(cell === null || cell.trim() !== '').toBe(true);
     }
+  });
+});
+
+describe('applyRecipe — V10', () => {
+  it('derives year, month and weekday from date columns', () => {
+    const header = ['date', 'kwh'];
+    const date: Cell[] = ['2026-05-03', '2026-05-04', 'oops', null];
+    const kwh: Cell[] = ['1', '2', '3', '4'];
+    // Too dirty for inference (2 valid dates out of 3 non-missing): the forced
+    // 'date' type is what makes the expansion possible.
+    const result = applyRecipe(header, [date, kwh], {
+      ...KEEP_ALL,
+      deriveDates: true,
+      types: { date: 'date' },
+    });
+    expect(result.header).toEqual(['date', 'kwh', 'date_year', 'date_month', 'date_weekday']);
+    expect(result.stats.derivedColumns).toEqual(['date_year', 'date_month', 'date_weekday']);
+    // 2026-05-03 is a Sunday.
+    expect(result.columns[2][0]).toBe('2026');
+    expect(result.columns[3][0]).toBe('05');
+    expect(result.columns[4][0]).toBe('sun');
+    expect(result.columns[4][1]).toBe('mon');
+    // Unparseable and missing dates yield missing derived cells.
+    expect(result.columns[2][2]).toBeNull();
+    expect(result.columns[2][3]).toBeNull();
+  });
+
+  it('honors forced column types during imputation', () => {
+    const header = ['code'];
+    // Looks numeric, but forced categorical: the mode (not the median) fills in.
+    const code: Cell[] = ['1', '1', '9', null];
+    const asNumeric = applyRecipe(header, [code], { ...KEEP_ALL, missing: 'impute' });
+    expect(asNumeric.columns[0][3]).toBe('1'); // median of 1,1,9
+    const asCategorical = applyRecipe(header, [code], {
+      ...KEEP_ALL,
+      missing: 'impute',
+      types: { code: 'categorical' },
+    });
+    expect(asCategorical.columns[0][3]).toBe('1'); // mode — same value here…
+    const spread: Cell[] = ['2', '9', '9', null];
+    const numericSpread = applyRecipe(header, [spread], { ...KEEP_ALL, missing: 'impute' });
+    expect(numericSpread.columns[0][3]).toBe('9'); // median of 2,9,9
+    const categoricalSpread = applyRecipe(header, [spread], {
+      ...KEEP_ALL,
+      missing: 'impute',
+      types: { code: 'categorical' },
+    });
+    expect(categoricalSpread.columns[0][3]).toBe('9'); // mode 9 as well
+    // The discriminating case: forced categorical disables outlier clipping.
+    const wild: Cell[] = [...Array.from({ length: 12 }, (_, i) => String(i + 1)), '999'];
+    const clippedOff = applyRecipe(['code'], [wild], {
+      ...KEEP_ALL,
+      clipOutliers: true,
+      types: { code: 'categorical' },
+    });
+    expect(clippedOff.stats.clippedCells).toBe(0);
+    expect(clippedOff.columns[0][12]).toBe('999');
+  });
+});
+
+describe('parseRecipeFile', () => {
+  it('round-trips an exported recipe and ignores unknown fields', () => {
+    const exported = JSON.stringify({
+      tool: 'LabML Data Studio',
+      source: 'cafe-sales.csv',
+      exportedAt: '2026-08-21T02:00:00Z',
+      options: {
+        ...DEFAULT_RECIPE,
+        deriveDates: true,
+        types: { date: 'date', quantity: 'categorical' },
+        futureOption: 'ignored',
+      },
+      effect: { rowCount: 1 },
+    });
+    const parsed = parseRecipeFile(exported);
+    expect(parsed).not.toBeNull();
+    expect(parsed!.options.deriveDates).toBe(true);
+    expect(parsed!.options.types).toEqual({ date: 'date', quantity: 'categorical' });
+    expect(parsed!.source).toBe('cafe-sales.csv');
+    expect('futureOption' in parsed!.options).toBe(false);
+  });
+
+  it('rejects payloads that are not recipes and sanitizes bad values', () => {
+    expect(parseRecipeFile('not json')).toBeNull();
+    expect(parseRecipeFile('{"foo": 1}')).toBeNull();
+    const messy = parseRecipeFile(
+      JSON.stringify({ options: { missing: 'explode', types: { a: 'alien' }, trimWhitespace: 1 } }),
+    );
+    expect(messy).not.toBeNull();
+    expect(messy!.options.missing).toBe(DEFAULT_RECIPE.missing);
+    expect(messy!.options.types).toEqual({});
+    expect(messy!.options.trimWhitespace).toBe(DEFAULT_RECIPE.trimWhitespace);
   });
 });
 

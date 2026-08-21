@@ -1,12 +1,12 @@
-import { Loader2 } from 'lucide-react';
-import { useId } from 'react';
+import { FileUp, Loader2 } from 'lucide-react';
+import { useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { useDataStore } from '@/features/data/data-store';
-import type { RecipeOptions } from '@/features/data/quality/types';
+import type { ForcedType, RecipeOptions } from '@/features/data/quality/types';
 
-type ToggleKey = Exclude<keyof RecipeOptions, 'missing'>;
+type ToggleKey = Exclude<keyof RecipeOptions, 'missing' | 'types'>;
 
 const TOGGLES: ToggleKey[] = [
   'trimWhitespace',
@@ -14,6 +14,7 @@ const TOGGLES: ToggleKey[] = [
   'dropDuplicates',
   'dropStructural',
   'clipOutliers',
+  'deriveDates',
 ];
 
 /** The cleaning recipe: options on the left, their live effect on the right. */
@@ -23,6 +24,11 @@ export function RecipePanel() {
   const stats = useDataStore((s) => s.stats);
   const applying = useDataStore((s) => s.applying);
   const setOptions = useDataStore((s) => s.setOptions);
+  const columnTypes = useDataStore((s) => s.columnTypes);
+  const recipeSource = useDataStore((s) => s.recipeSource);
+  const recipeImportError = useDataStore((s) => s.recipeImportError);
+  const importRecipe = useDataStore((s) => s.importRecipe);
+  const importRef = useRef<HTMLInputElement>(null);
   const missingId = useId();
 
   const effect = (key: ToggleKey): string | null => {
@@ -43,13 +49,20 @@ export function RecipePanel() {
           : t('data.recipe.effects.columns', { count: 0 });
       case 'clipOutliers':
         return t('data.recipe.effects.cells', { count: stats.clippedCells });
+      case 'deriveDates':
+        return stats.derivedColumns.length > 0
+          ? t('data.recipe.effects.columnsAdded', {
+              count: stats.derivedColumns.length,
+              columns: stats.derivedColumns.join(', '),
+            })
+          : t('data.recipe.effects.columnsAddedNone');
     }
   };
 
   return (
     <section className="pb-12">
       <Card className="flex flex-col gap-4">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Eyebrow>{t('data.recipe.title')}</Eyebrow>
           {applying && (
             <Loader2
@@ -57,7 +70,40 @@ export function RecipePanel() {
               aria-label={t('data.recipe.applying')}
             />
           )}
+          <button
+            type="button"
+            onClick={() => importRef.current?.click()}
+            data-testid="recipe-import"
+            className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1 text-xs transition-colors hover:border-accent hover:bg-accent-soft"
+          >
+            <FileUp className="h-3.5 w-3.5" aria-hidden="true" />
+            {t('data.recipe.import')}
+          </button>
+          <input
+            ref={importRef}
+            type="file"
+            accept=".json,application/json"
+            className="sr-only"
+            aria-label={t('data.recipe.import')}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) importRecipe(file);
+              e.target.value = '';
+            }}
+          />
         </div>
+        {recipeSource && !recipeImportError && (
+          <p className="text-xs text-muted" data-testid="recipe-imported">
+            {t('data.recipe.imported', { name: recipeSource.name })}
+            {recipeSource.exportedAt &&
+              ` · ${t('data.recipe.importedAt', { date: recipeSource.exportedAt.slice(0, 10) })}`}
+          </p>
+        )}
+        {recipeImportError && (
+          <p className="text-xs text-copper" role="alert">
+            {t('data.recipe.importError')}
+          </p>
+        )}
 
         <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
           {TOGGLES.map((key) => (
@@ -107,6 +153,42 @@ export function RecipePanel() {
             </span>
           </div>
         </div>
+
+        <details className="text-sm">
+          <summary className="cursor-pointer font-medium select-none">
+            {t('data.recipe.typesTitle')}
+          </summary>
+          <p className="mt-1 max-w-3xl text-xs text-muted">{t('data.recipe.typesHint')}</p>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {Object.entries(columnTypes).map(([name, inferred]) => (
+              <label
+                key={name}
+                className="flex items-center justify-between gap-2 rounded-lg border border-line px-2.5 py-1.5"
+              >
+                <span className="truncate font-mono text-xs">{name}</span>
+                <select
+                  value={options.types[name] ?? 'auto'}
+                  onChange={(e) => {
+                    const types = { ...options.types };
+                    if (e.target.value === 'auto') delete types[name];
+                    else types[name] = e.target.value as ForcedType;
+                    setOptions({ types });
+                  }}
+                  className="rounded-lg border border-line bg-surface px-1.5 py-1 text-xs"
+                >
+                  <option value="auto">
+                    {t('data.recipe.typeAuto', { type: t(`ml.lab.type.${inferred}`) })}
+                  </option>
+                  {(['numeric', 'categorical', 'text', 'date'] as const).map((forced) => (
+                    <option key={forced} value={forced}>
+                      {t(`ml.lab.type.${forced}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+          </div>
+        </details>
 
         {stats && (
           <p className="border-t border-line pt-3 text-sm text-muted" data-testid="recipe-result">
