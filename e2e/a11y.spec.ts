@@ -32,6 +32,21 @@ test('ai hub and vision playground pass WCAG A/AA checks', async ({ page }) => {
   await expectNoViolations(page);
 });
 
+test('data assistant passes WCAG A/AA checks, idle and mid-conversation', async ({ page }) => {
+  await page.goto('/ai/chat');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expectNoViolations(page);
+
+  await page.getByRole('button', { name: /titanic\.csv/ }).click();
+  await expect(page.getByText('891 rows · 15 columns')).toBeVisible();
+  await page.getByLabel('Your question').fill('average age by pclass');
+  await page.getByRole('button', { name: 'Ask' }).click();
+  await expect(page.getByTestId('chat-assistant').last()).toContainText('average', {
+    timeout: 15000,
+  });
+  await expectNoViolations(page);
+});
+
 test('data studio passes WCAG A/AA checks, idle and with the demo audited', async ({ page }) => {
   await page.goto('/data');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
