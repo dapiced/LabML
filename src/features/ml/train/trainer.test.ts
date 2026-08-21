@@ -50,8 +50,9 @@ describe('runTraining — classification', () => {
 
     expect(summary.taskType).toBe('binary');
     expect(summary.trainRows + summary.testRows).toBe(N);
-    expect(summary.featureColumns).toEqual(['f1', 'f2']);
-    expect(summary.skippedColumns).toEqual(['note']); // free text is not trainable yet
+    // V24: free text is a feature now — it joins the pipeline as a TF-IDF block.
+    expect(summary.featureColumns).toEqual(['f1', 'f2', 'note']);
+    expect(summary.skippedColumns).toEqual([]);
     expect(outcome!.artifacts.models.size).toBe(8);
     expect(outcome!.artifacts.testY).toHaveLength(summary.testRows);
   });

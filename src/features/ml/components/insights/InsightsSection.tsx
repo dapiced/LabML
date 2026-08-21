@@ -11,6 +11,7 @@ import {
   ScatterPlot,
 } from '@/features/ml/components/insights/RegressionDiagnostics';
 import { RocCurve } from '@/features/ml/components/insights/RocCurve';
+import { WordEffects } from '@/features/ml/components/insights/WordEffects';
 import { WhatIfPanel } from '@/features/ml/components/insights/WhatIfPanel';
 import { useLabStore } from '@/features/ml/lab-store';
 
@@ -53,6 +54,13 @@ export function InsightsSection() {
         {insights.scatter && <ScatterPlot points={insights.scatter} />}
         {insights.residuals && <ResidualsChart residuals={insights.residuals} />}
         <ImportanceBars importance={insights.importance} isClassification={isClassification} />
+        {insights.words && insights.words.length > 0 && (
+          <WordEffects
+            words={insights.words}
+            isClassification={isClassification}
+            positiveClass={insights.classes?.[1]}
+          />
+        )}
         {insights.pdp?.map(({ column, points }) => (
           <PdpChart key={column} column={column} points={points} />
         ))}

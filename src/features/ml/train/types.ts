@@ -46,6 +46,13 @@ export interface InsightsPayload {
   /** Permutation importance per source column, sorted descending. */
   importance: { column: string; value: number }[];
   /**
+   * Signed word effects inside text columns (V24): the average shift of the
+   * answer when that word is erased from the reviews containing it, biggest
+   * magnitude first. Absent without a text column, and on multiclass tasks —
+   * there is no single axis to project the shift onto.
+   */
+  words?: { column: string; term: string; effect: number; rows: number }[];
+  /**
    * Partial dependence of the prediction on the top numeric columns
    * (binary classification: mean probability of the positive class;
    * regression: mean prediction). x is in the column's original scale.
@@ -71,7 +78,7 @@ export interface TrainSummary {
   featureCount: number;
   /** Source columns actually used. */
   featureColumns: string[];
-  /** Source columns skipped because their type is not trainable yet (text/date). */
+  /** Source columns skipped for their type — dates and identifiers (V24 made text trainable). */
   skippedColumns: string[];
   totalMs: number;
 }

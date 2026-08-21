@@ -32,7 +32,7 @@ async function train(
 
 const artifacts = () => train(data, 'label', ['f1', 'group']);
 
-describe('serializeModel (format v2)', () => {
+describe('serializeModel (format v3)', () => {
   it('exports a manifest with target, pipeline and honest reference metrics', async () => {
     const arts = await artifacts();
     for (const key of [
@@ -48,7 +48,7 @@ describe('serializeModel (format v2)', () => {
       expect(json, key).not.toBeNull();
       const parsed = JSON.parse(json!);
       expect(parsed.app).toBe('LabML');
-      expect(parsed.formatVersion).toBe(2);
+      expect(parsed.formatVersion).toBe(3);
       expect(parsed.model).toBe(key);
       expect(parsed.target).toBe('label');
       expect(parsed.classes).toEqual(['no', 'yes']);
@@ -67,6 +67,16 @@ describe('serializeModel (format v2)', () => {
 describe('deserializeModel — the exported model comes back (v22)', () => {
   const header = ['f1', 'group', 'label'];
   const rawColumns = () => header.map((name) => data[name]);
+
+  it('still imports a v2 file, so earlier exports keep working', async () => {
+    const arts = await artifacts();
+    const v3 = JSON.parse(serializeModel(arts, 'logistic', META)!) as Record<string, unknown>;
+    // A v2 file is a v3 file without text specs: only the stamp differs here.
+    const v2 = JSON.stringify({ ...v3, formatVersion: 2 });
+    const imported = deserializeModel(v2);
+    expect(imported.manifest.model).toBe('logistic');
+    expect(imported.manifest.featureColumns).toEqual(['f1', 'group']);
+  });
 
   it('rebuilds every exportable classifier with identical predictions', async () => {
     const arts = await artifacts();

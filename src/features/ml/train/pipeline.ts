@@ -1,5 +1,6 @@
 import { isMissing, parseNumber } from '@/features/ml/data/infer';
 import { mulberry32, shuffleInPlace } from '@/features/ml/train/random';
+import { fitTfidf, transformDocument } from '@/features/ml/train/tfidf';
 import type { Cell, ColumnProfile } from '@/features/ml/data/types';
 
 /** Categorical columns with at most this many categories are one-hot encoded. */
@@ -16,7 +17,9 @@ type FeatureSpec =
       mode: string;
       mean: number;
       std: number;
-    };
+    }
+  /** Free text: one TF-IDF weight per kept term, vocabulary fitted on train. */
+  | { kind: 'text'; name: string; terms: string[]; idf: number[] };
 
 export interface FittedPipeline {
   specs: FeatureSpec[];
@@ -37,7 +40,8 @@ export type PipelineSpecJson =
       mode: string;
       mean: number;
       std: number;
-    };
+    }
+  | { kind: 'text'; name: string; terms: string[]; idf: number[] };
 
 export function specsToJson(specs: FeatureSpec[]): PipelineSpecJson[] {
   return specs.map((spec) =>
@@ -99,6 +103,20 @@ export function fitPipeline(
       continue;
     }
 
+    if (profile.type === 'text') {
+      // Free text gets its own vocabulary, fitted on the train split only.
+      // Frequency-ranking whole sentences (the old ordinal path) was noise:
+      // every review is its own category.
+      const documents: string[] = [];
+      for (const i of trainIndices) {
+        const raw = cellString(values[i]);
+        if (raw !== null) documents.push(raw);
+      }
+      const { terms, idf } = fitTfidf(documents);
+      specs.push({ kind: 'text', name, terms, idf });
+      continue;
+    }
+
     // categorical / boolean
     const counts = new Map<string, number>();
     for (const i of trainIndices) {
@@ -145,6 +163,9 @@ function encodeInto(row: number[], spec: FeatureSpec, raw: string | null): void 
   } else if (spec.kind === 'onehot') {
     const value = raw ?? spec.mode;
     for (const category of spec.categories) row.push(value === category ? 1 : 0);
+  } else if (spec.kind === 'text') {
+    // Missing text stays all-zero: there is genuinely nothing to say about it.
+    row.push(...transformDocument(raw, spec));
   } else {
     const rank = spec.ranks.get(raw ?? spec.mode) ?? spec.ranks.get(spec.mode) ?? 0;
     row.push((rank - spec.mean) / spec.std);
@@ -159,9 +180,12 @@ export function buildRowEncoder(specs: FeatureSpec[]): {
   featureNames: string[];
   transformRow(record: Record<string, Cell>): number[];
 } {
-  const featureNames = specs.flatMap((spec) =>
-    spec.kind === 'onehot' ? spec.categories.map((c) => `${spec.name}=${c}`) : [spec.name],
-  );
+  const featureNames = specs.flatMap((spec) => {
+    if (spec.kind === 'onehot') return spec.categories.map((c) => `${spec.name}=${c}`);
+    // `column:word` reads as a word everywhere importance and Shapley show up.
+    if (spec.kind === 'text') return spec.terms.map((term) => `${spec.name}:${term}`);
+    return [spec.name];
+  });
   function transformRow(record: Record<string, Cell>): number[] {
     const row: number[] = [];
     for (const spec of specs) {

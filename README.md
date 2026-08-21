@@ -33,18 +33,18 @@ The project follows three non-negotiable principles:
 
 ### ML Lab — `/ml`
 
-| Area           | What it does                                                                                                                                                                                                                                                                          |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Data in        | Drag & drop CSV/Excel (parsed in a worker), demo datasets, per-column profiling, automatic task detection, smart exclusions and **target-leakage detection**                                                                                                                          |
-| Models         | 8 classifiers / 7 regressors trained live: naive baseline, linear/logistic regression, k-NN, Gaussian Naive Bayes, decision tree, random forest, **hand-written histogram gradient boosting** (LightGBM-style) and **MLP** (seeded He init, Adam)                                     |
-| Leaderboard    | Accuracy/F1/ROC-AUC/log-loss or RMSE/MAE/R², delta vs baseline, train time, inference latency p50/p95, **95% bootstrap intervals** with a paired winner-vs-baseline verdict                                                                                                           |
-| Understanding  | Confusion matrix, ROC, permutation importance, partial dependence, live what-if with **exact Shapley explanations**, plain-language read (FR/EN, rule-generated)                                                                                                                      |
-| Where it fails | **Per-segment analysis**: the test set sliced by every categorical column — including excluded ones, where proxy effects hide — worst gaps first                                                                                                                                      |
-| Imbalance      | Precision-recall curve (AP), calibration curve (Brier), **cost-priced decision threshold** with the optimal cut computed by exhaustive sweep                                                                                                                                          |
-| Tuning         | Seeded random search scored by stratified 3-fold cross-validation, pipeline refitted inside each fold — the test set is scored exactly once                                                                                                                                           |
-| No target?     | Seeded k-means (k chosen by silhouette) + power-iteration PCA projection, groups described in plain language; date column? **Holt-Winters forecasting** validated by rolling-origin backtest                                                                                          |
-| MLOps loop     | Score a **new batch** with honest test-vs-batch metrics; **compare two runs** side by side with cross-run uncertainty verdicts; **export a model as JSON and re-import it later** — the exact predictor is rebuilt (byte-identical predictions) and scores any CSV without retraining |
-| Persistence    | Local run history with attached artifacts, opted-in dataset storage (compressed, explicit 50 MB budget), self-contained HTML reports, data-free share links                                                                                                                           |
+| Area           | What it does                                                                                                                                                                                                                                                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Data in        | Drag & drop CSV/Excel (parsed in a worker), demo datasets, per-column profiling, automatic task detection, smart exclusions and **target-leakage detection**; **free-text columns** join the pipeline as hand-written TF-IDF (FR/EN tokenization, capped vocabulary, fitted on the training split only) |
+| Models         | 8 classifiers / 7 regressors trained live: naive baseline, linear/logistic regression, k-NN, Gaussian Naive Bayes, decision tree, random forest, **hand-written histogram gradient boosting** (LightGBM-style) and **MLP** (seeded He init, Adam)                                                       |
+| Leaderboard    | Accuracy/F1/ROC-AUC/log-loss or RMSE/MAE/R², delta vs baseline, train time, inference latency p50/p95, **95% bootstrap intervals** with a paired winner-vs-baseline verdict                                                                                                                             |
+| Understanding  | Confusion matrix, ROC, permutation importance, partial dependence, live what-if with **exact Shapley explanations**, **signed word effects** for text columns (which words push the answer up or down), plain-language read (FR/EN, rule-generated)                                                     |
+| Where it fails | **Per-segment analysis**: the test set sliced by every categorical column — including excluded ones, where proxy effects hide — worst gaps first                                                                                                                                                        |
+| Imbalance      | Precision-recall curve (AP), calibration curve (Brier), **cost-priced decision threshold** with the optimal cut computed by exhaustive sweep                                                                                                                                                            |
+| Tuning         | Seeded random search scored by stratified 3-fold cross-validation, pipeline refitted inside each fold — the test set is scored exactly once                                                                                                                                                             |
+| No target?     | Seeded k-means (k chosen by silhouette) + power-iteration PCA projection, groups described in plain language; date column? **Holt-Winters forecasting** validated by rolling-origin backtest                                                                                                            |
+| MLOps loop     | Score a **new batch** with honest test-vs-batch metrics; **compare two runs** side by side with cross-run uncertainty verdicts; **export a model as JSON and re-import it later** — the exact predictor is rebuilt (byte-identical predictions) and scores any CSV without retraining                   |
+| Persistence    | Local run history with attached artifacts, opted-in dataset storage (compressed, explicit 50 MB budget), self-contained HTML reports, data-free share links                                                                                                                                             |
 
 ### Data Studio — `/data`
 
@@ -78,7 +78,8 @@ The project follows three non-negotiable principles:
 - **From-scratch algorithms**, unit-tested against known results: gradient boosting
   (quantile bins, second-order gains, Newton leaves), MLP, k-means++, PCA, Holt-Winters,
   isolation forest, PSI, Shapley values, bootstrap intervals, PR/ROC/calibration curves,
-  and detection post-processing (YOLOX grid decode, IoU, non-maximum suppression).
+  TF-IDF (bilingual tokenizer, smoothed IDF, L2-normalized vectors), and detection
+  post-processing (YOLOX grid decode, IoU, non-maximum suppression).
 - **Leakage discipline.** Preprocessing (imputation, one-hot/ordinal encoding,
   standardization) is fitted on the training split only; cross-validation refits the
   pipeline inside each fold; forecast backtests never peek at the future.
@@ -87,7 +88,7 @@ The project follows three non-negotiable principles:
 - **Performance.** Every section serves a prerendered static shell (hero paints before
   JavaScript); Lighthouse mobile ≈ 0.99 on `/ml` under real throttling. Heavy
   dependencies (Dexie, SheetJS, ONNX Runtime) load lazily.
-- **Quality bar.** 248 unit tests, 50 Playwright end-to-end tests (including offline PWA,
+- **Quality bar.** 276 unit tests, 52 Playwright end-to-end tests (including offline PWA,
   fake-webcam and axe-core WCAG A/AA accessibility checks), strict TypeScript, ESLint,
   Prettier, and Lighthouse budgets — all enforced in CI.
 

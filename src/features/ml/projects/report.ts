@@ -366,6 +366,19 @@ export function buildReportHtml(record: RunRecord, t: Translate, lang: string): 
       )
       .join('\n')}</table>`;
 
+  // V24: the words the model leans on, when the run has a text column.
+  const words = record.insights.words?.length
+    ? `<h2>${esc(t('ml.lab.insights.wordsTitle'))}</h2>
+    <table><tr><th>${esc(t('ml.lab.type.text'))}</th><th>Δ</th></tr>
+    ${record.insights.words
+      .slice(0, 12)
+      .map(
+        (w) =>
+          `<tr><td>${esc(w.term)}</td><td>${w.effect >= 0 ? '+' : '−'}${Math.abs(w.effect).toFixed(3)}</td></tr>`,
+      )
+      .join('\n')}</table>`
+    : '';
+
   const read = buildPlainRead(record, t, lang);
 
   return `<!doctype html>
@@ -402,6 +415,7 @@ ${leaderboardRows}
 </table>
 ${confusion}
 ${importance}
+${words}
 ${artifactSections(record, t, lang)}
 <footer>${esc(t('ml.lab.reportFooter'))} — https://app.dominicdapice.com/ml</footer>
 </body>
