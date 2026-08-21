@@ -111,7 +111,16 @@ export function RunsHistory() {
                     </span>
                   )}
                   {run.artifacts &&
-                    (['tuning', 'explanation', 'exploration', 'forecast', 'batchScore'] as const)
+                    (
+                      [
+                        'tuning',
+                        'explanation',
+                        'exploration',
+                        'forecast',
+                        'batchScore',
+                        'threshold',
+                      ] as const
+                    )
                       .filter((kind) => run.artifacts?.[kind])
                       .map((kind) => (
                         <Badge key={kind} variant="outline" className="text-[0.62rem]">
