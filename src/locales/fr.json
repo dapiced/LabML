@@ -363,7 +363,8 @@
       "v9": "V9 vitesse & confort : coquille statique /ml, toast de mise à jour PWA, webcam vision — livré",
       "v10": "V10 Data Studio 2 : recettes rejouables, types forcés, décomposition de dates — livré",
       "v11": "V11 MLOps : contrôle de dérive — diff de schéma, PSI par colonne, catégories nouvelles/disparues — livré",
-      "v13": "V13 runs complets : tuning, Shapley, groupes et prévisions survivent dans l’historique, les rapports et les liens — livré"
+      "v13": "V13 runs complets : tuning, Shapley, groupes et prévisions survivent dans l’historique, les rapports et les liens — livré",
+      "v14": "V14 prérendu généralisé : coquilles statiques pour chaque section, Lighthouse /ml 0,86 → 0,99 en conditions réelles — livré"
     }
   },
   "data": {

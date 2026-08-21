@@ -125,11 +125,25 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   (v2 payloads, with point clouds downsampled so URLs stay short; v1 links
   still decode). Metrics and summaries only — never the data.
 
-**Cap 2 is complete** (V7–V10). **Cap 3 is underway**: V11 drift check and
-V13 complete runs shipped. V12 (an optional generative chat behind a
+- **V14 (generalized prerender) — shipped**: every section (`/ml`, `/data`,
+  `/ai`, `/ai/vision`, `/ai/chat`, `/about`) now serves a **static shell**
+  whose hero paints without JavaScript: the stylesheet is inlined (the last
+  render-blocking request disappears), the two latin text fonts ride inside
+  it as `data:` URIs with `font-display: block` (one paint, final font — no
+  swap reflow), each shell modulepreloads its own route chunk, and a header
+  placeholder reserves the exact mount footprint. Measured under **real
+  (devtools) throttling**, 3-run medians: `/ml` **0.86 → 0.99** (FCP = LCP ≈
+  1.0 s, CLS 0.007), `/data` **1.0**. The simulated-throttling score stays
+  ~0.87–0.89 by construction: on an instant localhost the observed trace
+  never contains the shell paint, so the simulator attributes LCP to the
+  full JS graph — documented, not hidden. The root stays the SPA fallback
+  (a shell there would flash the wrong hero on dynamic routes and share
+  links).
+
+**Cap 3 is complete**: V11 drift check, V13 complete runs and V14
+generalized prerender shipped. V12 (an optional generative chat behind a
 server-side key proxy with explicit consent — never an API key in the
-browser) is on hold as a product decision; **generalized prerendering**
-(the last Lighthouse gap) remains as V14.
+browser) stays on hold as a product decision.
 
 Full roadmap in [PLAN.md](PLAN.md), target analysis in
 [docs/analyse-quantifai.md](docs/analyse-quantifai.md).
