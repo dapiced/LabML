@@ -7,6 +7,7 @@ import { DataDropZone } from '@/features/data/components/DataDropZone';
 import { DataExportBar } from '@/features/data/components/DataExportBar';
 import { DataPreview } from '@/features/data/components/DataPreview';
 import { DriftPanel } from '@/features/data/components/DriftPanel';
+import { JoinPanel } from '@/features/data/components/JoinPanel';
 import { QualitySummary } from '@/features/data/components/QualitySummary';
 import { RecipePanel } from '@/features/data/components/RecipePanel';
 import { useDataStore } from '@/features/data/data-store';
@@ -70,6 +71,7 @@ export function DataPage() {
             </Button>
           </section>
 
+          <JoinPanel />
           <QualitySummary />
           <RecipePanel />
           <DataExportBar />
