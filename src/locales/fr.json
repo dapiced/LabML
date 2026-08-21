@@ -9,6 +9,7 @@
       "ai": "IA"
     },
     "soon": "Bientôt",
+    "skipToContent": "Aller au contenu",
     "theme": {
       "toggle": "Changer de thème",
       "light": "Thème clair",
@@ -24,7 +25,41 @@
     "footer": {
       "copyright": "© 2026 Dominic Dapice",
       "openSource": "Open source",
-      "sourceCode": "Code source"
+      "sourceCode": "Code source",
+      "about": "Comment ça marche"
+    }
+  },
+  "about": {
+    "eyebrow": "LABML",
+    "title": "Comment ça marche — et pourquoi vos données sont en sécurité.",
+    "lede": "LabML est un laboratoire de machine learning qui tourne entièrement dans votre navigateur. Cette page explique le moteur, et comment chaque choix de conception garde vos données sur votre machine.",
+    "how": {
+      "title": "Comment ça marche",
+      "body": "Votre CSV est lu dans un Web Worker, à l'intérieur de cet onglet. Le labo profile chaque colonne, détecte la tâche à partir de votre cible, puis met de côté 20 % des lignes (split seedé et stratifié) avant tout apprentissage — imputation, encodage et normalisation sont appris sur le seul split d'entraînement, pour un score de test honnête. Six modèles s'entraînent dans le worker et alimentent un leaderboard en direct, toujours comparés à une baseline naïve. Les insights (matrice de confusion, ROC, importance par permutation, what-if) interrogent les vrais modèles entraînés, conservés en mémoire du worker."
+    },
+    "privacy": {
+      "title": "Une confidentialité vérifiable",
+      "local": {
+        "title": "Lu localement, et prouvable",
+        "body": "Le fichier ne quitte jamais l'onglet. Ouvrez le panneau Réseau de votre navigateur et lancez un entraînement complet : aucune requête ne part. La Content-Security-Policy du site interdit d'ailleurs tout appel tiers — c'est la preuve, pas une promesse."
+      },
+      "storage": {
+        "title": "L'historique reste ici",
+        "body": "Les runs sauvegardés vivent dans l'IndexedDB de votre navigateur — métriques et graphiques uniquement, jamais les lignes sources. Supprimez-les quand vous voulez ; rien n'existe ailleurs."
+      },
+      "share": {
+        "title": "Partage sans données",
+        "body": "Les liens de partage compressent les métriques du run dans le fragment d'URL — la partie après # que les navigateurs n'envoient à aucun serveur. Votre correspondant voit les résultats, pas vos données."
+      },
+      "offline": {
+        "title": "Fonctionne hors-ligne",
+        "body": "LabML est une PWA installable : une fois chargée, coupez le Wi-Fi et tout — jeux de démonstration compris — fonctionne encore. Difficile d'exfiltrer des données sans réseau."
+      }
+    },
+    "openSource": {
+      "title": "Open source",
+      "body": "Tout le labo — parsing, modèles, métriques, tests — est open source. Chaque affirmation de cette page se vérifie dans le code.",
+      "cta": "Parcourir le code sur GitHub"
     }
   },
   "home": {
@@ -236,7 +271,7 @@
       "sprint2": "Moteur d'entraînement et leaderboard — livré",
       "sprint3": "Résultats, explications et what-if — livré",
       "sprint4": "Projets, export & partage sans données — livré",
-      "sprint5": "Qualité : accessibilité, PWA hors-ligne, budgets — prochaine étape"
+      "sprint5": "Qualité : WCAG AA, PWA hors-ligne, budgets Lighthouse — livré"
     }
   },
   "data": {

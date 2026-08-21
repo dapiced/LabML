@@ -34,7 +34,15 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   metrics only, never the data) with rename/delete/compare, exports (model parameters as
   JSON, test predictions as CSV, self-contained HTML report), and data-free share links
   carried in the URL fragment.
-- **Next — Sprint 5**: polish (WCAG AA pass, offline PWA, Lighthouse budgets).
+- **Sprint 5 — shipped**: polish. WCAG A/AA verified by axe-core in the e2e suite,
+  installable **offline-first PWA** (the whole lab — demo datasets included — works with
+  the network cut, proven by an offline e2e test), Lighthouse budgets in CI
+  (home: 98/100/100/100), reduced-motion support, skip link, and an in-app
+  "How it works / Privacy" page.
+
+**The MVP (Sprints 0–5) is complete.** Candidate next steps (V2): TensorFlow.js MLP with
+WebGPU, hyperparameter search, SHAP-style explanations, PDP/ICE, xlsx import — and the
+`/data` and `/ai` sections.
 
 Full roadmap in [PLAN.md](PLAN.md), target analysis in
 [docs/analyse-quantifai.md](docs/analyse-quantifai.md).
