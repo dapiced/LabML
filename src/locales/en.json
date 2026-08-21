@@ -404,7 +404,8 @@
       "v13": "V13 complete runs: tuning, Shapley, groups and forecasts now survive in history, reports and share links — shipped",
       "v14": "V14 generalized prerender: static shells for every section, /ml Lighthouse 0.86 → 0.99 under real throttling — shipped",
       "v15": "V15 MLOps: score a new batch — predictions in the browser, honest test-vs-batch metrics — shipped",
-      "v16": "V16 imbalance: precision-recall, cost-priced decision threshold, calibration — shipped"
+      "v16": "V16 imbalance: precision-recall, cost-priced decision threshold, calibration — shipped",
+      "v17": "V17 Data Studio 3: file joins with honest orphan bookkeeping, seeded isolation-forest anomalies in the recipe — shipped"
     }
   },
   "data": {
@@ -424,6 +425,24 @@
     "error": "This file could not be read ({{detail}}). Try a CSV, TSV or Excel file with a header row.",
     "restart": "Start over",
     "loaded": "{{rows}} rows · {{columns}} columns",
+    "join": {
+      "title": "Join a second file",
+      "hint": "Enrich {{name}} with columns from another file, matched on a shared key column. Matching is exact after trimming — a messy key shows up as an orphan, not silently. The joined result becomes THE dataset: quality report, recipe, drift and the ML Lab all continue from it.",
+      "browse": "Join a file…",
+      "demoTag": "catalog",
+      "parsing": "Reading…",
+      "keyLabel": "Key column",
+      "apply": "Join",
+      "noKey": "No column name in common between the two files — the key must exist on both sides.",
+      "verdict": "{{other}} joined on “{{key}}”: {{matched}} of {{total}} rows matched, {{columns}} columns added.",
+      "orphans_one": "{{count}} row found no match — unmatched key: {{keys}}.",
+      "orphans_other": "{{count}} rows found no match — unmatched keys: {{keys}}.",
+      "duplicates_one": "{{count}} duplicated key on the joined file (first occurrence wins).",
+      "duplicates_other": "{{count}} duplicated keys on the joined file (first occurrence wins).",
+      "unused_one": "{{count}} row of the joined file matched nothing.",
+      "unused_other": "{{count}} rows of the joined file matched nothing.",
+      "note": "Left join: every original row survives; unmatched rows keep empty new columns. Orphans caused by messy keys (case, spaces) are a cleaning finding — merge the variants in the recipe below."
+    },
     "score": {
       "before": "Before",
       "after": "After cleaning",
@@ -481,7 +500,8 @@
         "dropDuplicates": "Drop duplicate rows",
         "dropStructural": "Drop constant and near-empty columns",
         "clipOutliers": "Clamp outliers to the Tukey fences",
-        "deriveDates": "Expand date columns (year, month, weekday)"
+        "deriveDates": "Expand date columns (year, month, weekday)",
+        "dropAnomalies": "Drop multivariate anomalies (seeded isolation forest)"
       },
       "missing": {
         "label": "Missing values",

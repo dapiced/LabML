@@ -10,6 +10,7 @@ const KEEP_ALL: RecipeOptions = {
   dropStructural: false,
   missing: 'keep',
   clipOutliers: false,
+  dropAnomalies: false,
   deriveDates: false,
   types: {},
 };
@@ -224,5 +225,40 @@ describe('formatNumber', () => {
   it('keeps numbers compact', () => {
     expect(formatNumber(16)).toBe('16');
     expect(formatNumber(12.350000000001)).toBe('12.35');
+  });
+});
+
+describe('dropAnomalies', () => {
+  it('drops seeded isolation-forest anomalies, deterministically', () => {
+    const a: Cell[] = [];
+    const b: Cell[] = [];
+    for (let i = 0; i < 60; i++) {
+      a.push(String(10 + (i % 5)));
+      b.push(String(20 + ((i * 3) % 7)));
+    }
+    a.push('90');
+    b.push('95');
+    const options: RecipeOptions = { ...KEEP_ALL, dropAnomalies: true };
+    const first = applyRecipe(['a', 'b'], [a, b], options);
+    expect(first.stats.droppedAnomalyRows).toBe(1);
+    expect(first.stats.rowCount).toBe(60);
+    // The planted row is the one that left.
+    expect(first.columns[0]).not.toContain('90');
+    // Replaying is bit-identical — the forest is seeded.
+    const second = applyRecipe(['a', 'b'], [a, b], options);
+    expect(second.columns).toEqual(first.columns);
+  });
+
+  it('declines quietly when the data cannot support the forest', () => {
+    const result = applyRecipe(
+      ['a', 'w'],
+      [
+        ['1', '2', '3'],
+        ['x', 'y', 'z'],
+      ],
+      { ...KEEP_ALL, dropAnomalies: true },
+    );
+    expect(result.stats.droppedAnomalyRows).toBe(0);
+    expect(result.stats.rowCount).toBe(3);
   });
 });
