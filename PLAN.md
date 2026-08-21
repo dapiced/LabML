@@ -1,421 +1,442 @@
-# LabML — Plan détaillé
+# LabML — Detailed Plan
 
-> **Plateforme ML interactive et privacy-first** — `app.dominicdapice.com/ml`
-> Un hub personnel Data/ML « zéro friction » avec une identité propre et une couche MLOps visible.
-
----
-
-## 1. Introduction — récapitulatif de la compréhension
-
-**Ce qu'on construit.** Une application web complète où un visiteur peut :
-
-1. Glisser un fichier CSV (ou choisir un dataset de démonstration),
-2. Explorer ses données (types, distributions, valeurs manquantes),
-3. Choisir une colonne cible (ou la laisser détecter),
-4. Entraîner automatiquement plusieurs modèles **entièrement dans son navigateur**,
-5. Lire un leaderboard, des métriques, des graphiques, l'importance des features et une interprétation en langage naturel,
-6. Sauvegarder ses projets localement, exporter modèles et rapports, partager ses résultats sans partager ses données.
-
-**Point critique retenu : on livre une application complète, pas juste le contenant.** Le shell (layout, navigation, thème, routes `/ml`, `/data`, `/ai`) est le livrable du Sprint 0 uniquement. Le cœur du projet — et l'essentiel du plan ci-dessous — est le **moteur ML fonctionnel de bout en bout** : parsing → profilage → préprocessing → entraînement multi-modèles → évaluation → visualisation → export. Chaque sprint se termine par une fonctionnalité utilisable par un vrai visiteur, pas par une maquette.
-
-**Contraintes structurantes :**
-
-- Domaine : `app.dominicdapice.com`, routage par chemins (`/ml` d'abord, `/data` et `/ai` ensuite).
-- Infra : GitHub (code + Actions CI/CD) + Cloudflare (DNS, SSL, hébergement).
-- Privacy-first : aucune donnée utilisateur ne quitte le navigateur.
-- **Bilingue français / anglais** dès la première version : sélecteur de langue visible, détection de la langue du navigateur, préférence mémorisée. Toute chaîne de l'UI passe par la couche i18n — aucune chaîne en dur.
-- **Deux thèmes de couleur au choix de l'utilisateur** : clair et sombre, bascule visible dans l'en-tête, préférence mémorisée (défaut = préférence système), contrastes WCAG vérifiés dans les deux thèmes (graphiques ECharts inclus).
-- Responsive, accessible (WCAG), code propre (ESLint/Prettier), open-source.
+> **Interactive, privacy-first ML platform** — `app.dominicdapice.com/ml`
+> A personal, zero-friction Data/ML hub with its own visual identity and a visible MLOps layer.
 
 ---
 
-## 2. Analyse de la cible
+## 1. Introduction — recap of the understanding
 
-_Note : cette synthèse s'appuie sur l'observation d'un laboratoire ML « zéro friction » du marché, pris comme référence de parcours, et sur les observations fournies dans le brief._
+**What we are building.** A complete web application where a visitor can:
 
-**Parcours utilisateur (le "flow" à égaler puis dépasser) :**
+1. Drag in a CSV file (or pick a demo dataset),
+2. Explore their data (types, distributions, missing values),
+3. Choose a target column (or let it be detected),
+4. Automatically train several models **entirely in their browser**,
+5. Read a leaderboard, metrics, charts, feature importance and a natural-language interpretation,
+6. Save their projects locally, export models and reports, share their results without sharing their data.
 
-| Étape        | Comportement de la référence                                                                                                                      |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Entrée       | Drag & drop d'un CSV (ou format tabulaire), lu localement, **rien n'est envoyé au serveur**                                                       |
-| Cible        | L'utilisateur choisit la colonne à prédire, ou ML Lab la propose ; suggestions de colonnes à conserver/exclure                                    |
-| Tâche        | Détection automatique classification vs régression depuis la colonne cible                                                                        |
-| Entraînement | Petit ensemble de modèles entraînés côté client, avec un jeu de test mis de côté (holdout)                                                        |
-| Résultats    | Leaderboard des modèles, métriques **comparées à une baseline naïve**, graphiques, top features, et une lecture en langage naturel ("plain read") |
-| Friction     | Zéro : pas de compte, pas de setup, pas de code                                                                                                   |
+**Critical point retained: we ship a complete application, not just the shell.** The shell (layout, navigation, theme, `/ml`, `/data`, `/ai` routes) is the deliverable of Sprint 0 only. The heart of the project — and the bulk of the plan below — is the **end-to-end working ML engine**: parsing → profiling → preprocessing → multi-model training → evaluation → visualization → export. Every sprint ends with a feature a real visitor can use, not a mockup.
 
-**Design/UX (esprit à capturer) :** interface SaaS épurée et professionnelle — une seule tâche par écran, progression guidée (upload → cible → train → résultats), beaucoup d'espace blanc, hiérarchie typographique claire, résultats vulgarisés pour non-experts.
+**Structuring constraints:**
 
-**Ce qui fait la force du produit** (et qu'on garde) : la friction zéro, la promesse privacy vérifiable, la baseline naïve comme point de comparaison honnête, l'interprétation en langage naturel.
-
-**Ce qu'on fera mieux** (détail en section D) : observabilité MLOps visible, reproductibilité ("pipeline as code"), projets persistants, partage sans données, interprétabilité plus poussée, thème sombre/clair, PWA hors-ligne.
+- Domain: `app.dominicdapice.com`, path-based routing (`/ml` first, `/data` and `/ai` later).
+- Infra: GitHub (code + Actions CI/CD) + Cloudflare (DNS, SSL, hosting).
+- Privacy-first: no user data ever leaves the browser.
+- **Bilingual French / English** from the very first version: visible language switcher, browser-language detection, remembered preference. Every UI string goes through the i18n layer — no hard-coded strings.
+- **Two color themes, user's choice**: light and dark, visible toggle in the header, remembered preference (default = system preference), WCAG contrast verified in both themes (ECharts charts included).
+- Responsive, accessible (WCAG), clean code (ESLint/Prettier), open-source.
 
 ---
 
-## A. Architecture technique
+## 2. Analysis of the reference
 
-### A.1 Stack recommandé
+_Note: this synthesis is based on observing a zero-friction ML lab on the market, taken as the journey reference, plus the observations provided in the brief._
 
-| Couche                          | Choix recommandé                                                                                                                                             | Alternatives écartées                                                                                                                                 |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Framework                       | **Vite + React 19 + TypeScript strict** (SPA statique)                                                                                                       | Next.js (SSR inutile ici : tout le calcul est client ; l'export statique de Next ajoute de la complexité sans bénéfice), Nuxt/SvelteKit (même raison) |
-| Routage                         | **React Router v7** (mode librairie, code-splitting par route)                                                                                               | TanStack Router (excellent mais plus niche)                                                                                                           |
-| UI                              | **Tailwind CSS v4 + shadcn/ui** (composants copiés dans le repo, personnalisables) + lucide-react                                                            | Material UI (identité visuelle trop "Google", bundle plus lourd)                                                                                      |
-| État                            | **Zustand** (léger, testable)                                                                                                                                | Redux (surdimensionné)                                                                                                                                |
-| Graphiques                      | **Apache ECharts** (canvas, performant sur 100k+ points, tree-shakable, zoom/filtre/export natifs)                                                           | Plotly.js (~4 Mo, lourd pour le budget perf), D3 pur (coût de dev élevé)                                                                              |
-| Parsing                         | **Papa Parse** (CSV en streaming, supporte les Web Workers)                                                                                                  | SheetJS (ajouté en V2 pour .xlsx)                                                                                                                     |
-| ML classique                    | **Écosystème ml.js** (ml-cart, ml-random-forest, ml-knn, ml-naivebayes, ml-regression) + implémentations TS maison (régression logistique, GBDT histogramme) | scikit-learn côté serveur (casse la promesse privacy)                                                                                                 |
-| Réseaux de neurones             | **TensorFlow.js** (MLP, backend WebGPU avec repli WASM) — V2                                                                                                 | —                                                                                                                                                     |
-| Inférence modèles pré-entraînés | **ONNX Runtime Web** (module `/ai/vision`) — V3                                                                                                              | —                                                                                                                                                     |
-| i18n                            | **react-i18next** (FR/EN, détection navigateur, lazy loading des ressources)                                                                                 | solutions maison (réinventer la roue)                                                                                                                 |
-| Persistance                     | **Dexie.js** (IndexedDB) : projets, runs, modèles                                                                                                            | localStorage (limites de taille), backend (privacy)                                                                                                   |
-| Partage                         | **lz-string** : résultats compressés dans le fragment d'URL (`#…`)                                                                                           | Backend de partage (V3 optionnel)                                                                                                                     |
-| Hébergement                     | **Cloudflare Pages** (statique + CDN)                                                                                                                        | Workers Sites (inutile sans logique serveur)                                                                                                          |
+**User journey (the "flow" to match, then beat):**
 
-### A.2 Justification des choix (le "pourquoi", avec parallèles DevOps)
+| Step     | Reference behavior                                                                                                     |
+| -------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Entry    | Drag & drop a CSV (or tabular format), read locally, **nothing is sent to a server**                                   |
+| Target   | The user picks the column to predict, or ML Lab suggests it; suggestions of columns to keep/exclude                    |
+| Task     | Automatic classification-vs-regression detection from the target column                                                |
+| Training | A small set of models trained client-side, with a held-out test set                                                    |
+| Results  | Model leaderboard, metrics **compared to a naive baseline**, charts, top features, and a natural-language "plain read" |
+| Friction | Zero: no account, no setup, no code                                                                                    |
 
-- **SPA statique plutôt que full-stack.** Toute la valeur (parsing, entraînement, visualisation) s'exécute chez le client : un serveur applicatif n'apporterait que des coûts, une surface d'attaque et une promesse privacy affaiblie. Parallèle infra : c'est l'équivalent d'un site servi par **Azure Static Web Apps + CDN** — zéro serveur à patcher, scaling trivial, coût quasi nul.
-- **Vite + React.** Build rapide, écosystème ML/dataviz JS le plus riche, et la compétence la plus lisible sur un portfolio. TypeScript strict joue le rôle que joue la validation Terraform : les erreurs sont attrapées au "plan", pas à l'"apply".
-- **Web Workers pour l'entraînement.** L'UI ne doit jamais geler pendant un fit. Chaque entraînement part dans un worker dédié (via Comlink) qui publie des événements de progression. Parallèle : c'est votre file de jobs — le worker est un _agent de build_, l'UI est l'orchestrateur qui affiche les logs en temps réel.
-- **ECharts plutôt que Plotly.** Le budget performance (Lighthouse ≥ 95) est un objectif affiché ; Plotly seul le ferait exploser. ECharts offre zoom, brush, filtrage et export PNG demandés dans le brief, pour ~1/5 du poids en imports sélectifs.
-- **shadcn/ui plutôt qu'une lib de composants.** Les composants vivent dans notre repo : identité visuelle propre (exigence du brief), pas de dépendance de style externe, et une vitrine de code lisible.
+**Design/UX (the spirit to capture):** a clean, professional SaaS interface — one task per screen, guided progression (upload → target → train → results), plenty of white space, clear typographic hierarchy, results explained for non-experts.
 
-### A.3 Schéma d'architecture
+**What makes the product strong** (and what we keep): zero friction, a verifiable privacy promise, the naive baseline as an honest point of comparison, the natural-language interpretation.
+
+**What we will do better** (detailed in section D): visible MLOps observability, reproducibility ("pipeline as code"), persistent projects, data-free sharing, deeper interpretability, dark/light theme, offline PWA.
+
+---
+
+## A. Technical architecture
+
+### A.1 Recommended stack
+
+| Layer                       | Recommended choice                                                                                                                                            | Alternatives set aside                                                                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework                   | **Vite + React 19 + strict TypeScript** (static SPA)                                                                                                          | Next.js (SSR is useless here: all compute is client-side; Next's static export adds complexity for no benefit), Nuxt/SvelteKit (same reason) |
+| Routing                     | **React Router v7** (library mode, per-route code-splitting)                                                                                                  | TanStack Router (excellent but more niche)                                                                                                   |
+| UI                          | **Tailwind CSS v4 + shadcn/ui** (components copied into the repo, customizable) + lucide-react                                                                | Material UI (visual identity too "Google", heavier bundle)                                                                                   |
+| State                       | **Zustand** (light, testable)                                                                                                                                 | Redux (oversized)                                                                                                                            |
+| Charts                      | **Apache ECharts** (canvas, fast on 100k+ points, tree-shakable, native zoom/filter/export)                                                                   | Plotly.js (~4 MB, too heavy for the perf budget), pure D3 (high dev cost)                                                                    |
+| Parsing                     | **Papa Parse** (streaming CSV, Web Worker support)                                                                                                            | SheetJS (added in V2 for .xlsx)                                                                                                              |
+| Classical ML                | **ml.js ecosystem** (ml-cart, ml-random-forest, ml-knn, ml-naivebayes, ml-regression) + hand-written TS implementations (logistic regression, histogram GBDT) | scikit-learn on a server (breaks the privacy promise)                                                                                        |
+| Neural networks             | **TensorFlow.js** (MLP, WebGPU backend with WASM fallback) — V2                                                                                               | —                                                                                                                                            |
+| Pre-trained model inference | **ONNX Runtime Web** (`/ai/vision` module) — V3                                                                                                               | —                                                                                                                                            |
+| i18n                        | **react-i18next** (FR/EN, browser detection, lazy-loaded resources)                                                                                           | home-grown solutions (reinventing the wheel)                                                                                                 |
+| Persistence                 | **Dexie.js** (IndexedDB): projects, runs, models                                                                                                              | localStorage (size limits), backend (privacy)                                                                                                |
+| Sharing                     | **lz-string**: results compressed into the URL fragment (`#…`)                                                                                                | Sharing backend (optional V3)                                                                                                                |
+| Hosting                     | **Cloudflare Pages** (static + CDN)                                                                                                                           | Workers Sites (pointless without server logic)                                                                                               |
+
+### A.2 Rationale for the choices (the "why", with DevOps parallels)
+
+- **Static SPA over full-stack.** All the value (parsing, training, visualization) runs on the client: an application server would only add cost, attack surface, and a weakened privacy promise. Infra parallel: this is the equivalent of a site served by **Azure Static Web Apps + CDN** — zero servers to patch, trivial scaling, near-zero cost.
+- **Vite + React.** Fast builds, the richest JS ML/dataviz ecosystem, and the most legible skill on a portfolio. Strict TypeScript plays the role Terraform validation plays: errors are caught at "plan" time, not at "apply" time.
+- **Web Workers for training.** The UI must never freeze during a fit. Each training run goes to a dedicated worker (via Comlink) that publishes progress events. Parallel: this is your job queue — the worker is a _build agent_, the UI is the orchestrator streaming the logs live.
+- **ECharts over Plotly.** The performance budget (Lighthouse ≥ 95) is a stated goal; Plotly alone would blow it. ECharts provides the zoom, brush, filtering and PNG export the brief asks for, at ~1/5 of the weight with selective imports.
+- **shadcn/ui over a component library.** The components live in our repo: our own visual identity (a brief requirement), no external style dependency, and a showcase of readable code.
+
+### A.3 Architecture diagram
 
 ```
                         ┌─────────────────────────────────────────────┐
-                        │      NAVIGATEUR DE L'UTILISATEUR            │
-                        │  (toutes les données restent ici)           │
+                        │           THE USER'S BROWSER                │
+                        │  (all the data stays here)                  │
                         │                                             │
                         │  ┌───────────────┐   ┌────────────────────┐ │
-                        │  │  UI React     │◄──┤ Web Workers        │ │
+                        │  │  React UI     │◄──┤ Web Workers        │ │
                         │  │  /ml /data /ai│   │ · parsing (Papa)   │ │
-                        │  │  ECharts      │   │ · préprocessing    │ │
-                        │  │  Zustand      │   │ · entraînement     │ │
+                        │  │  ECharts      │   │ · preprocessing    │ │
+                        │  │  Zustand      │   │ · training         │ │
                         │  └──────┬────────┘   │   (ml.js / TF.js)  │ │
                         │         │            └────────────────────┘ │
                         │  ┌──────▼────────┐   ┌────────────────────┐ │
-                        │  │ IndexedDB     │   │ Fragment d'URL #…  │ │
-                        │  │ (Dexie)       │   │ partage sans donnée│ │
-                        │  │ projets/runs  │   │ (jamais transmis   │ │
-                        │  └───────────────┘   │  au serveur)       │ │
+                        │  │ IndexedDB     │   │ URL fragment #…    │ │
+                        │  │ (Dexie)       │   │ data-free sharing  │ │
+                        │  │ projects/runs │   │ (never sent to     │ │
+                        │  └───────────────┘   │  the server)       │ │
                         └─────────┬────────────┴────────────────────┴─┘
-                                  │ HTTPS (assets statiques uniquement)
+                                  │ HTTPS (static assets only)
                  ┌────────────────▼───────────────────┐
                  │           CLOUDFLARE               │
                  │  DNS: app.dominicdapice.com (CNAME)│
-                 │  SSL universel · CDN · _headers CSP│
-                 │  Pages (statique) · Workers (V3:   │
-                 │  proxy API pour /ai/chat)          │
+                 │  Universal SSL · CDN · _headers CSP│
+                 │  Pages (static) · Workers (V3:     │
+                 │  API proxy for /ai/chat)           │
                  └────────────────▲───────────────────┘
-                                  │ déploiement (wrangler)
+                                  │ deployment (wrangler)
                  ┌────────────────┴───────────────────┐
                  │             GITHUB                 │
-                 │  Repo LabML (open-source)          │
+                 │  LabML repo (open-source)          │
                  │  Actions: lint→type→test→build→    │
-                 │  e2e→deploy (+ previews par PR)    │
+                 │  e2e→deploy (+ per-PR previews)    │
                  └────────────────────────────────────┘
 ```
 
-**Point clé privacy :** le lien de partage encode les métriques/graphiques (jamais les données) dans le **fragment** d'URL — la partie après `#` n'est jamais envoyée au serveur par le navigateur. La promesse "vos données ne quittent pas votre machine" reste vraie même en partageant.
+**Key privacy point:** the share link encodes the metrics/charts (never the data) into the URL **fragment** — the part after `#` is never sent to the server by the browser. The promise "your data never leaves your machine" stays true even while sharing.
 
-### A.4 Structure de dossiers
+### A.4 Folder structure
 
 ```
 LabML/
 ├── .github/workflows/          # ci.yml, deploy.yml, lighthouse.yml
-├── docs/                       # ARCHITECTURE.md, adr/, guide utilisateur
+├── docs/                       # ARCHITECTURE.md, adr/, user guide
 ├── public/
-│   ├── datasets/               # CSV de démo (iris, titanic, housing…)
-│   └── _headers, _redirects    # CSP + fallback SPA Cloudflare
+│   ├── datasets/               # demo CSVs (iris, titanic, housing…)
+│   └── _headers, _redirects    # CSP + Cloudflare SPA fallback
 ├── src/
-│   ├── app/                    # bootstrap, routeur, layout, thème
-│   ├── components/ui/          # design system (shadcn/ui personnalisé)
+│   ├── app/                    # bootstrap, router, layout, theme
+│   ├── components/ui/          # design system (customized shadcn/ui)
 │   ├── features/
-│   │   ├── ml/                 # LE CŒUR DU PRODUIT
-│   │   │   ├── data/           # parsing, inférence de types, profilage
-│   │   │   ├── pipeline/       # préprocessing, split, config de run
-│   │   │   ├── models/         # un module par modèle (interface commune)
-│   │   │   ├── metrics/        # accuracy, F1, AUC, RMSE… (golden-testés)
-│   │   │   ├── explain/        # importance, PDP, interprétation NL
-│   │   │   ├── workers/        # workers d'entraînement (Comlink)
-│   │   │   ├── projects/       # persistance Dexie, export, partage
-│   │   │   └── pages/          # écrans du parcours /ml
-│   │   ├── data/               # placeholder V3 (pipelines data)
-│   │   └── ai/                 # placeholder V2/V3 (chat, vision)
-│   └── lib/                    # utilitaires partagés
+│   │   ├── ml/                 # THE HEART OF THE PRODUCT
+│   │   │   ├── data/           # parsing, type inference, profiling
+│   │   │   ├── pipeline/       # preprocessing, split, run config
+│   │   │   ├── models/         # one module per model (shared interface)
+│   │   │   ├── metrics/        # accuracy, F1, AUC, RMSE… (golden-tested)
+│   │   │   ├── explain/        # importance, PDP, NL interpretation
+│   │   │   ├── workers/        # training workers (Comlink)
+│   │   │   ├── projects/       # Dexie persistence, export, sharing
+│   │   │   └── pages/          # screens of the /ml journey
+│   │   ├── data/               # V3 placeholder (data pipelines)
+│   │   └── ai/                 # V2/V3 placeholder (chat, vision)
+│   └── lib/                    # shared utilities
 ├── tests/
 │   ├── e2e/                    # Playwright
-│   └── golden/                 # valeurs de référence scikit-learn
-└── wrangler.toml               # config Cloudflare (l'équivalent du .tf)
+│   └── golden/                 # scikit-learn reference values
+└── wrangler.toml               # Cloudflare config (the .tf equivalent)
 ```
 
-Chaque section (`/ml`, `/data`, `/ai`) est un **feature folder** chargé paresseusement (code-splitting par route) : ajouter `/ai/vision` plus tard ne touche ni au shell ni à `/ml`.
+Each section (`/ml`, `/data`, `/ai`) is a lazily-loaded **feature folder** (per-route code-splitting): adding `/ai/vision` later touches neither the shell nor `/ml`.
 
 ---
 
-## B. Développement — phases et contenu fonctionnel
+## B. Development — phases and functional content
 
-### B.0 Sprint 0 — Fondations (≈ 1 semaine) — _le contenant, et rien que lui_
+### B.0 Sprint 0 — Foundations (≈ 1 week) — _the shell, and nothing but the shell_
 
-- Scaffold Vite + React + TS strict, ESLint (flat config) + Prettier + Husky/lint-staged.
-- Design system : tokens (couleurs, typo, espacements), **deux thèmes clair/sombre avec bascule utilisateur persistée** (défaut = préférence système), composants de base.
-- **Fondation i18n (react-i18next)** : FR + EN dès le premier écran, sélecteur de langue, détection navigateur, préférence persistée — l'i18n se pose au Sprint 0 car le rétrofit sur une app existante coûte 10× plus cher.
-- Shell : layout, navigation, pages `/`, `/ml`, `/data` (à venir), `/ai` (à venir), page 404.
-- CI/CD complet (section C) + domaine `app.dominicdapice.com` en ligne.
-- **Definition of done :** l'app est déployée, Lighthouse ≥ 95, le pipeline CI bloque lint/type/test.
+- Vite + React + strict TS scaffold, ESLint (flat config) + Prettier + Husky/lint-staged.
+- Design system: tokens (colors, type, spacing), **two light/dark themes with a persisted user toggle** (default = system preference), base components.
+- **i18n foundation (react-i18next)**: FR + EN from the very first screen, language switcher, browser detection, persisted preference — i18n lands in Sprint 0 because retrofitting it onto an existing app costs 10× more.
+- Shell: layout, navigation, `/`, `/ml`, `/data` (coming soon), `/ai` (coming soon) pages, 404 page.
+- Full CI/CD (section C) + the `app.dominicdapice.com` domain live.
+- **Definition of done:** the app is deployed, Lighthouse ≥ 95, the CI pipeline blocks on lint/type/test.
 
-### B.1 Sprint 1 — Données (≈ 1–2 semaines) — _première vraie valeur utilisateur_
+### B.1 Sprint 1 — Data (≈ 1–2 weeks) — _first real user value_
 
-- Upload drag & drop CSV (Papa Parse en streaming dans un worker, jusqu'à ~500 Mo).
-- **Datasets de démo intégrés** (Iris, Titanic, California Housing) → essai en un clic, friction zéro.
-- Inférence de types par colonne (numérique, catégoriel, booléen, date, texte, ID).
-- **Profil de données** : par colonne — distribution (histogramme/barres), % manquants, cardinalité, min/max/moyenne/médiane ; aperçu tabulaire virtualisé.
-- Sélection de la cible + **détection automatique de la tâche** (classification binaire/multi-classes vs régression).
-- Suggestions intelligentes : exclusion des colonnes ID/constantes/quasi-vides, **alerte de fuite de cible** (colonne trop corrélée à la cible).
-- **DoD :** un visiteur charge un CSV et comprend ses données sans rien installer.
+- Drag & drop CSV upload (streaming Papa Parse in a worker, up to ~500 MB).
+- **Built-in demo datasets** (Iris, Titanic, California Housing) → one-click trial, zero friction.
+- Per-column type inference (numeric, categorical, boolean, date, text, ID).
+- **Data profile**: per column — distribution (histogram/bars), % missing, cardinality, min/max/mean/median; virtualized tabular preview.
+- Target selection + **automatic task detection** (binary/multi-class classification vs regression).
+- Smart suggestions: exclusion of ID/constant/near-empty columns, **target-leakage warning** (a column too correlated with the target).
+- **DoD:** a visitor loads a CSV and understands their data without installing anything.
 
-### B.2 Sprint 2 — Moteur d'entraînement (≈ 2 semaines) — _le cœur_
+### B.2 Sprint 2 — Training engine (≈ 2 weeks) — _the heart_
 
-- Pipeline de préprocessing déclaratif : imputation (médiane/mode), encodage (one-hot / ordinal selon cardinalité), standardisation, tout **appris sur le train uniquement** (pas de fuite).
-- Split train/test stratifié (80/20, seed fixe reproductible).
-- **Zoo de modèles v1** derrière une interface commune `Trainable` :
-  - Baseline naïve (classe majoritaire / moyenne) — le point de comparaison honnête,
-  - Régression linéaire / logistique (TS maison, descentes de gradient vectorisées),
-  - k-NN, Naive Bayes gaussien,
-  - Arbre de décision (ml-cart), Random Forest (ml-random-forest).
-- Exécution dans des **Web Workers** avec progression temps réel (modèle en cours, % , temps écoulé), annulable.
-- **Leaderboard temps réel** : les lignes apparaissent au fur et à mesure, triées par métrique principale, delta vs baseline mis en évidence.
-- Métriques : accuracy, précision/rappel, F1, ROC-AUC, log-loss (classif) ; RMSE, MAE, R² (régression).
-- **DoD :** parcours complet upload → cible → train → leaderboard, reproductible (même seed ⇒ mêmes résultats).
+- Declarative preprocessing pipeline: imputation (median/mode), encoding (one-hot / ordinal depending on cardinality), standardization, all **fitted on the training split only** (no leakage).
+- Stratified train/test split (80/20, fixed reproducible seed).
+- **Model zoo v1** behind a shared `Trainable` interface:
+  - Naive baseline (majority class / mean) — the honest point of comparison,
+  - Linear / logistic regression (hand-written TS, vectorized gradient descent),
+  - k-NN, Gaussian Naive Bayes,
+  - Decision tree (ml-cart), Random Forest (ml-random-forest).
+- Execution in **Web Workers** with live progress (current model, %, elapsed time), cancellable.
+- **Live leaderboard**: rows appear as they finish, sorted by the main metric, delta vs baseline highlighted.
+- Metrics: accuracy, precision/recall, F1, ROC-AUC, log-loss (classification); RMSE, MAE, R² (regression).
+- **DoD:** the full upload → target → train → leaderboard journey, reproducible (same seed ⇒ same results).
 
-### B.3 Sprint 3 — Résultats & insights (≈ 1–2 semaines)
+### B.3 Sprint 3 — Results & insights (≈ 1–2 weeks)
 
-- Visualisations par modèle : matrice de confusion interactive, courbes ROC/PR, prédit-vs-réel et résidus (régression) — zoom, filtre, export PNG (ECharts).
-- **Importance des features** : permutation importance (agnostique au modèle) + importance par impureté pour les arbres.
-- **Interprétation en langage naturel** générée par règles (pas d'API externe) : "Le Random Forest bat la baseline de 18 points. Les 3 variables les plus décisives sont…".
-- **Prédiction what-if** : formulaire pré-rempli d'une ligne, l'utilisateur modifie des valeurs et voit la prédiction changer en direct.
-- **DoD :** la page résultats raconte une histoire complète à un non-expert.
+- Per-model visualizations: interactive confusion matrix, ROC/PR curves, predicted-vs-actual and residuals (regression) — zoom, filter, PNG export (ECharts).
+- **Feature importance**: permutation importance (model-agnostic) + impurity-based importance for trees.
+- **Natural-language interpretation** generated by rules (no external API): "The Random Forest beats the baseline by 18 points. The 3 most decisive variables are…".
+- **What-if prediction**: a form pre-filled with one row; the user edits values and watches the prediction change live.
+- **DoD:** the results page tells a complete story to a non-expert.
 
-### B.4 Sprint 4 — Projets, export & partage (≈ 1 semaine)
+### B.4 Sprint 4 — Projects, export & sharing (≈ 1 week)
 
-- **Projets** (Dexie/IndexedDB) : historique des runs, renommage, suppression, comparaison côte à côte de deux runs.
-- **Exports** : modèle (JSON rechargeable), prédictions (CSV), **rapport HTML autonome** (imprimable en PDF via CSS print).
-- **Lien de partage** : métriques + graphiques compressés (lz-string) dans le fragment d'URL ; page de lecture seule.
-- **DoD :** un visiteur revient et retrouve ses projets ; un lien partagé s'ouvre sans les données d'origine.
+- **Projects** (Dexie/IndexedDB): run history, rename, delete, side-by-side comparison of two runs.
+- **Exports**: model (reloadable JSON), predictions (CSV), **self-contained HTML report** (printable to PDF via CSS print).
+- **Share link**: metrics + charts compressed (lz-string) into the URL fragment; read-only page.
+- **DoD:** a returning visitor finds their projects; a shared link opens without the original data.
 
-### B.5 Sprint 5 — Qualité & polish (≈ 1 semaine)
+### B.5 Sprint 5 — Quality & polish (≈ 1 week)
 
-- Accessibilité WCAG AA (navigation clavier, aria, contrastes vérifiés dans les deux thèmes, axe-core en CI).
-- **PWA hors-ligne** (vite-plugin-pwa) : la démo ultime de la promesse privacy — _coupez le Wi-Fi, tout fonctionne encore_.
-- Budgets Lighthouse en CI, **revue complète des traductions FR/EN** (y compris les interprétations en langage naturel générées, produites dans les deux langues), page "Comment ça marche / Confidentialité".
+- WCAG AA accessibility (keyboard navigation, aria, contrast verified in both themes, axe-core in CI).
+- **Offline PWA** (vite-plugin-pwa): the ultimate demo of the privacy promise — _turn off the Wi-Fi, everything still works_.
+- Lighthouse budgets in CI, **full FR/EN translation review** (including the generated natural-language interpretations, produced in both languages), "How it works / Privacy" page.
 
-### B.6 V2 / V3 — extensions (post-MVP, priorisées en section D)
+### B.6 V2 / V3 — extensions (post-MVP, prioritized in section D)
 
-- **V2 :** MLP TensorFlow.js (WebGPU→WASM), GBDT histogramme TS maison (esprit LightGBM), recherche d'hyperparamètres (random search à budget temps), SHAP approché (Kernel SHAP échantillonné), PDP/ICE, import .xlsx/.parquet.
-- **V3 :** `/ai/vision` (ONNX Runtime Web + modèles pré-entraînés type MobileNet), `/ai/chat` (LLM via proxy Cloudflare Worker — seules les _questions et statistiques agrégées_ sortent, jamais les données brutes, avec consentement explicite), module `/data`, export ONNX, auth GitHub OAuth si des fonctionnalités le justifient.
+- **V2:** TensorFlow.js MLP (WebGPU→WASM), hand-written TS histogram GBDT (LightGBM spirit), hyperparameter search (time-budgeted random search), approximate SHAP (sampled Kernel SHAP), PDP/ICE, .xlsx/.parquet import.
+- **V3:** `/ai/vision` (ONNX Runtime Web + pre-trained models like MobileNet), `/ai/chat` (LLM via a Cloudflare Worker proxy — only the _questions and aggregated statistics_ leave, never the raw data, with explicit consent), the `/data` module, ONNX export, GitHub OAuth auth if features ever justify it.
 
 ---
 
-## C. Intégration continue & déploiement
+## C. Continuous integration & deployment
 
 ### C.1 GitHub Actions
 
-Deux workflows (parallèle direct avec vos pipelines Azure DevOps) :
+Two workflows (a direct parallel with your Azure DevOps pipelines):
 
 ```
-ci.yml (sur PR et main)
+ci.yml (on PRs and main)
   lint (ESLint + Prettier check)
   → typecheck (tsc --noEmit)
-  → test unitaires + golden tests (Vitest, couverture)
+  → unit + golden tests (Vitest, coverage)
   → build (Vite)
-  → e2e (Playwright, navigateur Chromium)
-  → lighthouse-ci (budgets perf/a11y, non bloquant au début)
+  → e2e (Playwright, Chromium browser)
+  → lighthouse-ci (perf/a11y budgets, non-blocking at first)
 
-deploy.yml (après CI verte)
-  PR    → wrangler pages deploy --branch=<pr>   ⇒ URL de preview par PR
+deploy.yml (after green CI)
+  PR    → wrangler pages deploy --branch=<pr>   ⇒ per-PR preview URL
   main  → wrangler pages deploy                 ⇒ production
 ```
 
-- Déploiement via `cloudflare/wrangler-action` avec `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` en secrets GitHub (équivalent des variable groups Azure DevOps ; token scodé au seul projet Pages, principe du moindre privilège).
-- **Previews par PR** = vos environnements éphémères : chaque PR a son URL de test.
-- V2 : CodeQL + Dependabot/Renovate — vitrine DevSecOps.
+- Deployment via `cloudflare/wrangler-action` with `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` as GitHub secrets (the equivalent of Azure DevOps variable groups; token scoped to the single Pages project, least privilege).
+- **Per-PR previews** = your ephemeral environments: every PR gets its own test URL.
+- V2: CodeQL + Dependabot/Renovate — a DevSecOps showcase.
 
-### C.2 Cloudflare (DNS, SSL, routage)
+### C.2 Cloudflare (DNS, SSL, routing)
 
-1. **Pages** : projet `labml`, connecté au repo (déploiement piloté par Actions pour garder la CI en contrôle — le "plan/apply" reste dans GitHub).
-2. **DNS** : `app.dominicdapice.com` en `CNAME` vers `<projet>.pages.dev`, proxy activé (nuage orange) ⇒ SSL universel automatique, CDN, HTTP/3. Le domaine apex reste sur GitHub Pages, aucune interférence.
-3. **Routage par chemins** : c'est le **routeur SPA** qui gère `/ml`, `/data`, `/ai` — côté Cloudflare, un simple fallback `_redirects` (`/* /index.html 200`). Pas besoin de Workers pour le MVP : un Worker de routage ne servirait que si `/ai` devenait un jour une app séparée.
-4. **`_headers`** : CSP stricte et en-têtes de sécurité (section E), servis par le CDN.
-
----
-
-## D. Améliorations vs la référence & priorisation
-
-### D.1 Les 3 améliorations "signature" (ADN MLOps du portfolio)
-
-1. **Observabilité de run intégrée.** Le leaderboard affiche pour chaque modèle : temps d'entraînement, **latence d'inférence p50/p95** (mesurée sur le jeu de test), mémoire estimée, backend de calcul (WASM/WebGPU). Un non-initié voit les scores ; un recruteur voit un réflexe Grafana/App Insights appliqué au ML. _(Sprint 2–3, coût marginal faible.)_
-2. **Pipeline as code + reproductibilité.** Chaque run est défini par une **config déclarative** (JSON : seed, split, préprocessing, modèles, hyperparamètres) visualisable via un bouton "Voir le pipeline", ré-exécutable à l'identique, et exportable en **script Python scikit-learn équivalent**. C'est Terraform appliqué au ML : le run est le `apply` d'un plan versionné. _(Config dès le Sprint 2 ; bouton + export Python en Sprint 4/V2.)_
-3. **Registre de modèles local avec lineage.** Les modèles sauvegardés portent version, stade (dev/staging/prod), config d'origine et hash du schéma de données ; comparaison diff entre deux runs et **alerte de dérive de schéma** quand un nouveau CSV du même projet ne correspond plus. MLflow-like, 100 % dans IndexedDB. _(Sprint 4 pour la base, V2 pour la dérive.)_
-
-### D.2 Priorisation des améliorations du brief (section 4 du prompt)
-
-| Amélioration demandée                                | Priorité               | Où                                     |
-| ---------------------------------------------------- | ---------------------- | -------------------------------------- |
-| Graphiques interactifs (zoom, filtre, export)        | **MVP**                | Sprints 1–3 (ECharts)                  |
-| Gestion de projets (historique local)                | **MVP**                | Sprint 4 (IndexedDB)                   |
-| Partage sans données                                 | **MVP**                | Sprint 4 (fragment URL)                |
-| Export modèle (JSON) + rapports (HTML/PDF)           | **MVP**                | Sprint 4                               |
-| Thème clair/sombre au choix de l'utilisateur         | **MVP** (requis ferme) | Sprint 0                               |
-| Interface bilingue FR/EN                             | **MVP** (requis ferme) | Sprints 0 → 5                          |
-| Animations fluides, WCAG                             | **MVP**                | Sprints 0 + 5                          |
-| Interprétabilité simplifiée (importance, lecture NL) | **MVP**                | Sprint 3                               |
-| Réseaux de neurones (TensorFlow.js)                  | V2                     | MLP après le zoo classique             |
-| Modèles boostés (esprit XGBoost/LightGBM)            | V2                     | GBDT TS maison ; port WASM à évaluer   |
-| SHAP/LIME approchés, PDP/ICE                         | V2                     | après permutation importance           |
-| AutoML + hyperparamètres                             | V2                     | random search à budget                 |
-| Export ONNX / PMML                                   | V3                     | non trivial en navigateur, à réévaluer |
-| Chat IA sur les données                              | V3                     | proxy Worker + consentement explicite  |
-| Vision par ordinateur                                | V3                     | ONNX Runtime Web, `/ai/vision`         |
-| Authentification                                     | V3                     | seulement si un besoin réel émerge     |
-
-**Logique de priorisation :** le MVP doit battre la référence sur son propre terrain (parcours tabulaire + confiance + persistance + partage) avant d'élargir la surface. Chaque item V2/V3 est une brique indépendante grâce au découpage par features.
+1. **Pages**: `labml` project, connected to the repo (deployment driven by Actions to keep CI in control — the "plan/apply" stays in GitHub).
+2. **DNS**: `app.dominicdapice.com` as a `CNAME` to `<project>.pages.dev`, proxy enabled (orange cloud) ⇒ automatic universal SSL, CDN, HTTP/3. The apex domain stays on GitHub Pages, no interference.
+3. **Path-based routing**: the **SPA router** handles `/ml`, `/data`, `/ai` — on the Cloudflare side, a simple `_redirects` fallback (`/* /index.html 200`). No Workers needed for the MVP: a routing Worker would only make sense if `/ai` ever became a separate app.
+4. **`_headers`**: strict CSP and security headers (section E), served by the CDN.
 
 ---
 
-## E. Sécurité & confidentialité
+## D. Improvements over the reference & prioritization
 
-- **Garantie "les données ne quittent pas le navigateur", vérifiable :**
-  - CSP stricte via `_headers` : `default-src 'self'` — le navigateur _interdit_ tout appel réseau vers des tiers ; fonts et assets self-hostés. La promesse n'est pas un texte marketing, elle est **observable dans l'onglet Réseau** (et on le dira tel quel sur la page Confidentialité).
-  - Aucune télémétrie par défaut ; au plus, Cloudflare Web Analytics (sans cookies, agrégé) — et uniquement si vous le décidez.
-  - PWA hors-ligne = preuve par l'usage.
-- **En-têtes** : `Strict-Transport-Security`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` ; COOP/COEP seulement si on active le multithread WASM (SharedArrayBuffer) en V2.
-- **Clés API** : aucune dans le client, jamais. Le futur `/ai/chat` passera par un **Cloudflare Worker proxy** qui détient la clé (secret Wrangler), applique du rate-limiting, et ne relaie que des agrégats consentis.
-- **Chaîne d'approvisionnement** : lockfile committé, Dependabot/Renovate, `npm audit` en CI, CodeQL (V2), permissions GitHub Actions minimales (`permissions: contents: read` par défaut).
+### D.1 The 3 "signature" improvements (the portfolio's MLOps DNA)
 
-## F. Tests & qualité
+1. **Built-in run observability.** For every model, the leaderboard shows: training time, **p50/p95 inference latency** (measured on the test set), estimated memory, compute backend (WASM/WebGPU). A lay visitor sees scores; a recruiter sees a Grafana/App Insights reflex applied to ML. _(Sprint 2–3, low marginal cost.)_
+2. **Pipeline as code + reproducibility.** Every run is defined by a **declarative config** (JSON: seed, split, preprocessing, models, hyperparameters), viewable via a "View pipeline" button, re-runnable identically, and exportable as an **equivalent scikit-learn Python script**. This is Terraform applied to ML: the run is the `apply` of a versioned plan. _(Config from Sprint 2; button + Python export in Sprint 4/V2.)_
+3. **Local model registry with lineage.** Saved models carry a version, a stage (dev/staging/prod), their original config and a hash of the data schema; diff comparison between two runs and a **schema-drift alert** when a new CSV in the same project no longer matches. MLflow-like, 100% in IndexedDB. _(Sprint 4 for the base, V2 for drift.)_
 
-- **Unitaires (Vitest)** : composants critiques + toute la couche `metrics/`, `pipeline/`, `models/`.
-- **Golden tests** — la pièce maîtresse pour un moteur ML maison : un script Python (exécuté hors CI, fixtures committées) calcule les valeurs de référence **scikit-learn** (métriques, prédictions de modèles simples à seed fixe) ; Vitest vérifie que notre implémentation TS reproduit ces valeurs à tolérance près. C'est notre contrat de non-régression scientifique.
-- **Property-based (fast-check)** : parsing CSV (encodages, quotes, lignes malformées), invariants des métriques (bornes, symétries).
-- **E2E (Playwright)** : le parcours complet — charger Titanic, choisir `survived`, entraîner, vérifier le leaderboard, exporter le rapport, recharger la page et retrouver le projet.
-- **Performance** : Lighthouse CI avec budgets (perf ≥ 95, a11y ≥ 95, bundle initial < 200 Ko gz — les libs ML chargées paresseusement au premier entraînement).
-- **A11y** : axe-core intégré aux e2e.
+### D.2 Prioritization of the brief's improvements (section 4 of the prompt)
+
+| Requested improvement                                | Priority           | Where                                   |
+| ---------------------------------------------------- | ------------------ | --------------------------------------- |
+| Interactive charts (zoom, filter, export)            | **MVP**            | Sprints 1–3 (ECharts)                   |
+| Project management (local history)                   | **MVP**            | Sprint 4 (IndexedDB)                    |
+| Data-free sharing                                    | **MVP**            | Sprint 4 (URL fragment)                 |
+| Model export (JSON) + reports (HTML/PDF)             | **MVP**            | Sprint 4                                |
+| Light/dark theme, user's choice                      | **MVP** (hard req) | Sprint 0                                |
+| Bilingual FR/EN interface                            | **MVP** (hard req) | Sprints 0 → 5                           |
+| Smooth animations, WCAG                              | **MVP**            | Sprints 0 + 5                           |
+| Simplified interpretability (importance, plain read) | **MVP**            | Sprint 3                                |
+| Neural networks (TensorFlow.js)                      | V2                 | MLP after the classical zoo             |
+| Boosted models (XGBoost/LightGBM spirit)             | V2                 | hand-written TS GBDT; WASM port to eval |
+| Approximate SHAP/LIME, PDP/ICE                       | V2                 | after permutation importance            |
+| AutoML + hyperparameters                             | V2                 | budgeted random search                  |
+| ONNX / PMML export                                   | V3                 | non-trivial in the browser, revisit     |
+| AI chat over the data                                | V3                 | Worker proxy + explicit consent         |
+| Computer vision                                      | V3                 | ONNX Runtime Web, `/ai/vision`          |
+| Authentication                                       | V3                 | only if a real need emerges             |
+
+**Prioritization logic:** the MVP must beat the reference on its own turf (tabular journey + trust + persistence + sharing) before widening the surface. Every V2/V3 item is an independent brick thanks to the feature-folder split.
+
+---
+
+## E. Security & privacy
+
+- **The "data never leaves the browser" guarantee, verifiable:**
+  - Strict CSP via `_headers`: `default-src 'self'` — the browser _forbids_ any network call to third parties; fonts and assets self-hosted. The promise is not marketing copy, it is **observable in the Network tab** (and the Privacy page will say exactly that).
+  - No telemetry by default; at most, Cloudflare Web Analytics (cookie-less, aggregated) — and only if you decide so.
+  - Offline PWA = proof by usage.
+- **Headers**: `Strict-Transport-Security`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`; COOP/COEP only if we enable WASM multithreading (SharedArrayBuffer) in V2.
+- **API keys**: none in the client, ever. The future `/ai/chat` will go through a **Cloudflare Worker proxy** that holds the key (Wrangler secret), applies rate-limiting, and only relays consented aggregates.
+- **Supply chain**: committed lockfile, Dependabot/Renovate, `npm audit` in CI, CodeQL (V2), minimal GitHub Actions permissions (`permissions: contents: read` by default).
+
+## F. Tests & quality
+
+- **Unit (Vitest)**: critical components + the entire `metrics/`, `pipeline/`, `models/` layer.
+- **Golden tests** — the centerpiece for a hand-written ML engine: a Python script (run outside CI, fixtures committed) computes **scikit-learn** reference values (metrics, predictions of simple fixed-seed models); Vitest checks that our TS implementation reproduces those values within tolerance. This is our scientific non-regression contract.
+- **Property-based (fast-check)**: CSV parsing (encodings, quotes, malformed lines), metric invariants (bounds, symmetries).
+- **E2E (Playwright)**: the full journey — load Titanic, pick `survived`, train, check the leaderboard, export the report, reload the page and find the project again.
+- **Performance**: Lighthouse CI with budgets (perf ≥ 95, a11y ≥ 95, initial bundle < 200 KB gz — ML libs lazy-loaded at the first training).
+- **A11y**: axe-core integrated into the e2e suite.
 
 ## G. Documentation & maintenance
 
-- **README** : pitch, capture, badges CI, quickstart 3 commandes.
-- **docs/ARCHITECTURE.md** + **ADRs** (`docs/adr/`) : chaque choix structurant tracé (framework, ECharts, moteur ML…) — le réflexe RFC/design-doc que les équipes attendent d'un tech lead.
-- **Guide utilisateur intégré** à l'app (page "Comment ça marche") plutôt qu'un wiki externe.
-- **Maintenance** : Renovate (mises à jour groupées hebdo), CHANGELOG en versionnage sémantique, monitoring léger (Cloudflare Analytics + error boundary avec rapport d'erreur _copiable manuellement_ par l'utilisateur — pas d'envoi automatique, cohérence privacy).
+- **README**: pitch, screenshot, CI badges, 3-command quickstart.
+- **docs/ARCHITECTURE.md** + **ADRs** (`docs/adr/`): every structuring choice recorded (framework, ECharts, ML engine…) — the RFC/design-doc reflex teams expect from a tech lead.
+- **Built-in user guide** inside the app (a "How it works" page) rather than an external wiki.
+- **Maintenance**: Renovate (weekly grouped updates), CHANGELOG with semantic versioning, light monitoring (Cloudflare Analytics + an error boundary with an error report the user can _copy manually_ — no automatic sending, consistent with privacy).
 
 ---
 
-## H. Décisions de cadrage
+## H. Framing decisions
 
-**Décisions validées le 20/08/2026 :**
+**Decisions validated on 20/08/2026:**
 
-| #   | Décision           | Choix validé                                                                                                      |
-| --- | ------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| 1   | Framework          | **Vite + React + TypeScript** (SPA statique)                                                                      |
-| 2   | UI / design system | **Tailwind CSS v4 + shadcn/ui**                                                                                   |
-| 3   | Exécution ML (MVP) | **100 % navigateur** (Azure réservé aux extensions V3)                                                            |
-| 4   | Déploiement        | **GitHub Actions + wrangler** (previews par PR)                                                                   |
-| 5   | Langues            | **Bilingue FR/EN** dès le Sprint 0 (addendum)                                                                     |
-| 6   | Thèmes             | **Clair + sombre au choix de l'utilisateur** (addendum)                                                           |
-| 7   | Palette            | **Sarcelle/teal profond + accent cuivre — aucun jaune/ambre** (identité volontairement distincte de la référence) |
+| #   | Decision           | Validated choice                                                                                       |
+| --- | ------------------ | ------------------------------------------------------------------------------------------------------ |
+| 1   | Framework          | **Vite + React + TypeScript** (static SPA)                                                             |
+| 2   | UI / design system | **Tailwind CSS v4 + shadcn/ui**                                                                        |
+| 3   | ML execution (MVP) | **100% in the browser** (Azure reserved for V3 extensions)                                             |
+| 4   | Deployment         | **GitHub Actions + wrangler** (per-PR previews)                                                        |
+| 5   | Languages          | **Bilingual FR/EN** from Sprint 0 (addendum)                                                           |
+| 6   | Themes             | **Light + dark, user's choice** (addendum)                                                             |
+| 7   | Palette            | **Deep teal + copper accent — no yellow/amber** (an identity deliberately distinct from the reference) |
 
-**Questions encore ouvertes (non bloquantes pour le Sprint 0) :**
+**Still-open questions (non-blocking for Sprint 0):**
 
-1. **Langue par défaut** quand le navigateur n'indique ni FR ni EN (recommandé : anglais, portée internationale du portfolio).
-2. **Accès Cloudflare** : création du projet Pages + token API de votre côté (procédure pas à pas fournie au Sprint 0), ou d'abord une validation sur `*.pages.dev` avant de brancher le DNS ?
+1. **Default language** when the browser reports neither FR nor EN (recommended: English, for the portfolio's international reach).
+2. **Cloudflare access**: create the Pages project + API token on your side (step-by-step guide provided in Sprint 0), or validate first on `*.pages.dev` before wiring the DNS?
 
-## I. Prochaines étapes concrètes
+## I. Concrete next steps
 
-1. **Vous** : valider/amender les réponses aux questions H1–H6.
-2. **Moi** : Sprint 0 — scaffold complet + design system + shell + CI/CD (PR dédiée, avec preview).
-3. **Vous** : créer le projet Cloudflare Pages + token (guide fourni), ajouter les 2 secrets GitHub.
-4. **Moi** : Sprints 1 → 2 dans la foulée — l'application devient _réellement_ un ML Lab (upload → profilage → entraînement → leaderboard), puis Sprints 3 → 5.
-5. Revue ensemble à chaque fin de sprint sur l'URL de preview.
-
----
-
-## J. Cap 2 — plan d'amélioration post-V6 (21/08/2026)
-
-**Bilan** : tout ce que ce plan promettait est livré et vérifié en production —
-S0–S5 (MVP complet), V2 (GBDT + MLP + PDP + Excel), V3 (vision ONNX), V4 (Data
-Studio), V5 (recherche d'hyperparamètres + Shapley), V6 (assistant de données
-FR/EN). 12 PRs mergées, 152 tests unitaires, 32 e2e, WCAG AA, PWA hors-ligne.
-
-Le Cap 2 priorise ce qui augmente le plus la valeur du produit en respectant
-les invariants (100 % navigateur, CSP stricte sans tiers, déterminisme seedé,
-FR/EN, WCAG AA, honnêteté des évaluations) :
-
-| Vague  | Contenu                                                                                                                                                                                                                                                                                                       | Pourquoi                                                                                                           |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| **V7** | **Exploration non supervisée** dans le ML Lab : k-means maison (init k-means++ seedée, k ∈ 2–5 choisi par silhouette), projection PCA 2D maison (itération de puissance), profils de groupes en langage clair, nuage à couleurs **et formes** (palette validée daltonisme par le validateur du design system) | Comble le vrai manque : aujourd'hui le labo exige une cible ; beaucoup de jeux de données s'explorent d'abord sans |
-| V8     | **Séries temporelles** : détection date + cible numérique → décomposition tendance/saison, prévision Holt-Winters maison, backtest à origine glissante                                                                                                                                                        | Ouvre une classe de problèmes entière                                                                              |
-| V9     | **Performance & confort** : budget Lighthouse /ml ≥ 0,90 (préchargements, découpage), toast de mise à jour PWA, webcam pour la vision (Permissions-Policy à ouvrir)                                                                                                                                           | Qualité perçue et scores                                                                                           |
-| V10    | **Data Studio 2** : recette importable et rejouable sur un nouveau fichier, types forcés par colonne, colonnes dérivées                                                                                                                                                                                       | Boucle de reproductibilité complète                                                                                |
-| —      | **Chat génératif** (optionnel, hors Cap) : exige un proxy serveur (Cloudflare Worker) + clé fournie par le propriétaire — jamais de clé dans le navigateur ; écran de consentement obligatoire                                                                                                                | Décision produit à prendre séparément                                                                              |
+1. **You**: validate/amend the answers to questions H1–H6.
+2. **Me**: Sprint 0 — full scaffold + design system + shell + CI/CD (dedicated PR, with preview).
+3. **You**: create the Cloudflare Pages project + token (guide provided), add the 2 GitHub secrets.
+4. **Me**: Sprints 1 → 2 right after — the app becomes a _real_ ML Lab (upload → profiling → training → leaderboard), then Sprints 3 → 5.
+5. Joint review at the end of every sprint on the preview URL.
 
 ---
 
-## K. Cap 3 — plan d'amélioration post-V10 (21/08/2026)
+## J. Cap 2 — post-V6 improvement plan (21/08/2026)
 
-**Bilan du Cap 2** : V7 (exploration non supervisée), V8 (séries temporelles),
-V9 (vitesse & confort, /ml 0,77 → 0,86 mesuré), V10 (recettes rejouables, types
-forcés, dates dérivées) — livrées et vérifiées en production. 16 PRs mergées,
-177 tests unitaires, 36 e2e.
+**Recap**: everything this plan promised is delivered and verified in production —
+S0–S5 (complete MVP), V2 (GBDT + MLP + PDP + Excel), V3 (ONNX vision), V4 (Data
+Studio), V5 (hyperparameter search + Shapley), V6 (FR/EN data assistant).
+12 PRs merged, 152 unit tests, 32 e2e, WCAG AA, offline PWA.
 
-| Vague            | Contenu                                                                                                                                                                                                                                                                                                                                                                                                             | Pourquoi                                                                                                   |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **V11 — livrée** | **Dérive de données (drift)** dans le Data Studio : un fichier de référence, un fichier à comparer → différences de schéma (colonnes ajoutées/retirées/retypées), **PSI par colonne** (bins de quantiles de la référence, seuils 0,1/0,25), catégories nouvelles/disparues, écarts de taux de manquants, verdict global — avec une démo dérivée volontairement (`cafe-sales-june.csv`)                              | Le geste MLOps par excellence : vérifier qu'un nouveau lot ressemble à celui sur lequel le modèle a appris |
-| V12 — en attente | **Chat génératif consenti** : Cloudflare Pages Function (même repo) en proxy vers l'API Anthropic — la clé vit en secret Cloudflare, jamais dans le navigateur ; le LLM traduit la question en intention exécutée **localement** par le moteur V6 (seuls la question et le schéma des colonnes partent, jamais les données) ; écran de consentement explicite ; dégradation propre si le secret n'est pas configuré | Décision produit du propriétaire (21/08/2026) : reportée pour le moment                                    |
-| **V13 — livrée** | **Runs complets** : tuning, dernière explication de Shapley, exploration et prévision attachés à l'enregistrement du run — historique IndexedDB (avec puces), page du run stocké, rapport HTML et liens de partage v2 (nuages de points sous-échantillonnés dans l'URL, les liens v1 restent décodables)                                                                                                            | Les artefacts V5–V8 ne survivaient pas au run                                                              |
-| **V14 — livrée** | **Prérendu généralisé** : coquilles statiques pour les six sections (approche V9 étendue — CSS inliné, polices latines en data:, façade préchargée par route, gabarit d'en-tête), Lighthouse /ml 0,86 → 0,99 et /data 1,0 en throttling réel (médianes 3 runs) ; la racine reste le fallback SPA (assumé)                                                                                                           | Le dernier écart Lighthouse                                                                                |
+Cap 2 prioritizes what raises the product's value the most while honoring the
+invariants (100% in the browser, strict CSP with no third parties, seeded
+determinism, FR/EN, WCAG AA, honest evaluation):
+
+| Wave   | Content                                                                                                                                                                                                                                                                                                                 | Why                                                                                               |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **V7** | **Unsupervised exploration** in the ML Lab: hand-written k-means (seeded k-means++ init, k ∈ 2–5 chosen by silhouette), hand-written 2D PCA projection (power iteration), plain-language group profiles, scatter plot with colors **and shapes** (palette validated for color blindness by the design-system validator) | Fills the real gap: today the lab requires a target; many datasets are explored first without one |
+| V8     | **Time series**: date + numeric target detection → trend/season decomposition, hand-written Holt-Winters forecasting, rolling-origin backtest                                                                                                                                                                           | Opens up an entire class of problems                                                              |
+| V9     | **Performance & comfort**: /ml Lighthouse budget ≥ 0.90 (preloads, splitting), PWA update toast, webcam for vision (Permissions-Policy to open)                                                                                                                                                                         | Perceived quality and scores                                                                      |
+| V10    | **Data Studio 2**: importable recipe replayable on a new file, per-column forced types, derived columns                                                                                                                                                                                                                 | Completes the reproducibility loop                                                                |
+| —      | **Generative chat** (optional, outside the cap): requires a server proxy (Cloudflare Worker) + a key provided by the owner — never a key in the browser; mandatory consent screen                                                                                                                                       | A product decision to make separately                                                             |
 
 ---
 
-## L. Cap 4 — plan d'amélioration post-Cap 3 (21/08/2026)
+## K. Cap 3 — post-V10 improvement plan (21/08/2026)
 
-**Bilan du Cap 3** : V11 (dérive), V13 (runs complets), V14 (prérendu
-généralisé, /ml 0,99 en throttling réel) — livrées et vérifiées en
-production. La V12 (chat génératif consenti) reste en attente d'une décision
-produit. Fil conducteur du Cap 4 : le geste d'après — utiliser le modèle
-dans le temps, et le comprendre plus finement.
+**Cap 2 recap**: V7 (unsupervised exploration), V8 (time series), V9 (speed &
+comfort, /ml 0.77 → 0.86 measured), V10 (replayable recipes, forced types,
+derived dates) — delivered and verified in production. 16 PRs merged,
+177 unit tests, 36 e2e.
 
-| Vague            | Contenu                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Pourquoi                                                                                                 |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| **V15 — livrée** | **Scorer un nouveau lot** : après un run, déposer un nouveau fichier → le modèle inspecté le score dans le navigateur (prédictions exportables, toutes colonnes conservées) ; si la cible est présente, comparaison honnête test vs lot (étiquettes inconnues exclues et comptées) ; schéma validé, démo dérivée `iris-field.csv`, score attaché au run (historique/rapport/partage)                                                                                                                                                                                          | Boucle MLOps complète : la V11 dit « les entrées ont bougé », la V15 dit « le modèle tient-il encore »   |
-| **V16 — livrée** | **Déséquilibre & seuils** : courbe précision-rappel (AP, hasard tracé), seuil de décision ajustable chiffré par une matrice de coûts (fausse alerte vs cas manqué, optimum en un clic), courbe de calibration (Brier), démo déséquilibrée `fraud.csv` ; le seuil choisi rejoint le run. Descope assumé : la pondération de classes à l'entraînement est écartée — le seuil chiffré par les coûts donne le même contrôle au niveau de la décision, sans toucher aux huit modèles maison                                                                                        | Les vrais jeux sont déséquilibrés ; l'accuracy y ment                                                    |
-| **V17 — livrée** | **Data Studio 3 : jointures & anomalies** : jointure gauche d'un second fichier sur clé commune (correspondance exacte après trim — une clé sale devient une orpheline nommée, jamais un silence ; taux de correspondance, doublons, lignes inutilisées ; le résultat joint devient LE dataset), et **anomalies multivariées** par isolation forest maison seedée (100 arbres, c(n) exact) en étape de la **recette rejouable** (seuil 0,6). Nuance assumée : la jointure est un geste d'ingestion, pas une étape de recette — rejouer une recette n'exige qu'un seul fichier | La préparation réelle commence par croiser deux fichiers ; l'anomalie multivariée voit ce que Tukey rate |
-| **V18 — livrée** | **Analyse par segments** : après un run, le jeu de test est découpé par chaque colonne catégorielle — y compris celles exclues des variables, où se cachent les effets de proxy — et la métrique du modèle inspecté (accuracy ou RMSE) est recalculée par tranche, écart vs global orienté et trié pire d'abord. Tranches < 8 lignes écartées et comptées, colonnes classées par amplitude (cap 6×8), analyse attachée au run (historique/rapport/partage). Sur titanic, elle pointe le pont C, Cherbourg — et la colonne `alive` découpée bien qu'exclue de l'entraînement   | « Où mon modèle échoue-t-il ? » — porte d'entrée honnête vers l'équité                                   |
+| Wave                | Content                                                                                                                                                                                                                                                                                                                                                                                          | Why                                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| **V11 — delivered** | **Data drift** in the Data Studio: a reference file, a file to compare → schema differences (columns added/removed/retyped), **PSI per column** (quantile bins from the reference, thresholds 0.1/0.25), new/vanished categories, missing-rate gaps, overall verdict — with a deliberately drifted demo (`cafe-sales-june.csv`)                                                                  | The MLOps gesture par excellence: checking that a new batch looks like what the model learned on |
+| V12 — pending       | **Consented generative chat**: a Cloudflare Pages Function (same repo) proxying the Anthropic API — the key lives in a Cloudflare secret, never in the browser; the LLM translates the question into an intent executed **locally** by the V6 engine (only the question and the column schema leave, never the data); explicit consent screen; clean degradation if the secret is not configured | Owner's product decision (21/08/2026): postponed for now                                         |
+| **V13 — delivered** | **Complete runs**: tuning, latest Shapley explanation, exploration and forecast attached to the run record — IndexedDB history (with chips), stored-run page, HTML report and v2 share links (subsampled scatter plots in the URL; v1 links remain decodable)                                                                                                                                    | The V5–V8 artifacts did not survive the run                                                      |
+| **V14 — delivered** | **Generalized prerendering**: static shells for all six sections (the V9 approach extended — inlined CSS, Latin fonts as data:, per-route preloaded façade, header template), Lighthouse /ml 0.86 → 0.99 and /data 1.0 under real throttling (3-run medians); the root stays the SPA fallback (accepted)                                                                                         | The last Lighthouse gap                                                                          |
 
-**Cap 4 clos (21/08/2026)** : V15, V16, V17 et V18 livrées et vérifiées.
-Seule la V12 reste en attente d'une décision produit. La section « Where
-the build stands » de /ml a été retirée à la même date (demande du
-propriétaire) — l'historique des vagues vit ici et dans le README.
+---
 
-## M. Cap 5 — plan d'amélioration post-Cap 4 (21/08/2026)
+## L. Cap 4 — post-Cap 3 improvement plan (21/08/2026)
 
-**Bilan du Cap 4** : V15 (scorer un lot), V16 (déséquilibre & seuils), V17
-(jointures & anomalies), V18 (analyse par segments) — livrées et vérifiées
-en production le 21/08/2026. Fil conducteur du Cap 5 : le projet complet —
-il survit, il se mesure, il se compare, il se réutilise.
+**Cap 3 recap**: V11 (drift), V13 (complete runs), V14 (generalized
+prerendering, /ml 0.99 under real throttling) — delivered and verified in
+production. V12 (consented generative chat) remains pending a product
+decision. Cap 4's guiding thread: the next gesture — using the model
+over time, and understanding it more finely.
 
-| Vague            | Contenu                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Pourquoi                                                                       |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| **V19 — livrée** | **Projets persistants** : le dataset rejoint le projet, opt-in (« conserver dans ce navigateur ») — CSV compressé lz-string dans IndexedDB, budget explicite 50 Mo (refus nommé avec les chiffres, jamais de coupe silencieuse), liste conservés (rouvrir/oublier) sous l'historique, runs liés au dataset conservé (« rouvrir les données de ce run »), réentraînement identique (seed 42). Rien dans les liens de partage                                                                                                                                                                                                                 | Un refresh effaçait tout ; les « projets » ne sont réels que s'ils survivent   |
-| **V20 — livrée** | **Incertitude honnête** : bootstrap seedé du jeu de test (1 000 rééchantillonnages partagés entre modèles — comparaisons appariées) → IC 95 % percentile sur la métrique principale de chaque modèle du leaderboard (moustaches sur échelle commune), verdict apparié gagnant vs baseline en clair (« l'écart survit au rééchantillonnage — probablement réel » / « l'intervalle traverse zéro — peut-être du bruit »), analyse attachée au run (historique/rapport/partage). Limites assumées et affichées : l'IC mesure la sensibilité au tirage du test, pas la variance d'entraînement ; jeu de test < 8 lignes → refus, pas de théâtre | `0,82` sur 178 lignes n'est pas `0,82` ; dire ce que le chiffre ne dit pas     |
-| **V21 — livrée** | **Comparer deux runs** : cocher deux runs dans l'historique → diff côte à côte sur /ml/compare — variables ajoutées/retirées en badges ±, métrique de chaque modèle en tableau A/B/Δ (couleurs orientées), lecture en clair du mouvement du meilleur modèle, et verdict croisé quand les deux runs portent des IC V20 (disjoints → l'écart dépasse les deux incertitudes ; recouvrants → peut-être du bruit). Honnêteté : cibles ou familles de tâche différentes → refus des deltas de métriques (le diff de config reste) ; note assumée : deux runs ne sont jamais appariés — indication, pas un test                                    | « Mon nettoyage a-t-il servi ? » — le geste itératif central du ML             |
-| **V22 — livrée** | **Le modèle revient** : export au format v2 — le JSON embarque le pipeline ajusté (imputation/encodage/standardisation), la cible, les classes et les métriques de test du run exportateur comme référence honnête. Réimporté sur /ml, LabML reconstruit le prédicteur EXACT (toutes les familles exportables round-trippent à l'octet près — GBDT avec ses bords de bins, MLP, arbres/forêts via ml.js) et score n'importe quel CSV sans réentraîner ; refus nommés (app inconnue, format v1, colonnes manquantes, famille inconnue). k-NN refuse toujours l'export : ses « paramètres » sont les données d'entraînement                   | Ferme la dernière boucle : entraîner aujourd'hui, revenir dans un mois, scorer |
+| Wave                | Content                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Why                                                                                        |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **V15 — delivered** | **Score a new batch**: after a run, drop a new file → the inspected model scores it in the browser (exportable predictions, all columns preserved); if the target is present, honest test-vs-batch comparison (unknown labels excluded and counted); schema validated, drifted demo `iris-field.csv`, score attached to the run (history/report/share)                                                                                                                                                                                          | The complete MLOps loop: V11 says "the inputs moved", V15 says "does the model still hold" |
+| **V16 — delivered** | **Imbalance & thresholds**: precision-recall curve (AP, chance line drawn), adjustable decision threshold priced by a cost matrix (false alarm vs missed case, one-click optimum), calibration curve (Brier), imbalanced demo `fraud.csv`; the chosen threshold joins the run. Accepted descope: class weighting at training time is set aside — the cost-priced threshold gives the same control at the decision level, without touching the eight hand-written models                                                                         | Real datasets are imbalanced; accuracy lies there                                          |
+| **V17 — delivered** | **Data Studio 3: joins & anomalies**: left join of a second file on a shared key (exact match after trim — a dirty key becomes a named orphan, never silence; match rate, duplicates, unused rows; the joined result becomes THE dataset), and **multivariate anomalies** via a hand-written seeded isolation forest (100 trees, exact c(n)) as a step of the **replayable recipe** (threshold 0.6). Accepted nuance: the join is an ingestion gesture, not a recipe step — replaying a recipe only requires a single file                      | Real data prep starts by crossing two files; multivariate anomalies see what Tukey misses  |
+| **V18 — delivered** | **Per-segment analysis**: after a run, the test set is sliced by every categorical column — including those excluded from the features, where proxy effects hide — and the inspected model's metric (accuracy or RMSE) is recomputed per slice, gap vs global signed and sorted worst-first. Slices < 8 rows set aside and counted, columns ranked by amplitude (cap 6×8), analysis attached to the run (history/report/share). On titanic it points at deck C, Cherbourg — and the `alive` column, sliced despite being excluded from training | "Where does my model fail?" — an honest gateway to fairness                                |
 
-**Cap 5 clos (21/08/2026)** : V19, V20, V21 et V22 livrées.
+**Cap 4 closed (21/08/2026)**: V15, V16, V17 and V18 delivered and verified.
+Only V12 remains pending a product decision. The "Where the build stands"
+section of /ml was removed the same day (owner request) — the wave history
+lives here and in the README.
 
-Écarté pour l'instant (Cap 6 possible) : **Vision 2** — un modèle plus
-fort qu'un SqueezeNet 2012 ou une vraie détection de visages/objets,
-toujours 100 % navigateur (demande du propriétaire, 21/08/2026 : les
-portraits n'ont pas de classe ImageNet et le modèle répond à côté) ;
-colonnes texte (TF-IDF maison), courbes d'apprentissage, passage à
-l'échelle 1M lignes (typed arrays), seuils multiclasse. La V12 reste en attente d'une décision produit.
+## M. Cap 5 — post-Cap 4 improvement plan (21/08/2026)
+
+**Cap 4 recap**: V15 (batch scoring), V16 (imbalance & thresholds), V17
+(joins & anomalies), V18 (per-segment analysis) — delivered and verified
+in production on 21/08/2026. Cap 5's guiding thread: the complete project —
+it survives, it measures itself, it compares itself, it gets reused.
+
+| Wave                | Content                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Why                                                                   |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| **V19 — delivered** | **Persistent projects**: the dataset joins the project, opt-in ("keep in this browser") — lz-string-compressed CSV in IndexedDB, explicit 50 MB budget (named refusal with the numbers, never a silent cut), saved list (reopen/forget) under the history, runs linked to the saved dataset ("reopen this run's data"), identical retraining (seed 42). Nothing in the share links                                                                                                                                                                                           | A refresh erased everything; "projects" are only real if they survive |
+| **V20 — delivered** | **Honest uncertainty**: seeded bootstrap of the test set (1,000 resamples shared across models — paired comparisons) → percentile 95% CI on every leaderboard model's main metric (whiskers on a shared scale), plain-language paired winner-vs-baseline verdict ("the gap survives resampling — probably real" / "the interval crosses zero — possibly noise"), analysis attached to the run (history/report/share). Limits owned and displayed: the CI measures sensitivity to the test draw, not training variance; test set < 8 rows → refusal, no theater               | `0.82` on 178 rows is not `0.82`; say what the number does not say    |
+| **V21 — delivered** | **Compare two runs**: check two runs in the history → side-by-side diff on /ml/compare — features added/removed as ± badges, every model's metric in an A/B/Δ table (signed colors), plain-language read of the best model's movement, and a cross-run verdict when both runs carry V20 CIs (disjoint → the gap exceeds both uncertainties; overlapping → possibly noise). Honesty: different targets or task families → metric deltas refused (the config diff remains); owned note: two runs are never paired — an indication, not a test                                  | "Did my cleaning help?" — the central iterative gesture of ML         |
+| **V22 — delivered** | **The model comes back**: export as format v2 — the JSON embeds the fitted pipeline (imputation/encoding/standardization), the target, the classes and the exporting run's test metrics as an honest reference. Re-imported on /ml, LabML rebuilds the EXACT predictor (every exportable family round-trips byte-identically — GBDT with its bin edges, MLP, trees/forests via ml.js) and scores any CSV without retraining; named refusals (unknown app, v1 format, missing columns, unknown family). k-NN always refuses to export: its "parameters" are the training data | Closes the last loop: train today, come back in a month, score        |
+
+**Cap 5 closed (21/08/2026)**: V19, V20, V21 and V22 delivered.
+
+Set aside for now (possible Cap 6): **Vision 2** — a stronger model than a
+2012 SqueezeNet, or real face/object detection, still 100% in the browser
+(owner request, 21/08/2026: portraits have no ImageNet class and the model
+answers off-target); text columns (hand-written TF-IDF), learning curves,
+scaling to 1M rows (typed arrays), multiclass thresholds. V12 remains
+pending a product decision.
+
+## N. Cap 6 — post-Cap 5 improvement plan (21/08/2026)
+
+**Cap 5 recap**: V19 (persistent projects), V20 (honest uncertainty), V21
+(run comparison), V22 (model export/import) — delivered and verified in
+production on 21/08/2026. Cap 6's guiding thread: the lab meets the real
+world — real photos, real text, real file sizes, and the question every
+data budget asks.
+
+| Wave    | Content                                                                                                                                                                                                                                                                                                                | Why                                                                                                   |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **V23** | **Vision 2**: a modern self-hosted image classifier (MobileNetV3 or EfficientNet-Lite, ONNX) replacing the 2012-era SqueezeNet, plus real object/face **detection** with boxes drawn on the image — "1 face detected" instead of guessing "neck brace"; still 100% in the browser, CSP intact, offline after first use | Owner request (21/08/2026): portraits have no ImageNet class, so the current model answers off-target |
+| V24     | **Text columns**: hand-written TF-IDF joining the pipeline — FR/EN tokenization, capped vocabulary (~256 terms), seeded and deterministic, fitted on the training split only; a customer-reviews demo dataset; top contributing words surfaced in the explanations                                                     | Real CSVs have text columns (comments, descriptions) — today the lab excludes them                    |
+| V25     | **Scale**: comfortable at 100k–1M rows — typed-array pipeline, streaming profiling, **announced** seeded sampling (never silent), named memory guards, before/after measurements published                                                                                                                             | The lab targets real files, but chokes past ~50k rows today                                           |
+| V26     | **Learning curves**: "would more data help?" — train on growing seeded fractions of the data, plot metric vs training size with V20 bootstrap intervals, plain-language verdict (plateau vs still climbing)                                                                                                            | Closes the classic budget question: collect more data, or work on the model                           |
+
+**Ordering**: V23 first (owner request); V24 keeps its vocabulary capped
+until V25 strengthens the underlying machinery (typed arrays, memory
+guards), then can widen. Set aside for now: multiclass thresholds. V12
+(consented generative chat) remains pending a product decision — no wave
+starts without an explicit launch command.
