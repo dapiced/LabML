@@ -15,8 +15,9 @@ const ROADMAP_KEYS = [
   'sprint5',
   'v2',
   'v3',
+  'v4',
 ] as const;
-const SHIPPED_SPRINTS = 8; // MVP (S0–S5) + V2 models + V3 vision are live
+const SHIPPED_SPRINTS = 9; // MVP (S0–S5) + V2 models + V3 vision + V4 Data Studio are live
 
 export function MlHomePage() {
   const { t } = useTranslation();

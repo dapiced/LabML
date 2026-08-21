@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router';
 import { LanguageSwitcher } from '@/app/LanguageSwitcher';
 import { ThemeToggle } from '@/app/ThemeToggle';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
@@ -39,10 +38,7 @@ export function Header() {
             {t('common.nav.mlLab')}
           </NavLink>
           <NavLink to="/data" className={navLinkClass}>
-            <span className="inline-flex items-center gap-1.5">
-              {t('common.nav.data')}
-              <Badge variant="outline">{t('common.soon')}</Badge>
-            </span>
+            {t('common.nav.data')}
           </NavLink>
           <NavLink to="/ai" className={navLinkClass}>
             {t('common.nav.ai')}
