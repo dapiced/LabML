@@ -13,7 +13,7 @@ test('iris: training fills the leaderboard with 6 ranked models', async ({ page 
   await expect(page.getByTestId('train-again')).toBeVisible({ timeout: 60000 });
 
   const rows = page.getByTestId('leaderboard').locator('tbody tr');
-  await expect(rows).toHaveCount(6);
+  await expect(rows).toHaveCount(8);
   await expect(page.getByText('best', { exact: true })).toBeVisible();
   await expect(page.getByText('baseline', { exact: true })).toBeVisible();
   await expect(page.getByText(/seed 42 · split/)).toBeVisible();
@@ -30,7 +30,7 @@ test('mpg: regression leaderboard ranks by RMSE', async ({ page }) => {
   await expect(page.getByTestId('train-again')).toBeVisible({ timeout: 60000 });
 
   const rows = page.getByTestId('leaderboard').locator('tbody tr');
-  await expect(rows).toHaveCount(5);
+  await expect(rows).toHaveCount(7);
   await expect(page.getByRole('columnheader', { name: 'RMSE' })).toBeVisible();
   await expect(page.getByText('best', { exact: true })).toBeVisible();
 });

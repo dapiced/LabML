@@ -91,6 +91,18 @@ function parseFile(file: File) {
   });
 }
 
+/** Excel support: SheetJS is loaded lazily, the first sheet becomes CSV. */
+async function parseExcel(file: File) {
+  const XLSX = await import('xlsx');
+  const workbook = XLSX.read(new Uint8Array(await file.arrayBuffer()), { type: 'array' });
+  const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+  if (!firstSheet) {
+    post({ kind: 'error', message: 'empty' });
+    return;
+  }
+  parseText(XLSX.utils.sheet_to_csv(firstSheet), file.name, file.size);
+}
+
 function finishParse(name: string, bytes: number) {
   if (header.length === 0 || rowCount === 0) {
     post({ kind: 'error', message: 'empty' });
@@ -103,7 +115,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   const request = event.data;
   try {
     if (request.kind === 'parse-file') {
-      parseFile(request.file);
+      if (/\.(xlsx|xls)$/i.test(request.file.name)) await parseExcel(request.file);
+      else parseFile(request.file);
     } else if (request.kind === 'parse-url') {
       const response = await fetch(request.url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);

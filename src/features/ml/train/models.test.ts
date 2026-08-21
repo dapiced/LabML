@@ -34,6 +34,8 @@ describe('classification zoo', () => {
       'naiveBayes',
       'tree',
       'forest',
+      'gbdt',
+      'mlp',
     ]);
   });
 
@@ -43,7 +45,7 @@ describe('classification zoo', () => {
     expect(model.predictProba!([[0, 0]])[0][0]).toBeCloseTo(0.75, 12);
   });
 
-  for (const key of ['logistic', 'knn', 'naiveBayes', 'tree', 'forest'] as const) {
+  for (const key of ['logistic', 'knn', 'naiveBayes', 'tree', 'forest', 'gbdt', 'mlp'] as const) {
     it(`${key} separates two clean clusters perfectly`, () => {
       const model = zooMap('classification').get(key)!.train(X, y, CLASSIFICATION);
       expect(accuracy(y, model.predict(X))).toBe(1);
@@ -51,7 +53,7 @@ describe('classification zoo', () => {
   }
 
   it('probabilistic models emit well-formed probabilities', () => {
-    for (const key of ['logistic', 'knn', 'naiveBayes'] as const) {
+    for (const key of ['logistic', 'knn', 'naiveBayes', 'gbdt', 'mlp'] as const) {
       const model = zooMap('classification').get(key)!.train(X, y, CLASSIFICATION);
       const probs = model.predictProba!([[2, 2]])[0];
       expect(probs).toHaveLength(2);
@@ -76,6 +78,8 @@ describe('regression zoo', () => {
       'knn',
       'tree',
       'forest',
+      'gbdt',
+      'mlp',
     ]);
   });
 

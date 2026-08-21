@@ -40,9 +40,15 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   (home: 98/100/100/100), reduced-motion support, skip link, and an in-app
   "How it works / Privacy" page.
 
-**The MVP (Sprints 0–5) is complete.** Candidate next steps (V2): TensorFlow.js MLP with
-WebGPU, hyperparameter search, SHAP-style explanations, PDP/ICE, xlsx import — and the
-`/data` and `/ai` sections.
+**The MVP (Sprints 0–5) is complete.**
+
+- **V2 (models) — shipped**: hand-written **histogram gradient boosting** (LightGBM-style
+  quantile bins, second-order gains, Newton leaves — solves XOR interactions), a
+  hand-written deterministic **neural network (MLP)** (seeded He init, full-batch Adam),
+  **partial-dependence plots** on the top numeric drivers, and **Excel (.xlsx) import**
+  (SheetJS, lazy-loaded). The zoo is now 8 classification / 7 regression models.
+- Candidate next steps: hyperparameter search, SHAP-style explanations, and the
+  `/data` and `/ai` sections (TensorFlow.js/ONNX Runtime for vision).
 
 Full roadmap in [PLAN.md](PLAN.md), target analysis in
 [docs/analyse-quantifai.md](docs/analyse-quantifai.md).

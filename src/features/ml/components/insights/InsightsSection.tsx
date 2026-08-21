@@ -4,6 +4,7 @@ import { Eyebrow } from '@/components/ui/eyebrow';
 import { ExportBar } from '@/features/ml/components/ExportBar';
 import { ConfusionMatrix } from '@/features/ml/components/insights/ConfusionMatrix';
 import { ImportanceBars } from '@/features/ml/components/insights/ImportanceBars';
+import { PdpChart } from '@/features/ml/components/insights/PdpChart';
 import { PlainRead } from '@/features/ml/components/insights/PlainRead';
 import {
   ResidualsChart,
@@ -52,6 +53,9 @@ export function InsightsSection() {
         {insights.scatter && <ScatterPlot points={insights.scatter} />}
         {insights.residuals && <ResidualsChart residuals={insights.residuals} />}
         <ImportanceBars importance={insights.importance} isClassification={isClassification} />
+        {insights.pdp?.map(({ column, points }) => (
+          <PdpChart key={column} column={column} points={points} />
+        ))}
       </div>
 
       <WhatIfPanel key={`${insights.model}:${summary.featureColumns.join('|')}`} />

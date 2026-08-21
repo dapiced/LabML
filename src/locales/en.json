@@ -111,7 +111,7 @@
     "lab": {
       "title": "new run",
       "noRequests": "runs locally · no requests",
-      "dropTitle": "Drop a CSV file",
+      "dropTitle": "Drop a CSV or Excel file",
       "dropHint": "or click to browse — the file is read right here in your browser, nothing is uploaded",
       "demoLabel": "Or try a sample dataset",
       "demoTask": {
@@ -199,7 +199,9 @@
         "knn": "k-nearest neighbors",
         "naiveBayes": "Gaussian Naive Bayes",
         "tree": "Decision tree",
-        "forest": "Random forest"
+        "forest": "Random forest",
+        "gbdt": "Gradient boosting",
+        "mlp": "Neural network (MLP)"
       },
       "insights": {
         "title": "Insights",
@@ -227,6 +229,8 @@
         "readRegression": "{{model}}'s predictions are off by {{mae}} on average across the {{rows}} held-out test rows.",
         "readVariance": "It explains {{r2}}% of the variance of the target.",
         "readDrivers": "The most decisive columns are: {{columns}}.",
+        "pdpTitle": "Partial dependence",
+        "pdpHint": "Average model prediction as this column sweeps its range, everything else unchanged.",
         "whatIfTitle": "What if…",
         "whatIfHint": "Edit the values and watch the model's live prediction — computed locally, like everything else.",
         "whatIfPrediction": "Prediction"
@@ -271,7 +275,8 @@
       "sprint2": "Training engine and leaderboard — shipped",
       "sprint3": "Results, explanations and what-if — shipped",
       "sprint4": "Projects, export & data-free sharing — shipped",
-      "sprint5": "Polish: WCAG AA, offline PWA, Lighthouse budgets — shipped"
+      "sprint5": "Polish: WCAG AA, offline PWA, Lighthouse budgets — shipped",
+      "v2": "V2 models: gradient boosting, neural network, partial dependence, Excel import — shipped"
     }
   },
   "data": {
