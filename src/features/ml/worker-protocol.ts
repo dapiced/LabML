@@ -19,6 +19,9 @@ import type {
 export type WorkerRequest =
   | { kind: 'parse-file'; file: File }
   | { kind: 'parse-url'; url: string; name: string }
+  // Reopening a dataset stored in the browser (v19 persistent projects).
+  | { kind: 'parse-text'; text: string; name: string }
+  | { kind: 'export-dataset' }
   | { kind: 'analyze-target'; target: string }
   | { kind: 'train'; config: TrainConfig }
   | { kind: 'cancel-train' }
@@ -56,6 +59,8 @@ export type WorkerResponse =
   | { kind: 'model-json'; model: ModelKey; json: string | null }
   | { kind: 'predictions-csv'; model: ModelKey; csv: string }
   | { kind: 'batch-scored'; payload: BatchScore }
+  // The current dataset rebuilt as CSV, for local persistence.
+  | { kind: 'dataset-csv'; csv: string }
   // null = not applicable (multiclass, regression, or no probabilities).
   | { kind: 'threshold-result'; payload: ThresholdAnalysis | null }
   // null = nothing sliceable (no categorical column, tiny test set).
