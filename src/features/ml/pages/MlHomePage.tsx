@@ -18,8 +18,9 @@ const ROADMAP_KEYS = [
   'v4',
   'v5',
   'v6',
+  'v7',
 ] as const;
-const SHIPPED_SPRINTS = 11; // MVP (S0–S5) + V2–V6 are live
+const SHIPPED_SPRINTS = 12; // MVP (S0–S5) + V2–V7 are live
 
 export function MlHomePage() {
   const { t } = useTranslation();

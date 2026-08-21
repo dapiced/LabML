@@ -4,6 +4,7 @@ import { profileColumn } from '@/features/ml/data/profile';
 import { analyzeTarget, baselineSuggestions } from '@/features/ml/data/suggest';
 import { computeInsights, computeWhatIf } from '@/features/ml/train/insights';
 import { runSearch } from '@/features/ml/train/search';
+import { runExploration } from '@/features/ml/unsupervised/explore';
 import { buildPredictionsCsv, serializeModel } from '@/features/ml/train/serialize';
 import { explainPrediction } from '@/features/ml/train/shapley';
 import { runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
@@ -188,6 +189,15 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       );
       if (outcome) post({ kind: 'tune-complete', payload: outcome });
       else post({ kind: 'tune-cancelled' });
+    } else if (request.kind === 'explore') {
+      if (header.length === 0) throw new Error('no-data');
+      const profiles: ColumnProfile[] = header.map((column, i) =>
+        profileColumn(column, columns[i]),
+      );
+      post({
+        kind: 'explore-result',
+        payload: runExploration(columnsAsMap(), profiles, request.features, request.seed),
+      });
     } else if (request.kind === 'export-model') {
       if (!artifacts) throw new Error('no-run');
       post({

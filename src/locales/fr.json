@@ -203,6 +203,18 @@
         "gbdt": "Gradient boosting",
         "mlp": "Réseau de neurones (MLP)"
       },
+      "explore": {
+        "title": "Explorer sans cible",
+        "hint": "Pas de colonne à prédire ? Le labo peut regrouper seul les lignes qui se ressemblent : k-means seedé (k = 2–5, choisi par silhouette) sur les mêmes variables encodées, projeté en 2D par ACP — écrit maison, déterministe, dans votre navigateur.",
+        "start": "Trouver des groupes",
+        "running": "Regroupement…",
+        "summary": "{{k}} groupes · silhouette {{silhouette}} (essayés k = {{tried}}) · {{rows}} lignes · les deux axes d'ACP portent {{p1}} % + {{p2}} % de la variance",
+        "clusterName": "Groupe {{id}}",
+        "clusterSize": "{{count}} lignes · {{share}} %",
+        "traitNumeric": "{{column}} : {{clusterMean}} en moyenne (vs {{overallMean}} global)",
+        "traitCategorical": "{{column}} : {{share}} % « {{value}} » (vs {{overallShare}} % global)",
+        "note": "Les groupes sont une aide à la lecture, pas une vérité : k-means favorise des groupes arrondis de tailles proches. Mêmes données, même seed — mêmes groupes, toujours."
+      },
       "tuning": {
         "title": "Recherche d'hyperparamètres",
         "hint": "Random search seedée : jusqu'à {{budget}} configurations notées par validation croisée à {{folds}} plis sur le split d'entraînement uniquement — le jeu de test mis de côté n'est évalué qu'une seule fois, à la fin.",
@@ -300,7 +312,8 @@
       "v3": "V3 vision : classification d'images sur votre appareil (SqueezeNet · ONNX Runtime Web) — livré",
       "v4": "V4 Data Studio : rapport de qualité, recette de nettoyage et passerelle vers le labo — livré",
       "v5": "V5 labo affûté : recherche d'hyperparamètres (CV) et explications de Shapley — livré",
-      "v6": "V6 assistant de données : questions FR/EN calculées localement, sans LLM — livré"
+      "v6": "V6 assistant de données : questions FR/EN calculées localement, sans LLM — livré",
+      "v7": "V7 exploration : k-means + ACP + profils de groupes, sans cible — livré"
     }
   },
   "data": {
