@@ -6,3 +6,5 @@ test-results
 .wrangler
 *.local
 .DS_Store
+.lighthouse
+.lighthouseci
