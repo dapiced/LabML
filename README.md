@@ -99,9 +99,18 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   and is told when offline mode is ready) and **webcam capture** for the vision
   playground (`Permissions-Policy: camera=(self)`, stream stays local, e2e-tested
   with Chromium's fake camera).
-- **Cap 2** (see [PLAN.md](PLAN.md) § J): V10 Data Studio replayable recipes — and,
-  as a separate product decision, an optional generative chat behind a server-side
-  key proxy (never an API key in the browser).
+- **V10 (Data Studio 2) — shipped**: cleaning becomes **reproducible**. The exported
+  recipe JSON can be **imported and replayed** on a new file (strict validation,
+  unknown fields ignored so future recipes still replay); **per-column forced
+  types** (numeric / categorical / text / date) steer variant merging, imputation,
+  outlier clamping and date handling; and **date expansion** derives `_year`,
+  `_month` and `_weekday` columns — making dates usable by the ML Lab after the
+  hand-off, where they were previously dropped.
+
+**Cap 2 is complete** (V7 exploration · V8 time series · V9 speed & comfort ·
+V10 replayable recipes). Remaining candidates: full prerendering/SSR of the app
+(the last Lighthouse gap), and an optional generative chat behind a server-side
+key proxy (never an API key in the browser) — a separate product decision.
 
 Full roadmap in [PLAN.md](PLAN.md), target analysis in
 [docs/analyse-le site de référence.md](docs/analyse-le site de référence.md).
