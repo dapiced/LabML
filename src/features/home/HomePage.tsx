@@ -1,7 +1,6 @@
 import { ArrowRight, Braces, Database, FlaskConical } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
@@ -40,10 +39,11 @@ export function HomePage() {
           <p className="text-sm text-muted">{t('home.modules.ml.description')}</p>
         </Card>
         <Card className="flex flex-col gap-3">
-          <Database className="h-6 w-6 text-copper" aria-hidden="true" />
-          <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
-            {t('home.modules.data.title')}
-            <Badge variant="copper">{t('common.soon')}</Badge>
+          <Database className="h-6 w-6 text-accent" aria-hidden="true" />
+          <h2 className="font-display text-xl font-semibold">
+            <Link to="/data" className="hover:underline">
+              {t('home.modules.data.title')}
+            </Link>
           </h2>
           <p className="text-sm text-muted">{t('home.modules.data.description')}</p>
         </Card>
