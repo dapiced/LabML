@@ -11,6 +11,8 @@ export interface DataParsePayload {
   meta: DatasetMeta;
   preview: Record<string, string>[];
   report: QualityReport;
+  /** Inferred type per column — the baseline the user can override. */
+  columnTypes: Record<string, string>;
 }
 
 export interface DataApplyPayload {
