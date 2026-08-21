@@ -217,11 +217,23 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   story), and the interval note says it plainly — two runs are never
   paired, read it as an indication, not a test.
 
+- **V22 (the model comes back) — shipped**: the export finally has a
+  matching import. Model exports are now **format v2** — the JSON carries
+  the fitted pipeline (imputation, encoding, standardization), the target,
+  the classes, and the exporting run's held-out test metrics as an honest
+  reference. Drop that file back on /ml and LabML **rebuilds the exact
+  predictor** — every exportable family (baseline, linear, logistic, naive
+  Bayes, tree, forest, GBDT with its bin edges, MLP) round-trips with
+  predictions identical byte for byte — then scores any CSV without
+  retraining, with named refusals for anything else (wrong app, format v1,
+  missing columns, unknown family). k-NN still refuses to export: its
+  "parameters" are the training data itself.
+
 **Cap 3 is complete** (V11 drift · V13 complete runs · V14 prerender).
 **Cap 4 is complete**: V15 batch scoring, V16 imbalance tools, V17
 joins & anomalies and V18 per-segment analysis all shipped.
-**Cap 5 is underway**: V19 persistent projects, V20 honest uncertainty
-and V21 run comparison shipped; V22 (model import) remains. V12 (an
+**Cap 5 is complete**: V19 persistent projects, V20 honest uncertainty,
+V21 run comparison and V22 model import all shipped. V12 (an
 optional generative chat behind a server-side key proxy — never an API key
 in the browser) stays on hold as a product decision.
 

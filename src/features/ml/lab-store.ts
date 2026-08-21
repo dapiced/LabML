@@ -9,6 +9,7 @@ import type {
 } from '@/features/ml/data/types';
 import { thresholdMetrics } from '@/features/ml/train/threshold';
 import type { BatchScore } from '@/features/ml/train/score';
+import type { ImportedManifest } from '@/features/ml/train/deserialize';
 import type { SegmentAnalysis } from '@/features/ml/train/segments';
 import type { ThresholdAnalysis } from '@/features/ml/train/threshold-analysis';
 import type { UncertaintyAnalysis } from '@/features/ml/train/uncertainty';
@@ -80,6 +81,11 @@ interface LabState {
   datasetSaving: boolean;
   /** Refusal detail when a save does not fit the quota — named, never silent. */
   datasetQuotaError: { usedBytes: number; neededBytes: number; quotaBytes: number } | null;
+  /** v22: the manifest of a re-imported exported model — null when none. */
+  importedManifest: ImportedManifest | null;
+  importedStatus: 'idle' | 'loading' | 'scoring';
+  importedResult: BatchScore | null;
+  importedError: string | null;
   /** File produced by an export action, consumed once by the UI download effect. */
   exportedFile: { name: string; mime: string; content: string } | null;
   loadFile: (file: File) => void;
@@ -87,6 +93,10 @@ interface LabState {
   saveDataset: () => void;
   openDataset: (id: number) => void;
   forgetDataset: (id: number) => void;
+  importModelFile: (file: File) => void;
+  importedScoreFile: (file: File) => void;
+  importedScoreDemo: (fileName: string) => void;
+  clearImported: () => void;
   setTarget: (column: string | null) => void;
   toggleColumn: (column: string) => void;
   train: () => void;
@@ -158,6 +168,10 @@ const initialData = {
   savedDatasetId: null as number | null,
   datasetSaving: false,
   datasetQuotaError: null as LabState['datasetQuotaError'],
+  importedManifest: null as ImportedManifest | null,
+  importedStatus: 'idle' as const,
+  importedResult: null as BatchScore | null,
+  importedError: null as string | null,
   ...initialTraining,
 };
 
@@ -371,6 +385,17 @@ export const useLabStore = create<LabState>((set, get) => {
           attachArtifact({ batchScore: artifact as Omit<BatchScore, 'csv' | 'preview'> });
         } else if (message.kind === 'batch-error') {
           set({ batchStatus: 'error', batchResult: null, batchError: message.message });
+        } else if (message.kind === 'model-loaded') {
+          set({
+            importedManifest: message.manifest,
+            importedStatus: 'idle',
+            importedResult: null,
+            importedError: null,
+          });
+        } else if (message.kind === 'imported-scored') {
+          set({ importedResult: message.payload, importedStatus: 'idle', importedError: null });
+        } else if (message.kind === 'import-error') {
+          set({ importedError: message.message, importedStatus: 'idle' });
         } else if (message.kind === 'threshold-result') {
           const choice = { threshold: 0.5, costFp: 1, costFn: 1 };
           set({ thresholdAnalysis: message.payload, thresholdChoice: choice });
@@ -462,6 +487,35 @@ export const useLabStore = create<LabState>((set, get) => {
       if (get().savedDatasetId === id) {
         set({ savedDatasetId: null, datasetQuotaError: null });
       }
+    },
+
+    importModelFile(file) {
+      if (get().importedStatus !== 'idle') return;
+      set({ importedStatus: 'loading', importedError: null });
+      void file.text().then((text) => send({ kind: 'load-model', text }));
+    },
+
+    importedScoreFile(file) {
+      const state = get();
+      if (!state.importedManifest || state.importedStatus !== 'idle') return;
+      set({ importedStatus: 'scoring', importedResult: null, importedError: null });
+      send({ kind: 'score-imported-file', file });
+    },
+
+    importedScoreDemo(fileName) {
+      const state = get();
+      if (!state.importedManifest || state.importedStatus !== 'idle') return;
+      set({ importedStatus: 'scoring', importedResult: null, importedError: null });
+      send({ kind: 'score-imported-url', url: `/datasets/${fileName}`, name: fileName });
+    },
+
+    clearImported() {
+      set({
+        importedManifest: null,
+        importedStatus: 'idle',
+        importedResult: null,
+        importedError: null,
+      });
     },
 
     setTarget(column) {

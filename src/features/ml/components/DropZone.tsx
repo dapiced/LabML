@@ -53,6 +53,7 @@ export function DropZone() {
         type="file"
         accept=".csv,.tsv,.txt,.xlsx,.xls,text/csv"
         className="sr-only"
+        data-testid="dataset-file-input"
         aria-label={t('ml.lab.dropTitle')}
         onChange={(e) => {
           const file = e.target.files?.[0];
