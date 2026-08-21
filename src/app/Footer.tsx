@@ -18,15 +18,6 @@ export function Footer() {
           </Link>
           <span aria-hidden="true">·</span>
           <span>{t('common.footer.copyright')}</span>
-          <span aria-hidden="true">·</span>
-          <a
-            href="https://github.com/dapiced/LabML"
-            target="_blank"
-            rel="noreferrer"
-            className="underline decoration-line underline-offset-4 hover:text-ink"
-          >
-            {t('common.footer.sourceCode')}
-          </a>
         </p>
       </div>
     </footer>
