@@ -83,7 +83,7 @@
       }
     },
     "statusTitle": "État du chantier",
-    "statusBody": "Le ML Lab est complet — entraînement, explications, export, PWA hors-ligne — et le premier module IA, la classification d'images, est en ligne. Les pipelines de données arrivent ensuite."
+    "statusBody": "Les trois modules sont en ligne : le ML Lab (entraînement, explications, export, PWA hors-ligne), la vision IA (classification d'images sur l'appareil) et le Data Studio (rapport de qualité, nettoyage, passerelle vers le labo)."
   },
   "ml": {
     "eyebrow": "ML LAB",
@@ -277,14 +277,112 @@
       "sprint4": "Projets, export & partage sans données — livré",
       "sprint5": "Qualité : WCAG AA, PWA hors-ligne, budgets Lighthouse — livré",
       "v2": "Modèles V2 : gradient boosting, réseau de neurones, dépendance partielle, import Excel — livré",
-      "v3": "V3 vision : classification d'images sur votre appareil (SqueezeNet · ONNX Runtime Web) — livré"
+      "v3": "V3 vision : classification d'images sur votre appareil (SqueezeNet · ONNX Runtime Web) — livré",
+      "v4": "V4 Data Studio : rapport de qualité, recette de nettoyage et passerelle vers le labo — livré"
     }
   },
   "data": {
-    "eyebrow": "DATA",
-    "title": "Les pipelines de données, pour plus tard.",
-    "lede": "Cette section accueillera les outils d'ingénierie de données : profilage, transformations et contrôles de qualité — avec les mêmes règles privacy-first que le ML Lab.",
-    "backHome": "Retour à l'accueil"
+    "eyebrow": "DATA STUDIO",
+    "title": "Diagnostiquer et nettoyer un jeu de données, sans le téléverser.",
+    "lede": "Déposez un fichier : le studio mesure sa qualité — valeurs manquantes, doublons, graphies incohérentes, valeurs aberrantes — puis le répare avec une recette transparente. Entièrement dans votre navigateur, comme le reste de LabML.",
+    "drop": {
+      "title": "Déposez un fichier CSV ou Excel",
+      "hint": "ou cliquez pour parcourir — .csv, .tsv, .xlsx. Lu localement dans un Web Worker, jamais téléversé."
+    },
+    "demoLabel": "Ou auditez un jeu de démonstration",
+    "demo": {
+      "cafe": "volontairement sale",
+      "titanic": "vrais manquants"
+    },
+    "parsing": "Lecture… {{rows}} lignes",
+    "error": "Ce fichier n'a pas pu être lu ({{detail}}). Essayez un CSV, TSV ou Excel avec une ligne d'en-têtes.",
+    "restart": "Recommencer",
+    "loaded": "{{rows}} lignes · {{columns}} colonnes",
+    "score": {
+      "before": "Avant",
+      "after": "Après nettoyage",
+      "bands": {
+        "good": "Bon",
+        "fair": "À surveiller",
+        "poor": "Faible"
+      }
+    },
+    "issues": {
+      "title": "Ce que le studio a trouvé",
+      "none": "Rien à signaler : ni cellules manquantes, ni doublons, ni variantes de graphie, ni valeurs aberrantes. Ce jeu de données est prêt.",
+      "missing": {
+        "title_one": "{{count, number}} cellule manquante",
+        "title_other": "{{count, number}} cellules manquantes",
+        "body": "Cellules vides et jetons comme « NA » ou « ? ». Les modèles ne peuvent pas les utiliser tels quels : remplissez-les ou supprimez les lignes."
+      },
+      "duplicates": {
+        "title_one": "{{count, number}} ligne dupliquée",
+        "title_other": "{{count, number}} lignes dupliquées",
+        "body": "Lignes identiques à une ligne précédente. Elles comptent double et peuvent fuiter entre les splits d'entraînement et de test."
+      },
+      "messy": {
+        "title_one": "{{count, number}} graphie incohérente",
+        "title_other": "{{count, number}} graphies incohérentes",
+        "body": "La même catégorie écrite de plusieurs façons (casse, espaces parasites). En l'état, chaque graphie compte comme une catégorie différente."
+      },
+      "outliers": {
+        "title_one": "{{count, number}} valeur aberrante",
+        "title_other": "{{count, number}} valeurs aberrantes",
+        "body": "Valeurs hors des bornes de Tukey (1,5 × IQR) de leur colonne — souvent des fautes de frappe ou des unités mélangées. Vérifiez avant d'écrêter."
+      },
+      "structural": {
+        "title_one": "{{count, number}} colonne à examiner",
+        "title_other": "{{count, number}} colonnes à examiner",
+        "body": "Les colonnes constantes ou quasi vides ne portent aucun signal ; les identifiants sont signalés pour information et jamais supprimés automatiquement.",
+        "constant": "constante",
+        "nearEmpty": "quasi vide",
+        "id": "identifiant"
+      }
+    },
+    "recipe": {
+      "title": "Recette de nettoyage",
+      "applying": "Application…",
+      "toggles": {
+        "trimWhitespace": "Retirer les espaces parasites",
+        "mergeVariants": "Fusionner les variantes de graphie vers la forme la plus fréquente",
+        "dropDuplicates": "Supprimer les lignes dupliquées",
+        "dropStructural": "Supprimer les colonnes constantes et quasi vides",
+        "clipOutliers": "Écrêter les valeurs aberrantes aux bornes de Tukey"
+      },
+      "missing": {
+        "label": "Valeurs manquantes",
+        "impute": "Remplir (médiane / plus fréquent)",
+        "dropRows": "Supprimer les lignes",
+        "keep": "Laisser telles quelles"
+      },
+      "effects": {
+        "cells_one": "{{count, number}} cellule touchée",
+        "cells_other": "{{count, number}} cellules touchées",
+        "rows_one": "{{count, number}} ligne supprimée",
+        "rows_other": "{{count, number}} lignes supprimées",
+        "columns_one": "{{count, number}} colonne supprimée",
+        "columns_other": "{{count, number}} colonnes supprimées",
+        "columnsList_one": "{{count, number}} colonne supprimée : {{columns}}",
+        "columnsList_other": "{{count, number}} colonnes supprimées : {{columns}}"
+      },
+      "result": "Après nettoyage : {{rows}} lignes · {{columns}} colonnes."
+    },
+    "preview": {
+      "title": "Aperçu",
+      "before": "Avant",
+      "after": "Après",
+      "note_one": "Première ligne affichée — les cellules manquantes apparaissent en « — ».",
+      "note_other": "{{count}} premières lignes affichées — les cellules manquantes apparaissent en « — »."
+    },
+    "export": {
+      "lab": "Ouvrir dans le ML Lab",
+      "csv": "Télécharger le CSV nettoyé",
+      "recipe": "Télécharger la recette (JSON)"
+    },
+    "privacy": {
+      "title": "Rien ne quitte votre navigateur",
+      "body": "Le fichier est lu et nettoyé dans un Web Worker ; la page ne reçoit que le rapport de qualité, des compteurs et quelques lignes d'aperçu. Les exports sont générés localement, et « Ouvrir dans le ML Lab » transmet le jeu nettoyé au labo en mémoire — aucun serveur n'intervient à aucun moment, comme l'impose la Content-Security-Policy stricte de ce site."
+    }
   },
   "ai": {
     "eyebrow": "IA",

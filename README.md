@@ -53,9 +53,15 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   self-hosted so the strict CSP still allows zero third-party calls, and both are
   runtime-cached by the service worker (works offline after first use). The photo
   never leaves the browser.
-- Candidate next steps: hyperparameter search, SHAP-style explanations, the `/data`
-  section, and `/ai` chat (requires a server-side key proxy — never an API key in
-  the browser).
+- **V4 (Data Studio) — shipped**: the `/data` section audits and repairs a dataset
+  without uploading it. Quality report (missing cells, duplicate rows, case/whitespace
+  spelling variants, Tukey-fence outliers, constant/near-empty/id columns) with a
+  deterministic 0–100 score; a **cleaning recipe** (trim, merge variants, drop
+  duplicates/columns, impute median/mode or drop rows, clamp outliers) applied live
+  in a Web Worker with per-option counters; exports (cleaned CSV, recipe JSON) and a
+  one-click **hand-off to the ML Lab**.
+- Candidate next steps: hyperparameter search, SHAP-style explanations, and `/ai`
+  chat (requires a server-side key proxy — never an API key in the browser).
 
 Full roadmap in [PLAN.md](PLAN.md), target analysis in
 [docs/analyse-le site de référence.md](docs/analyse-le site de référence.md).
