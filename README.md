@@ -74,8 +74,17 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   column names and category values), honestly labeled as _not_ a language model.
   Questions and data never leave the browser; when it does not understand, it says
   so instead of guessing.
-- Candidate next step: a generative `/ai` chat would require a server-side key
-  proxy (never an API key in the browser) and an explicit consent screen.
+- **V7 (exploration) — shipped**: the ML Lab no longer requires a target.
+  **"Explore without a target"** clusters the rows with a hand-written, seeded
+  k-means (k-means++ init, k = 2–5 chosen by silhouette), projects them in 2D with
+  a hand-written power-iteration **PCA**, and describes each group by its most
+  distinctive traits in plain language. The scatter encodes groups with a
+  **colorblind-validated palette** (checked by the design-system validator, light
+  and dark) _and_ marker shapes — identity is never color-alone.
+- **Cap 2** (see [PLAN.md](PLAN.md) § J): V8 time series (Holt-Winters, rolling
+  backtest), V9 performance & PWA update UX, V10 Data Studio replayable recipes —
+  and, as a separate product decision, an optional generative chat behind a
+  server-side key proxy (never an API key in the browser).
 
 Full roadmap in [PLAN.md](PLAN.md), target analysis in
 [docs/analyse-le site de référence.md](docs/analyse-le site de référence.md).
