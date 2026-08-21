@@ -7,7 +7,7 @@ import { RunsHistory } from '@/features/ml/components/RunsHistory';
 
 const STEP_KEYS = ['upload', 'target', 'train', 'read'] as const;
 const ROADMAP_KEYS = ['sprint0', 'sprint1', 'sprint2', 'sprint3', 'sprint4', 'sprint5'] as const;
-const SHIPPED_SPRINTS = 5; // S0 through S4 are live
+const SHIPPED_SPRINTS = 6; // the full MVP (S0–S5) is live
 
 export function MlHomePage() {
   const { t } = useTranslation();
