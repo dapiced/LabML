@@ -1,7 +1,12 @@
-import { MessageSquareText } from 'lucide-react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { FolderOpen, MessageSquareText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/eyebrow';
+import { db } from '@/features/ml/projects/db';
+import { useLabStore } from '@/features/ml/lab-store';
 import { LeaderboardTable } from '@/features/ml/components/LeaderboardTable';
 import { ConfusionMatrix } from '@/features/ml/components/insights/ConfusionMatrix';
 import { ImportanceBars } from '@/features/ml/components/insights/ImportanceBars';
@@ -19,6 +24,15 @@ import type { RunRecord } from '@/features/ml/projects/types';
 export function RunView({ record }: { record: RunRecord }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'en';
+  const navigate = useNavigate();
+  const openDataset = useLabStore((s) => s.openDataset);
+  // v19: the run's dataset may still be kept in this browser — offer to reopen
+  // it (shared runs carry no datasetId, so the button never shows there).
+  const datasetKept = useLiveQuery(
+    async () =>
+      record.datasetId !== undefined ? ((await db.datasets.get(record.datasetId)) ?? null) : null,
+    [record.datasetId],
+  );
   const read = buildPlainRead(record, t, lang);
   const isClassification = record.taskType !== 'regression';
   const { insights } = record;
@@ -34,6 +48,20 @@ export function RunView({ record }: { record: RunRecord }) {
         <Badge>
           {t(`ml.lab.task.${record.taskType}`, { count: insights.classes?.length ?? 0 })}
         </Badge>
+        {datasetKept && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              openDataset(record.datasetId!);
+              void navigate('/ml');
+            }}
+            data-testid="run-reopen-dataset"
+          >
+            <FolderOpen className="h-3.5 w-3.5" aria-hidden="true" />
+            {t('ml.lab.datasets.reopenFromRun')}
+          </Button>
+        )}
       </div>
 
       {read && (

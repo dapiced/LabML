@@ -316,6 +316,20 @@
         "small_other": "{{count}} slices with fewer than {{min}} test rows excluded.",
         "note": "A gap is a finding to investigate, not a verdict — a small slice moves for one hard row as easily as for a real weakness. A gap on a column outside the features means the model reaches it through proxies."
       },
+      "datasets": {
+        "keepButton": "Keep in this browser",
+        "keeping": "Keeping…",
+        "keptBadge": "kept in this browser",
+        "forget": "Forget this dataset",
+        "reopen": "Reopen in the lab",
+        "reopenFromRun": "Reopen this run's data",
+        "listTitle": "Datasets kept in this browser",
+        "listNote": "Stored locally in IndexedDB (compressed) — nothing ever leaves your machine, and share links never carry data.",
+        "quotaError": "Does not fit: this file needs {{needed}} but {{used}} of the {{quota}} budget are in use. Forget a dataset below to make room.",
+        "unitKb": "KB",
+        "unitMb": "MB",
+        "stored": "stored"
+      },
       "insights": {
         "title": "Insights",
         "loading": "Analyzing the winning model…",
