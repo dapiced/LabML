@@ -219,11 +219,17 @@ export function splitIndices(
   const train: number[] = [];
   const test: number[] = [];
 
+  // Plain loops, not push(...spread): spreading turns every row into a call
+  // argument, and past ~65k rows that overflows the call stack.
+  const append = (target: number[], source: number[], from: number, to: number) => {
+    for (let i = from; i < to; i++) target.push(source[i]);
+  };
+
   if (labels === null) {
     const shuffled = shuffleInPlace([...rows], rng);
     const testCount = Math.max(1, Math.round(shuffled.length * testRatio));
-    test.push(...shuffled.slice(0, testCount));
-    train.push(...shuffled.slice(testCount));
+    append(test, shuffled, 0, testCount);
+    append(train, shuffled, testCount, shuffled.length);
   } else {
     const byClass = new Map<string, number[]>();
     rows.forEach((row, position) => {
@@ -235,8 +241,8 @@ export function splitIndices(
     for (const bucket of [...byClass.keys()].sort().map((k) => byClass.get(k)!)) {
       shuffleInPlace(bucket, rng);
       const testCount = Math.max(1, Math.round(bucket.length * testRatio));
-      test.push(...bucket.slice(0, testCount));
-      train.push(...bucket.slice(testCount));
+      append(test, bucket, 0, testCount);
+      append(train, bucket, testCount, bucket.length);
     }
   }
 
