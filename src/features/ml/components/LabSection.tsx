@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
+import { MAX_CELLS } from '@/features/ml/data/limits';
 import { DropZone } from '@/features/ml/components/DropZone';
 import { ImportModelPanel } from '@/features/ml/components/ImportModelPanel';
 import { useLabStore } from '@/features/ml/lab-store';
@@ -32,12 +33,29 @@ function ParsingPanel() {
 }
 
 function ErrorPanel() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const reset = useLabStore((s) => s.reset);
+  const error = useLabStore((s) => s.error);
+  // V25: the memory guard refuses by name, with the numbers ('too-large:rows:cols').
+  const tooLarge = error?.startsWith('too-large:') ? error.split(':') : null;
+  const lang = i18n.resolvedLanguage ?? 'en';
   return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-line bg-surface p-10 text-center">
-      <p className="font-display text-lg font-semibold">{t('ml.lab.errorTitle')}</p>
-      <p className="max-w-md text-sm text-muted">{t('ml.lab.errorBody')}</p>
+    <div
+      data-testid="parse-error"
+      className="flex flex-col items-center gap-3 rounded-2xl border border-line bg-surface p-10 text-center"
+    >
+      <p className="font-display text-lg font-semibold">
+        {tooLarge ? t('ml.lab.errorTooLargeTitle') : t('ml.lab.errorTitle')}
+      </p>
+      <p className="max-w-md text-sm text-muted">
+        {tooLarge
+          ? t('ml.lab.errorTooLarge', {
+              max: MAX_CELLS.toLocaleString(lang),
+              rows: Number(tooLarge[1]).toLocaleString(lang),
+              cols: tooLarge[2],
+            })
+          : t('ml.lab.errorBody')}
+      </p>
       <Button variant="outline" size="sm" onClick={reset}>
         {t('ml.lab.retry')}
       </Button>

@@ -150,6 +150,15 @@ export function TuningPanel() {
             )}
           </div>
 
+          {outcome.sampledFrom !== undefined && (
+            <p className="text-xs text-muted">
+              {t('ml.lab.tuning.sampled', {
+                rows: outcome.trainedRows.toLocaleString(lang),
+                from: outcome.sampledFrom.toLocaleString(lang),
+              })}
+            </p>
+          )}
+
           <details className="text-xs text-muted">
             <summary className="cursor-pointer select-none">
               {t('ml.lab.tuning.trials', { count: outcome.trials.length })}
