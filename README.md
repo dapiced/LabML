@@ -67,8 +67,15 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   prediction — interventional permutation sampling (8 permutations × 24 reference
   rows, one-hot blocks grouped by source column) with the efficiency property holding
   exactly: the bars sum to prediction − baseline.
-- Candidate next steps: `/ai` chat (requires a server-side key proxy — never an API
-  key in the browser).
+- **V6 (data assistant) — shipped**: `/ai/chat` answers plain French or English
+  questions about a loaded dataset — averages, medians, counts under a condition,
+  top N, breakdowns, Pearson correlations, missing values — through a
+  **deterministic local interpreter** (a keyword grammar over the dataset's real
+  column names and category values), honestly labeled as _not_ a language model.
+  Questions and data never leave the browser; when it does not understand, it says
+  so instead of guessing.
+- Candidate next step: a generative `/ai` chat would require a server-side key
+  proxy (never an API key in the browser) and an explicit consent screen.
 
 Full roadmap in [PLAN.md](PLAN.md), target analysis in
 [docs/analyse-quantifai.md](docs/analyse-quantifai.md).
