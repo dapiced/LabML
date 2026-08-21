@@ -7,6 +7,8 @@
  */
 import { isMissing, parseNumber } from '@/features/ml/data/infer';
 import { scoreModel, type TrainArtifacts } from '@/features/ml/train/trainer';
+import type { TrainedModel } from '@/features/ml/train/models';
+import type { FittedPipeline } from '@/features/ml/train/pipeline';
 import type { Cell } from '@/features/ml/data/types';
 import type { MetricMap, ModelKey } from '@/features/ml/train/types';
 
@@ -34,9 +36,25 @@ function csvEscape(value: string): string {
   return /[",\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value;
 }
 
+/**
+ * Everything needed to score raw rows — built from a live run's artifacts,
+ * or rebuilt from an imported export (v22). Same code path either way.
+ */
+export interface RowScorer {
+  model: TrainedModel;
+  specs: FittedPipeline['specs'];
+  transformRow(record: Record<string, Cell>): number[];
+  classes: string[];
+  isClassification: boolean;
+}
+
 /** Source columns the fitted pipeline needs, in fitting order. */
+export function requiredColumnsOf(specs: FittedPipeline['specs']): string[] {
+  return [...new Set(specs.map((spec) => spec.name))];
+}
+
 export function requiredColumns(artifacts: TrainArtifacts): string[] {
-  return [...new Set(artifacts.pipeline.specs.map((spec) => spec.name))];
+  return requiredColumnsOf(artifacts.pipeline.specs);
 }
 
 export function scoreBatch(
@@ -49,22 +67,58 @@ export function scoreBatch(
 ): BatchScore {
   const model = artifacts.models.get(modelKey);
   if (!model) throw new Error('model-not-found');
+  const referenceMetrics = scoreModel(
+    model,
+    artifacts.testX,
+    artifacts.testY,
+    artifacts.isClassification,
+    artifacts.classes.length,
+  ).metrics;
+  return scoreRows(
+    {
+      model,
+      specs: artifacts.pipeline.specs,
+      transformRow: artifacts.pipeline.transformRow,
+      classes: artifacts.classes,
+      isClassification: artifacts.isClassification,
+    },
+    modelKey,
+    referenceMetrics,
+    target,
+    fileName,
+    header,
+    columns,
+  );
+}
+
+/** Scores a parsed file with any RowScorer; `referenceMetrics` fills the
+ * honest comparison column (held-out test of the live or exporting run). */
+export function scoreRows(
+  scorer: RowScorer,
+  modelKey: ModelKey,
+  referenceMetrics: MetricMap,
+  target: string,
+  fileName: string,
+  header: string[],
+  columns: Cell[][],
+): BatchScore {
+  const { model, classes, isClassification } = scorer;
 
   const index = new Map(header.map((name, i) => [name, i]));
-  const missing = requiredColumns(artifacts).filter((name) => !index.has(name));
+  const missing = requiredColumnsOf(scorer.specs).filter((name) => !index.has(name));
   if (missing.length > 0) throw new Error(`missing-columns:${missing.join(', ')}`);
 
   const rowCount = columns[0]?.length ?? 0;
   if (rowCount === 0) throw new Error('empty');
 
-  const { pipeline, classes, isClassification } = artifacts;
+  const required = requiredColumnsOf(scorer.specs);
   const X: number[][] = [];
   for (let r = 0; r < rowCount; r++) {
     const record: Record<string, Cell> = {};
-    for (const name of requiredColumns(artifacts)) {
+    for (const name of required) {
       record[name] = columns[index.get(name)!][r];
     }
-    X.push(pipeline.transformRow(record));
+    X.push(scorer.transformRow(record));
   }
 
   const predictions = model.predict(X);
@@ -109,13 +163,7 @@ export function scoreBatch(
     }
   }
 
-  const testMetrics = scoreModel(
-    model,
-    artifacts.testX,
-    artifacts.testY,
-    isClassification,
-    classes.length,
-  ).metrics;
+  const testMetrics = referenceMetrics;
 
   const preview = predictions.slice(0, PREVIEW_ROWS).map((value, r) => ({
     predicted: label(value),
