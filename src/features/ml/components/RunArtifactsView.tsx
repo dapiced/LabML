@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { CurveChart } from '@/features/ml/components/LearningCurvePanel';
 import { Badge } from '@/components/ui/badge';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { METRIC_ROWS, metricDelta } from '@/features/ml/train/score-view';
@@ -45,7 +46,7 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'en';
   const { tuning, explanation, exploration, forecast, batchScore, threshold, segments } = artifacts;
-  const { uncertainty } = artifacts;
+  const { uncertainty, learningCurve } = artifacts;
   if (
     !tuning &&
     !explanation &&
@@ -54,7 +55,8 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
     !batchScore &&
     !threshold &&
     !segments &&
-    !uncertainty
+    !uncertainty &&
+    !learningCurve
   ) {
     return null;
   }
@@ -286,6 +288,42 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
                 )}
               </p>
             )}
+          </ArtifactCard>
+        )}
+
+        {learningCurve && (
+          <ArtifactCard title={t('ml.lab.curve.title')}>
+            <p className="font-mono text-[0.68rem] text-muted">
+              {t('ml.lab.curve.axis', {
+                model: t(`ml.lab.models.${learningCurve.model}`),
+                metric: t(`ml.lab.leaderboard.${learningCurve.metricLabel}`),
+                test: learningCurve.testRows.toLocaleString(lang),
+              })}
+            </p>
+            <CurveChart outcome={learningCurve} lang={lang} />
+            <p className="text-xs">
+              {learningCurve.verdict.kind === 'climbing'
+                ? t('ml.lab.curve.climbing', {
+                    from: learningCurve.points[learningCurve.points.length - 2].rows.toLocaleString(
+                      lang,
+                    ),
+                    to: learningCurve.points[learningCurve.points.length - 1].rows.toLocaleString(
+                      lang,
+                    ),
+                    gain: score(learningCurve.verdict.gain),
+                    lo: score(learningCurve.verdict.lo),
+                    hi: score(learningCurve.verdict.hi),
+                  })
+                : t('ml.lab.curve.plateau', {
+                    from: learningCurve.points[learningCurve.points.length - 2].rows.toLocaleString(
+                      lang,
+                    ),
+                    to: learningCurve.points[learningCurve.points.length - 1].rows.toLocaleString(
+                      lang,
+                    ),
+                    gain: score(learningCurve.verdict.gain),
+                  })}
+            </p>
           </ArtifactCard>
         )}
 
