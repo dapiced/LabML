@@ -303,6 +303,19 @@
         "cost": "coût total",
         "note": "Une probabilité n’est pas une décision. Au-dessus du seuil, la ligne est marquée « positive » — le déplacer échange des fausses alertes contre des cas manqués, et le bon échange dépend de ce que chaque erreur VOUS coûte. Le point sur la courbe est votre choix courant ; il est sauvegardé avec le run."
       },
+      "segments": {
+        "title": "Où le modèle échoue",
+        "hint": "Le jeu de test ({{rows}} lignes) est découpé par chaque colonne catégorielle — y compris celles exclues des variables, où peuvent se cacher des effets de proxy. Les tranches de moins de {{min}} lignes de test sont écartées.",
+        "inFeatures": "dans les variables",
+        "outFeatures": "hors variables",
+        "colColumn": "Colonne",
+        "colSegment": "Segment",
+        "colRows": "Lignes",
+        "colDelta": "Δ vs global",
+        "small_one": "{{count}} tranche de moins de {{min}} lignes de test écartée.",
+        "small_other": "{{count}} tranches de moins de {{min}} lignes de test écartées.",
+        "note": "Un écart est une piste à creuser, pas un verdict — une petite tranche bouge pour une seule ligne difficile aussi bien que pour une vraie faiblesse. Un écart sur une colonne hors variables signifie que le modèle la retrouve par des proxys."
+      },
       "insights": {
         "title": "Insights",
         "loading": "Analyse du modèle gagnant…",
@@ -374,7 +387,8 @@
           "exploration": "groupes",
           "forecast": "prévision",
           "batchScore": "nouveau lot",
-          "threshold": "seuil"
+          "threshold": "seuil",
+          "segments": "segments"
         }
       },
       "share": {
@@ -382,30 +396,6 @@
         "invalid": "Lien de partage invalide ou incomplet."
       },
       "reportFooter": "Généré localement par LabML — aucune donnée n'a quitté le navigateur."
-    },
-    "roadmap": {
-      "title": "Où en est la construction",
-      "sprint0": "Fondations — livrées",
-      "sprint1": "Moteur de données : upload, profilage, cible — livré",
-      "sprint2": "Moteur d'entraînement et leaderboard — livré",
-      "sprint3": "Résultats, explications et what-if — livré",
-      "sprint4": "Projets, export & partage sans données — livré",
-      "sprint5": "Qualité : WCAG AA, PWA hors-ligne, budgets Lighthouse — livré",
-      "v2": "Modèles V2 : gradient boosting, réseau de neurones, dépendance partielle, import Excel — livré",
-      "v3": "V3 vision : classification d'images sur votre appareil (SqueezeNet · ONNX Runtime Web) — livré",
-      "v4": "V4 Data Studio : rapport de qualité, recette de nettoyage et passerelle vers le labo — livré",
-      "v5": "V5 labo affûté : recherche d'hyperparamètres (CV) et explications de Shapley — livré",
-      "v6": "V6 assistant de données : questions FR/EN calculées localement, sans LLM — livré",
-      "v7": "V7 exploration : k-means + ACP + profils de groupes, sans cible — livré",
-      "v8": "V8 séries temporelles : prévision Holt-Winters, backtest à origine glissante — livré",
-      "v9": "V9 vitesse & confort : coquille statique /ml, toast de mise à jour PWA, webcam vision — livré",
-      "v10": "V10 Data Studio 2 : recettes rejouables, types forcés, décomposition de dates — livré",
-      "v11": "V11 MLOps : contrôle de dérive — diff de schéma, PSI par colonne, catégories nouvelles/disparues — livré",
-      "v13": "V13 runs complets : tuning, Shapley, groupes et prévisions survivent dans l’historique, les rapports et les liens — livré",
-      "v14": "V14 prérendu généralisé : coquilles statiques pour chaque section, Lighthouse /ml 0,86 → 0,99 en conditions réelles — livré",
-      "v15": "V15 MLOps : scorer un nouveau lot — prédictions dans le navigateur, métriques test vs lot honnêtes — livré",
-      "v16": "V16 déséquilibre : précision-rappel, seuil de décision chiffré par les coûts, calibration — livré",
-      "v17": "V17 Data Studio 3 : jointures avec orphelines nommées, anomalies par isolation forest seedée dans la recette — livré"
     }
   },
   "data": {

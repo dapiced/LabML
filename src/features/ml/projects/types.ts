@@ -2,6 +2,7 @@ import type { TaskType } from '@/features/ml/data/types';
 import type { BatchScore } from '@/features/ml/train/score';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
 import type { CalibrationBin, PrPoint, ThresholdMetrics } from '@/features/ml/train/threshold';
+import type { SegmentAnalysis } from '@/features/ml/train/segments';
 import type { ModelKey } from '@/features/ml/train/types';
 import type { TuneOutcome } from '@/features/ml/train/search';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
@@ -37,6 +38,7 @@ export interface RunArtifacts {
   forecast?: ForecastPayload;
   batchScore?: BatchScoreArtifact;
   threshold?: ThresholdArtifact;
+  segments?: SegmentAnalysis;
 }
 
 /**

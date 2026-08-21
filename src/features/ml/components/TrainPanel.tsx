@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Leaderboard } from '@/features/ml/components/Leaderboard';
 import { BatchScorePanel } from '@/features/ml/components/BatchScorePanel';
+import { SegmentsPanel } from '@/features/ml/components/SegmentsPanel';
 import { ThresholdPanel } from '@/features/ml/components/ThresholdPanel';
 import { TuningPanel } from '@/features/ml/components/TuningPanel';
 import { InsightsSection } from '@/features/ml/components/insights/InsightsSection';
@@ -63,6 +64,8 @@ export function TrainPanel() {
       <InsightsSection />
 
       <ThresholdPanel />
+
+      <SegmentsPanel />
 
       <BatchScorePanel />
 

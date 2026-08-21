@@ -119,6 +119,7 @@ export function RunsHistory() {
                         'forecast',
                         'batchScore',
                         'threshold',
+                        'segments',
                       ] as const
                     )
                       .filter((kind) => run.artifacts?.[kind])
