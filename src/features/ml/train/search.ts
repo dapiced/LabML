@@ -7,13 +7,14 @@
 import { GBDT_DEFAULTS, trainGbdtClassifier, trainGbdtRegressor } from '@/features/ml/train/gbdt';
 import { defaultMlpParams, trainMlp } from '@/features/ml/train/mlp';
 import {
+  MODEL_TRAIN_CAPS,
   trainForest,
   trainKnn,
   type ModelContext,
   type TrainedModel,
 } from '@/features/ml/train/models';
 import { fitPipeline } from '@/features/ml/train/pipeline';
-import { mulberry32, shuffleInPlace } from '@/features/ml/train/random';
+import { mulberry32, nestedSampleOrder, shuffleInPlace } from '@/features/ml/train/random';
 import { prepareData, scoreModel, yieldToQueue } from '@/features/ml/train/trainer';
 import type { Cell, ColumnProfile } from '@/features/ml/data/types';
 import type { MetricMap, ModelKey, TrainConfig } from '@/features/ml/train/types';
@@ -45,6 +46,10 @@ export interface TuneOutcome {
   /** Best trials first, capped for display. */
   trials: TuneTrial[];
   totalMs: number;
+  /** V25: train rows the search actually used (folds + final refit). */
+  trainedRows: number;
+  /** V25: full train-split size when the family cap engaged — announced, never silent. */
+  sampledFrom?: number;
 }
 
 const SPACES: Record<TunableKey, Record<string, number[]>> = {
@@ -167,8 +172,27 @@ export async function runSearch(
 ): Promise<TuneOutcome | null> {
   const startedAt = performance.now();
   const prepared = prepareData(columns, profiles, config);
-  const { isClassification, classes, featureColumns, train, test, trainLabels, encode } = prepared;
+  const { isClassification, classes, featureColumns, test, encode } = prepared;
   const higherIsBetter = isClassification;
+
+  // V25: the tuned family searches on the same announced seeded sample the
+  // trainer used (same caps, same seed, same nested order) — so CV folds stay
+  // affordable and the tuned model is comparable to the leaderboard's default.
+  let { train, trainLabels } = prepared;
+  const cap = MODEL_TRAIN_CAPS[modelKey];
+  let sampledFrom: number | undefined;
+  if (cap !== undefined && train.length > cap) {
+    sampledFrom = train.length;
+    const keep = nestedSampleOrder(train.length, trainLabels, config.seed)
+      .slice(0, cap)
+      .sort((a, b) => a - b);
+    const fullTrain = train;
+    train = keep.map((position) => fullTrain[position]);
+    if (trainLabels) {
+      const labels = trainLabels;
+      trainLabels = keep.map((position) => labels[position]);
+    }
+  }
 
   const context: ModelContext = {
     task: isClassification ? 'classification' : 'regression',
@@ -217,7 +241,8 @@ export async function runSearch(
   trials.sort((a, b) => (higherIsBetter ? b.cvScore - a.cvScore : a.cvScore - b.cvScore));
   const best = trials[0];
 
-  // Refit the winner on the full train split, score the held-out test once.
+  // Refit the winner on the (possibly capped, announced) train split; the
+  // held-out test set is scored exactly once.
   const pipeline = fitPipeline(columns, profiles, featureColumns, train);
   const trainX = pipeline.transform(train);
   const trainY = train.map(encode);
@@ -241,5 +266,7 @@ export async function runSearch(
     tunedMetrics: tunedScore.metrics,
     trials: trials.slice(0, TRIALS_SHOWN),
     totalMs: performance.now() - startedAt,
+    trainedRows: train.length,
+    ...(sampledFrom !== undefined && { sampledFrom }),
   };
 }
