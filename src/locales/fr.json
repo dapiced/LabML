@@ -352,7 +352,8 @@
       "v7": "V7 exploration : k-means + ACP + profils de groupes, sans cible — livré",
       "v8": "V8 séries temporelles : prévision Holt-Winters, backtest à origine glissante — livré",
       "v9": "V9 vitesse & confort : coquille statique /ml, toast de mise à jour PWA, webcam vision — livré",
-      "v10": "V10 Data Studio 2 : recettes rejouables, types forcés, décomposition de dates — livré"
+      "v10": "V10 Data Studio 2 : recettes rejouables, types forcés, décomposition de dates — livré",
+      "v11": "V11 MLOps : contrôle de dérive — diff de schéma, PSI par colonne, catégories nouvelles/disparues — livré"
     }
   },
   "data": {
@@ -463,6 +464,28 @@
       "lab": "Ouvrir dans le ML Lab",
       "csv": "Télécharger le CSV nettoyé",
       "recipe": "Télécharger la recette (JSON)"
+    },
+    "drift": {
+      "title": "Contrôle de dérive",
+      "hint": "Comparez un nouveau lot à {{name}} (la référence chargée) : différences de schéma, glissements de distribution (PSI), catégories nouvelles ou disparues. Le nouveau fichier est aussi analysé dans votre navigateur — rien n’est envoyé.",
+      "browse": "Comparer un nouveau fichier…",
+      "demoTag": "lot démo",
+      "comparing": "Comparaison…",
+      "verdict": "{{name}} vs la référence : {{drifted}} colonnes sur {{total}} ont dérivé ({{refRows}} → {{newRows}} lignes).",
+      "schemaTitle": "Changements de schéma :",
+      "colColumn": "colonne",
+      "colSeverity": "sévérité",
+      "colDetail": "détail",
+      "meanShift": "moyenne {{ref}} → {{next}}",
+      "newCategories": "nouvelles : {{list}}",
+      "goneCategories": "disparues : {{list}}",
+      "missingShift": "manquants {{ref}} % → {{next}} %",
+      "severity": {
+        "stable": "stable",
+        "moderate": "dérive modérée",
+        "strong": "dérive forte"
+      },
+      "note": "Le PSI (Population Stability Index) mesure le déplacement de la distribution d’une colonne, sur des intervalles construits depuis la référence. Lecture conventionnelle : < 0,1 stable, 0,1–0,25 modéré, > 0,25 fort — un modèle entraîné sur la référence mérite d’être réexaminé."
     },
     "privacy": {
       "title": "Rien ne quitte votre navigateur",
