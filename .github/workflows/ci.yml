@@ -54,6 +54,31 @@ jobs:
           path: playwright-report
           retention-days: 7
 
+  lighthouse:
+    name: Lighthouse budgets
+    needs: quality
+    runs-on: ubuntu-latest
+    # Informational for now — scores on shared runners are noisy.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - run: npx lhci autorun
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-report
+          path: .lighthouse
+          retention-days: 7
+
   deploy:
     name: Deploy to Cloudflare Pages
     needs: [quality, e2e]

@@ -9,6 +9,7 @@
       "ai": "AI"
     },
     "soon": "Soon",
+    "skipToContent": "Skip to content",
     "theme": {
       "toggle": "Change theme",
       "light": "Light theme",
@@ -24,7 +25,41 @@
     "footer": {
       "copyright": "© 2026 Dominic Dapice",
       "openSource": "Open source",
-      "sourceCode": "Source code"
+      "sourceCode": "Source code",
+      "about": "How it works"
+    }
+  },
+  "about": {
+    "eyebrow": "LABML",
+    "title": "How it works — and why your data is safe.",
+    "lede": "LabML is a machine learning lab that runs entirely in your browser. This page explains the engine, and how each design choice keeps your data on your machine.",
+    "how": {
+      "title": "How it works",
+      "body": "Your CSV is parsed in a Web Worker inside this tab. The lab profiles every column, detects the task from your target, then holds back 20% of the rows (seeded, stratified) before fitting anything — imputation, encoding and scaling are learned on the training split only, so the test score is honest. Six models train in the worker and land on a live leaderboard, always compared to a naive baseline. Insights (confusion matrix, ROC, permutation importance, what-if) interrogate the real trained models kept in worker memory."
+    },
+    "privacy": {
+      "title": "Privacy, verifiable",
+      "local": {
+        "title": "Read locally, provably",
+        "body": "The file never leaves the tab. Open your browser's Network panel and run a full training: no requests go out. The Content-Security-Policy of this site forbids third-party calls altogether — that is the proof, not a promise."
+      },
+      "storage": {
+        "title": "History stays here",
+        "body": "Saved runs live in your browser's IndexedDB — metrics and charts only, never the source rows. Delete them anytime; nothing exists anywhere else."
+      },
+      "share": {
+        "title": "Data-free sharing",
+        "body": "Share links compress the run's metrics into the URL fragment — the part after # that browsers never send to any server. Your correspondent sees the results, not your data."
+      },
+      "offline": {
+        "title": "Works offline",
+        "body": "LabML is an installable PWA: once loaded, cut the Wi-Fi and everything — demo datasets included — still works. Hard to exfiltrate data without a network."
+      }
+    },
+    "openSource": {
+      "title": "Open source",
+      "body": "The entire lab — parsing, models, metrics, tests — is open source. Every claim on this page can be checked in the code.",
+      "cta": "Browse the source on GitHub"
     }
   },
   "home": {
@@ -236,7 +271,7 @@
       "sprint2": "Training engine and leaderboard — shipped",
       "sprint3": "Results, explanations and what-if — shipped",
       "sprint4": "Projects, export & data-free sharing — shipped",
-      "sprint5": "Polish: accessibility, offline PWA, budgets — next"
+      "sprint5": "Polish: WCAG AA, offline PWA, Lighthouse budgets — shipped"
     }
   },
   "data": {

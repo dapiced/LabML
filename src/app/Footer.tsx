@@ -1,5 +1,6 @@
 import { ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 
 export function Footer() {
   const { t } = useTranslation();
@@ -12,6 +13,10 @@ export function Footer() {
           {t('common.privacyStrip')}
         </p>
         <p className="flex items-center gap-3">
+          <Link to="/about" className="underline decoration-line underline-offset-4 hover:text-ink">
+            {t('common.footer.about')}
+          </Link>
+          <span aria-hidden="true">·</span>
           <span>{t('common.footer.copyright')}</span>
           <span aria-hidden="true">·</span>
           <a
