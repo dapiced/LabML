@@ -14,8 +14,9 @@ const ROADMAP_KEYS = [
   'sprint4',
   'sprint5',
   'v2',
+  'v3',
 ] as const;
-const SHIPPED_SPRINTS = 7; // MVP (S0–S5) + V2 models are live
+const SHIPPED_SPRINTS = 8; // MVP (S0–S5) + V2 models + V3 vision are live
 
 export function MlHomePage() {
   const { t } = useTranslation();
@@ -57,7 +58,7 @@ export function MlHomePage() {
                   variant={index < SHIPPED_SPRINTS ? 'accent' : 'outline'}
                   className="mt-0.5 shrink-0"
                 >
-                  {key === 'v2' ? 'V2' : `S${index}`}
+                  {key.startsWith('v') ? key.toUpperCase() : `S${index}`}
                 </Badge>
                 <span className={index < SHIPPED_SPRINTS ? 'text-ink' : 'text-muted'}>
                   {t(`ml.roadmap.${key}`)}

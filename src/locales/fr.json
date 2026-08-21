@@ -83,7 +83,7 @@
       }
     },
     "statusTitle": "État du chantier",
-    "statusBody": "Les fondations sont en ligne : design system, double thème, français/anglais, routage et CI/CD. Le moteur d'entraînement arrive juste après."
+    "statusBody": "Le ML Lab est complet — entraînement, explications, export, PWA hors-ligne — et le premier module IA, la classification d'images, est en ligne. Les pipelines de données arrivent ensuite."
   },
   "ml": {
     "eyebrow": "ML LAB",
@@ -276,7 +276,8 @@
       "sprint3": "Résultats, explications et what-if — livré",
       "sprint4": "Projets, export & partage sans données — livré",
       "sprint5": "Qualité : WCAG AA, PWA hors-ligne, budgets Lighthouse — livré",
-      "v2": "Modèles V2 : gradient boosting, réseau de neurones, dépendance partielle, import Excel — livré"
+      "v2": "Modèles V2 : gradient boosting, réseau de neurones, dépendance partielle, import Excel — livré",
+      "v3": "V3 vision : classification d'images sur votre appareil (SqueezeNet · ONNX Runtime Web) — livré"
     }
   },
   "data": {
@@ -287,9 +288,45 @@
   },
   "ai": {
     "eyebrow": "IA",
-    "title": "Les modules de deep learning, pour plus tard.",
-    "lede": "Au programme : un terrain de jeu de classification d'images sur ONNX Runtime Web, et un chat sur vos données avec consentement explicite pour tout ce qui sortirait du navigateur.",
-    "backHome": "Retour à l'accueil"
+    "title": "Le deep learning, toujours dans votre navigateur.",
+    "lede": "Des modules neuronaux construits sur la même règle que le labo : le modèle vient à vos données — jamais l'inverse.",
+    "hub": {
+      "vision": {
+        "title": "Terrain de jeu vision",
+        "description": "Classez une photo avec un vrai réseau de neurones convolutif — SqueezeNet sur ONNX Runtime Web — exécuté dans un Web Worker, sur votre machine.",
+        "cta": "Ouvrir le terrain de jeu vision"
+      },
+      "chat": {
+        "title": "Chat sur vos données",
+        "description": "Un assistant conversationnel exige un modèle de langage derrière une API — donc un serveur et une clé secrète, qui ne doit jamais être embarquée dans un navigateur. Ce module n'arrivera qu'avec un proxy côté serveur et un écran de consentement explicite pour tout ce qui quitterait votre machine."
+      }
+    },
+    "vision": {
+      "eyebrow": "IA · VISION",
+      "title": "Que voit un réseau de neurones ?",
+      "lede": "Déposez une photo : SqueezeNet, un réseau convolutif à 1 000 classes, s'exécute localement via ONNX Runtime Web (WebAssembly). L'image ne quitte jamais votre navigateur.",
+      "loading": "Téléchargement du modèle (~5 Mo, une seule fois — il est ensuite mis en cache, hors-ligne compris)…",
+      "ready": "Modèle chargé en {{ms}} ms",
+      "error": "Le modèle n'a pas pu être chargé ou exécuté. Rechargez la page et vérifiez votre connexion pour le premier téléchargement.",
+      "drop": {
+        "title": "Déposez une image ici",
+        "hint": "ou cliquez pour parcourir — JPEG, PNG, WebP… Elle est traitée localement, rien n'est envoyé.",
+        "browse": "Choisir une image"
+      },
+      "results": {
+        "title": "Top 5 des prédictions",
+        "inferMs": "inférence {{ms}} ms",
+        "working": "Le réseau regarde votre image…",
+        "empty": "Les prédictions apparaîtront ici dès que vous déposerez une image.",
+        "note": "SqueezeNet a été entraîné sur ImageNet (1 000 classes du quotidien, 2012). Il répond toujours par sa classe la plus proche — même sur une image qu'il ne comprend pas — et ne connaît ni visages ni documents.",
+        "preview": "Image analysée"
+      },
+      "how": {
+        "title": "Comment ça marche — et pourquoi c'est privé",
+        "body": "L'image est redimensionnée en 224 × 224 pixels dans un canvas, normalisée avec les statistiques d'ImageNet, puis confiée à un Web Worker où ONNX Runtime exécute le réseau en WebAssembly. Modèle et runtime sont servis par ce site lui-même : la Content-Security-Policy stricte interdit toujours tout appel tiers, la photo ne peut donc pas quitter l'onglet."
+      },
+      "backToAi": "Retour aux modules IA"
+    }
   },
   "notFound": {
     "title": "Page introuvable",
