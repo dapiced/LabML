@@ -23,6 +23,12 @@
   --copper: #8f4c1f; /* ≥ 4.5:1 sur copper-soft et surface (WCAG AA texte) */
   --copper-soft: #f3e6da;
   --ok: #1f7a4d;
+  /* Palette catégorielle des groupes (validée daltonisme + formes en second canal). */
+  --cluster-0: #0e8467;
+  --cluster-1: #c65a1a;
+  --cluster-2: #24589c;
+  --cluster-3: #c23a68;
+  --cluster-4: #7d55d4;
 }
 
 .dark {
@@ -39,6 +45,11 @@
   --copper: #d9915a;
   --copper-soft: #33261c;
   --ok: #4cc98a;
+  --cluster-0: #16997c;
+  --cluster-1: #d06a28;
+  --cluster-2: #3a6fb0;
+  --cluster-3: #cf4f7c;
+  --cluster-4: #8b68d9;
 }
 
 @theme inline {

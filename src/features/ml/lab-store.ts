@@ -9,6 +9,7 @@ import type {
   TaskInfo,
 } from '@/features/ml/data/types';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
+import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
 import type {
   InsightsPayload,
@@ -53,6 +54,8 @@ interface LabState {
   tuneStatus: 'idle' | 'running' | 'done';
   tuneProgress: { done: number; total: number; bestCv: number | null } | null;
   tuneOutcome: TuneOutcome | null;
+  exploreStatus: 'idle' | 'running' | 'done';
+  exploration: ExplorationPayload | null;
   /** The auto-saved record of the current run (id set once stored). */
   currentRun: RunRecord | null;
   /** File produced by an export action, consumed once by the UI download effect. */
@@ -68,6 +71,7 @@ interface LabState {
   requestExplanation: (values: Record<string, string>) => void;
   tune: (model: TunableKey) => void;
   cancelTune: () => void;
+  explore: () => void;
   exportModel: () => void;
   exportPredictions: () => void;
   clearExportedFile: () => void;
@@ -92,6 +96,8 @@ const initialTraining = {
   tuneStatus: 'idle' as const,
   tuneProgress: null,
   tuneOutcome: null,
+  exploreStatus: 'idle' as const,
+  exploration: null,
   currentRun: null,
   exportedFile: null,
 };
@@ -202,6 +208,8 @@ export const useLabStore = create<LabState>((set, get) => {
           set({ tuneStatus: 'done', tuneProgress: null, tuneOutcome: message.payload });
         } else if (message.kind === 'tune-cancelled') {
           set({ tuneStatus: 'idle', tuneProgress: null });
+        } else if (message.kind === 'explore-result') {
+          set({ exploreStatus: 'done', exploration: message.payload });
         } else if (message.kind === 'model-json') {
           if (message.json !== null) {
             set({
@@ -325,6 +333,16 @@ export const useLabStore = create<LabState>((set, get) => {
     cancelTune() {
       if (get().tuneStatus !== 'running') return;
       send({ kind: 'cancel-tune' });
+    },
+
+    explore() {
+      const state = get();
+      if (state.status !== 'ready' || state.exploreStatus === 'running') return;
+      const features = state.profiles
+        .map((p) => p.name)
+        .filter((name) => effectiveExclusion(state, name) === null && name !== state.target);
+      set({ exploreStatus: 'running', exploration: null });
+      send({ kind: 'explore', features, seed: TRAIN_SEED });
     },
 
     exportModel() {
