@@ -51,3 +51,33 @@ test('data studio exports and hands the cleaned dataset to the ML Lab', async ({
   await expect(page).toHaveURL(/\/ml$/);
   await expect(page.getByText('112 rows · 8 columns')).toBeVisible();
 });
+
+test('recipes are replayable: derive dates, force a type, export, re-import', async ({ page }) => {
+  await page.goto('/data');
+  await page.getByRole('button', { name: /cafe-sales\.csv/ }).click();
+  await expect(page.getByTestId('recipe-result')).toContainText('112 rows · 8 columns');
+
+  // Date expansion: the `date` column yields _year/_month/_weekday.
+  await page.getByRole('checkbox', { name: /Expand date columns/ }).check();
+  await expect(page.getByTestId('recipe-result')).toContainText('112 rows · 11 columns');
+  await expect(page.getByText(/date_year, date_month, date_weekday/)).toBeVisible();
+
+  // Force a column type from the types panel.
+  await page.locator('summary', { hasText: 'Column types' }).click();
+  await page
+    .locator('label', { hasText: 'quantity' })
+    .locator('select')
+    .selectOption('categorical');
+  await expect(page.getByTestId('recipe-result')).toContainText('112 rows · 11 columns');
+
+  // Export the recipe, revert the option, then replay the downloaded file.
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Download the recipe (JSON)' }).click();
+  const recipePath = await (await download).path();
+  await page.getByRole('checkbox', { name: /Expand date columns/ }).uncheck();
+  await expect(page.getByTestId('recipe-result')).toContainText('112 rows · 8 columns');
+
+  await page.locator('input[accept*="json"]').setInputFiles(recipePath!);
+  await expect(page.getByTestId('recipe-imported')).toContainText('cafe-sales.csv');
+  await expect(page.getByTestId('recipe-result')).toContainText('112 rows · 11 columns');
+});

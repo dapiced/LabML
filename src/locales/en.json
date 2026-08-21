@@ -351,7 +351,8 @@
       "v6": "V6 data assistant: FR/EN questions answered locally, no LLM — shipped",
       "v7": "V7 exploration: k-means + PCA + group profiles, no target needed — shipped",
       "v8": "V8 time series: Holt-Winters forecasting, rolling-origin backtest — shipped",
-      "v9": "V9 speed & comfort: static /ml shell, PWA update toast, webcam vision — shipped"
+      "v9": "V9 speed & comfort: static /ml shell, PWA update toast, webcam vision — shipped",
+      "v10": "V10 Data Studio 2: replayable recipes, forced types, date expansion — shipped"
     }
   },
   "data": {
@@ -414,13 +415,21 @@
     },
     "recipe": {
       "title": "Cleaning recipe",
+      "import": "Import a recipe",
+      "imported": "Recipe applied from {{name}}",
+      "importedAt": "exported {{date}}",
+      "importError": "This file is not a LabML recipe.",
+      "typesTitle": "Column types",
+      "typesHint": "Force how a column is treated by the cleaning steps (variant merging, imputation, outlier clamping, date expansion). \u201cAuto\u201d keeps the inferred type.",
+      "typeAuto": "auto ({{type}})",
       "applying": "Applying…",
       "toggles": {
         "trimWhitespace": "Trim stray whitespace",
         "mergeVariants": "Merge spelling variants to the most frequent form",
         "dropDuplicates": "Drop duplicate rows",
         "dropStructural": "Drop constant and near-empty columns",
-        "clipOutliers": "Clamp outliers to the Tukey fences"
+        "clipOutliers": "Clamp outliers to the Tukey fences",
+        "deriveDates": "Expand date columns (year, month, weekday)"
       },
       "missing": {
         "label": "Missing values",
@@ -435,6 +444,9 @@
         "rows_other": "{{count, number}} rows removed",
         "columns_one": "{{count, number}} column removed",
         "columns_other": "{{count, number}} columns removed",
+        "columnsAdded_one": "{{count, number}} column added: {{columns}}",
+        "columnsAdded_other": "{{count, number}} columns added: {{columns}}",
+        "columnsAddedNone": "no date column to expand",
         "columnsList_one": "{{count, number}} column removed: {{columns}}",
         "columnsList_other": "{{count, number}} columns removed: {{columns}}"
       },
