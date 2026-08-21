@@ -303,6 +303,19 @@
         "cost": "total cost",
         "note": "A probability is not a decision. Above the threshold the row is flagged “positive” — moving it trades false alarms against missed cases, and the right trade depends on what each mistake costs YOU. The dot on the curve is your current choice; it is saved with the run."
       },
+      "segments": {
+        "title": "Where the model fails",
+        "hint": "The test set ({{rows}} rows) is sliced by each categorical column — including columns kept out of the features, where proxy effects can hide. Slices with fewer than {{min}} test rows are excluded.",
+        "inFeatures": "in the features",
+        "outFeatures": "outside the features",
+        "colColumn": "Column",
+        "colSegment": "Segment",
+        "colRows": "Rows",
+        "colDelta": "Δ vs overall",
+        "small_one": "{{count}} slice with fewer than {{min}} test rows excluded.",
+        "small_other": "{{count}} slices with fewer than {{min}} test rows excluded.",
+        "note": "A gap is a finding to investigate, not a verdict — a small slice moves for one hard row as easily as for a real weakness. A gap on a column outside the features means the model reaches it through proxies."
+      },
       "insights": {
         "title": "Insights",
         "loading": "Analyzing the winning model…",
@@ -374,7 +387,8 @@
           "exploration": "groups",
           "forecast": "forecast",
           "batchScore": "new batch",
-          "threshold": "threshold"
+          "threshold": "threshold",
+          "segments": "segments"
         }
       },
       "share": {
@@ -382,30 +396,6 @@
         "invalid": "Invalid or incomplete share link."
       },
       "reportFooter": "Generated locally by LabML — no data ever left the browser."
-    },
-    "roadmap": {
-      "title": "Where the build stands",
-      "sprint0": "Foundations — shipped",
-      "sprint1": "Data engine: upload, profiling, target — shipped",
-      "sprint2": "Training engine and leaderboard — shipped",
-      "sprint3": "Results, explanations and what-if — shipped",
-      "sprint4": "Projects, export & data-free sharing — shipped",
-      "sprint5": "Polish: WCAG AA, offline PWA, Lighthouse budgets — shipped",
-      "v2": "V2 models: gradient boosting, neural network, partial dependence, Excel import — shipped",
-      "v3": "V3 vision: image classification on your device (SqueezeNet · ONNX Runtime Web) — shipped",
-      "v4": "V4 Data Studio: quality report, cleaning recipe and hand-off to the lab — shipped",
-      "v5": "V5 lab upgrades: hyperparameter search (CV) and Shapley explanations — shipped",
-      "v6": "V6 data assistant: FR/EN questions answered locally, no LLM — shipped",
-      "v7": "V7 exploration: k-means + PCA + group profiles, no target needed — shipped",
-      "v8": "V8 time series: Holt-Winters forecasting, rolling-origin backtest — shipped",
-      "v9": "V9 speed & comfort: static /ml shell, PWA update toast, webcam vision — shipped",
-      "v10": "V10 Data Studio 2: replayable recipes, forced types, date expansion — shipped",
-      "v11": "V11 MLOps: drift check — schema diff, per-column PSI, new/vanished categories — shipped",
-      "v13": "V13 complete runs: tuning, Shapley, groups and forecasts now survive in history, reports and share links — shipped",
-      "v14": "V14 generalized prerender: static shells for every section, /ml Lighthouse 0.86 → 0.99 under real throttling — shipped",
-      "v15": "V15 MLOps: score a new batch — predictions in the browser, honest test-vs-batch metrics — shipped",
-      "v16": "V16 imbalance: precision-recall, cost-priced decision threshold, calibration — shipped",
-      "v17": "V17 Data Studio 3: file joins with honest orphan bookkeeping, seeded isolation-forest anomalies in the recipe — shipped"
     }
   },
   "data": {

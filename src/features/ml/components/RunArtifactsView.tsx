@@ -44,8 +44,16 @@ function TraitLine({ trait }: { trait: ClusterTrait }) {
 export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'en';
-  const { tuning, explanation, exploration, forecast, batchScore, threshold } = artifacts;
-  if (!tuning && !explanation && !exploration && !forecast && !batchScore && !threshold) {
+  const { tuning, explanation, exploration, forecast, batchScore, threshold, segments } = artifacts;
+  if (
+    !tuning &&
+    !explanation &&
+    !exploration &&
+    !forecast &&
+    !batchScore &&
+    !threshold &&
+    !segments
+  ) {
     return null;
   }
   const score = (v: number) =>
@@ -216,6 +224,59 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
               TP {threshold.chosen.tp} · FP {threshold.chosen.fp} · FN {threshold.chosen.fn} · TN{' '}
               {threshold.chosen.tn}
             </p>
+          </ArtifactCard>
+        )}
+
+        {segments && (
+          <ArtifactCard title={t('ml.lab.segments.title')}>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline" className="font-mono">
+                {t(`ml.lab.leaderboard.${segments.metricLabel}`)} {segments.overall.toFixed(3)}
+              </Badge>
+              <Badge variant="outline">{t(`ml.lab.models.${segments.model}`)}</Badge>
+            </div>
+            <div className="flex flex-col gap-2">
+              {segments.columns.map((column) => (
+                <div key={column.column} className="rounded-xl bg-surface-2 p-3">
+                  <p className="flex flex-wrap items-center gap-2 text-xs font-medium">
+                    <span className="font-mono">{column.column}</span>
+                    <Badge variant="outline" className="text-[0.62rem]">
+                      {column.inFeatures
+                        ? t('ml.lab.segments.inFeatures')
+                        : t('ml.lab.segments.outFeatures')}
+                    </Badge>
+                  </p>
+                  <table className="mt-1 w-full text-left text-xs">
+                    <tbody>
+                      {column.segments.map((segment) => (
+                        <tr key={segment.value} className="border-b border-line last:border-b-0">
+                          <td className="max-w-40 truncate py-1 pr-3" title={segment.value}>
+                            {segment.value}
+                          </td>
+                          <td className="py-1 pr-3 font-mono tabular-nums text-muted">
+                            {segment.rows}
+                          </td>
+                          <td className="py-1 pr-3 font-mono tabular-nums">
+                            {segment.metric.toFixed(3)}
+                          </td>
+                          <td
+                            className={`py-1 font-mono tabular-nums ${
+                              (segments.isClassification ? segment.delta < 0 : segment.delta > 0)
+                                ? 'text-copper'
+                                : 'text-ok'
+                            }`}
+                          >
+                            {segment.delta >= 0 ? '+' : ''}
+                            {segment.delta.toFixed(3)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-muted">{t('ml.lab.segments.note')}</p>
           </ArtifactCard>
         )}
 
