@@ -48,10 +48,11 @@ export function HomePage() {
           <p className="text-sm text-muted">{t('home.modules.data.description')}</p>
         </Card>
         <Card className="flex flex-col gap-3">
-          <Braces className="h-6 w-6 text-copper" aria-hidden="true" />
-          <h2 className="flex items-center gap-2 font-display text-xl font-semibold">
-            {t('home.modules.ai.title')}
-            <Badge variant="copper">{t('common.soon')}</Badge>
+          <Braces className="h-6 w-6 text-accent" aria-hidden="true" />
+          <h2 className="font-display text-xl font-semibold">
+            <Link to="/ai" className="hover:underline">
+              {t('home.modules.ai.title')}
+            </Link>
           </h2>
           <p className="text-sm text-muted">{t('home.modules.ai.description')}</p>
         </Card>

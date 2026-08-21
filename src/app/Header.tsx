@@ -45,10 +45,7 @@ export function Header() {
             </span>
           </NavLink>
           <NavLink to="/ai" className={navLinkClass}>
-            <span className="inline-flex items-center gap-1.5">
-              {t('common.nav.ai')}
-              <Badge variant="outline">{t('common.soon')}</Badge>
-            </span>
+            {t('common.nav.ai')}
           </NavLink>
         </nav>
 
