@@ -1,4 +1,5 @@
 import type { RunRecord } from '@/features/ml/projects/types';
+import type { ClusterTrait } from '@/features/ml/unsupervised/explore';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
@@ -78,6 +79,125 @@ function esc(value: string): string {
 }
 
 const fmt = (v: number | undefined) => (v === undefined || Number.isNaN(v) ? '—' : v.toFixed(3));
+
+function traitText(trait: ClusterTrait, t: Translate, lang: string): string {
+  const num = (v: number) => v.toLocaleString(lang, { maximumFractionDigits: 2 });
+  const pct = (v: number) => (v * 100).toLocaleString(lang, { maximumFractionDigits: 0 });
+  return trait.kind === 'numeric'
+    ? t('ml.lab.explore.traitNumeric', {
+        column: trait.column,
+        clusterMean: num(trait.clusterMean),
+        overallMean: num(trait.overallMean),
+      })
+    : t('ml.lab.explore.traitCategorical', {
+        column: trait.column,
+        value: trait.value,
+        share: pct(trait.share),
+        overallShare: pct(trait.overallShare),
+      });
+}
+
+/**
+ * The analyses that joined the run after training — same numbers as the
+ * in-app panels, rendered as print-friendly tables.
+ */
+function artifactSections(record: RunRecord, t: Translate, lang: string): string {
+  const { artifacts } = record;
+  if (!artifacts) return '';
+  const sections: string[] = [];
+
+  if (artifacts.tuning) {
+    const tuning = artifacts.tuning;
+    const params = Object.entries(tuning.bestParams)
+      .map(([name, value]) => `${name} = ${value}`)
+      .join(' · ');
+    const delta = Number.isFinite(tuning.defaultPrimary)
+      ? tuning.isClassification
+        ? tuning.tunedPrimary - tuning.defaultPrimary
+        : tuning.defaultPrimary - tuning.tunedPrimary
+      : null;
+    sections.push(`<h2>${esc(t('ml.lab.tuning.title'))} — ${esc(t(`ml.lab.models.${tuning.model}`))}</h2>
+    <p class="meta">${esc(params)}</p>
+    <table><tr><th>${esc(t('ml.lab.tuning.cvScore'))}</th><th>${esc(
+      t('ml.lab.tuning.testScore', { metric: tuning.isClassification ? 'accuracy' : 'RMSE' }),
+    )}</th><th>${esc(t('ml.lab.tuning.delta'))}</th></tr>
+    <tr><td>${fmt(tuning.bestCv)}</td><td>${fmt(tuning.tunedPrimary)}</td>
+    <td>${delta === null ? '—' : `${delta >= 0 ? '+' : ''}${delta.toFixed(3)}`}</td></tr></table>`);
+  }
+
+  if (artifacts.explanation) {
+    const explanation = artifacts.explanation;
+    const title = explanation.targetClass
+      ? t('ml.lab.insights.explainTitleClass', { class: explanation.targetClass })
+      : t('ml.lab.insights.explainTitle');
+    sections.push(`<h2>${esc(title)}</h2>
+    <p class="meta">${fmt(explanation.baseline)} → ${fmt(explanation.prediction)} (${esc(
+      t(`ml.lab.models.${explanation.model}`),
+    )})</p>
+    <table><tr><th>${esc(t('ml.lab.leaderboard.model'))}</th><th>Δ</th></tr>
+    ${explanation.contributions
+      .slice(0, 8)
+      .map(
+        (entry) =>
+          `<tr><td>${esc(entry.column)}</td><td>${entry.value >= 0 ? '+' : ''}${entry.value.toFixed(3)}</td></tr>`,
+      )
+      .join('\n')}</table>`);
+  }
+
+  if (artifacts.exploration) {
+    const exploration = artifacts.exploration;
+    sections.push(`<h2>${esc(t('ml.lab.explore.title'))}</h2>
+    <p class="meta">${esc(
+      t('ml.lab.explore.summary', {
+        k: exploration.k,
+        silhouette: exploration.silhouette.toLocaleString(lang, { maximumFractionDigits: 2 }),
+        tried: exploration.tried.map((entry) => entry.k).join(', '),
+        rows: exploration.rowsUsed.toLocaleString(lang),
+        p1: (exploration.explained[0] * 100).toLocaleString(lang, { maximumFractionDigits: 0 }),
+        p2: (exploration.explained[1] * 100).toLocaleString(lang, { maximumFractionDigits: 0 }),
+      }),
+    )}</p>
+    <table>${exploration.clusters
+      .map(
+        (
+          cluster,
+        ) => `<tr><th>${esc(t('ml.lab.explore.clusterName', { id: cluster.id + 1 }))}<br>${esc(
+          t('ml.lab.explore.clusterSize', {
+            count: cluster.size,
+            share: (cluster.share * 100).toLocaleString(lang, { maximumFractionDigits: 0 }),
+          }),
+        )}</th>
+        <td>${cluster.traits.map((trait) => esc(traitText(trait, t, lang))).join('<br>')}</td></tr>`,
+      )
+      .join('\n')}</table>`);
+  }
+
+  if (artifacts.forecast) {
+    const forecast = artifacts.forecast;
+    sections.push(`<h2>${esc(t('ml.lab.forecast.title'))} — ${esc(forecast.valueColumn)}</h2>
+    <p class="meta">${esc(
+      t('ml.lab.forecast.summary', {
+        points: forecast.totalPoints.toLocaleString(lang),
+        freq: t(`ml.lab.forecast.freq.${forecast.freq}`),
+        holdout: forecast.holdout,
+        winner: t(`ml.lab.forecast.methods.${forecast.winner.key}`),
+        mae: fmt(forecast.winner.mae),
+        naive: fmt(forecast.naiveMae),
+      }),
+    )}</p>
+    <table><tr><th>${esc(t('ml.lab.forecast.methodHeader'))}</th><th>MAE</th><th>RMSE</th></tr>
+    ${forecast.methods
+      .map(
+        (method) =>
+          `<tr${method.key === forecast.winner.key ? ' class="best"' : ''}><td>${esc(
+            t(`ml.lab.forecast.methods.${method.key}`),
+          )}</td><td>${fmt(method.mae)}</td><td>${fmt(method.rmse)}</td></tr>`,
+      )
+      .join('\n')}</table>`);
+  }
+
+  return sections.join('\n');
+}
 
 /**
  * Fully self-contained HTML report (inline CSS, no scripts, print-friendly) —
@@ -162,6 +282,7 @@ ${leaderboardRows}
 </table>
 ${confusion}
 ${importance}
+${artifactSections(record, t, lang)}
 <footer>${esc(t('ml.lab.reportFooter'))} — https://app.dominicdapice.com/ml</footer>
 </body>
 </html>`;

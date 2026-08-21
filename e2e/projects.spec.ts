@@ -78,3 +78,37 @@ test('model JSON, predictions CSV and HTML report download locally', async ({ pa
   await page.getByRole('button', { name: 'Report (HTML)' }).click();
   expect((await report).suggestedFilename()).toMatch(/-report\.html$/);
 });
+
+test('late analyses survive the run: tuning and groups join history and share links', async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await trainIris(page);
+
+  // Tune k-NN (small grid — fast) then find groups: both attach to the run.
+  await page.getByTestId('tuning').getByRole('combobox').selectOption('knn');
+  await page.getByTestId('tune-start').click();
+  await expect(page.getByTestId('tune-result')).toBeVisible({ timeout: 60000 });
+  await page.getByTestId('explore-start').click();
+  await expect(page.getByTestId('explore-result')).toBeVisible({ timeout: 60000 });
+
+  // The stored run now tells the complete story.
+  const history = page.getByTestId('runs-history');
+  await history.getByRole('link', { name: 'iris · species' }).click();
+  await expect(page).toHaveURL(/\/ml\/run\/\d+$/);
+  const artifacts = page.getByTestId('run-artifacts');
+  await expect(artifacts).toBeVisible();
+  await expect(artifacts).toContainText('k-nearest neighbors');
+  await expect(artifacts).toContainText(/k = \d+/);
+  await expect(artifacts).toContainText('Group 1');
+
+  // And so does the data-free share link.
+  await page.getByRole('link', { name: 'Back to the lab' }).click();
+  await page.getByRole('button', { name: 'Copy share link' }).click();
+  const url = await page.evaluate(() => navigator.clipboard.readText());
+  await page.goto(url);
+  await expect(page.getByTestId('run-view')).toBeVisible();
+  await expect(page.getByTestId('run-artifacts')).toContainText(/k = \d+/);
+  await expect(page.getByTestId('run-artifacts')).toContainText('Group 1');
+});
