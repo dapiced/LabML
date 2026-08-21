@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Outlet } from 'react-router';
 import { Footer } from '@/app/Footer';
 import { Header } from '@/app/Header';
+import { ReloadPrompt } from '@/app/ReloadPrompt';
 
 export function RootLayout() {
   const { t } = useTranslation();
@@ -18,6 +19,7 @@ export function RootLayout() {
         <Outlet />
       </main>
       <Footer />
+      <ReloadPrompt />
     </div>
   );
 }

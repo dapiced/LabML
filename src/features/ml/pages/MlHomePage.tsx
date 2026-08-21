@@ -1,9 +1,9 @@
+import { Suspense, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { LabSection } from '@/features/ml/components/LabSection';
-import { RunsHistory } from '@/features/ml/components/RunsHistory';
 
 const STEP_KEYS = ['upload', 'target', 'train', 'read'] as const;
 const ROADMAP_KEYS = [
@@ -20,8 +20,12 @@ const ROADMAP_KEYS = [
   'v6',
   'v7',
   'v8',
+  'v9',
 ] as const;
-const SHIPPED_SPRINTS = 13; // MVP (S0–S5) + V2–V8 are live
+// History (and Dexie with it) loads after first paint — it sits below the fold.
+const RunsHistory = lazy(() => import('@/features/ml/components/RunsHistory'));
+
+const SHIPPED_SPRINTS = 14; // MVP (S0–S5) + V2–V9 are live
 
 export function MlHomePage() {
   const { t } = useTranslation();
@@ -41,7 +45,9 @@ export function MlHomePage() {
 
       <LabSection />
 
-      <RunsHistory />
+      <Suspense fallback={null}>
+        <RunsHistory />
+      </Suspense>
 
       <section className="grid gap-4 pb-12 sm:grid-cols-2 lg:grid-cols-4">
         {STEP_KEYS.map((key, index) => (

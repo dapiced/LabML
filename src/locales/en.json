@@ -21,6 +21,12 @@
       "en": "English",
       "fr": "Français"
     },
+    "pwa": {
+      "offlineReady": "LabML is ready to work offline — datasets and models included.",
+      "updateAvailable": "A new version of LabML is available.",
+      "reload": "Reload",
+      "dismiss": "Later"
+    },
     "privacyStrip": "Your data never leaves your browser — verify it yourself in the Network tab.",
     "footer": {
       "copyright": "© 2026 Dominic Dapice",
@@ -344,7 +350,8 @@
       "v5": "V5 lab upgrades: hyperparameter search (CV) and Shapley explanations — shipped",
       "v6": "V6 data assistant: FR/EN questions answered locally, no LLM — shipped",
       "v7": "V7 exploration: k-means + PCA + group profiles, no target needed — shipped",
-      "v8": "V8 time series: Holt-Winters forecasting, rolling-origin backtest — shipped"
+      "v8": "V8 time series: Holt-Winters forecasting, rolling-origin backtest — shipped",
+      "v9": "V9 speed & comfort: static /ml shell, PWA update toast, webcam vision — shipped"
     }
   },
   "data": {
@@ -546,6 +553,12 @@
         "title": "Drop an image here",
         "hint": "or click to browse — JPEG, PNG, WebP… It is processed locally, nothing is uploaded.",
         "browse": "Choose an image"
+      },
+      "webcam": {
+        "open": "Use the webcam",
+        "capture": "Capture",
+        "close": "Close",
+        "error": "Camera unavailable or permission denied — the file drop above still works."
       },
       "results": {
         "title": "Top 5 predictions",

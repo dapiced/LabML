@@ -88,9 +88,20 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   backtest** that never peeks at the future, and the forecast band is the empirical
   80% interval of the winner's backtest residuals — measured, not assumed. Dated
   demo dataset (`energy.csv`, deterministic) included.
-- **Cap 2** (see [PLAN.md](PLAN.md) § J): V9 performance & PWA update UX, V10 Data
-  Studio replayable recipes — and, as a separate product decision, an optional
-  generative chat behind a server-side key proxy (never an API key in the browser).
+- **V9 (speed & comfort) — shipped**: `/ml` Lighthouse mobile score **0.77 → 0.86**
+  (measured, 3-run medians) — Dexie and the whole post-load lab moved off the
+  first-paint critical path, render-blocking scripts eliminated (the anti-flash
+  theme boot is inlined with a CSP `sha256` hash; the SW registers from the app),
+  route facades module-preloaded, and a **static HTML shell for `/ml`** whose hero
+  paints as soon as the CSS arrives (React replaces it on mount — no hydration).
+  Reaching ~0.9+ would take full prerendering/SSR, noted as a Cap 3 candidate.
+  Plus: a **PWA update toast** (`prompt` mode — the user decides when to reload,
+  and is told when offline mode is ready) and **webcam capture** for the vision
+  playground (`Permissions-Policy: camera=(self)`, stream stays local, e2e-tested
+  with Chromium's fake camera).
+- **Cap 2** (see [PLAN.md](PLAN.md) § J): V10 Data Studio replayable recipes — and,
+  as a separate product decision, an optional generative chat behind a server-side
+  key proxy (never an API key in the browser).
 
 Full roadmap in [PLAN.md](PLAN.md), target analysis in
 [docs/analyse-quantifai.md](docs/analyse-quantifai.md).

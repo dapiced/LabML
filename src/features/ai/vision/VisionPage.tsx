@@ -1,4 +1,4 @@
-import { ArrowLeft, ImageUp, Loader2, ShieldCheck, Zap } from 'lucide-react';
+import { ArrowLeft, Camera, ImageUp, Loader2, ShieldCheck, X, Zap } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -102,6 +102,66 @@ export function VisionPage() {
     }
   }, []);
 
+  // --- Webcam: the stream stays local, frames are cropped like any photo. ---
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [webcamOn, setWebcamOn] = useState(false);
+  const [webcamError, setWebcamError] = useState(false);
+
+  const stopWebcam = useCallback(() => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    setWebcamOn(false);
+  }, []);
+
+  useEffect(() => stopWebcam, [stopWebcam]);
+
+  async function startWebcam() {
+    setWebcamError(false);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+      });
+      streamRef.current = stream;
+      setWebcamOn(true);
+      // The <video> mounts with the state flip; attach on the next frame.
+      requestAnimationFrame(() => {
+        if (videoRef.current) videoRef.current.srcObject = stream;
+      });
+    } catch {
+      setWebcamError(true);
+    }
+  }
+
+  function captureFrame() {
+    const video = videoRef.current;
+    const worker = workerRef.current;
+    if (!video || !worker || video.videoWidth === 0) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = VISION_SIZE;
+    canvas.height = VISION_SIZE;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return;
+    const side = Math.min(video.videoWidth, video.videoHeight);
+    ctx.drawImage(
+      video,
+      (video.videoWidth - side) / 2,
+      (video.videoHeight - side) / 2,
+      side,
+      side,
+      0,
+      0,
+      VISION_SIZE,
+      VISION_SIZE,
+    );
+    setStatus('classifying');
+    setPredictions(null);
+    setPreview(canvas.toDataURL('image/png'));
+    const rgba = ctx.getImageData(0, 0, VISION_SIZE, VISION_SIZE).data;
+    const tensor = tensorFromRgba(rgba, VISION_SIZE, VISION_SIZE);
+    worker.postMessage({ kind: 'classify', tensor } satisfies VisionRequest, [tensor.buffer]);
+  }
+
   const busy = status === 'loading' || status === 'classifying';
 
   return (
@@ -186,6 +246,53 @@ export function VisionPage() {
             }}
           />
         </label>
+
+        <div className="flex flex-col gap-3 lg:col-start-1">
+          {!webcamOn ? (
+            <button
+              type="button"
+              onClick={() => void startWebcam()}
+              disabled={busy}
+              data-testid="webcam-open"
+              className={cn(buttonVariants({ variant: 'outline' }), 'w-fit')}
+            >
+              <Camera className="h-4 w-4" aria-hidden="true" />
+              {t('ai.vision.webcam.open')}
+            </button>
+          ) : (
+            <>
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                data-testid="webcam-video"
+                className="w-full max-w-md rounded-xl border border-line bg-surface-2"
+              />
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={captureFrame}
+                  disabled={busy}
+                  data-testid="webcam-capture"
+                  className={cn(buttonVariants({ size: 'sm' }))}
+                >
+                  <Camera className="h-4 w-4" aria-hidden="true" />
+                  {t('ai.vision.webcam.capture')}
+                </button>
+                <button
+                  type="button"
+                  onClick={stopWebcam}
+                  className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                  {t('ai.vision.webcam.close')}
+                </button>
+              </div>
+            </>
+          )}
+          {webcamError && <p className="text-sm text-copper">{t('ai.vision.webcam.error')}</p>}
+        </div>
 
         <Card>
           <h2 className="font-display text-lg font-semibold">{t('ai.vision.results.title')}</h2>

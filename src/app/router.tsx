@@ -1,14 +1,16 @@
 import { createBrowserRouter } from 'react-router';
 import { NotFoundPage } from '@/app/NotFoundPage';
 import { RootLayout } from '@/app/RootLayout';
-import { HomePage } from '@/features/home/HomePage';
 
 export const router = createBrowserRouter([
   {
     path: '/',
     Component: RootLayout,
     children: [
-      { index: true, Component: HomePage },
+      {
+        index: true,
+        lazy: async () => ({ Component: (await import('@/features/home/HomePage')).default }),
+      },
       {
         path: 'ml',
         lazy: async () => ({ Component: (await import('@/features/ml/pages/MlHomePage')).default }),
