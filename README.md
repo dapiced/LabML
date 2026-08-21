@@ -61,8 +61,11 @@ The project follows three non-negotiable principles:
 
 ### AI Playground — `/ai`
 
-- **Vision** (`/ai/vision`): on-device image classification — SqueezeNet on ONNX Runtime
-  Web (WebAssembly), self-hosted, webcam supported; the photo never leaves the browser.
+- **Vision** (`/ai/vision`): on-device image analysis on ONNX Runtime Web (WebAssembly)
+  with three self-hosted models — **EfficientNet-Lite4** classification (1,000 ImageNet
+  classes, 77.6% top-1), **YOLOX-Nano** object detection (80 COCO classes) and
+  **UltraFace** face detection — boxes drawn on the image, hand-written and unit-tested
+  box decoding (grids, IoU, NMS), webcam supported; the photo never leaves the browser.
 - **Data assistant** (`/ai/chat`): plain French or English questions about a loaded
   dataset (averages, counts, top-N, correlations…) answered by a deterministic local
   interpreter — honestly labeled as _not_ a language model; when it does not understand,
@@ -74,7 +77,8 @@ The project follows three non-negotiable principles:
   run in dedicated Web Workers behind typed message protocols.
 - **From-scratch algorithms**, unit-tested against known results: gradient boosting
   (quantile bins, second-order gains, Newton leaves), MLP, k-means++, PCA, Holt-Winters,
-  isolation forest, PSI, Shapley values, bootstrap intervals, PR/ROC/calibration curves.
+  isolation forest, PSI, Shapley values, bootstrap intervals, PR/ROC/calibration curves,
+  and detection post-processing (YOLOX grid decode, IoU, non-maximum suppression).
 - **Leakage discipline.** Preprocessing (imputation, one-hot/ordinal encoding,
   standardization) is fitted on the training split only; cross-validation refits the
   pipeline inside each fold; forecast backtests never peek at the future.
@@ -83,7 +87,7 @@ The project follows three non-negotiable principles:
 - **Performance.** Every section serves a prerendered static shell (hero paints before
   JavaScript); Lighthouse mobile ≈ 0.99 on `/ml` under real throttling. Heavy
   dependencies (Dexie, SheetJS, ONNX Runtime) load lazily.
-- **Quality bar.** 237 unit tests, 49 Playwright end-to-end tests (including offline PWA,
+- **Quality bar.** 248 unit tests, 50 Playwright end-to-end tests (including offline PWA,
   fake-webcam and axe-core WCAG A/AA accessibility checks), strict TypeScript, ESLint,
   Prettier, and Lighthouse budgets — all enforced in CI.
 

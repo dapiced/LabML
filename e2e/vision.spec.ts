@@ -3,6 +3,9 @@ import { expect, test } from '@playwright/test';
 
 test.use({ locale: 'en-US' });
 
+// The three models total ~19 MB served by the site itself — first load is slow.
+const MODELS_READY = /Models loaded in \d+ ms/;
+
 /** A 224×224 PNG built in the browser — no binary fixture to maintain. */
 async function makePhoto(page: import('@playwright/test').Page) {
   const dataUrl = await page.evaluate(() => {
@@ -44,11 +47,9 @@ test('the deployed CSP allows blob: image previews', () => {
   expect(headers).toMatch(/img-src [^;\n]*blob:/);
 });
 
-test('vision playground classifies an image entirely in the browser', async ({ page }) => {
+test('vision playground analyzes an image entirely in the browser', async ({ page }) => {
   await page.goto('/ai/vision');
-
-  // The ~5 MB model is served by the site itself; first load can take a while.
-  await expect(page.getByText(/Model loaded in \d+ ms/)).toBeVisible({ timeout: 120_000 });
+  await expect(page.getByText(MODELS_READY)).toBeVisible({ timeout: 120_000 });
 
   const photo = await makePhoto(page);
   await page.locator('input[type="file"]').setInputFiles(photo);
@@ -57,18 +58,38 @@ test('vision playground classifies an image entirely in the browser', async ({ p
   await expect(page.getByTestId('vision-prediction')).toHaveCount(5, { timeout: 60_000 });
   await expect(page.getByText(/inference \d+ ms/)).toBeVisible();
   await expect(page.getByTestId('vision-prediction').first()).toContainText('%');
+  // A drawn abstract image holds no faces — the honest answer is zero, not noise.
+  await expect(page.getByTestId('vision-faces')).toContainText('No faces detected');
   // The preview must actually DECODE, not just exist — a CSP that blocks
   // blob: URLs leaves a visible-but-broken <img> (naturalWidth 0).
-  const previewImg = page.getByRole('img', { name: 'Analyzed image' });
+  const previewImg = page.getByRole('img', { name: 'Analyzed image' }).first();
   await expect(previewImg).toBeVisible();
   await expect
     .poll(async () => previewImg.evaluate((el: HTMLImageElement) => el.naturalWidth))
     .toBeGreaterThan(0);
 });
 
-test('webcam capture classifies a live frame (fake camera)', async ({ page }) => {
+test('detection finds the person and the face on a real portrait', async ({ page }) => {
   await page.goto('/ai/vision');
-  await expect(page.getByText(/Model loaded in \d+ ms/)).toBeVisible({ timeout: 120_000 });
+  await expect(page.getByText(MODELS_READY)).toBeVisible({ timeout: 120_000 });
+
+  // NASA portrait of Cdr. Eileen Collins (GPN-2000-001177) — public domain.
+  // Path is cwd-relative, like the _headers read above.
+  await page.locator('input[type="file"]').setInputFiles('e2e/fixtures/astronaut.jpg');
+
+  await expect(page.getByTestId('vision-faces')).toContainText('1 face detected', {
+    timeout: 60_000,
+  });
+  await expect(page.getByTestId('vision-objects')).toContainText('1 object detected');
+  await expect(page.getByTestId('vision-object-chip')).toContainText('person');
+  // Boxes are drawn over the image: one solid object rect + one dashed face rect.
+  const annotated = page.getByTestId('vision-annotated');
+  await expect(annotated.locator('svg rect')).toHaveCount(2);
+});
+
+test('webcam capture analyzes a live frame (fake camera)', async ({ page }) => {
+  await page.goto('/ai/vision');
+  await expect(page.getByText(MODELS_READY)).toBeVisible({ timeout: 120_000 });
 
   await page.getByTestId('webcam-open').click();
   const video = page.getByTestId('webcam-video');
@@ -80,5 +101,5 @@ test('webcam capture classifies a live frame (fake camera)', async ({ page }) =>
 
   await page.getByTestId('webcam-capture').click();
   await expect(page.getByTestId('vision-prediction')).toHaveCount(5, { timeout: 60_000 });
-  await expect(page.getByRole('img', { name: 'Analyzed image' })).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Analyzed image' }).first()).toBeVisible();
 });

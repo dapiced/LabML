@@ -22,10 +22,11 @@
       "fr": "Français"
     },
     "pwa": {
-      "offlineReady": "LabML is ready to work offline — datasets and models included.",
+      "offlineReady": "LabML is now saved in this browser: everything — demo datasets and vision models included — keeps working even without a connection.",
       "updateAvailable": "A new version of LabML is available.",
       "reload": "Reload",
-      "dismiss": "Later"
+      "dismiss": "Later",
+      "gotIt": "OK"
     },
     "privacyStrip": "Your data never leaves your browser — verify it yourself in the Network tab.",
     "footer": {
@@ -624,7 +625,7 @@
     "hub": {
       "vision": {
         "title": "Vision playground",
-        "description": "Classify a photo with a real convolutional network — SqueezeNet on ONNX Runtime Web — running in a Web Worker on your machine.",
+        "description": "Classify a photo, find every object and locate faces with three real neural networks on ONNX Runtime Web — running in a Web Worker on your machine.",
         "cta": "Open the vision playground"
       },
       "chat": {
@@ -705,9 +706,9 @@
     "vision": {
       "eyebrow": "AI · VISION",
       "title": "What does a neural network see?",
-      "lede": "Drop a photo: SqueezeNet, a 1,000-class convolutional network, runs locally through ONNX Runtime Web (WebAssembly). The image never leaves your browser.",
-      "loading": "Downloading the model (~5 MB, once — it is then cached, offline included)…",
-      "ready": "Model loaded in {{ms}} ms",
+      "lede": "Drop a photo: three self-hosted neural networks — an EfficientNet-Lite4 classifier (1,000 classes), a YOLOX-Nano object detector (80 kinds of things) and an UltraFace face detector — run locally through ONNX Runtime Web (WebAssembly). The image never leaves your browser.",
+      "loading": "Downloading the three models (~19 MB, once — they are then cached, offline included)…",
+      "ready": "Models loaded in {{ms}} ms",
       "error": "The model could not be loaded or run. Reload the page and check your connection for the first download.",
       "drop": {
         "title": "Drop an image here",
@@ -721,16 +722,25 @@
         "error": "Camera unavailable or permission denied — the file drop above still works."
       },
       "results": {
-        "title": "Top 5 predictions",
+        "title": "What the networks see",
         "inferMs": "inference {{ms}} ms",
         "working": "The network is looking at your image…",
-        "empty": "Predictions will appear here once you drop an image.",
-        "note": "SqueezeNet was trained on ImageNet (1,000 everyday classes, 2012). It always answers with its closest class — even on an image it does not understand — and knows nothing about faces or documents.",
-        "preview": "Analyzed image"
+        "empty": "The analysis will appear here once you drop an image.",
+        "note": "EfficientNet-Lite4 (77.6 % ImageNet top-1) still always answers with its closest of 1,000 classes — even on an image it does not understand — and its class names stay in English.",
+        "preview": "Analyzed image",
+        "subject": "Main subject — ImageNet top 5",
+        "annotated": "Analyzed image with detection boxes",
+        "objectsNone": "No objects detected — nothing above the 35 % confidence bar.",
+        "objectCount_one": "{{count}} object detected",
+        "objectCount_other": "{{count}} objects detected",
+        "facesNone": "No faces detected.",
+        "faceCount_one": "{{count}} face detected",
+        "faceCount_other": "{{count}} faces detected",
+        "detNote": "Detection says where, not who: YOLOX-Nano knows the 80 everyday COCO classes (35 % confidence bar), UltraFace only locates faces — neither recognizes anyone, and nothing leaves the tab."
       },
       "how": {
         "title": "How it works — and why it is private",
-        "body": "The image is resized to 224 × 224 pixels in a canvas, normalized with ImageNet statistics, then handed to a Web Worker where ONNX Runtime executes the network in WebAssembly. Model and runtime are served by this site itself: the strict Content-Security-Policy still forbids any third-party call, so the photo cannot leave the tab."
+        "body": "The photo is prepared in canvases (a 224² center crop, a 416² letterbox and a 320×240 frame), then handed to a Web Worker where ONNX Runtime executes the three networks in WebAssembly; the box math — grids, IoU, non-maximum suppression — is hand-written and unit-tested. Models and runtime are served by this site itself: the strict Content-Security-Policy still forbids any third-party call, so the photo cannot leave the tab."
       },
       "backToAi": "Back to AI modules"
     }
