@@ -363,7 +363,8 @@
       "v9": "V9 speed & comfort: static /ml shell, PWA update toast, webcam vision — shipped",
       "v10": "V10 Data Studio 2: replayable recipes, forced types, date expansion — shipped",
       "v11": "V11 MLOps: drift check — schema diff, per-column PSI, new/vanished categories — shipped",
-      "v13": "V13 complete runs: tuning, Shapley, groups and forecasts now survive in history, reports and share links — shipped"
+      "v13": "V13 complete runs: tuning, Shapley, groups and forecasts now survive in history, reports and share links — shipped",
+      "v14": "V14 generalized prerender: static shells for every section, /ml Lighthouse 0.86 → 0.99 under real throttling — shipped"
     }
   },
   "data": {
