@@ -6,7 +6,8 @@ test('home page renders and leads to the ML Lab', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveTitle(/LabML/);
   await expect(page.getByRole('heading', { level: 1 })).toContainText('A machine learning lab');
-  await page.getByRole('link', { name: 'Open the ML Lab' }).click();
+  // The module card is the way in — the hero CTA was removed as redundant.
+  await page.getByRole('main').getByRole('link', { name: 'ML Lab', exact: true }).click();
   await expect(page).toHaveURL(/\/ml$/);
   await expect(page.getByRole('heading', { level: 1 })).toContainText('leaderboard');
 });
