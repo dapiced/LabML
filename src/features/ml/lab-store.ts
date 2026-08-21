@@ -7,6 +7,7 @@ import type {
   ExclusionReason,
   TaskInfo,
 } from '@/features/ml/data/types';
+import type { BatchScore } from '@/features/ml/train/score';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
 import type { ForecastPayload } from '@/features/ml/timeseries/run';
@@ -58,6 +59,9 @@ interface LabState {
   exploration: ExplorationPayload | null;
   forecastStatus: 'idle' | 'running' | 'done' | 'error';
   forecastPayload: ForecastPayload | null;
+  batchStatus: 'idle' | 'scoring' | 'done' | 'error';
+  batchResult: BatchScore | null;
+  batchError: string | null;
   /** The auto-saved record of the current run (id set once stored). */
   currentRun: RunRecord | null;
   /** File produced by an export action, consumed once by the UI download effect. */
@@ -75,6 +79,8 @@ interface LabState {
   cancelTune: () => void;
   explore: () => void;
   forecast: (dateColumn: string, valueColumn: string) => void;
+  scoreBatch: (file: File) => void;
+  scoreBatchDemo: (fileName: string) => void;
   exportModel: () => void;
   exportPredictions: () => void;
   clearExportedFile: () => void;
@@ -103,6 +109,9 @@ const initialTraining = {
   exploration: null,
   forecastStatus: 'idle' as const,
   forecastPayload: null,
+  batchStatus: 'idle' as const,
+  batchResult: null,
+  batchError: null,
   currentRun: null,
   exportedFile: null,
 };
@@ -248,6 +257,15 @@ export const useLabStore = create<LabState>((set, get) => {
         } else if (message.kind === 'forecast-result') {
           set({ forecastStatus: 'done', forecastPayload: message.payload });
           attachArtifact({ forecast: message.payload });
+        } else if (message.kind === 'batch-scored') {
+          set({ batchStatus: 'done', batchResult: message.payload, batchError: null });
+          // The record keeps the numbers, never the row-level CSV.
+          const artifact = { ...message.payload } as Partial<BatchScore>;
+          delete artifact.csv;
+          delete artifact.preview;
+          attachArtifact({ batchScore: artifact as Omit<BatchScore, 'csv' | 'preview'> });
+        } else if (message.kind === 'batch-error') {
+          set({ batchStatus: 'error', batchResult: null, batchError: message.message });
         } else if (message.kind === 'model-json') {
           if (message.json !== null) {
             set({
@@ -338,7 +356,15 @@ export const useLabStore = create<LabState>((set, get) => {
       const state = get();
       if (state.trainStatus !== 'done' || state.insights?.model === model) return;
       if (!state.results.some((r) => r.ok && r.key === model)) return;
-      set({ insights: null, whatIf: null, explanation: null });
+      // The batch score belongs to the previously inspected model.
+      set({
+        insights: null,
+        whatIf: null,
+        explanation: null,
+        batchStatus: 'idle',
+        batchResult: null,
+        batchError: null,
+      });
       send({ kind: 'model-insights', model });
     },
 
@@ -388,6 +414,27 @@ export const useLabStore = create<LabState>((set, get) => {
       if (state.status !== 'ready' || state.forecastStatus === 'running') return;
       set({ forecastStatus: 'running', forecastPayload: null });
       send({ kind: 'forecast', dateColumn, valueColumn });
+    },
+
+    scoreBatch(file) {
+      const state = get();
+      if (state.trainStatus !== 'done' || !state.insights || state.batchStatus === 'scoring')
+        return;
+      set({ batchStatus: 'scoring', batchResult: null, batchError: null });
+      send({ kind: 'score-batch-file', file, model: state.insights.model });
+    },
+
+    scoreBatchDemo(fileName) {
+      const state = get();
+      if (state.trainStatus !== 'done' || !state.insights || state.batchStatus === 'scoring')
+        return;
+      set({ batchStatus: 'scoring', batchResult: null, batchError: null });
+      send({
+        kind: 'score-batch-url',
+        url: `/datasets/${fileName}`,
+        name: fileName,
+        model: state.insights.model,
+      });
     },
 
     exportModel() {

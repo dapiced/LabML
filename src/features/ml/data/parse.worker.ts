@@ -8,8 +8,10 @@ import { runExploration } from '@/features/ml/unsupervised/explore';
 import { runForecast } from '@/features/ml/timeseries/run';
 import { buildPredictionsCsv, serializeModel } from '@/features/ml/train/serialize';
 import { explainPrediction } from '@/features/ml/train/shapley';
+import { scoreBatch } from '@/features/ml/train/score';
 import { runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
 import type { Cell, ColumnProfile, ParseResultPayload } from '@/features/ml/data/types';
+import type { ModelKey } from '@/features/ml/train/types';
 import type { WorkerRequest, WorkerResponse } from '@/features/ml/worker-protocol';
 
 const PREVIEW_ROWS = 50;
@@ -24,6 +26,8 @@ let rowCount = 0;
 let cancelTraining = false;
 let cancelTuning = false;
 let artifacts: TrainArtifacts | null = null;
+/** Target column of the last training — batch metrics need it by name. */
+let lastTarget: string | null = null;
 
 function post(message: WorkerResponse) {
   self.postMessage(message);
@@ -116,6 +120,51 @@ function finishParse(name: string, bytes: number) {
   post({ kind: 'parsed', payload: buildResult(name, bytes) });
 }
 
+/**
+ * Parses a NEW batch into local structures — the main dataset and the run
+ * artifacts stay untouched, whatever is in the file.
+ */
+async function parseBatch(source: File | string): Promise<{ header: string[]; cols: Cell[][] }> {
+  let text: string;
+  if (typeof source === 'string') {
+    text = source;
+  } else if (/\.(xlsx|xls)$/i.test(source.name)) {
+    const XLSX = await import('xlsx');
+    const workbook = XLSX.read(new Uint8Array(await source.arrayBuffer()), { type: 'array' });
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    if (!firstSheet) throw new Error('empty');
+    text = XLSX.utils.sheet_to_csv(firstSheet);
+  } else {
+    text = await source.text();
+  }
+  const parsed = Papa.parse<string[]>(text, { skipEmptyLines: true });
+  const rows = parsed.data;
+  if (rows.length < 2) throw new Error('empty');
+  const batchHeader = rows[0].map((cell, i) =>
+    cell.trim() === '' ? `column_${i + 1}` : cell.trim(),
+  );
+  const cols: Cell[][] = batchHeader.map(() => []);
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    if (row.length === 1 && row[0].trim() === '') continue;
+    for (let c = 0; c < batchHeader.length; c++) cols[c].push(row[c] ?? null);
+  }
+  return { header: batchHeader, cols };
+}
+
+async function handleScoreBatch(source: File | string, name: string, model: ModelKey) {
+  try {
+    if (!artifacts || !lastTarget) throw new Error('no-run');
+    const batch = await parseBatch(source);
+    post({
+      kind: 'batch-scored',
+      payload: scoreBatch(artifacts, model, lastTarget, name, batch.header, batch.cols),
+    });
+  } catch (error) {
+    post({ kind: 'batch-error', message: error instanceof Error ? error.message : String(error) });
+  }
+}
+
 self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   const request = event.data;
   try {
@@ -140,6 +189,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     } else if (request.kind === 'train') {
       cancelTraining = false;
       artifacts = null;
+      lastTarget = request.config.target;
       const profiles: ColumnProfile[] = header.map((column, i) =>
         profileColumn(column, columns[i]),
       );
@@ -227,6 +277,12 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         model: request.model,
         csv: buildPredictionsCsv(artifacts, request.model),
       });
+    } else if (request.kind === 'score-batch-file') {
+      await handleScoreBatch(request.file, request.file.name, request.model);
+    } else if (request.kind === 'score-batch-url') {
+      const response = await fetch(request.url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      await handleScoreBatch(await response.text(), request.name, request.model);
     }
   } catch (error) {
     post({ kind: 'error', message: error instanceof Error ? error.message : String(error) });

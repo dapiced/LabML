@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Eyebrow } from '@/components/ui/eyebrow';
+import { METRIC_ROWS, metricDelta } from '@/features/ml/train/score-view';
 import type { RunArtifacts } from '@/features/ml/projects/types';
 import type { ClusterTrait } from '@/features/ml/unsupervised/explore';
 
@@ -43,8 +44,8 @@ function TraitLine({ trait }: { trait: ClusterTrait }) {
 export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'en';
-  const { tuning, explanation, exploration, forecast } = artifacts;
-  if (!tuning && !explanation && !exploration && !forecast) return null;
+  const { tuning, explanation, exploration, forecast, batchScore } = artifacts;
+  if (!tuning && !explanation && !exploration && !forecast && !batchScore) return null;
   const score = (v: number) =>
     v.toLocaleString(lang, { minimumFractionDigits: 3, maximumFractionDigits: 3 });
   const tuningDelta =
@@ -169,6 +170,62 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
                 </li>
               ))}
             </ul>
+          </ArtifactCard>
+        )}
+
+        {batchScore && (
+          <ArtifactCard title={`${t('ml.lab.batch.title')} — ${batchScore.fileName}`}>
+            <p className="text-xs text-muted">
+              {t('ml.lab.batch.verdict', {
+                name: batchScore.fileName,
+                rows: batchScore.rowCount.toLocaleString(lang),
+                model: t(`ml.lab.models.${batchScore.model}`),
+              })}
+            </p>
+            {batchScore.metrics ? (
+              <table className="w-full max-w-md text-left text-xs">
+                <thead>
+                  <tr className="border-b border-line text-muted">
+                    <th className="py-1 pr-3 font-normal">{t('ml.lab.batch.colMetric')}</th>
+                    <th className="py-1 pr-3 font-normal">{t('ml.lab.batch.colTest')}</th>
+                    <th className="py-1 pr-3 font-normal">{t('ml.lab.batch.colBatch')}</th>
+                    <th className="py-1 font-normal">{t('ml.lab.batch.colDelta')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {METRIC_ROWS.filter(
+                    ({ key }) =>
+                      batchScore.metrics![key] !== undefined &&
+                      batchScore.testMetrics[key] !== undefined,
+                  ).map(({ key }) => {
+                    const delta = metricDelta(
+                      key,
+                      batchScore.testMetrics[key]!,
+                      batchScore.metrics![key]!,
+                    );
+                    return (
+                      <tr key={key} className="border-b border-line last:border-b-0">
+                        <td className="py-1 pr-3">{t(`ml.lab.leaderboard.${key}`)}</td>
+                        <td className="py-1 pr-3 font-mono tabular-nums">
+                          {batchScore.testMetrics[key]!.toFixed(3)}
+                        </td>
+                        <td className="py-1 pr-3 font-mono tabular-nums">
+                          {batchScore.metrics![key]!.toFixed(3)}
+                        </td>
+                        <td
+                          className={`py-1 font-mono tabular-nums ${delta.better ? 'text-ok' : 'text-copper'}`}
+                        >
+                          {delta.value >= 0 ? '+' : ''}
+                          {delta.value.toFixed(3)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            ) : (
+              <p className="text-xs text-muted">{t('ml.lab.batch.noTarget')}</p>
+            )}
           </ArtifactCard>
         )}
 

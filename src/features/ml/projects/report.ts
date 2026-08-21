@@ -1,3 +1,4 @@
+import { METRIC_ROWS, metricDelta } from '@/features/ml/train/score-view';
 import type { RunRecord } from '@/features/ml/projects/types';
 import type { ClusterTrait } from '@/features/ml/unsupervised/explore';
 
@@ -170,6 +171,38 @@ function artifactSections(record: RunRecord, t: Translate, lang: string): string
         <td>${cluster.traits.map((trait) => esc(traitText(trait, t, lang))).join('<br>')}</td></tr>`,
       )
       .join('\n')}</table>`);
+  }
+
+  if (artifacts.batchScore) {
+    const batch = artifacts.batchScore;
+    const rows = batch.metrics
+      ? METRIC_ROWS.filter(
+          ({ key }) => batch.metrics![key] !== undefined && batch.testMetrics[key] !== undefined,
+        )
+      : [];
+    sections.push(`<h2>${esc(t('ml.lab.batch.title'))} — ${esc(batch.fileName)}</h2>
+    <p class="meta">${esc(
+      t('ml.lab.batch.verdict', {
+        name: batch.fileName,
+        rows: batch.rowCount.toLocaleString(lang),
+        model: t(`ml.lab.models.${batch.model}`),
+      }),
+    )}</p>
+    ${
+      rows.length > 0
+        ? `<table><tr><th>${esc(t('ml.lab.batch.colMetric'))}</th><th>${esc(
+            t('ml.lab.batch.colTest'),
+          )}</th><th>${esc(t('ml.lab.batch.colBatch'))}</th><th>${esc(t('ml.lab.batch.colDelta'))}</th></tr>
+    ${rows
+      .map(({ key }) => {
+        const delta = metricDelta(key, batch.testMetrics[key]!, batch.metrics![key]!);
+        return `<tr><td>${esc(t(`ml.lab.leaderboard.${key}`))}</td><td>${fmt(batch.testMetrics[key])}</td><td>${fmt(
+          batch.metrics![key],
+        )}</td><td>${delta.value >= 0 ? '+' : ''}${delta.value.toFixed(3)}</td></tr>`;
+      })
+      .join('\n')}</table>`
+        : `<p class="meta">${esc(t('ml.lab.batch.noTarget'))}</p>`
+    }`);
   }
 
   if (artifacts.forecast) {

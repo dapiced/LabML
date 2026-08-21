@@ -1,6 +1,7 @@
 import type { Cell, ParseResultPayload, TargetAnalysis } from '@/features/ml/data/types';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
 import type { ForecastPayload } from '@/features/ml/timeseries/run';
+import type { BatchScore } from '@/features/ml/train/score';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
 import type {
@@ -27,7 +28,9 @@ export type WorkerRequest =
   | { kind: 'explore'; features: string[]; seed: number }
   | { kind: 'forecast'; dateColumn: string; valueColumn: string }
   | { kind: 'export-model'; model: ModelKey }
-  | { kind: 'export-predictions'; model: ModelKey };
+  | { kind: 'export-predictions'; model: ModelKey }
+  | { kind: 'score-batch-file'; file: File; model: ModelKey }
+  | { kind: 'score-batch-url'; url: string; name: string; model: ModelKey };
 
 /** Messages emitted by the data/training worker. */
 export type WorkerResponse =
@@ -48,4 +51,7 @@ export type WorkerResponse =
   | { kind: 'forecast-result'; payload: ForecastPayload }
   | { kind: 'model-json'; model: ModelKey; json: string | null }
   | { kind: 'predictions-csv'; model: ModelKey; csv: string }
+  | { kind: 'batch-scored'; payload: BatchScore }
+  // Dedicated channel: a bad batch file must not tear down the run state.
+  | { kind: 'batch-error'; message: string }
   | { kind: 'error'; message: string };
