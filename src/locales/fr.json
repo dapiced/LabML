@@ -299,7 +299,8 @@
       "v2": "Modèles V2 : gradient boosting, réseau de neurones, dépendance partielle, import Excel — livré",
       "v3": "V3 vision : classification d'images sur votre appareil (SqueezeNet · ONNX Runtime Web) — livré",
       "v4": "V4 Data Studio : rapport de qualité, recette de nettoyage et passerelle vers le labo — livré",
-      "v5": "V5 labo affûté : recherche d'hyperparamètres (CV) et explications de Shapley — livré"
+      "v5": "V5 labo affûté : recherche d'hyperparamètres (CV) et explications de Shapley — livré",
+      "v6": "V6 assistant de données : questions FR/EN calculées localement, sans LLM — livré"
     }
   },
   "data": {
@@ -417,8 +418,78 @@
       },
       "chat": {
         "title": "Chat sur vos données",
-        "description": "Un assistant conversationnel exige un modèle de langage derrière une API — donc un serveur et une clé secrète, qui ne doit jamais être embarquée dans un navigateur. Ce module n'arrivera qu'avec un proxy côté serveur et un écran de consentement explicite pour tout ce qui quitterait votre machine."
+        "description": "Posez vos questions en français ou en anglais — moyennes, comptages sous condition, top N, corrélations. Un interpréteur local déterministe, pas un modèle de langage : vos données et vos questions ne quittent jamais le navigateur.",
+        "cta": "Ouvrir l'assistant de données"
       }
+    },
+    "chat": {
+      "eyebrow": "IA · CHAT",
+      "title": "Posez une question à vos données.",
+      "lede": "Chargez un jeu de données et demandez en français ou en anglais : moyennes, médianes, comptages sous condition, top N, répartitions, corrélations, valeurs manquantes. Tout est interprété et calculé ici même.",
+      "drop": {
+        "title": "Déposez un fichier CSV ou Excel",
+        "hint": "ou cliquez pour parcourir — lu localement dans un Web Worker, jamais téléversé."
+      },
+      "demoLabel": "Ou interrogez un jeu de démonstration",
+      "demo": {
+        "titanic": "891 passagers",
+        "cafe": "ventes de café",
+        "mpg": "398 voitures"
+      },
+      "parsing": "Lecture…",
+      "error": "Ce fichier n'a pas pu être lu. Essayez un CSV, TSV ou Excel avec une ligne d'en-têtes.",
+      "loaded": "{{rows}} lignes · {{columns}} colonnes",
+      "restart": "Changer de jeu",
+      "welcome": "Prêt. Posez une question ci-dessous, ou touchez une des idées.",
+      "inputLabel": "Votre question",
+      "placeholder": "ex. moyenne de age par class",
+      "send": "Demander",
+      "suggestLabel": "Idées de questions",
+      "suggest": {
+        "mean": "moyenne de {{num}} par {{cat}}",
+        "count": "combien de lignes où {{cat}} est {{value}}",
+        "top": "top 3 {{cat}} par somme de {{num}}",
+        "corr": "corrélation entre {{num}} et {{num2}}",
+        "missing": "combien de valeurs manquantes ?"
+      },
+      "ops": {
+        "mean": "moyenne",
+        "median": "médiane",
+        "min": "minimum",
+        "max": "maximum",
+        "sum": "somme",
+        "std": "écart-type",
+        "count": "comptage"
+      },
+      "answers": {
+        "scalar": "La {{op}} de {{column}} est {{value}} (sur {{rows}} lignes).",
+        "count_one": "{{count, number}} ligne correspond",
+        "count_other": "{{count, number}} lignes correspondent",
+        "countFilter": "où {{filter}}",
+        "grouped": "{{op}} de {{column}} par {{group}} :",
+        "topk": "Top {{k}} {{group}} par effectif :",
+        "topkMetric": "Top {{k}} {{group}} par {{op}} de {{column}} :",
+        "distribution": "Répartition de {{column}} :",
+        "correlation": "Corrélation de Pearson entre {{a}} et {{b}} : {{value}} sur {{rows}} paires — {{strength}}.",
+        "strength": {
+          "strongPos": "un lien positif fort",
+          "modPos": "un lien positif modéré",
+          "weak": "un lien linéaire faible ou nul",
+          "modNeg": "un lien négatif modéré",
+          "strongNeg": "un lien négatif fort"
+        },
+        "shape": "{{rows}} lignes × {{columns}} colonnes.",
+        "missing": "Cellules manquantes, par colonne :",
+        "noMissing": "Aucune cellule manquante — ce jeu de données est complet.",
+        "filterNote": "sur {{rows}} lignes où {{filter}}"
+      },
+      "unknown": "Je n'ai pas compris. Je suis un interpréteur déterministe, pas un modèle de langage : demandez une moyenne, une médiane, un min/max, une somme, un comptage sous condition, un top N, une répartition, une corrélation ou les valeurs manquantes — en nommant vos colonnes.",
+      "thinking": "Calcul…",
+      "honesty": {
+        "title": "Honnête par construction",
+        "body": "Cet assistant est un interpréteur local déterministe — pas un modèle de langage. Il ne calcule que ce qu'il comprend entièrement, le dit quand ce n'est pas le cas, et ni vos données ni vos questions ne quittent le navigateur. Un assistant génératif exigerait un modèle derrière une API — un serveur et une clé secrète qui ne doit jamais être embarquée dans un navigateur — et n'arriverait ici qu'avec un proxy côté serveur et un écran de consentement explicite."
+      },
+      "backToAi": "Retour aux modules IA"
     },
     "vision": {
       "eyebrow": "IA · VISION",

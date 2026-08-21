@@ -299,7 +299,8 @@
       "v2": "V2 models: gradient boosting, neural network, partial dependence, Excel import — shipped",
       "v3": "V3 vision: image classification on your device (SqueezeNet · ONNX Runtime Web) — shipped",
       "v4": "V4 Data Studio: quality report, cleaning recipe and hand-off to the lab — shipped",
-      "v5": "V5 lab upgrades: hyperparameter search (CV) and Shapley explanations — shipped"
+      "v5": "V5 lab upgrades: hyperparameter search (CV) and Shapley explanations — shipped",
+      "v6": "V6 data assistant: FR/EN questions answered locally, no LLM — shipped"
     }
   },
   "data": {
@@ -417,8 +418,78 @@
       },
       "chat": {
         "title": "Chat over your data",
-        "description": "A conversational assistant needs a language model behind an API — that means a server and a secret key, which must never ship in a browser. This module will only land with a server-side proxy and an explicit consent screen for anything that leaves your machine."
+        "description": "Ask questions in plain French or English — averages, counts with conditions, top N, correlations. A deterministic local interpreter, not a language model: your data and your questions never leave the browser.",
+        "cta": "Open the data assistant"
       }
+    },
+    "chat": {
+      "eyebrow": "AI · CHAT",
+      "title": "Ask your data a question.",
+      "lede": "Load a dataset and ask in plain French or English: averages, medians, counts under a condition, top N, breakdowns, correlations, missing values. Everything is interpreted and computed right here.",
+      "drop": {
+        "title": "Drop a CSV or Excel file",
+        "hint": "or click to browse — read locally in a Web Worker, never uploaded."
+      },
+      "demoLabel": "Or question a demo dataset",
+      "demo": {
+        "titanic": "891 passengers",
+        "cafe": "coffee sales",
+        "mpg": "398 cars"
+      },
+      "parsing": "Reading…",
+      "error": "This file could not be read. Try a CSV, TSV or Excel file with a header row.",
+      "loaded": "{{rows}} rows · {{columns}} columns",
+      "restart": "Change dataset",
+      "welcome": "Ready. Ask a question below, or tap one of the ideas.",
+      "inputLabel": "Your question",
+      "placeholder": "e.g. average age by class",
+      "send": "Ask",
+      "suggestLabel": "Question ideas",
+      "suggest": {
+        "mean": "average {{num}} by {{cat}}",
+        "count": "how many rows where {{cat}} is {{value}}",
+        "top": "top 3 {{cat}} by sum of {{num}}",
+        "corr": "correlation between {{num}} and {{num2}}",
+        "missing": "how many missing values?"
+      },
+      "ops": {
+        "mean": "average",
+        "median": "median",
+        "min": "minimum",
+        "max": "maximum",
+        "sum": "sum",
+        "std": "standard deviation",
+        "count": "count"
+      },
+      "answers": {
+        "scalar": "The {{op}} of {{column}} is {{value}} (over {{rows}} rows).",
+        "count_one": "{{count, number}} row matches",
+        "count_other": "{{count, number}} rows match",
+        "countFilter": "where {{filter}}",
+        "grouped": "{{op}} of {{column}} by {{group}}:",
+        "topk": "Top {{k}} {{group}} by count:",
+        "topkMetric": "Top {{k}} {{group}} by {{op}} of {{column}}:",
+        "distribution": "Breakdown of {{column}}:",
+        "correlation": "Pearson correlation between {{a}} and {{b}}: {{value}} over {{rows}} pairs — {{strength}}.",
+        "strength": {
+          "strongPos": "a strong positive link",
+          "modPos": "a moderate positive link",
+          "weak": "a weak or no linear link",
+          "modNeg": "a moderate negative link",
+          "strongNeg": "a strong negative link"
+        },
+        "shape": "{{rows}} rows × {{columns}} columns.",
+        "missing": "Missing cells, by column:",
+        "noMissing": "No missing cells — this dataset is complete.",
+        "filterNote": "on {{rows}} rows where {{filter}}"
+      },
+      "unknown": "I did not understand that. I am a deterministic interpreter, not a language model: ask for an average, a median, a min/max, a sum, a count under a condition, a top N, a breakdown, a correlation or the missing values — naming your columns.",
+      "thinking": "Computing…",
+      "honesty": {
+        "title": "Honest by design",
+        "body": "This assistant is a deterministic local interpreter — not a language model. It only computes what it fully understands, says so when it does not, and neither your data nor your questions ever leave the browser. A generative assistant would need a model behind an API — a server and a secret key that must never ship in a browser — and would only land here with a server-side proxy and an explicit consent screen."
+      },
+      "backToAi": "Back to AI modules"
     },
     "vision": {
       "eyebrow": "AI · VISION",
