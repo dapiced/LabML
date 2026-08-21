@@ -10,10 +10,14 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:4173',
     colorScheme: 'light',
     trace: 'on-first-retry',
-    // Lets local sandboxes point at a pre-installed Chromium instead of downloading one.
-    ...(process.env.PW_CHROMIUM_PATH
-      ? { launchOptions: { executablePath: process.env.PW_CHROMIUM_PATH } }
-      : {}),
+    // The webcam e2e uses Chromium's built-in fake camera (a rolling test
+    // pattern) so no real device or permission prompt is involved.
+    permissions: ['camera'],
+    launchOptions: {
+      args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
+      // Lets local sandboxes point at a pre-installed Chromium instead of downloading one.
+      ...(process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {}),
+    },
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {

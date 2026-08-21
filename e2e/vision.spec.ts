@@ -51,3 +51,20 @@ test('vision playground classifies an image entirely in the browser', async ({ p
   await expect(page.getByTestId('vision-prediction').first()).toContainText('%');
   await expect(page.getByRole('img', { name: 'Analyzed image' })).toBeVisible();
 });
+
+test('webcam capture classifies a live frame (fake camera)', async ({ page }) => {
+  await page.goto('/ai/vision');
+  await expect(page.getByText(/Model loaded in \d+ ms/)).toBeVisible({ timeout: 120_000 });
+
+  await page.getByTestId('webcam-open').click();
+  const video = page.getByTestId('webcam-video');
+  await expect(video).toBeVisible();
+  // Wait for the fake stream to deliver frames before capturing.
+  await expect
+    .poll(() => video.evaluate((el: HTMLVideoElement) => el.videoWidth), { timeout: 15_000 })
+    .toBeGreaterThan(0);
+
+  await page.getByTestId('webcam-capture').click();
+  await expect(page.getByTestId('vision-prediction')).toHaveCount(5, { timeout: 60_000 });
+  await expect(page.getByRole('img', { name: 'Analyzed image' })).toBeVisible();
+});

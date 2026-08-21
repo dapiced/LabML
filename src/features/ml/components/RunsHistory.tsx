@@ -188,3 +188,5 @@ export function RunsHistory() {
     </section>
   );
 }
+
+export default RunsHistory;
