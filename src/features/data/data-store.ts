@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { DEFAULT_RECIPE, parseRecipeFile } from '@/features/data/quality/types';
 import type { CleanStats, QualityReport, RecipeOptions } from '@/features/data/quality/types';
+import type { DriftReport } from '@/features/data/quality/drift';
 import type { DatasetMeta } from '@/features/ml/data/types';
 import type { DataWorkerRequest, DataWorkerResponse } from '@/features/data/data-protocol';
 
@@ -35,10 +36,15 @@ interface DataState {
   exportedFile: ExportedFile | null;
   /** Cleaned CSV handed to the ML Lab, consumed once by the page. */
   labHandoff: { name: string; content: string } | null;
+  driftStatus: 'idle' | 'parsing' | 'done';
+  driftReport: DriftReport | null;
+  compareMeta: DatasetMeta | null;
   loadFile: (file: File) => void;
   loadDemo: (fileName: string) => void;
   setOptions: (partial: Partial<RecipeOptions>) => void;
   importRecipe: (file: File) => void;
+  loadCompareFile: (file: File) => void;
+  loadCompareDemo: (fileName: string) => void;
   exportCsv: () => void;
   exportRecipe: () => void;
   openInLab: () => void;
@@ -71,6 +77,9 @@ const initialData = {
   applying: false,
   exportedFile: null,
   labHandoff: null,
+  driftStatus: 'idle' as const,
+  driftReport: null,
+  compareMeta: null,
 };
 
 export const useDataStore = create<DataState>((set, get) => {
@@ -100,6 +109,8 @@ export const useDataStore = create<DataState>((set, get) => {
             cleanedPreview: message.payload.preview,
             stats: message.payload.stats,
           });
+        } else if (message.kind === 'drift') {
+          set({ driftStatus: 'done', driftReport: message.payload, compareMeta: message.meta });
         } else if (message.kind === 'csv') {
           if (message.purpose === 'lab') {
             set({ labHandoff: { name: message.name, content: message.content } });
@@ -138,6 +149,18 @@ export const useDataStore = create<DataState>((set, get) => {
       const options = { ...get().options, ...partial };
       set({ options, applying: true, recipeImportError: false });
       send({ kind: 'apply', options });
+    },
+
+    loadCompareFile(file) {
+      if (get().status !== 'ready') return;
+      set({ driftStatus: 'parsing', driftReport: null, compareMeta: null });
+      send({ kind: 'parse-compare-file', file });
+    },
+
+    loadCompareDemo(fileName) {
+      if (get().status !== 'ready') return;
+      set({ driftStatus: 'parsing', driftReport: null, compareMeta: null });
+      send({ kind: 'parse-compare-url', url: `/datasets/${fileName}`, name: fileName });
     },
 
     importRecipe(file) {

@@ -81,3 +81,24 @@ test('recipes are replayable: derive dates, force a type, export, re-import', as
   await expect(page.getByTestId('recipe-imported')).toContainText('cafe-sales.csv');
   await expect(page.getByTestId('recipe-result')).toContainText('112 rows · 11 columns');
 });
+
+test('drift check compares a new batch against the loaded reference', async ({ page }) => {
+  await page.goto('/data');
+  await page.getByRole('button', { name: /cafe-sales\.csv/ }).click();
+  await expect(page.getByTestId('recipe-result')).toBeVisible();
+
+  // Compare the June demo batch (shifted prices, new Matcha product, city mix).
+  await page.getByTestId('drift-demo').click();
+  const result = page.getByTestId('drift-result');
+  await expect(result).toBeVisible();
+  await expect(result).toContainText('cafe-sales-june.csv vs the reference');
+
+  // The planted numeric shift is graded strong and both means are shown.
+  const priceRow = result.locator('tr', { hasText: 'unit_price' });
+  await expect(priceRow).toContainText('strong drift');
+  await expect(priceRow).toContainText('mean');
+
+  // The new product shows up as a new category.
+  const productRow = result.locator('tr', { hasText: 'product' });
+  await expect(productRow).toContainText('Matcha');
+});
