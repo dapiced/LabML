@@ -1,4 +1,4 @@
-import { Database, ExternalLink, Link2, ShieldCheck, WifiOff } from 'lucide-react';
+import { Database, Link2, ShieldCheck, WifiOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
@@ -49,15 +49,6 @@ export function AboutPage() {
         <Card className="flex flex-col gap-2 bg-surface-2">
           <Eyebrow>{t('about.openSource.title')}</Eyebrow>
           <p className="max-w-3xl text-sm text-muted">{t('about.openSource.body')}</p>
-          <a
-            href="https://github.com/dapiced/LabML"
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2 inline-flex w-fit items-center gap-2 text-sm font-medium text-accent-strong hover:underline"
-          >
-            <ExternalLink className="h-4 w-4" aria-hidden="true" />
-            {t('about.openSource.cta')}
-          </a>
         </Card>
       </section>
     </div>

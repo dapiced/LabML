@@ -1,7 +1,7 @@
 # LabML — Plan détaillé
 
 > **Plateforme ML interactive et privacy-first** — `app.dominicdapice.com/ml`
-> Inspirée de le site de référence ML Lab, repensée comme hub personnel Data/ML avec une identité propre et une couche MLOps visible.
+> Un hub personnel Data/ML « zéro friction » avec une identité propre et une couche MLOps visible.
 
 ---
 
@@ -29,13 +29,13 @@
 
 ---
 
-## 2. Analyse de la cible (le site de référence)
+## 2. Analyse de la cible
 
-_Note de transparence : l'accès direct à `app.le site de référence.co` est bloqué par la politique réseau de l'environnement d'analyse. Cette synthèse s'appuie sur les sources web publiques ([le site de référence.co](https://le site de référence.co/), [LinkedIn](https://www.linkedin.com/company/le site de référenceco)) et sur les observations fournies dans le brief._
+_Note : cette synthèse s'appuie sur l'observation d'un laboratoire ML « zéro friction » du marché, pris comme référence de parcours, et sur les observations fournies dans le brief._
 
 **Parcours utilisateur (le "flow" à égaler puis dépasser) :**
 
-| Étape        | Comportement le site de référence                                                                                                                            |
+| Étape        | Comportement de la référence                                                                                                                      |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Entrée       | Drag & drop d'un CSV (ou format tabulaire), lu localement, **rien n'est envoyé au serveur**                                                       |
 | Cible        | L'utilisateur choisit la colonne à prédire, ou ML Lab la propose ; suggestions de colonnes à conserver/exclure                                    |
@@ -168,7 +168,7 @@ Chaque section (`/ml`, `/data`, `/ai`) est un **feature folder** chargé paresse
 ### B.1 Sprint 1 — Données (≈ 1–2 semaines) — _première vraie valeur utilisateur_
 
 - Upload drag & drop CSV (Papa Parse en streaming dans un worker, jusqu'à ~500 Mo).
-- **Datasets de démo intégrés** (Iris, Titanic, California Housing) → essai en un clic, friction zéro comme le site de référence.
+- **Datasets de démo intégrés** (Iris, Titanic, California Housing) → essai en un clic, friction zéro.
 - Inférence de types par colonne (numérique, catégoriel, booléen, date, texte, ID).
 - **Profil de données** : par colonne — distribution (histogramme/barres), % manquants, cardinalité, min/max/moyenne/médiane ; aperçu tabulaire virtualisé.
 - Sélection de la cible + **détection automatique de la tâche** (classification binaire/multi-classes vs régression).
@@ -250,7 +250,7 @@ deploy.yml (après CI verte)
 
 ---
 
-## D. Améliorations vs le site de référence & priorisation
+## D. Améliorations vs la référence & priorisation
 
 ### D.1 Les 3 améliorations "signature" (ADN MLOps du portfolio)
 
@@ -279,7 +279,7 @@ deploy.yml (après CI verte)
 | Vision par ordinateur                                | V3                     | ONNX Runtime Web, `/ai/vision`         |
 | Authentification                                     | V3                     | seulement si un besoin réel émerge     |
 
-**Logique de priorisation :** le MVP doit battre le site de référence sur son propre terrain (parcours tabulaire + confiance + persistance + partage) avant d'élargir la surface. Chaque item V2/V3 est une brique indépendante grâce au découpage par features.
+**Logique de priorisation :** le MVP doit battre la référence sur son propre terrain (parcours tabulaire + confiance + persistance + partage) avant d'élargir la surface. Chaque item V2/V3 est une brique indépendante grâce au découpage par features.
 
 ---
 
@@ -315,15 +315,15 @@ deploy.yml (après CI verte)
 
 **Décisions validées le 20/08/2026 :**
 
-| #   | Décision           | Choix validé                                                                                                   |
-| --- | ------------------ | -------------------------------------------------------------------------------------------------------------- |
-| 1   | Framework          | **Vite + React + TypeScript** (SPA statique)                                                                   |
-| 2   | UI / design system | **Tailwind CSS v4 + shadcn/ui**                                                                                |
-| 3   | Exécution ML (MVP) | **100 % navigateur** (Azure réservé aux extensions V3)                                                         |
-| 4   | Déploiement        | **GitHub Actions + wrangler** (previews par PR)                                                                |
-| 5   | Langues            | **Bilingue FR/EN** dès le Sprint 0 (addendum)                                                                  |
-| 6   | Thèmes             | **Clair + sombre au choix de l'utilisateur** (addendum)                                                        |
-| 7   | Palette            | **Sarcelle/teal profond + accent cuivre — aucun jaune/ambre** (identité volontairement distincte de le site de référence) |
+| #   | Décision           | Choix validé                                                                                                      |
+| --- | ------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| 1   | Framework          | **Vite + React + TypeScript** (SPA statique)                                                                      |
+| 2   | UI / design system | **Tailwind CSS v4 + shadcn/ui**                                                                                   |
+| 3   | Exécution ML (MVP) | **100 % navigateur** (Azure réservé aux extensions V3)                                                            |
+| 4   | Déploiement        | **GitHub Actions + wrangler** (previews par PR)                                                                   |
+| 5   | Langues            | **Bilingue FR/EN** dès le Sprint 0 (addendum)                                                                     |
+| 6   | Thèmes             | **Clair + sombre au choix de l'utilisateur** (addendum)                                                           |
+| 7   | Palette            | **Sarcelle/teal profond + accent cuivre — aucun jaune/ambre** (identité volontairement distincte de la référence) |
 
 **Questions encore ouvertes (non bloquantes pour le Sprint 0) :**
 

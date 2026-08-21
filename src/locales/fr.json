@@ -29,9 +29,7 @@
     },
     "privacyStrip": "Vos données ne quittent jamais votre navigateur — vérifiez-le vous-même dans l'onglet Réseau.",
     "footer": {
-      "copyright": "© 2026 Dominic Dapice",
-      "openSource": "Open source",
-      "sourceCode": "Code source",
+      "copyright": "© 2026 Dominic D'Apice",
       "about": "Comment ça marche"
     }
   },
@@ -63,9 +61,8 @@
       }
     },
     "openSource": {
-      "title": "Open source",
-      "body": "Tout le labo — parsing, modèles, métriques, tests — est open source. Chaque affirmation de cette page se vérifie dans le code.",
-      "cta": "Parcourir le code sur GitHub"
+      "title": "Sous le capot",
+      "body": "Tout le labo — parsing, modèles, métriques — est écrit à la main et couvert par des tests automatisés (unitaires, bout en bout, accessibilité). Aucun service ML externe, aucun CDN : tout est livré avec l’application."
     }
   },
   "home": {
