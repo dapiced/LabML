@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 test.use({ locale: 'en-US' });
+// Titanic trains 8 models on 891 rows — the default 30 s cap is too tight.
+test.setTimeout(90_000);
 
 test('titanic: the test set is sliced per segment and the analysis joins the run', async ({
   page,

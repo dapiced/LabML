@@ -194,11 +194,23 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   run offers "reopen this run's data", and retraining is identical
   (seed 42). Forgetting is explicit and immediate.
 
+- **V20 (honest uncertainty) — shipped**: "0.82 on 178 test rows is not
+  0.82". After every run, the test set is **bootstrap-resampled** (1,000
+  seeded resamples, shared across models so comparisons are paired) and
+  each leaderboard metric gets its **95% interval**, drawn as
+  dot-and-whisker rows on a common scale. The winner-vs-baseline gap gets
+  a **paired verdict in plain language** — "the gap survives resampling
+  (99.8% of resamples), probably real" or "the interval crosses zero,
+  possibly noise" — and the analysis joins the run record. The honest
+  limits ship with the numbers: intervals measure sensitivity to the test
+  draw (not training variance), tiny test sets are declined instead of
+  decorated, and a wide interval is information, not a defect.
+
 **Cap 3 is complete** (V11 drift · V13 complete runs · V14 prerender).
 **Cap 4 is complete**: V15 batch scoring, V16 imbalance tools, V17
 joins & anomalies and V18 per-segment analysis all shipped.
-**Cap 5 is underway**: V19 persistent projects shipped; V20 (honest
-uncertainty), V21 (run comparison) and V22 (model import) remain. V12 (an
+**Cap 5 is underway**: V19 persistent projects and V20 honest uncertainty
+shipped; V21 (run comparison) and V22 (model import) remain. V12 (an
 optional generative chat behind a server-side key proxy — never an API key
 in the browser) stays on hold as a product decision.
 
