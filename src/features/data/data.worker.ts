@@ -6,6 +6,7 @@
  */
 import Papa from 'papaparse';
 import { buildQualityReport } from '@/features/data/quality/checks';
+import { inferColumnType } from '@/features/ml/data/infer';
 import { applyRecipe } from '@/features/data/quality/clean';
 import { DEFAULT_RECIPE } from '@/features/data/quality/types';
 import type { Cell } from '@/features/ml/data/types';
@@ -78,6 +79,9 @@ function finishParse(name: string, bytes: number) {
       meta: { name, rowCount, columnCount: header.length, bytes },
       preview: previewOf(header, columns),
       report: buildQualityReport(header, columns),
+      columnTypes: Object.fromEntries(
+        header.map((name2, i) => [name2, inferColumnType(name2, columns[i])]),
+      ),
     },
   });
 }

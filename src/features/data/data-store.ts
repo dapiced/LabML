@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { DEFAULT_RECIPE } from '@/features/data/quality/types';
+import { DEFAULT_RECIPE, parseRecipeFile } from '@/features/data/quality/types';
 import type { CleanStats, QualityReport, RecipeOptions } from '@/features/data/quality/types';
 import type { DatasetMeta } from '@/features/ml/data/types';
 import type { DataWorkerRequest, DataWorkerResponse } from '@/features/data/data-protocol';
@@ -20,6 +20,11 @@ interface DataState {
   /** Report and preview of the ORIGINAL data — the "before" side. */
   report: QualityReport | null;
   preview: Record<string, string>[];
+  /** Inferred type per column, the baseline for the type overrides. */
+  columnTypes: Record<string, string>;
+  /** Provenance of an imported recipe, for the confirmation line. */
+  recipeSource: { name: string; exportedAt?: string } | null;
+  recipeImportError: boolean;
   options: RecipeOptions;
   /** Report, preview and counters of the cleaned data — the "after" side. */
   cleanedReport: QualityReport | null;
@@ -33,6 +38,7 @@ interface DataState {
   loadFile: (file: File) => void;
   loadDemo: (fileName: string) => void;
   setOptions: (partial: Partial<RecipeOptions>) => void;
+  importRecipe: (file: File) => void;
   exportCsv: () => void;
   exportRecipe: () => void;
   openInLab: () => void;
@@ -55,6 +61,9 @@ const initialData = {
   meta: null,
   report: null,
   preview: [],
+  columnTypes: {},
+  recipeSource: null,
+  recipeImportError: false,
   options: DEFAULT_RECIPE,
   cleanedReport: null,
   cleanedPreview: [],
@@ -78,6 +87,7 @@ export const useDataStore = create<DataState>((set, get) => {
             meta: message.payload.meta,
             report: message.payload.report,
             preview: message.payload.preview,
+            columnTypes: message.payload.columnTypes,
             rowsParsed: message.payload.meta.rowCount,
             applying: true,
           });
@@ -126,8 +136,25 @@ export const useDataStore = create<DataState>((set, get) => {
 
     setOptions(partial) {
       const options = { ...get().options, ...partial };
-      set({ options, applying: true });
+      set({ options, applying: true, recipeImportError: false });
       send({ kind: 'apply', options });
+    },
+
+    importRecipe(file) {
+      void file.text().then((text) => {
+        const parsed = parseRecipeFile(text);
+        if (!parsed) {
+          set({ recipeImportError: true });
+          return;
+        }
+        set({
+          options: parsed.options,
+          applying: true,
+          recipeImportError: false,
+          recipeSource: { name: parsed.source ?? file.name, exportedAt: parsed.exportedAt },
+        });
+        send({ kind: 'apply', options: parsed.options });
+      });
     },
 
     exportCsv() {

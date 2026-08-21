@@ -351,7 +351,8 @@
       "v6": "V6 assistant de données : questions FR/EN calculées localement, sans LLM — livré",
       "v7": "V7 exploration : k-means + ACP + profils de groupes, sans cible — livré",
       "v8": "V8 séries temporelles : prévision Holt-Winters, backtest à origine glissante — livré",
-      "v9": "V9 vitesse & confort : coquille statique /ml, toast de mise à jour PWA, webcam vision — livré"
+      "v9": "V9 vitesse & confort : coquille statique /ml, toast de mise à jour PWA, webcam vision — livré",
+      "v10": "V10 Data Studio 2 : recettes rejouables, types forcés, décomposition de dates — livré"
     }
   },
   "data": {
@@ -414,13 +415,21 @@
     },
     "recipe": {
       "title": "Recette de nettoyage",
+      "import": "Importer une recette",
+      "imported": "Recette appliquée depuis {{name}}",
+      "importedAt": "exportée le {{date}}",
+      "importError": "Ce fichier n'est pas une recette LabML.",
+      "typesTitle": "Types de colonnes",
+      "typesHint": "Forcez la façon dont une colonne est traitée par le nettoyage (fusion de variantes, imputation, écrêtage, décomposition de dates). « Auto » garde le type inféré.",
+      "typeAuto": "auto ({{type}})",
       "applying": "Application…",
       "toggles": {
         "trimWhitespace": "Retirer les espaces parasites",
         "mergeVariants": "Fusionner les variantes de graphie vers la forme la plus fréquente",
         "dropDuplicates": "Supprimer les lignes dupliquées",
         "dropStructural": "Supprimer les colonnes constantes et quasi vides",
-        "clipOutliers": "Écrêter les valeurs aberrantes aux bornes de Tukey"
+        "clipOutliers": "Écrêter les valeurs aberrantes aux bornes de Tukey",
+        "deriveDates": "Décomposer les colonnes de dates (année, mois, jour de semaine)"
       },
       "missing": {
         "label": "Valeurs manquantes",
@@ -435,6 +444,9 @@
         "rows_other": "{{count, number}} lignes supprimées",
         "columns_one": "{{count, number}} colonne supprimée",
         "columns_other": "{{count, number}} colonnes supprimées",
+        "columnsAdded_one": "{{count, number}} colonne ajoutée : {{columns}}",
+        "columnsAdded_other": "{{count, number}} colonnes ajoutées : {{columns}}",
+        "columnsAddedNone": "aucune colonne date à décomposer",
         "columnsList_one": "{{count, number}} colonne supprimée : {{columns}}",
         "columnsList_other": "{{count, number}} colonnes supprimées : {{columns}}"
       },
