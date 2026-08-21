@@ -93,8 +93,8 @@ describe('calibrationCurve', () => {
     expect(curve.bins[1]).toEqual({ meanPredicted: 0.15, observedRate: 1, count: 1 });
     expect(curve.bins[2]).toEqual({ meanPredicted: 0.85, observedRate: 0, count: 1 });
     expect(curve.bins[3]).toEqual({ meanPredicted: 0.95, observedRate: 1, count: 1 });
-    // Brier = (0.05² + 0.85² + 0.15² + 0.05²) / 4
-    expect(curve.brier).toBeCloseTo((0.0025 + 0.7225 + 0.0225 + 0.0025) / 4, 10);
+    // Brier = ((0.95−1)² + (0.85−0)² + (0.15−1)² + (0.05−0)²) / 4 = 1.45 / 4
+    expect(curve.brier).toBeCloseTo(1.45 / 4, 10);
   });
 
   it('a probability of exactly 1 lands in the last bin', () => {
