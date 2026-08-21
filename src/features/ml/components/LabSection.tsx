@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { DropZone } from '@/features/ml/components/DropZone';
+import { ImportModelPanel } from '@/features/ml/components/ImportModelPanel';
 import { useLabStore } from '@/features/ml/lab-store';
 
 // The whole post-load lab arrives only once a dataset is actually loaded.
@@ -57,7 +58,12 @@ export function LabSection() {
             {t('ml.lab.noRequests')}
           </span>
         </div>
-        {status === 'idle' && <DropZone />}
+        {status === 'idle' && (
+          <>
+            <DropZone />
+            <ImportModelPanel />
+          </>
+        )}
         {status === 'parsing' && <ParsingPanel />}
         {status === 'error' && <ErrorPanel />}
         {status === 'ready' && (

@@ -347,6 +347,32 @@
         "intervalsOverlap": "The intervals overlap — on these test sets, the gap between the two runs could be noise.",
         "intervalsNote": "Each interval comes from its own run's test draw (v20). Two runs are never paired — read this as an indication, not a test."
       },
+      "imported": {
+        "title": "Reuse an exported model",
+        "hint": "Trained here before? Drop the exported model (.json) — it scores new files without retraining. Everything stays in your browser.",
+        "browse": "Import a model (.json)",
+        "loading": "Reading…",
+        "clear": "Remove the imported model",
+        "targetBadge": "predicts {{target}}",
+        "summary": "features: {{features}} · trained on {{source}} · exported {{date}}",
+        "scoreCta": "Score a CSV with this model",
+        "scoring": "Scoring…",
+        "scoreHint": "The file must carry the feature columns above; a target column is optional and only feeds the honest comparison.",
+        "verdict": "{{name}} — {{rows}} rows scored by {{model}}.",
+        "colReference": "Original run (test)",
+        "note": "The reference column is the exporting run's held-out test — a different draw than this file. Read gaps as signals, not verdicts.",
+        "errors": {
+          "invalid-json": "This file is not valid JSON.",
+          "not-labml": "This JSON was not exported by LabML.",
+          "unsupported-version": "Format v{{detail}} predates re-import — export the model again from a fresh run.",
+          "bad-manifest": "The manifest is incomplete — this export cannot be trusted to predict.",
+          "unsupported-kind": "Unknown model family in this export.",
+          "no-model": "Import a model before scoring.",
+          "empty": "The file is empty.",
+          "missingColumns": "The file is missing required columns: {{detail}}.",
+          "generic": "The file could not be processed."
+        }
+      },
       "datasets": {
         "keepButton": "Keep in this browser",
         "keeping": "Keeping…",

@@ -1,4 +1,5 @@
 import type { Cell, ParseResultPayload, TargetAnalysis } from '@/features/ml/data/types';
+import type { ImportedManifest } from '@/features/ml/train/deserialize';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
 import type { ForecastPayload } from '@/features/ml/timeseries/run';
 import type { BatchScore } from '@/features/ml/train/score';
@@ -39,7 +40,11 @@ export type WorkerRequest =
   | { kind: 'score-batch-url'; url: string; name: string; model: ModelKey }
   | { kind: 'threshold-analysis'; model: ModelKey }
   | { kind: 'segment-analysis'; model: ModelKey }
-  | { kind: 'uncertainty-analysis' };
+  | { kind: 'uncertainty-analysis' }
+  // v22: an exported model comes back to score files, no retraining.
+  | { kind: 'load-model'; text: string }
+  | { kind: 'score-imported-file'; file: File }
+  | { kind: 'score-imported-url'; url: string; name: string };
 
 /** Messages emitted by the data/training worker. */
 export type WorkerResponse =
@@ -71,4 +76,8 @@ export type WorkerResponse =
   | { kind: 'uncertainty-result'; payload: UncertaintyAnalysis | null }
   // Dedicated channel: a bad batch file must not tear down the run state.
   | { kind: 'batch-error'; message: string }
+  // v22 import flow — its errors never touch the run or dataset state.
+  | { kind: 'model-loaded'; manifest: ImportedManifest }
+  | { kind: 'imported-scored'; payload: BatchScore }
+  | { kind: 'import-error'; message: string }
   | { kind: 'error'; message: string };

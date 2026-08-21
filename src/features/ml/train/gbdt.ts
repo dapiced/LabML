@@ -305,3 +305,28 @@ export function trainGbdtClassifier(
 
   return { boosters, proba };
 }
+
+/**
+ * Raw-score predictor rebuilt from exported parameters alone (v22 import):
+ * the same bin edges and learning rate the booster trained with.
+ */
+export function gbdtRawPredictor(
+  trees: GbdtTree[],
+  baseScore: number,
+  edges: number[][],
+  learningRate: number,
+): (rows: number[][]) => number[] {
+  return (rows) =>
+    rows.map((row) => {
+      const binnedRow = new Uint8Array(row.length);
+      for (let j = 0; j < row.length; j++) binnedRow[j] = binValue(edges[j], row[j]);
+      let score = baseScore;
+      for (const tree of trees) score += learningRate * treePredictBinned(tree, binnedRow);
+      return score;
+    });
+}
+
+/** The sigmoid, exported for the import path's probability rebuild. */
+export function gbdtSigmoid(z: number): number {
+  return sigmoid(z);
+}
