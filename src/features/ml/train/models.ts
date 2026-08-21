@@ -1,5 +1,7 @@
 import { DecisionTreeClassifier, DecisionTreeRegression } from 'ml-cart';
 import { RandomForestClassifier, RandomForestRegression } from 'ml-random-forest';
+import { trainGbdtClassifier, trainGbdtRegressor, GBDT_DEFAULTS } from '@/features/ml/train/gbdt';
+import { trainMlp } from '@/features/ml/train/mlp';
 import { mulberry32, shuffleInPlace } from '@/features/ml/train/random';
 import type { ModelKey } from '@/features/ml/train/types';
 
@@ -305,8 +307,61 @@ const forest: ModelDef = {
   },
 };
 
+// --- Histogram gradient boosting (own implementation, see gbdt.ts) ---------
+
+const gbdt: ModelDef = {
+  key: 'gbdt',
+  train(X, y, ctx) {
+    if (ctx.task === 'regression') {
+      const model = trainGbdtRegressor(X, y);
+      return {
+        predict: (rows) => model.predictRaw(rows),
+        toJSON: () => ({
+          kind: 'gbdt',
+          task: 'regression',
+          params: GBDT_DEFAULTS,
+          baseScore: model.baseScore,
+          trees: model.trees,
+        }),
+      };
+    }
+    const model = trainGbdtClassifier(X, y, ctx.classCount);
+    return {
+      predict: (rows) => model.proba(rows).map((p) => p.indexOf(Math.max(...p))),
+      predictProba: (rows) => model.proba(rows),
+      toJSON: () => ({
+        kind: 'gbdt',
+        task: 'classification',
+        params: GBDT_DEFAULTS,
+        boosters: model.boosters.map((b) => ({ baseScore: b.baseScore, trees: b.trees })),
+      }),
+    };
+  },
+};
+
+// --- Neural network (own MLP, see mlp.ts) ----------------------------------
+
+const mlp: ModelDef = {
+  key: 'mlp',
+  train(X, y, ctx) {
+    if (ctx.task === 'regression') {
+      const model = trainMlp(X, y, 0, ctx.seed);
+      return {
+        predict: (rows) => model.forward(rows).map((p) => p[0]),
+        toJSON: () => model.toJSON(),
+      };
+    }
+    const model = trainMlp(X, y, ctx.classCount, ctx.seed);
+    return {
+      predict: (rows) => model.forward(rows).map((p) => p.indexOf(Math.max(...p))),
+      predictProba: (rows) => model.forward(rows),
+      toJSON: () => model.toJSON(),
+    };
+  },
+};
+
 export function modelZoo(task: 'classification' | 'regression'): ModelDef[] {
   return task === 'classification'
-    ? [baseline, logistic, knn, naiveBayes, tree, forest]
-    : [baseline, linear, knn, tree, forest];
+    ? [baseline, logistic, knn, naiveBayes, tree, forest, gbdt, mlp]
+    : [baseline, linear, knn, tree, forest, gbdt, mlp];
 }

@@ -6,8 +6,16 @@ import { LabSection } from '@/features/ml/components/LabSection';
 import { RunsHistory } from '@/features/ml/components/RunsHistory';
 
 const STEP_KEYS = ['upload', 'target', 'train', 'read'] as const;
-const ROADMAP_KEYS = ['sprint0', 'sprint1', 'sprint2', 'sprint3', 'sprint4', 'sprint5'] as const;
-const SHIPPED_SPRINTS = 6; // the full MVP (S0–S5) is live
+const ROADMAP_KEYS = [
+  'sprint0',
+  'sprint1',
+  'sprint2',
+  'sprint3',
+  'sprint4',
+  'sprint5',
+  'v2',
+] as const;
+const SHIPPED_SPRINTS = 7; // MVP (S0–S5) + V2 models are live
 
 export function MlHomePage() {
   const { t } = useTranslation();
@@ -49,7 +57,7 @@ export function MlHomePage() {
                   variant={index < SHIPPED_SPRINTS ? 'accent' : 'outline'}
                   className="mt-0.5 shrink-0"
                 >
-                  S{index}
+                  {key === 'v2' ? 'V2' : `S${index}`}
                 </Badge>
                 <span className={index < SHIPPED_SPRINTS ? 'text-ink' : 'text-muted'}>
                   {t(`ml.roadmap.${key}`)}

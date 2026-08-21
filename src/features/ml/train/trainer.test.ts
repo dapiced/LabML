@@ -40,7 +40,7 @@ describe('runTraining — classification', () => {
     const outcome = await runTraining(columns, profiles, config, callbacks);
     expect(outcome).not.toBeNull();
     const summary = outcome!.summary;
-    expect(results).toHaveLength(6);
+    expect(results).toHaveLength(8);
     expect(results.every((r) => r.ok)).toBe(true);
 
     const baseline = results.find((r) => r.key === 'baseline')!;
@@ -52,7 +52,7 @@ describe('runTraining — classification', () => {
     expect(summary.trainRows + summary.testRows).toBe(N);
     expect(summary.featureColumns).toEqual(['f1', 'f2']);
     expect(summary.skippedColumns).toEqual(['note']); // free text is not trainable yet
-    expect(outcome!.artifacts.models.size).toBe(6);
+    expect(outcome!.artifacts.models.size).toBe(8);
     expect(outcome!.artifacts.testY).toHaveLength(summary.testRows);
   });
 
@@ -70,7 +70,7 @@ describe('runTraining — classification', () => {
     const { results, callbacks } = collector(() => results.length >= 2);
     const outcome = await runTraining(columns, profiles, config, callbacks);
     expect(outcome).toBeNull();
-    expect(results.length).toBeLessThan(6);
+    expect(results.length).toBeLessThan(8);
   });
 });
 
@@ -83,7 +83,7 @@ describe('runTraining — regression', () => {
     const { results, callbacks } = collector();
     const outcome = await runTraining(columns, profiles, config, callbacks);
     expect(outcome!.summary.taskType).toBe('regression');
-    expect(results).toHaveLength(5);
+    expect(results).toHaveLength(7);
     expect(results.every((r) => r.ok)).toBe(true);
     const linear = results.find((r) => r.key === 'linear')!;
     expect(linear.metrics.r2!).toBeGreaterThan(0.99);
