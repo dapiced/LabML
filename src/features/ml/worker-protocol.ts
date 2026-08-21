@@ -1,5 +1,6 @@
 import type { Cell, ParseResultPayload, TargetAnalysis } from '@/features/ml/data/types';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
+import type { ForecastPayload } from '@/features/ml/timeseries/run';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
 import type {
@@ -24,6 +25,7 @@ export type WorkerRequest =
   | { kind: 'tune'; model: TunableKey; config: TrainConfig }
   | { kind: 'cancel-tune' }
   | { kind: 'explore'; features: string[]; seed: number }
+  | { kind: 'forecast'; dateColumn: string; valueColumn: string }
   | { kind: 'export-model'; model: ModelKey }
   | { kind: 'export-predictions'; model: ModelKey };
 
@@ -43,6 +45,7 @@ export type WorkerResponse =
   | { kind: 'tune-complete'; payload: TuneOutcome }
   | { kind: 'tune-cancelled' }
   | { kind: 'explore-result'; payload: ExplorationPayload }
+  | { kind: 'forecast-result'; payload: ForecastPayload }
   | { kind: 'model-json'; model: ModelKey; json: string | null }
   | { kind: 'predictions-csv'; model: ModelKey; csv: string }
   | { kind: 'error'; message: string };
