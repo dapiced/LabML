@@ -7,6 +7,7 @@ import { Eyebrow } from '@/components/ui/eyebrow';
 import { ColumnCard } from '@/features/ml/components/ColumnCard';
 import { DropZone } from '@/features/ml/components/DropZone';
 import { TargetPicker } from '@/features/ml/components/TargetPicker';
+import { ExplorePanel } from '@/features/ml/components/ExplorePanel';
 import { TrainPanel } from '@/features/ml/components/TrainPanel';
 import { effectiveExclusion, useLabStore } from '@/features/ml/lab-store';
 
@@ -82,6 +83,8 @@ function DatasetView() {
       <TargetPicker />
 
       <TrainPanel />
+
+      <ExplorePanel />
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-baseline gap-3">

@@ -337,3 +337,24 @@ deploy.yml (après CI verte)
 3. **Vous** : créer le projet Cloudflare Pages + token (guide fourni), ajouter les 2 secrets GitHub.
 4. **Moi** : Sprints 1 → 2 dans la foulée — l'application devient _réellement_ un ML Lab (upload → profilage → entraînement → leaderboard), puis Sprints 3 → 5.
 5. Revue ensemble à chaque fin de sprint sur l'URL de preview.
+
+---
+
+## J. Cap 2 — plan d'amélioration post-V6 (21/08/2026)
+
+**Bilan** : tout ce que ce plan promettait est livré et vérifié en production —
+S0–S5 (MVP complet), V2 (GBDT + MLP + PDP + Excel), V3 (vision ONNX), V4 (Data
+Studio), V5 (recherche d'hyperparamètres + Shapley), V6 (assistant de données
+FR/EN). 12 PRs mergées, 152 tests unitaires, 32 e2e, WCAG AA, PWA hors-ligne.
+
+Le Cap 2 priorise ce qui augmente le plus la valeur du produit en respectant
+les invariants (100 % navigateur, CSP stricte sans tiers, déterminisme seedé,
+FR/EN, WCAG AA, honnêteté des évaluations) :
+
+| Vague  | Contenu                                                                                                                                                                                                                                                                                                       | Pourquoi                                                                                                           |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **V7** | **Exploration non supervisée** dans le ML Lab : k-means maison (init k-means++ seedée, k ∈ 2–5 choisi par silhouette), projection PCA 2D maison (itération de puissance), profils de groupes en langage clair, nuage à couleurs **et formes** (palette validée daltonisme par le validateur du design system) | Comble le vrai manque : aujourd'hui le labo exige une cible ; beaucoup de jeux de données s'explorent d'abord sans |
+| V8     | **Séries temporelles** : détection date + cible numérique → décomposition tendance/saison, prévision Holt-Winters maison, backtest à origine glissante                                                                                                                                                        | Ouvre une classe de problèmes entière                                                                              |
+| V9     | **Performance & confort** : budget Lighthouse /ml ≥ 0,90 (préchargements, découpage), toast de mise à jour PWA, webcam pour la vision (Permissions-Policy à ouvrir)                                                                                                                                           | Qualité perçue et scores                                                                                           |
+| V10    | **Data Studio 2** : recette importable et rejouable sur un nouveau fichier, types forcés par colonne, colonnes dérivées                                                                                                                                                                                       | Boucle de reproductibilité complète                                                                                |
+| —      | **Chat génératif** (optionnel, hors Cap) : exige un proxy serveur (Cloudflare Worker) + clé fournie par le propriétaire — jamais de clé dans le navigateur ; écran de consentement obligatoire                                                                                                                | Décision produit à prendre séparément                                                                              |
