@@ -11,6 +11,7 @@ import {
   ScatterPlot,
 } from '@/features/ml/components/insights/RegressionDiagnostics';
 import { RocCurve } from '@/features/ml/components/insights/RocCurve';
+import { RunArtifactsView } from '@/features/ml/components/RunArtifactsView';
 import { buildPlainRead } from '@/features/ml/projects/report';
 import type { RunRecord } from '@/features/ml/projects/types';
 
@@ -64,6 +65,8 @@ export function RunView({ record }: { record: RunRecord }) {
           <PdpChart key={column} column={column} points={points} />
         ))}
       </div>
+
+      {record.artifacts && <RunArtifactsView artifacts={record.artifacts} />}
     </div>
   );
 }
