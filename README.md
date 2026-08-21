@@ -81,10 +81,16 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   distinctive traits in plain language. The scatter encodes groups with a
   **colorblind-validated palette** (checked by the design-system validator, light
   and dark) _and_ marker shapes — identity is never color-alone.
-- **Cap 2** (see [PLAN.md](PLAN.md) § J): V8 time series (Holt-Winters, rolling
-  backtest), V9 performance & PWA update UX, V10 Data Studio replayable recipes —
-  and, as a separate product decision, an optional generative chat behind a
-  server-side key proxy (never an API key in the browser).
+- **V8 (time series) — shipped**: when a dataset carries a date column, the lab
+  forecasts any numeric value over time. Hand-written exponential-smoothing family
+  (SES, Holt, additive **Holt-Winters** with seasonal-period detection), plus naive
+  and seasonal-naive baselines; the winner is chosen by a **rolling-origin one-step
+  backtest** that never peeks at the future, and the forecast band is the empirical
+  80% interval of the winner's backtest residuals — measured, not assumed. Dated
+  demo dataset (`energy.csv`, deterministic) included.
+- **Cap 2** (see [PLAN.md](PLAN.md) § J): V9 performance & PWA update UX, V10 Data
+  Studio replayable recipes — and, as a separate product decision, an optional
+  generative chat behind a server-side key proxy (never an API key in the browser).
 
 Full roadmap in [PLAN.md](PLAN.md), target analysis in
 [docs/analyse-quantifai.md](docs/analyse-quantifai.md).
