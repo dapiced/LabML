@@ -8,6 +8,8 @@ import type {
   ExclusionReason,
   TaskInfo,
 } from '@/features/ml/data/types';
+import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
+import type { ShapleyExplanation } from '@/features/ml/train/shapley';
 import type {
   InsightsPayload,
   ModelKey,
@@ -46,6 +48,11 @@ interface LabState {
   /** Insights bundle for the currently inspected model (defaults to the best). */
   insights: InsightsPayload | null;
   whatIf: WhatIfResult | null;
+  /** Shapley explanation of the latest what-if row (cleared with it). */
+  explanation: ShapleyExplanation | null;
+  tuneStatus: 'idle' | 'running' | 'done';
+  tuneProgress: { done: number; total: number; bestCv: number | null } | null;
+  tuneOutcome: TuneOutcome | null;
   /** The auto-saved record of the current run (id set once stored). */
   currentRun: RunRecord | null;
   /** File produced by an export action, consumed once by the UI download effect. */
@@ -58,6 +65,9 @@ interface LabState {
   cancelTrain: () => void;
   selectInsightModel: (model: ModelKey) => void;
   requestWhatIf: (values: Record<string, string>) => void;
+  requestExplanation: (values: Record<string, string>) => void;
+  tune: (model: TunableKey) => void;
+  cancelTune: () => void;
   exportModel: () => void;
   exportPredictions: () => void;
   clearExportedFile: () => void;
@@ -78,6 +88,10 @@ const initialTraining = {
   summary: null,
   insights: null,
   whatIf: null,
+  explanation: null,
+  tuneStatus: 'idle' as const,
+  tuneProgress: null,
+  tuneOutcome: null,
   currentRun: null,
   exportedFile: null,
 };
@@ -177,7 +191,17 @@ export const useLabStore = create<LabState>((set, get) => {
             });
           }
         } else if (message.kind === 'what-if-result') {
-          set({ whatIf: message.payload });
+          set({ whatIf: message.payload, explanation: null });
+        } else if (message.kind === 'explanation') {
+          set({ explanation: message.payload });
+        } else if (message.kind === 'tune-progress') {
+          set({
+            tuneProgress: { done: message.done, total: message.total, bestCv: message.bestCv },
+          });
+        } else if (message.kind === 'tune-complete') {
+          set({ tuneStatus: 'done', tuneProgress: null, tuneOutcome: message.payload });
+        } else if (message.kind === 'tune-cancelled') {
+          set({ tuneStatus: 'idle', tuneProgress: null });
         } else if (message.kind === 'model-json') {
           if (message.json !== null) {
             set({
@@ -268,7 +292,7 @@ export const useLabStore = create<LabState>((set, get) => {
       const state = get();
       if (state.trainStatus !== 'done' || state.insights?.model === model) return;
       if (!state.results.some((r) => r.ok && r.key === model)) return;
-      set({ insights: null, whatIf: null });
+      set({ insights: null, whatIf: null, explanation: null });
       send({ kind: 'model-insights', model });
     },
 
@@ -276,6 +300,31 @@ export const useLabStore = create<LabState>((set, get) => {
       const state = get();
       if (state.trainStatus !== 'done' || !state.insights) return;
       send({ kind: 'what-if', model: state.insights.model, values });
+    },
+
+    requestExplanation(values) {
+      const state = get();
+      if (state.trainStatus !== 'done' || !state.insights) return;
+      send({ kind: 'explain', model: state.insights.model, values });
+    },
+
+    tune(model) {
+      const state = get();
+      if (!state.target || state.trainStatus !== 'done' || state.tuneStatus === 'running') return;
+      const features = state.profiles
+        .map((p) => p.name)
+        .filter((name) => name !== state.target && effectiveExclusion(state, name) === null);
+      set({ tuneStatus: 'running', tuneProgress: null, tuneOutcome: null });
+      send({
+        kind: 'tune',
+        model,
+        config: { target: state.target, features, seed: TRAIN_SEED, testRatio: TEST_RATIO },
+      });
+    },
+
+    cancelTune() {
+      if (get().tuneStatus !== 'running') return;
+      send({ kind: 'cancel-tune' });
     },
 
     exportModel() {

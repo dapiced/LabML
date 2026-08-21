@@ -166,51 +166,59 @@ const logistic: ModelDef = {
 
 // --- k-nearest neighbors ---------------------------------------------------
 
+/** Parameterizable k-NN — the zoo uses k = 5, the hyperparameter search varies it. */
+export function trainKnn(
+  X: number[][],
+  y: number[],
+  ctx: ModelContext,
+  kWanted: number,
+): TrainedModel {
+  let trainX = X;
+  let trainY = y;
+  if (X.length > KNN_MAX_TRAIN) {
+    const indices = shuffleInPlace(
+      X.map((_, i) => i),
+      mulberry32(ctx.seed),
+    ).slice(0, KNN_MAX_TRAIN);
+    trainX = indices.map((i) => X[i]);
+    trainY = indices.map((i) => y[i]);
+  }
+  const k = Math.min(kWanted, trainX.length);
+
+  function neighbors(row: number[]): number[] {
+    const distances = trainX.map((trainRow, i) => {
+      let sum = 0;
+      for (let j = 0; j < row.length; j++) sum += (row[j] - trainRow[j]) ** 2;
+      return { i, d: sum };
+    });
+    distances.sort((a, b) => a.d - b.d);
+    return distances.slice(0, k).map(({ i }) => trainY[i]);
+  }
+
+  if (ctx.task === 'regression') {
+    return {
+      predict: (rows) =>
+        rows.map((row) => {
+          const near = neighbors(row);
+          return near.reduce((a, v) => a + v, 0) / near.length;
+        }),
+    };
+  }
+  const proba = (rows: number[][]) =>
+    rows.map((row) => {
+      const votes = new Array<number>(ctx.classCount).fill(0);
+      for (const label of neighbors(row)) votes[label] += 1;
+      return votes.map((v) => v / k);
+    });
+  return {
+    predict: (rows) => proba(rows).map((p) => p.indexOf(Math.max(...p))),
+    predictProba: proba,
+  };
+}
+
 const knn: ModelDef = {
   key: 'knn',
-  train(X, y, ctx) {
-    let trainX = X;
-    let trainY = y;
-    if (X.length > KNN_MAX_TRAIN) {
-      const indices = shuffleInPlace(
-        X.map((_, i) => i),
-        mulberry32(ctx.seed),
-      ).slice(0, KNN_MAX_TRAIN);
-      trainX = indices.map((i) => X[i]);
-      trainY = indices.map((i) => y[i]);
-    }
-    const k = Math.min(KNN_K, trainX.length);
-
-    function neighbors(row: number[]): number[] {
-      const distances = trainX.map((trainRow, i) => {
-        let sum = 0;
-        for (let j = 0; j < row.length; j++) sum += (row[j] - trainRow[j]) ** 2;
-        return { i, d: sum };
-      });
-      distances.sort((a, b) => a.d - b.d);
-      return distances.slice(0, k).map(({ i }) => trainY[i]);
-    }
-
-    if (ctx.task === 'regression') {
-      return {
-        predict: (rows) =>
-          rows.map((row) => {
-            const near = neighbors(row);
-            return near.reduce((a, v) => a + v, 0) / near.length;
-          }),
-      };
-    }
-    const proba = (rows: number[][]) =>
-      rows.map((row) => {
-        const votes = new Array<number>(ctx.classCount).fill(0);
-        for (const label of neighbors(row)) votes[label] += 1;
-        return votes.map((v) => v / k);
-      });
-    return {
-      predict: (rows) => proba(rows).map((p) => p.indexOf(Math.max(...p))),
-      predictProba: proba,
-    };
-  },
+  train: (X, y, ctx) => trainKnn(X, y, ctx, KNN_K),
 };
 
 // --- Gaussian naive Bayes --------------------------------------------------
@@ -286,25 +294,38 @@ const tree: ModelDef = {
   },
 };
 
-const forest: ModelDef = {
-  key: 'forest',
-  train(X, y, ctx) {
-    const options = { nEstimators: 40, seed: ctx.seed, useSampleBagging: true };
-    if (ctx.task === 'regression') {
-      const model = new RandomForestRegression(options);
-      model.train(X, y);
-      return {
-        predict: (rows) => model.predict(rows),
-        toJSON: () => ({ kind: 'forest', model: model.toJSON() }),
-      };
-    }
-    const model = new RandomForestClassifier(options);
+/** Parameterizable random forest — the zoo uses 40 unbounded trees. */
+export function trainForest(
+  X: number[][],
+  y: number[],
+  ctx: ModelContext,
+  params?: { nEstimators: number; maxDepth?: number },
+): TrainedModel {
+  const options = {
+    nEstimators: params?.nEstimators ?? 40,
+    seed: ctx.seed,
+    useSampleBagging: true,
+    ...(params?.maxDepth !== undefined && { treeOptions: { maxDepth: params.maxDepth } }),
+  };
+  if (ctx.task === 'regression') {
+    const model = new RandomForestRegression(options);
     model.train(X, y);
     return {
       predict: (rows) => model.predict(rows),
       toJSON: () => ({ kind: 'forest', model: model.toJSON() }),
     };
-  },
+  }
+  const model = new RandomForestClassifier(options);
+  model.train(X, y);
+  return {
+    predict: (rows) => model.predict(rows),
+    toJSON: () => ({ kind: 'forest', model: model.toJSON() }),
+  };
+}
+
+const forest: ModelDef = {
+  key: 'forest',
+  train: (X, y, ctx) => trainForest(X, y, ctx),
 };
 
 // --- Histogram gradient boosting (own implementation, see gbdt.ts) ---------
