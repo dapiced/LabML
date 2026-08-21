@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 
 test.use({ locale: 'en-US' });
@@ -36,6 +37,13 @@ test('the AI hub links to the vision playground', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toContainText('neural network');
 });
 
+test('the deployed CSP allows blob: image previews', () => {
+  // The preview server does not enforce _headers, so guard the config itself:
+  // without blob: in img-src, uploaded-file previews render as broken images.
+  const headers = readFileSync('public/_headers', 'utf8');
+  expect(headers).toMatch(/img-src [^;\n]*blob:/);
+});
+
 test('vision playground classifies an image entirely in the browser', async ({ page }) => {
   await page.goto('/ai/vision');
 
@@ -49,7 +57,13 @@ test('vision playground classifies an image entirely in the browser', async ({ p
   await expect(page.getByTestId('vision-prediction')).toHaveCount(5, { timeout: 60_000 });
   await expect(page.getByText(/inference \d+ ms/)).toBeVisible();
   await expect(page.getByTestId('vision-prediction').first()).toContainText('%');
-  await expect(page.getByRole('img', { name: 'Analyzed image' })).toBeVisible();
+  // The preview must actually DECODE, not just exist — a CSP that blocks
+  // blob: URLs leaves a visible-but-broken <img> (naturalWidth 0).
+  const previewImg = page.getByRole('img', { name: 'Analyzed image' });
+  await expect(previewImg).toBeVisible();
+  await expect
+    .poll(async () => previewImg.evaluate((el: HTMLImageElement) => el.naturalWidth))
+    .toBeGreaterThan(0);
 });
 
 test('webcam capture classifies a live frame (fake camera)', async ({ page }) => {
