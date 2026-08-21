@@ -352,7 +352,8 @@
       "v7": "V7 exploration: k-means + PCA + group profiles, no target needed — shipped",
       "v8": "V8 time series: Holt-Winters forecasting, rolling-origin backtest — shipped",
       "v9": "V9 speed & comfort: static /ml shell, PWA update toast, webcam vision — shipped",
-      "v10": "V10 Data Studio 2: replayable recipes, forced types, date expansion — shipped"
+      "v10": "V10 Data Studio 2: replayable recipes, forced types, date expansion — shipped",
+      "v11": "V11 MLOps: drift check — schema diff, per-column PSI, new/vanished categories — shipped"
     }
   },
   "data": {
@@ -420,7 +421,7 @@
       "importedAt": "exported {{date}}",
       "importError": "This file is not a LabML recipe.",
       "typesTitle": "Column types",
-      "typesHint": "Force how a column is treated by the cleaning steps (variant merging, imputation, outlier clamping, date expansion). \u201cAuto\u201d keeps the inferred type.",
+      "typesHint": "Force how a column is treated by the cleaning steps (variant merging, imputation, outlier clamping, date expansion). “Auto” keeps the inferred type.",
       "typeAuto": "auto ({{type}})",
       "applying": "Applying…",
       "toggles": {
@@ -463,6 +464,28 @@
       "lab": "Open in the ML Lab",
       "csv": "Download the cleaned CSV",
       "recipe": "Download the recipe (JSON)"
+    },
+    "drift": {
+      "title": "Drift check",
+      "hint": "Compare a new batch against {{name}} (the loaded reference): schema differences, distribution shifts (PSI), new or vanished categories. The new file is parsed in your browser too — nothing is uploaded.",
+      "browse": "Compare a new file…",
+      "demoTag": "demo batch",
+      "comparing": "Comparing…",
+      "verdict": "{{name}} vs the reference: {{drifted}} of {{total}} columns drifted ({{refRows}} → {{newRows}} rows).",
+      "schemaTitle": "Schema changes:",
+      "colColumn": "column",
+      "colSeverity": "severity",
+      "colDetail": "detail",
+      "meanShift": "mean {{ref}} → {{next}}",
+      "newCategories": "new: {{list}}",
+      "goneCategories": "gone: {{list}}",
+      "missingShift": "missing {{ref}}% → {{next}}%",
+      "severity": {
+        "stable": "stable",
+        "moderate": "moderate drift",
+        "strong": "strong drift"
+      },
+      "note": "PSI (Population Stability Index) measures how much a column’s distribution moved, over bins built from the reference. Conventional reading: < 0.1 stable, 0.1–0.25 moderate, > 0.25 strong — a model trained on the reference should be re-examined."
     },
     "privacy": {
       "title": "Nothing leaves your browser",

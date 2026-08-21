@@ -1,11 +1,14 @@
 import type { DatasetMeta } from '@/features/ml/data/types';
 import type { CleanStats, QualityReport, RecipeOptions } from '@/features/data/quality/types';
+import type { DriftReport } from '@/features/data/quality/drift';
 
 export type DataWorkerRequest =
   | { kind: 'parse-file'; file: File }
   | { kind: 'parse-url'; url: string; name: string }
   | { kind: 'apply'; options: RecipeOptions }
-  | { kind: 'export-csv'; purpose: 'download' | 'lab' };
+  | { kind: 'export-csv'; purpose: 'download' | 'lab' }
+  | { kind: 'parse-compare-file'; file: File }
+  | { kind: 'parse-compare-url'; url: string; name: string };
 
 export interface DataParsePayload {
   meta: DatasetMeta;
@@ -26,4 +29,5 @@ export type DataWorkerResponse =
   | { kind: 'parsed'; payload: DataParsePayload }
   | { kind: 'applied'; payload: DataApplyPayload }
   | { kind: 'csv'; purpose: 'download' | 'lab'; name: string; content: string }
+  | { kind: 'drift'; meta: DatasetMeta; payload: DriftReport }
   | { kind: 'error'; message: string };
