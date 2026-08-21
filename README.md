@@ -107,10 +107,21 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   `_month` and `_weekday` columns — making dates usable by the ML Lab after the
   hand-off, where they were previously dropped.
 
-**Cap 2 is complete** (V7 exploration · V8 time series · V9 speed & comfort ·
-V10 replayable recipes). Remaining candidates: full prerendering/SSR of the app
-(the last Lighthouse gap), and an optional generative chat behind a server-side
-key proxy (never an API key in the browser) — a separate product decision.
+- **V11 (drift check) — shipped**: the Data Studio compares a **new batch against
+  the loaded reference** — the MLOps gesture of checking that fresh data still
+  looks like what a model was trained on. Schema diff (added / removed /
+  re-typed columns), **PSI per column** (bins built from the reference's
+  quantiles, top-10 + OTHER buckets for categories, ε-smoothed so an emptied
+  bin stays finite), new / vanished categories, missing-rate shifts, and a
+  severity verdict on the conventional 0.1 / 0.25 thresholds. A deterministic
+  drifted demo batch (`cafe-sales-june.csv`) is included; the comparison file
+  is parsed in the browser like everything else.
+
+**Cap 2 is complete** (V7–V10). **Cap 3 is underway**: V11 drift check shipped;
+next candidates are an **optional generative chat** behind a server-side key
+proxy with explicit consent (never an API key in the browser), **complete runs**
+(tuning, Shapley, exploration and forecasts joining the history/report/share
+flow), and **generalized prerendering** (the last Lighthouse gap).
 
 Full roadmap in [PLAN.md](PLAN.md), target analysis in
 [docs/analyse-le site de référence.md](docs/analyse-le site de référence.md).
