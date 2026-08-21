@@ -117,7 +117,8 @@
       "demoTask": {
         "binary": "binaire",
         "multiclass": "multi-classes",
-        "regression": "régression"
+        "regression": "régression",
+        "timeseries": "série temporelle"
       },
       "parsing": "Lecture locale en cours…",
       "rowsRead": "{{count}} lignes lues",
@@ -202,6 +203,35 @@
         "forest": "Forêt aléatoire",
         "gbdt": "Gradient boosting",
         "mlp": "Réseau de neurones (MLP)"
+      },
+      "forecast": {
+        "title": "Séries temporelles",
+        "hint": "Ce jeu de données porte une colonne de dates. Le labo peut prévoir une valeur numérique dans le temps : naïf, naïf saisonnier, lissages exponentiels (SES, Holt, Holt-Winters additif — écrits maison), le gagnant choisi par un backtest à origine glissante qui ne regarde jamais le futur.",
+        "dateColumn": "Colonne de dates",
+        "valueColumn": "Valeur à prévoir",
+        "start": "Prévoir",
+        "running": "Backtest…",
+        "summary": "{{points}} points ({{freq}}) · backtest sur les {{holdout}} derniers points · gagnant : {{winner}} avec MAE {{mae}} (naïf : {{naive}}).",
+        "seasonNote": "Période saisonnière détectée : {{m}} observations.",
+        "freq": {
+          "daily": "journalier",
+          "weekly": "hebdomadaire",
+          "monthly": "mensuel",
+          "quarterly": "trimestriel",
+          "yearly": "annuel",
+          "irregular": "irrégulier"
+        },
+        "methods": {
+          "naive": "Naïf (dernière valeur)",
+          "seasonalNaive": "Naïf saisonnier",
+          "ses": "Lissage simple (SES)",
+          "holt": "Holt (tendance)",
+          "holtWinters": "Holt-Winters (tendance + saison)"
+        },
+        "methodHeader": "méthode",
+        "legendHistory": "historique ({{from}} → {{to}})",
+        "legendForecast": "prévision, {{count}} pas → {{to}}",
+        "note": "La bande est l'intervalle empirique à 80 % des erreurs de backtest à un pas du gagnant — mesurée, pas supposée. Chaque méthode a été notée sur des prévisions faites strictement avant chaque point mis de côté."
       },
       "explore": {
         "title": "Explorer sans cible",
@@ -313,7 +343,8 @@
       "v4": "V4 Data Studio : rapport de qualité, recette de nettoyage et passerelle vers le labo — livré",
       "v5": "V5 labo affûté : recherche d'hyperparamètres (CV) et explications de Shapley — livré",
       "v6": "V6 assistant de données : questions FR/EN calculées localement, sans LLM — livré",
-      "v7": "V7 exploration : k-means + ACP + profils de groupes, sans cible — livré"
+      "v7": "V7 exploration : k-means + ACP + profils de groupes, sans cible — livré",
+      "v8": "V8 séries temporelles : prévision Holt-Winters, backtest à origine glissante — livré"
     }
   },
   "data": {

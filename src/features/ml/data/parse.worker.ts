@@ -5,6 +5,7 @@ import { analyzeTarget, baselineSuggestions } from '@/features/ml/data/suggest';
 import { computeInsights, computeWhatIf } from '@/features/ml/train/insights';
 import { runSearch } from '@/features/ml/train/search';
 import { runExploration } from '@/features/ml/unsupervised/explore';
+import { runForecast } from '@/features/ml/timeseries/run';
 import { buildPredictionsCsv, serializeModel } from '@/features/ml/train/serialize';
 import { explainPrediction } from '@/features/ml/train/shapley';
 import { runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
@@ -197,6 +198,20 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       post({
         kind: 'explore-result',
         payload: runExploration(columnsAsMap(), profiles, request.features, request.seed),
+      });
+    } else if (request.kind === 'forecast') {
+      if (header.length === 0) throw new Error('no-data');
+      const dateIndex = header.indexOf(request.dateColumn);
+      const valueIndex = header.indexOf(request.valueColumn);
+      if (dateIndex < 0 || valueIndex < 0) throw new Error('unknown-column');
+      post({
+        kind: 'forecast-result',
+        payload: runForecast(
+          columns[dateIndex],
+          columns[valueIndex],
+          request.dateColumn,
+          request.valueColumn,
+        ),
       });
     } else if (request.kind === 'export-model') {
       if (!artifacts) throw new Error('no-run');
