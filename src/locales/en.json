@@ -117,7 +117,8 @@
       "demoTask": {
         "binary": "binary",
         "multiclass": "multi-class",
-        "regression": "regression"
+        "regression": "regression",
+        "timeseries": "time series"
       },
       "parsing": "Reading locally…",
       "rowsRead": "{{count}} rows read",
@@ -202,6 +203,35 @@
         "forest": "Random forest",
         "gbdt": "Gradient boosting",
         "mlp": "Neural network (MLP)"
+      },
+      "forecast": {
+        "title": "Time series",
+        "hint": "This dataset carries a date column. The lab can forecast a numeric value over time: naive, seasonal naive, exponential smoothing (SES, Holt, additive Holt-Winters — hand-written), the winner picked by a rolling-origin backtest that never peeks at the future.",
+        "dateColumn": "Date column",
+        "valueColumn": "Value to forecast",
+        "start": "Forecast",
+        "running": "Backtesting…",
+        "summary": "{{points}} points ({{freq}}) · backtest on the last {{holdout}} points · winner: {{winner}} with MAE {{mae}} (naive: {{naive}}).",
+        "seasonNote": "Seasonal period detected: {{m}} observations.",
+        "freq": {
+          "daily": "daily",
+          "weekly": "weekly",
+          "monthly": "monthly",
+          "quarterly": "quarterly",
+          "yearly": "yearly",
+          "irregular": "irregular"
+        },
+        "methods": {
+          "naive": "Naive (last value)",
+          "seasonalNaive": "Seasonal naive",
+          "ses": "Simple smoothing (SES)",
+          "holt": "Holt (trend)",
+          "holtWinters": "Holt-Winters (trend + season)"
+        },
+        "methodHeader": "method",
+        "legendHistory": "history ({{from}} → {{to}})",
+        "legendForecast": "forecast, {{count}} steps → {{to}}",
+        "note": "The band is the empirical 80% interval of the winner's one-step backtest errors — measured, not assumed. Every method was scored on forecasts made strictly before each held-out point."
       },
       "explore": {
         "title": "Explore without a target",
@@ -313,7 +343,8 @@
       "v4": "V4 Data Studio: quality report, cleaning recipe and hand-off to the lab — shipped",
       "v5": "V5 lab upgrades: hyperparameter search (CV) and Shapley explanations — shipped",
       "v6": "V6 data assistant: FR/EN questions answered locally, no LLM — shipped",
-      "v7": "V7 exploration: k-means + PCA + group profiles, no target needed — shipped"
+      "v7": "V7 exploration: k-means + PCA + group profiles, no target needed — shipped",
+      "v8": "V8 time series: Holt-Winters forecasting, rolling-origin backtest — shipped"
     }
   },
   "data": {

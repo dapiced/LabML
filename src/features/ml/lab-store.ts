@@ -10,6 +10,7 @@ import type {
 } from '@/features/ml/data/types';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
+import type { ForecastPayload } from '@/features/ml/timeseries/run';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
 import type {
   InsightsPayload,
@@ -56,6 +57,8 @@ interface LabState {
   tuneOutcome: TuneOutcome | null;
   exploreStatus: 'idle' | 'running' | 'done';
   exploration: ExplorationPayload | null;
+  forecastStatus: 'idle' | 'running' | 'done' | 'error';
+  forecastPayload: ForecastPayload | null;
   /** The auto-saved record of the current run (id set once stored). */
   currentRun: RunRecord | null;
   /** File produced by an export action, consumed once by the UI download effect. */
@@ -72,6 +75,7 @@ interface LabState {
   tune: (model: TunableKey) => void;
   cancelTune: () => void;
   explore: () => void;
+  forecast: (dateColumn: string, valueColumn: string) => void;
   exportModel: () => void;
   exportPredictions: () => void;
   clearExportedFile: () => void;
@@ -98,6 +102,8 @@ const initialTraining = {
   tuneOutcome: null,
   exploreStatus: 'idle' as const,
   exploration: null,
+  forecastStatus: 'idle' as const,
+  forecastPayload: null,
   currentRun: null,
   exportedFile: null,
 };
@@ -210,6 +216,8 @@ export const useLabStore = create<LabState>((set, get) => {
           set({ tuneStatus: 'idle', tuneProgress: null });
         } else if (message.kind === 'explore-result') {
           set({ exploreStatus: 'done', exploration: message.payload });
+        } else if (message.kind === 'forecast-result') {
+          set({ forecastStatus: 'done', forecastPayload: message.payload });
         } else if (message.kind === 'model-json') {
           if (message.json !== null) {
             set({
@@ -343,6 +351,13 @@ export const useLabStore = create<LabState>((set, get) => {
         .filter((name) => effectiveExclusion(state, name) === null && name !== state.target);
       set({ exploreStatus: 'running', exploration: null });
       send({ kind: 'explore', features, seed: TRAIN_SEED });
+    },
+
+    forecast(dateColumn, valueColumn) {
+      const state = get();
+      if (state.status !== 'ready' || state.forecastStatus === 'running') return;
+      set({ forecastStatus: 'running', forecastPayload: null });
+      send({ kind: 'forecast', dateColumn, valueColumn });
     },
 
     exportModel() {

@@ -10,6 +10,7 @@ const DEMO_DATASETS = [
   { file: 'iris.csv', size: '4 KB', task: 'multiclass' },
   { file: 'titanic.csv', size: '56 KB', task: 'binary' },
   { file: 'mpg.csv', size: '21 KB', task: 'regression' },
+  { file: 'energy.csv', size: '5 KB', task: 'timeseries' },
 ] as const;
 
 export function DropZone() {
