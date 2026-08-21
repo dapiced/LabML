@@ -420,7 +420,7 @@ answers off-target); text columns (hand-written TF-IDF), learning curves,
 scaling to 1M rows (typed arrays), multiclass thresholds. V12 remains
 pending a product decision.
 
-## N. Cap 6 — post-Cap 5 improvement plan (21/08/2026)
+## N. Cap 6 — post-Cap 5 future improvement plan (xx/xx/2026) TODO
 
 **Cap 5 recap**: V19 (persistent projects), V20 (honest uncertainty), V21
 (run comparison), V22 (model export/import) — delivered and verified in
