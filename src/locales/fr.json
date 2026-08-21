@@ -21,6 +21,12 @@
       "en": "English",
       "fr": "Français"
     },
+    "pwa": {
+      "offlineReady": "LabML est prêt à fonctionner hors-ligne — jeux de données et modèles compris.",
+      "updateAvailable": "Une nouvelle version de LabML est disponible.",
+      "reload": "Recharger",
+      "dismiss": "Plus tard"
+    },
     "privacyStrip": "Vos données ne quittent jamais votre navigateur — vérifiez-le vous-même dans l'onglet Réseau.",
     "footer": {
       "copyright": "© 2026 Dominic Dapice",
@@ -344,7 +350,8 @@
       "v5": "V5 labo affûté : recherche d'hyperparamètres (CV) et explications de Shapley — livré",
       "v6": "V6 assistant de données : questions FR/EN calculées localement, sans LLM — livré",
       "v7": "V7 exploration : k-means + ACP + profils de groupes, sans cible — livré",
-      "v8": "V8 séries temporelles : prévision Holt-Winters, backtest à origine glissante — livré"
+      "v8": "V8 séries temporelles : prévision Holt-Winters, backtest à origine glissante — livré",
+      "v9": "V9 vitesse & confort : coquille statique /ml, toast de mise à jour PWA, webcam vision — livré"
     }
   },
   "data": {
@@ -546,6 +553,12 @@
         "title": "Déposez une image ici",
         "hint": "ou cliquez pour parcourir — JPEG, PNG, WebP… Elle est traitée localement, rien n'est envoyé.",
         "browse": "Choisir une image"
+      },
+      "webcam": {
+        "open": "Utiliser la webcam",
+        "capture": "Capturer",
+        "close": "Fermer",
+        "error": "Caméra indisponible ou permission refusée — le dépôt de fichier ci-dessus fonctionne toujours."
       },
       "results": {
         "title": "Top 5 des prédictions",
