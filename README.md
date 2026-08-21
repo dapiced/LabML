@@ -148,12 +148,24 @@ Deployed at **https://app.dominicdapice.com** (`/ml` — ML Lab; `/data` and `/a
   (`iris-field.csv`) shows the drop live, and the score joins the run
   record (history, report, share links) like every other artifact.
 
+- **V16 (imbalance & thresholds) — shipped**: on binary runs with a
+  probabilistic model, the lab shows what accuracy hides. **Precision-recall
+  curve** with Average Precision (the random-classifier baseline drawn in),
+  **calibration curve** with the Brier score, and an **adjustable decision
+  threshold priced by a cost matrix** (false alarm vs missed case) — with
+  the cost-optimal cut one click away, computed by an exhaustive sweep. The
+  chosen threshold and its confusion join the run record. A deterministic
+  imbalanced demo (`fraud.csv`, ~9% positives) makes the lesson concrete.
+  Class-weighted _training_ was deliberately left out: cost-priced
+  thresholding delivers the same decision-level control without touching
+  eight hand-written models.
+
 **Cap 3 is complete** (V11 drift · V13 complete runs · V14 prerender).
-**Cap 4 is underway**: V15 batch scoring shipped; next are V16 (imbalanced
-classes & decision thresholds), V17 (Data Studio joins & multivariate
-anomalies) and V18 (per-segment analysis). V12 (an optional generative chat
-behind a server-side key proxy — never an API key in the browser) stays on
-hold as a product decision.
+**Cap 4 is underway**: V15 batch scoring and V16 imbalance tools shipped;
+next are V17 (Data Studio joins & multivariate anomalies) and V18
+(per-segment analysis). V12 (an optional generative chat behind a
+server-side key proxy — never an API key in the browser) stays on hold as
+a product decision.
 
 Full roadmap in [PLAN.md](PLAN.md).
 

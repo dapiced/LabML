@@ -283,6 +283,26 @@
         "downloadCsv": "Télécharger les prédictions (CSV)",
         "note": "Une baisse par rapport au jeu de test est un signal, pas un bug : le monde a bougé. Vérifiez la dérive des entrées dans le Data Studio (PSI) pour voir quelles colonnes ont glissé."
       },
+      "threshold": {
+        "title": "Seuil de décision & déséquilibre",
+        "hint": "Seulement {{rate}} % des lignes sont « {{positive}} » : ici, l’accuracy flatte n’importe quel modèle. La courbe précision-rappel dit la vérité, la courbe de calibration dit si les probabilités sont fiables — et le seuil est VOTRE décision, chiffrée par vos coûts.",
+        "prTitle": "Précision-rappel (pointillés : hasard)",
+        "calibrationTitle": "Calibration (pointillés : parfaite)",
+        "recall": "rappel",
+        "precision": "précision",
+        "predictedProb": "probabilité prédite",
+        "observedRate": "taux observé",
+        "threshold": "Seuil de décision",
+        "costFp": "Coût d’une fausse alerte (FP)",
+        "costFn": "Coût d’un cas manqué (FN)",
+        "bestForCosts": "Optimal pour ces coûts : {{threshold}}",
+        "atChosen": "à {{threshold}}",
+        "atDefault": "à 0,50",
+        "f1": "F1",
+        "accuracy": "accuracy",
+        "cost": "coût total",
+        "note": "Une probabilité n’est pas une décision. Au-dessus du seuil, la ligne est marquée « positive » — le déplacer échange des fausses alertes contre des cas manqués, et le bon échange dépend de ce que chaque erreur VOUS coûte. Le point sur la courbe est votre choix courant ; il est sauvegardé avec le run."
+      },
       "insights": {
         "title": "Insights",
         "loading": "Analyse du modèle gagnant…",
@@ -353,7 +373,8 @@
           "explanation": "Shapley",
           "exploration": "groupes",
           "forecast": "prévision",
-          "batchScore": "nouveau lot"
+          "batchScore": "nouveau lot",
+          "threshold": "seuil"
         }
       },
       "share": {
@@ -382,7 +403,8 @@
       "v11": "V11 MLOps : contrôle de dérive — diff de schéma, PSI par colonne, catégories nouvelles/disparues — livré",
       "v13": "V13 runs complets : tuning, Shapley, groupes et prévisions survivent dans l’historique, les rapports et les liens — livré",
       "v14": "V14 prérendu généralisé : coquilles statiques pour chaque section, Lighthouse /ml 0,86 → 0,99 en conditions réelles — livré",
-      "v15": "V15 MLOps : scorer un nouveau lot — prédictions dans le navigateur, métriques test vs lot honnêtes — livré"
+      "v15": "V15 MLOps : scorer un nouveau lot — prédictions dans le navigateur, métriques test vs lot honnêtes — livré",
+      "v16": "V16 déséquilibre : précision-rappel, seuil de décision chiffré par les coûts, calibration — livré"
     }
   },
   "data": {
