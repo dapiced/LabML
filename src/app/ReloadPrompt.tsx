@@ -47,7 +47,9 @@ export function ReloadPrompt() {
           }}
         >
           <X className="h-3.5 w-3.5" aria-hidden="true" />
-          {t('common.pwa.dismiss')}
+          {/* "Later" only makes sense when a reload is pending; the
+              offline notice is purely informational — "OK" closes it. */}
+          {needRefresh ? t('common.pwa.dismiss') : t('common.pwa.gotIt')}
         </Button>
       </div>
     </div>

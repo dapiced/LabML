@@ -7,7 +7,17 @@ import { buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import labels from '@/features/ai/vision-labels.json';
-import { tensorFromRgba, VISION_SIZE } from '@/features/ai/vision/preprocess';
+import { cocoLabel } from '@/features/ai/vision/coco-labels';
+import type { DetectedBox } from '@/features/ai/vision/detect';
+import {
+  liteTensorFromRgba,
+  ULTRA_H,
+  ULTRA_W,
+  ultraTensorFromRgba,
+  VISION_SIZE,
+  YOLOX_INPUT,
+  yoloxTensorFromRgba,
+} from '@/features/ai/vision/preprocess';
 import type { VisionRequest, VisionResponse } from '@/features/ai/vision/vision.worker';
 import { cn } from '@/lib/utils';
 
@@ -18,42 +28,95 @@ interface Prediction {
   p: number;
 }
 
-/** Center-crop an image file to a 224×224 RGBA buffer via an offscreen canvas. */
-async function rgbaFromFile(file: File): Promise<Uint8ClampedArray> {
-  const bitmap = await createImageBitmap(file);
-  try {
-    const canvas = document.createElement('canvas');
-    canvas.width = VISION_SIZE;
-    canvas.height = VISION_SIZE;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) throw new Error('canvas-2d');
-    const side = Math.min(bitmap.width, bitmap.height);
-    ctx.drawImage(
-      bitmap,
-      (bitmap.width - side) / 2,
-      (bitmap.height - side) / 2,
-      side,
-      side,
-      0,
-      0,
+interface AnalysisResult {
+  top: Prediction[];
+  objects: DetectedBox[];
+  faces: DetectedBox[];
+  width: number;
+  height: number;
+}
+
+function rgbaFrom(ctx: CanvasRenderingContext2D, width: number, height: number) {
+  return ctx.getImageData(0, 0, width, height).data;
+}
+
+function makeCanvas(width: number, height: number) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) throw new Error('canvas-2d');
+  return { canvas, ctx };
+}
+
+/**
+ * One source image → the three model inputs: a 224² center crop for the
+ * classifier, plus gray letterboxes (ratio preserved, top-left anchored) at
+ * 416² for YOLOX and 320×240 for UltraFace.
+ */
+function prepareTensors(source: CanvasImageSource, width: number, height: number) {
+  const crop = makeCanvas(VISION_SIZE, VISION_SIZE);
+  const side = Math.min(width, height);
+  crop.ctx.drawImage(
+    source,
+    (width - side) / 2,
+    (height - side) / 2,
+    side,
+    side,
+    0,
+    0,
+    VISION_SIZE,
+    VISION_SIZE,
+  );
+
+  const letterbox = makeCanvas(YOLOX_INPUT, YOLOX_INPUT);
+  const ratio = Math.min(YOLOX_INPUT / width, YOLOX_INPUT / height);
+  letterbox.ctx.fillStyle = '#727272'; // YOLOX's 114-gray padding
+  letterbox.ctx.fillRect(0, 0, YOLOX_INPUT, YOLOX_INPUT);
+  letterbox.ctx.drawImage(source, 0, 0, width, height, 0, 0, width * ratio, height * ratio);
+
+  const faceBox = makeCanvas(ULTRA_W, ULTRA_H);
+  const faceRatio = Math.min(ULTRA_W / width, ULTRA_H / height);
+  faceBox.ctx.fillStyle = '#7f7f7f'; // 127-gray → 0 after (x−127)/128
+  faceBox.ctx.fillRect(0, 0, ULTRA_W, ULTRA_H);
+  faceBox.ctx.drawImage(source, 0, 0, width, height, 0, 0, width * faceRatio, height * faceRatio);
+
+  return {
+    classifier: liteTensorFromRgba(
+      rgbaFrom(crop.ctx, VISION_SIZE, VISION_SIZE),
       VISION_SIZE,
       VISION_SIZE,
-    );
-    return ctx.getImageData(0, 0, VISION_SIZE, VISION_SIZE).data;
-  } finally {
-    bitmap.close();
-  }
+    ),
+    objects: yoloxTensorFromRgba(
+      rgbaFrom(letterbox.ctx, YOLOX_INPUT, YOLOX_INPUT),
+      YOLOX_INPUT,
+      YOLOX_INPUT,
+    ),
+    faces: ultraTensorFromRgba(rgbaFrom(faceBox.ctx, ULTRA_W, ULTRA_H), ULTRA_W, ULTRA_H),
+    ratio,
+    faceRatio,
+  };
+}
+
+/** Group detected objects into localized "2 people · 1 dog" chips. */
+function groupObjects(objects: DetectedBox[], lang: string): { label: string; count: number }[] {
+  const counts = new Map<number, number>();
+  for (const box of objects) counts.set(box.classIndex, (counts.get(box.classIndex) ?? 0) + 1);
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+    .map(([classIndex, count]) => ({ label: cocoLabel(classIndex, lang), count }));
 }
 
 export function VisionPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const workerRef = useRef<Worker | null>(null);
   const [status, setStatus] = useState<ModelStatus>('loading');
   const [loadMs, setLoadMs] = useState(0);
   const [inferMs, setInferMs] = useState(0);
-  const [predictions, setPredictions] = useState<Prediction[] | null>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const imageSizeRef = useRef<{ width: number; height: number }>({ width: 0, height: 0 });
 
   useEffect(() => {
     const worker = new Worker(new URL('./vision.worker.ts', import.meta.url), { type: 'module' });
@@ -63,11 +126,15 @@ export function VisionPage() {
       if (message.kind === 'ready') {
         setLoadMs(Math.round(message.loadMs));
         setStatus('ready');
-      } else if (message.kind === 'top') {
+      } else if (message.kind === 'result') {
         setInferMs(Math.round(message.inferMs));
-        setPredictions(
-          message.items.map(({ index, p }) => ({ label: labels[index] ?? `#${index}`, p })),
-        );
+        setResult({
+          top: message.top.map(({ index, p }) => ({ label: labels[index] ?? `#${index}`, p })),
+          objects: message.objects,
+          faces: message.faces,
+          width: imageSizeRef.current.width,
+          height: imageSizeRef.current.height,
+        });
         setStatus('ready');
       } else {
         setStatus('error');
@@ -82,27 +149,63 @@ export function VisionPage() {
 
   useEffect(
     () => () => {
-      if (preview) URL.revokeObjectURL(preview);
+      if (preview?.startsWith('blob:')) URL.revokeObjectURL(preview);
     },
     [preview],
   );
 
-  const classify = useCallback(async (file: File) => {
-    const worker = workerRef.current;
-    if (!worker || !file.type.startsWith('image/')) return;
-    setStatus('classifying');
-    setPredictions(null);
-    setPreview(URL.createObjectURL(file));
-    try {
-      const rgba = await rgbaFromFile(file);
-      const tensor = tensorFromRgba(rgba, VISION_SIZE, VISION_SIZE);
-      worker.postMessage({ kind: 'classify', tensor } satisfies VisionRequest, [tensor.buffer]);
-    } catch {
-      setStatus('error');
-    }
-  }, []);
+  const analyzeSource = useCallback(
+    (source: CanvasImageSource, width: number, height: number, previewUrl: string) => {
+      const worker = workerRef.current;
+      if (!worker) return;
+      setStatus('classifying');
+      setResult(null);
+      setPreview(previewUrl);
+      imageSizeRef.current = { width, height };
+      try {
+        const { classifier, objects, faces, ratio, faceRatio } = prepareTensors(
+          source,
+          width,
+          height,
+        );
+        worker.postMessage(
+          {
+            kind: 'analyze',
+            classifier,
+            objects,
+            faces,
+            width,
+            height,
+            ratio,
+            faceRatio,
+          } satisfies VisionRequest,
+          [classifier.buffer, objects.buffer, faces.buffer],
+        );
+      } catch {
+        setStatus('error');
+      }
+    },
+    [],
+  );
 
-  // --- Webcam: the stream stays local, frames are cropped like any photo. ---
+  const classify = useCallback(
+    async (file: File) => {
+      if (!file.type.startsWith('image/')) return;
+      try {
+        const bitmap = await createImageBitmap(file);
+        try {
+          analyzeSource(bitmap, bitmap.width, bitmap.height, URL.createObjectURL(file));
+        } finally {
+          bitmap.close();
+        }
+      } catch {
+        setStatus('error');
+      }
+    },
+    [analyzeSource],
+  );
+
+  // --- Webcam: the stream stays local, frames are analyzed like any photo. ---
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [webcamOn, setWebcamOn] = useState(false);
@@ -135,34 +238,19 @@ export function VisionPage() {
 
   function captureFrame() {
     const video = videoRef.current;
-    const worker = workerRef.current;
-    if (!video || !worker || video.videoWidth === 0) return;
-    const canvas = document.createElement('canvas');
-    canvas.width = VISION_SIZE;
-    canvas.height = VISION_SIZE;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) return;
-    const side = Math.min(video.videoWidth, video.videoHeight);
-    ctx.drawImage(
-      video,
-      (video.videoWidth - side) / 2,
-      (video.videoHeight - side) / 2,
-      side,
-      side,
-      0,
-      0,
-      VISION_SIZE,
-      VISION_SIZE,
-    );
-    setStatus('classifying');
-    setPredictions(null);
-    setPreview(canvas.toDataURL('image/png'));
-    const rgba = ctx.getImageData(0, 0, VISION_SIZE, VISION_SIZE).data;
-    const tensor = tensorFromRgba(rgba, VISION_SIZE, VISION_SIZE);
-    worker.postMessage({ kind: 'classify', tensor } satisfies VisionRequest, [tensor.buffer]);
+    if (!video || video.videoWidth === 0) return;
+    // Full frame, native resolution: the letterbox handles the aspect ratio,
+    // and detection deserves the whole scene, not a center crop.
+    const { canvas, ctx } = makeCanvas(video.videoWidth, video.videoHeight);
+    ctx.drawImage(video, 0, 0);
+    analyzeSource(canvas, canvas.width, canvas.height, canvas.toDataURL('image/png'));
   }
 
   const busy = status === 'loading' || status === 'classifying';
+  const lang = i18n.language;
+  const objectGroups = result ? groupObjects(result.objects, lang) : [];
+  // SVG overlay geometry is in image pixels: scale strokes/text with the image.
+  const unit = result ? Math.max(result.width, result.height) / 100 : 1;
 
   return (
     <div className="mx-auto max-w-6xl px-4">
@@ -187,7 +275,7 @@ export function VisionPage() {
         {(status === 'ready' || status === 'classifying') && (
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="accent">{t('ai.vision.ready', { ms: loadMs })}</Badge>
-            {predictions && (
+            {result && (
               <Badge variant="copper">
                 <Zap className="h-3 w-3" aria-hidden="true" />
                 {t('ai.vision.results.inferMs', { ms: inferMs })}
@@ -294,7 +382,7 @@ export function VisionPage() {
           {webcamError && <p className="text-sm text-copper">{t('ai.vision.webcam.error')}</p>}
         </div>
 
-        <Card>
+        <Card className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
           <h2 className="font-display text-lg font-semibold">{t('ai.vision.results.title')}</h2>
           {status === 'classifying' && (
             <p className="mt-4 flex items-center gap-2 text-sm text-muted">
@@ -302,35 +390,126 @@ export function VisionPage() {
               {t('ai.vision.results.working')}
             </p>
           )}
-          {predictions ? (
-            <ol className="mt-4 flex flex-col gap-3">
-              {predictions.map(({ label, p }, rank) => (
-                <li key={label} data-testid="vision-prediction" className="flex flex-col gap-1">
-                  <div className="flex items-baseline justify-between gap-3 text-sm">
-                    <span className={rank === 0 ? 'font-semibold' : undefined}>{label}</span>
-                    <span className="font-mono text-xs text-muted">{(p * 100).toFixed(1)} %</span>
-                  </div>
-                  <div
-                    className="h-1.5 overflow-hidden rounded-full bg-surface-2"
+          {result ? (
+            <div className="mt-4 flex flex-col gap-5">
+              {preview && (
+                <figure
+                  data-testid="vision-annotated"
+                  className="relative overflow-hidden rounded-xl"
+                >
+                  <img src={preview} alt={t('ai.vision.results.annotated')} className="w-full" />
+                  <svg
+                    viewBox={`0 0 ${result.width} ${result.height}`}
+                    className="absolute inset-0 h-full w-full"
                     aria-hidden="true"
                   >
-                    <div
-                      className={cn(
-                        'h-full rounded-full',
-                        rank === 0 ? 'bg-accent' : 'bg-accent/45',
-                      )}
-                      style={{ width: `${Math.max(p * 100, 1.5)}%` }}
-                    />
+                    {result.objects.map((box, index) => (
+                      <g key={`o${index}`}>
+                        <rect
+                          x={box.x1}
+                          y={box.y1}
+                          width={box.x2 - box.x1}
+                          height={box.y2 - box.y1}
+                          fill="none"
+                          style={{ stroke: 'var(--accent)' }}
+                          strokeWidth={unit * 0.45}
+                        />
+                        <text
+                          x={box.x1 + unit * 0.8}
+                          y={Math.max(box.y1 + unit * 3.2, unit * 3.6)}
+                          fontSize={unit * 3}
+                          fontWeight={600}
+                          style={{
+                            fill: 'var(--accent)',
+                            stroke: 'var(--surface)',
+                            strokeWidth: unit * 0.35,
+                            paintOrder: 'stroke',
+                          }}
+                        >
+                          {`${cocoLabel(box.classIndex, lang)} ${Math.round(box.score * 100)} %`}
+                        </text>
+                      </g>
+                    ))}
+                    {result.faces.map((box, index) => (
+                      <rect
+                        key={`f${index}`}
+                        x={box.x1}
+                        y={box.y1}
+                        width={box.x2 - box.x1}
+                        height={box.y2 - box.y1}
+                        fill="none"
+                        style={{ stroke: 'var(--copper)' }}
+                        strokeWidth={unit * 0.45}
+                        strokeDasharray={`${unit * 1.4} ${unit * 0.8}`}
+                      />
+                    ))}
+                  </svg>
+                </figure>
+              )}
+
+              <div className="flex flex-col gap-2" data-testid="vision-objects">
+                <p className="text-sm font-medium">
+                  {result.objects.length === 0
+                    ? t('ai.vision.results.objectsNone')
+                    : t('ai.vision.results.objectCount', { count: result.objects.length })}
+                </p>
+                {objectGroups.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {objectGroups.map(({ label, count }) => (
+                      <Badge key={label} variant="accent" data-testid="vision-object-chip">
+                        {count > 1 ? `${label} ×${count}` : label}
+                      </Badge>
+                    ))}
                   </div>
-                </li>
-              ))}
-            </ol>
+                )}
+              </div>
+
+              <p className="text-sm font-medium" data-testid="vision-faces">
+                {result.faces.length === 0
+                  ? t('ai.vision.results.facesNone')
+                  : t('ai.vision.results.faceCount', { count: result.faces.length })}
+              </p>
+
+              <div>
+                <h3 className="font-mono text-xs font-semibold tracking-[0.14em] text-muted uppercase">
+                  {t('ai.vision.results.subject')}
+                </h3>
+                <ol className="mt-3 flex flex-col gap-3">
+                  {result.top.map(({ label, p }, rank) => (
+                    <li key={label} data-testid="vision-prediction" className="flex flex-col gap-1">
+                      <div className="flex items-baseline justify-between gap-3 text-sm">
+                        <span className={rank === 0 ? 'font-semibold' : undefined}>{label}</span>
+                        <span className="font-mono text-xs text-muted">
+                          {(p * 100).toFixed(1)} %
+                        </span>
+                      </div>
+                      <div
+                        className="h-1.5 overflow-hidden rounded-full bg-surface-2"
+                        aria-hidden="true"
+                      >
+                        <div
+                          className={cn(
+                            'h-full rounded-full',
+                            rank === 0 ? 'bg-accent' : 'bg-accent/45',
+                          )}
+                          style={{ width: `${Math.max(p * 100, 1.5)}%` }}
+                        />
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <p className="text-xs text-muted">{t('ai.vision.results.detNote')}</p>
+                <p className="text-xs text-muted">{t('ai.vision.results.note')}</p>
+              </div>
+            </div>
           ) : (
             status !== 'classifying' && (
               <p className="mt-4 text-sm text-muted">{t('ai.vision.results.empty')}</p>
             )
           )}
-          {predictions && <p className="mt-5 text-xs text-muted">{t('ai.vision.results.note')}</p>}
         </Card>
       </section>
 

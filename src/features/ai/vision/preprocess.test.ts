@@ -1,72 +1,86 @@
 import { describe, expect, it } from 'vitest';
-import { softmaxTop, tensorFromRgba, VISION_SIZE } from './preprocess';
+import {
+  liteTensorFromRgba,
+  topK,
+  ultraTensorFromRgba,
+  VISION_SIZE,
+  yoloxTensorFromRgba,
+} from './preprocess';
 
-const MEAN = [0.485, 0.456, 0.406];
-const STD = [0.229, 0.224, 0.225];
-
-describe('tensorFromRgba', () => {
-  it('normalizes a single pixel with the ImageNet statistics', () => {
+describe('liteTensorFromRgba (EfficientNet-Lite)', () => {
+  it('normalizes a single pixel as (x − 127) / 128, RGB interleaved', () => {
     const rgba = new Uint8ClampedArray([255, 128, 0, 255]);
-    const tensor = tensorFromRgba(rgba, 1, 1);
+    const tensor = liteTensorFromRgba(rgba, 1, 1);
 
     expect(tensor).toHaveLength(3);
-    expect(tensor[0]).toBeCloseTo((1 - MEAN[0]) / STD[0], 5);
-    expect(tensor[1]).toBeCloseTo((128 / 255 - MEAN[1]) / STD[1], 5);
-    expect(tensor[2]).toBeCloseTo((0 - MEAN[2]) / STD[2], 5);
+    expect(tensor[0]).toBeCloseTo((255 - 127) / 128, 6);
+    expect(tensor[1]).toBeCloseTo((128 - 127) / 128, 6);
+    expect(tensor[2]).toBeCloseTo((0 - 127) / 128, 6);
   });
 
-  it('lays pixels out as planes (NCHW), not interleaved', () => {
+  it('lays pixels out interleaved (NHWC), not as planes', () => {
     // 2×1 image: pure red pixel then pure blue pixel.
     const rgba = new Uint8ClampedArray([255, 0, 0, 255, 0, 0, 255, 255]);
-    const tensor = tensorFromRgba(rgba, 2, 1);
+    const tensor = liteTensorFromRgba(rgba, 2, 1);
 
     expect(tensor).toHaveLength(6);
-    // Red plane: [red@p0, red@p1], blue plane: [blue@p0, blue@p1].
-    expect(tensor[0]).toBeCloseTo((1 - MEAN[0]) / STD[0], 5);
-    expect(tensor[1]).toBeCloseTo((0 - MEAN[0]) / STD[0], 5);
-    expect(tensor[4]).toBeCloseTo((0 - MEAN[2]) / STD[2], 5);
-    expect(tensor[5]).toBeCloseTo((1 - MEAN[2]) / STD[2], 5);
+    // Pixel 0 = [R,G,B] then pixel 1 = [R,G,B].
+    expect(tensor[0]).toBeCloseTo(1, 6);
+    expect(tensor[2]).toBeCloseTo(-127 / 128, 6);
+    expect(tensor[3]).toBeCloseTo(-127 / 128, 6);
+    expect(tensor[5]).toBeCloseTo(1, 6);
   });
 
   it('ignores the alpha channel entirely', () => {
-    const opaque = tensorFromRgba(new Uint8ClampedArray([10, 20, 30, 255]), 1, 1);
-    const transparent = tensorFromRgba(new Uint8ClampedArray([10, 20, 30, 0]), 1, 1);
+    const opaque = liteTensorFromRgba(new Uint8ClampedArray([10, 20, 30, 255]), 1, 1);
+    const transparent = liteTensorFromRgba(new Uint8ClampedArray([10, 20, 30, 0]), 1, 1);
     expect([...opaque]).toEqual([...transparent]);
   });
 
-  it('produces a full-size SqueezeNet input tensor', () => {
+  it('produces a full-size classifier input tensor', () => {
     const rgba = new Uint8ClampedArray(VISION_SIZE * VISION_SIZE * 4);
-    expect(tensorFromRgba(rgba, VISION_SIZE, VISION_SIZE)).toHaveLength(
+    expect(liteTensorFromRgba(rgba, VISION_SIZE, VISION_SIZE)).toHaveLength(
       3 * VISION_SIZE * VISION_SIZE,
     );
   });
 });
 
-describe('softmaxTop', () => {
-  it('returns the k most probable indices, sorted by probability', () => {
-    const top = softmaxTop([1, 3, 2, 0], 2);
+describe('yoloxTensorFromRgba', () => {
+  it('keeps raw 0–255 values in BGR planes (NCHW)', () => {
+    // 2×1 image: pure red pixel then pure green pixel.
+    const rgba = new Uint8ClampedArray([255, 0, 0, 255, 0, 200, 0, 255]);
+    const tensor = yoloxTensorFromRgba(rgba, 2, 1);
+
+    expect(tensor).toHaveLength(6);
+    // Plane order B, G, R — red lands in the LAST plane.
+    expect([...tensor.slice(0, 2)]).toEqual([0, 0]); // B plane
+    expect([...tensor.slice(2, 4)]).toEqual([0, 200]); // G plane
+    expect([...tensor.slice(4, 6)]).toEqual([255, 0]); // R plane
+  });
+});
+
+describe('ultraTensorFromRgba', () => {
+  it('normalizes as (x − 127) / 128 in RGB planes (NCHW)', () => {
+    const rgba = new Uint8ClampedArray([255, 127, 0, 255]);
+    const tensor = ultraTensorFromRgba(rgba, 1, 1);
+
+    expect(tensor).toHaveLength(3);
+    expect(tensor[0]).toBeCloseTo(1, 6);
+    expect(tensor[1]).toBeCloseTo(0, 6);
+    expect(tensor[2]).toBeCloseTo(-127 / 128, 6);
+  });
+});
+
+describe('topK', () => {
+  it('returns the k most probable indices without re-normalizing', () => {
+    const top = topK([0.1, 0.6, 0.3], 2);
     expect(top.map((item) => item.index)).toEqual([1, 2]);
-    expect(top[0].p).toBeGreaterThan(top[1].p);
+    expect(top[0].p).toBeCloseTo(0.6, 6);
+    expect(top[1].p).toBeCloseTo(0.3, 6);
   });
 
-  it('computes true softmax probabilities', () => {
-    const top = softmaxTop([0, 1, 2], 3);
-    const denominator = Math.exp(0) + Math.exp(1) + Math.exp(2);
-    expect(top[0].index).toBe(2);
-    expect(top[0].p).toBeCloseTo(Math.exp(2) / denominator, 6);
-    expect(top.reduce((sum, item) => sum + item.p, 0)).toBeCloseTo(1, 6);
-  });
-
-  it('is numerically stable on large logits', () => {
-    const top = softmaxTop([1000, 999], 2);
-    expect(Number.isFinite(top[0].p)).toBe(true);
-    expect(top[0].index).toBe(0);
-    expect(top[0].p).toBeCloseTo(Math.exp(0) / (Math.exp(0) + Math.exp(-1)), 6);
-  });
-
-  it('splits a tie uniformly', () => {
-    const top = softmaxTop([5, 5], 2);
-    expect(top[0].p).toBeCloseTo(0.5, 6);
-    expect(top[1].p).toBeCloseTo(0.5, 6);
+  it('breaks ties by index order, deterministically', () => {
+    const top = topK([0.5, 0.5], 2);
+    expect(top.map((item) => item.index)).toEqual([0, 1]);
   });
 });
