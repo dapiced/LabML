@@ -58,6 +58,7 @@ function makeArtifacts(): RunArtifacts {
       tunedMetrics: { accuracy: 0.95 },
       trials: [{ params: { k: 5 }, cvScore: 0.94 }],
       totalMs: 120,
+      trainedRows: 96,
     },
     explanation: {
       model: 'logistic',

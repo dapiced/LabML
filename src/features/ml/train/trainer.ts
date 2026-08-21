@@ -1,8 +1,9 @@
 import { isMissing, parseNumber } from '@/features/ml/data/infer';
 import { detectTask } from '@/features/ml/data/suggest';
 import { accuracy, logLoss, macroPrf, mae, r2, rmse, rocAuc } from '@/features/ml/train/metrics';
-import { modelZoo, type TrainedModel } from '@/features/ml/train/models';
+import { MODEL_TRAIN_CAPS, modelZoo, type TrainedModel } from '@/features/ml/train/models';
 import { fitPipeline, splitIndices, usableRows } from '@/features/ml/train/pipeline';
+import { nestedSampleOrder } from '@/features/ml/train/random';
 import type { Cell, ColumnProfile } from '@/features/ml/data/types';
 import type {
   MetricMap,
@@ -37,6 +38,12 @@ export interface TrainOutcome {
 }
 
 const LATENCY_SAMPLE = 200;
+/**
+ * V25: past this many usable rows, train/test are drawn from a seeded
+ * stratified sample of exactly this size — and the summary SAYS so
+ * (sampledFrom), on the leaderboard and in the report. Never silent.
+ */
+export const GLOBAL_SAMPLE_CAP = 100_000;
 // 'text' joined the list in V24: free-text columns now enter the pipeline as
 // TF-IDF blocks instead of being skipped. Dates and ids stay out.
 const TRAINABLE_TYPES = new Set(['numeric', 'categorical', 'boolean', 'text']);
@@ -57,6 +64,8 @@ export interface PreparedData {
   test: number[];
   /** Stratification labels aligned with `train` (null for regression). */
   trainLabels: (string | null)[] | null;
+  /** Usable rows before the announced global sample, when it engaged (V25). */
+  sampledFrom?: number;
   encode(i: number): number;
 }
 
@@ -98,9 +107,25 @@ export function prepareData(
   const labelOf = (i: number): number => classIndex.get((targetValues[i] as string).trim()) ?? -1;
   if (isClassification) rows = rows.filter((i) => labelOf(i) >= 0);
 
-  const stratifyLabels = isClassification
+  let stratifyLabels = isClassification
     ? rows.map((i) => (isMissing(targetValues[i]) ? null : (targetValues[i] as string).trim()))
     : null;
+
+  // V25: the announced global cap. Beyond it, keep a seeded stratified sample
+  // of exactly GLOBAL_SAMPLE_CAP rows and record where it came from — the UI
+  // announces the sample; it is never applied silently.
+  let sampledFrom: number | undefined;
+  if (rows.length > GLOBAL_SAMPLE_CAP) {
+    sampledFrom = rows.length;
+    const order = nestedSampleOrder(rows.length, stratifyLabels, config.seed);
+    const keep = order.slice(0, GLOBAL_SAMPLE_CAP).sort((a, b) => a - b);
+    rows = keep.map((position) => rows[position]);
+    if (stratifyLabels) {
+      const labels = stratifyLabels;
+      stratifyLabels = keep.map((position) => labels[position]);
+    }
+  }
+
   const { train, test } = splitIndices(rows, stratifyLabels, config.testRatio, config.seed);
 
   const trainLabels = isClassification
@@ -116,6 +141,7 @@ export function prepareData(
     train,
     test,
     trainLabels,
+    ...(sampledFrom !== undefined && { sampledFrom }),
     encode: (i: number): number =>
       isClassification ? labelOf(i) : (parseNumber((targetValues[i] as string).trim()) as number),
   };
@@ -196,6 +222,16 @@ export async function runTraining(
 
   const zoo = modelZoo(isClassification ? 'classification' : 'regression');
   const models = new Map<ModelKey, TrainedModel>();
+
+  // V25: one seeded order shared by every capped family — family K trains on
+  // the first K positions, so smaller caps are subsets of larger ones (nested)
+  // and every leaderboard row is scored on the same untouched test set.
+  let sampleOrder: number[] | null = null;
+  const cappedTrainPositions = (cap: number): number[] => {
+    sampleOrder ??= nestedSampleOrder(train.length, prepared.trainLabels, config.seed);
+    return sampleOrder.slice(0, cap).sort((a, b) => a - b);
+  };
+
   const context = {
     task: isClassification ? ('classification' as const) : ('regression' as const),
     classCount: classes.length,
@@ -210,8 +246,16 @@ export async function runTraining(
     if (callbacks.isCancelled()) return null;
 
     try {
+      const cap = MODEL_TRAIN_CAPS[def.key];
+      let fitX = trainX;
+      let fitY = trainY;
+      if (cap !== undefined && train.length > cap) {
+        const keep = cappedTrainPositions(cap);
+        fitX = keep.map((position) => trainX[position]);
+        fitY = keep.map((position) => trainY[position]);
+      }
       const trainStart = performance.now();
-      const model = def.train(trainX, trainY, context);
+      const model = def.train(fitX, fitY, context);
       const trainMs = performance.now() - trainStart;
       models.set(def.key, model);
       const { metrics, primary } = scoreModel(
@@ -231,6 +275,7 @@ export async function runTraining(
         trainMs,
         inferP50Ms: latency.p50,
         inferP95Ms: latency.p95,
+        trainedRows: fitX.length,
       });
     } catch (error) {
       callbacks.onModelResult({
@@ -258,6 +303,7 @@ export async function runTraining(
       featureColumns,
       skippedColumns,
       totalMs: performance.now() - startedAt,
+      ...(prepared.sampledFrom !== undefined && { sampledFrom: prepared.sampledFrom }),
     },
     artifacts: {
       models,

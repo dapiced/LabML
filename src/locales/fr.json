@@ -129,6 +129,8 @@
       "cancel": "Annuler",
       "errorTitle": "Fichier illisible",
       "errorBody": "Le fichier semble vide ou non tabulaire. Essayez un CSV avec une ligne d'en-têtes.",
+      "errorTooLargeTitle": "Fichier trop grand pour la mémoire du navigateur",
+      "errorTooLarge": "Ce fichier dépasse le budget de {{max}} cellules (lignes × colonnes) que le labo garde en mémoire — lecture arrêtée, volontairement, à {{rows}} lignes × {{cols}} colonnes. Scindez le fichier ou retirez des colonnes, puis réessayez.",
       "retry": "Essayer un autre fichier",
       "rows": "lignes",
       "columns": "colonnes",
@@ -195,7 +197,10 @@
         "baselineTag": "baseline",
         "failed": "échec",
         "runInfo": "seed {{seed}} · {{train}} lignes d'entraînement · {{test}} lignes de test · {{features}} variables après encodage",
-        "skipped": "écartées (dates et identifiants ne sont pas des variables) : {{columns}}"
+        "skipped": "écartées (dates et identifiants ne sont pas des variables) : {{columns}}",
+        "trainedOn": "échantillon : {{rows}} lignes",
+        "trainedOnTitle": "Entraîné sur un échantillon seedé annoncé de {{rows}} des {{total}} lignes d'entraînement — jamais en silence. Le score vient du même jeu de test complet que les autres modèles.",
+        "sampledFrom": "échantillon annoncé : {{cap}} lignes sur {{from}} utilisables (seedé, stratifié)"
       },
       "models": {
         "baseline": "Baseline naïve",
@@ -263,7 +268,8 @@
         "trials_one": "Top {{count}} configuration",
         "trials_other": "Top {{count}} configurations",
         "paramsHeader": "paramètres",
-        "note": "Le gagnant est choisi par validation croisée, jamais en regardant le jeu de test — le delta sur le test peut donc être négatif. C'est une évaluation honnête, pas un bug."
+        "note": "Le gagnant est choisi par validation croisée, jamais en regardant le jeu de test — le delta sur le test peut donc être négatif. C'est une évaluation honnête, pas un bug.",
+        "sampled": "Recherche menée sur un échantillon seedé annoncé de {{rows}} lignes sur {{from}} d'entraînement — les mêmes lignes que le modèle du classement."
       },
       "batch": {
         "title": "Scorer un nouveau lot",
@@ -705,7 +711,8 @@
       "thinking": "Calcul…",
       "honesty": {
         "title": "Honnête par construction",
-        "body": "Cet assistant est un interpréteur local déterministe — pas un modèle de langage. Il ne calcule que ce qu'il comprend entièrement, le dit quand ce n'est pas le cas, et ni vos données ni vos questions ne quittent le navigateur. Un assistant génératif exigerait un modèle derrière une API — un serveur et une clé secrète qui ne doit jamais être embarquée dans un navigateur — et n'arriverait ici qu'avec un proxy côté serveur et un écran de consentement explicite."
+        "body": "Cet assistant est un interpréteur local déterministe — pas un modèle de langage. Il ne calcule que ce qu'il comprend entièrement, le dit quand ce n'est pas le cas, et ni vos données ni vos questions ne quittent le navigateur. Un assistant génératif exigerait un modèle derrière une API — un serveur et une clé secrète qui ne doit jamais être embarquée dans un navigateur — et n'arriverait ici qu'avec un proxy côté serveur et un écran de consentement explicite.",
+        "coming": "Bientôt : un vrai modèle de langage — petit, ouvert et exécuté entièrement dans votre navigateur, avec les mêmes règles de confidentialité. L'interpréteur déterministe restera le repli honnête."
       },
       "backToAi": "Retour aux modules IA"
     },
