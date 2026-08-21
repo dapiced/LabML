@@ -316,6 +316,20 @@
         "small_other": "{{count}} tranches de moins de {{min}} lignes de test écartées.",
         "note": "Un écart est une piste à creuser, pas un verdict — une petite tranche bouge pour une seule ligne difficile aussi bien que pour une vraie faiblesse. Un écart sur une colonne hors variables signifie que le modèle la retrouve par des proxys."
       },
+      "datasets": {
+        "keepButton": "Conserver dans ce navigateur",
+        "keeping": "Conservation…",
+        "keptBadge": "conservé dans ce navigateur",
+        "forget": "Oublier ce jeu de données",
+        "reopen": "Rouvrir dans le labo",
+        "reopenFromRun": "Rouvrir les données de ce run",
+        "listTitle": "Jeux de données conservés dans ce navigateur",
+        "listNote": "Stockés localement dans IndexedDB (compressés) — rien ne quitte jamais votre machine, et les liens de partage ne transportent jamais de données.",
+        "quotaError": "Ne rentre pas : ce fichier demande {{needed}} mais {{used}} des {{quota}} du budget sont utilisés. Oubliez un jeu de données ci-dessous pour faire de la place.",
+        "unitKb": "Ko",
+        "unitMb": "Mo",
+        "stored": "stockés"
+      },
       "insights": {
         "title": "Insights",
         "loading": "Analyse du modèle gagnant…",

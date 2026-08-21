@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { ColumnCard } from '@/features/ml/components/ColumnCard';
+import { KeepDatasetControl } from '@/features/ml/components/KeepDatasetControl';
 import { TargetPicker } from '@/features/ml/components/TargetPicker';
 import { ExplorePanel } from '@/features/ml/components/ExplorePanel';
 import { ForecastPanel } from '@/features/ml/components/ForecastPanel';
@@ -41,6 +42,7 @@ export function DatasetView() {
           <ShieldCheck className="h-3 w-3" aria-hidden="true" />
           {t('ml.lab.readLocally')}
         </Badge>
+        <KeepDatasetControl />
         <Button variant="ghost" size="sm" onClick={reset} className="ml-auto">
           <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
           {t('ml.lab.newDataset')}
