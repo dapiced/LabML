@@ -1,4 +1,5 @@
 import type { TaskType } from '@/features/ml/data/types';
+import type { BatchScore } from '@/features/ml/train/score';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
 import type { TuneOutcome } from '@/features/ml/train/search';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
@@ -10,12 +11,16 @@ import type { InsightsPayload, ModelResult, TrainSummary } from '@/features/ml/t
  * outcome of its kind (running a second tuning replaces the first). Metrics
  * and summaries only, never the source data.
  */
+/** Persisted batch score: the numbers survive, the row-level CSV does not. */
+export type BatchScoreArtifact = Omit<BatchScore, 'csv' | 'preview'>;
+
 export interface RunArtifacts {
   tuning?: TuneOutcome;
   /** Shapley explanation of the last explained what-if row. */
   explanation?: ShapleyExplanation;
   exploration?: ExplorationPayload;
   forecast?: ForecastPayload;
+  batchScore?: BatchScoreArtifact;
 }
 
 /**

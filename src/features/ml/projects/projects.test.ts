@@ -98,6 +98,16 @@ function makeArtifacts(): RunArtifacts {
       rowsUsed: 120,
       seed: 42,
     },
+    batchScore: {
+      fileName: 'field.csv',
+      model: 'logistic',
+      rowCount: 30,
+      hasTarget: true,
+      labeledRows: 30,
+      unknownLabels: 0,
+      metrics: { accuracy: 0.9, f1: 0.89 },
+      testMetrics: { accuracy: 0.95, f1: 0.94 },
+    },
     forecast: {
       dateColumn: 'date',
       valueColumn: 'y',
@@ -145,6 +155,7 @@ describe('share link codec', () => {
     expect(decoded.artifacts?.explanation?.contributions).toEqual([{ column: 'f1', value: 0.4 }]);
     expect(decoded.artifacts?.exploration?.clusters).toHaveLength(2);
     expect(decoded.artifacts?.forecast?.winner.key).toBe('holtWinters');
+    expect(decoded.artifacts?.batchScore?.fileName).toBe('field.csv');
     // Oversized point clouds are downsampled / tailed, never dropped.
     expect(decoded.artifacts!.exploration!.points.length).toBeLessThanOrEqual(121);
     expect(decoded.artifacts!.exploration!.points.length).toBeGreaterThan(50);
@@ -205,6 +216,8 @@ describe('report generation', () => {
     expect(html).toContain('ml.lab.explore.traitNumeric(f1|30|60)');
     expect(html).toContain('ml.lab.forecast.title');
     expect(html).toContain('ml.lab.forecast.methods.holtWinters');
+    expect(html).toContain('ml.lab.batch.title');
+    expect(html).toContain('field.csv');
     expect(html).not.toContain('<script');
   });
 });
