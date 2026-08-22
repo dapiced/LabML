@@ -8,6 +8,7 @@ import { DataExportBar } from '@/features/data/components/DataExportBar';
 import { DataPreview } from '@/features/data/components/DataPreview';
 import { DriftPanel } from '@/features/data/components/DriftPanel';
 import { JoinPanel } from '@/features/data/components/JoinPanel';
+import { SqlPanel } from '@/features/data/SqlPanel';
 import { QualitySummary } from '@/features/data/components/QualitySummary';
 import { RecipePanel } from '@/features/data/components/RecipePanel';
 import { useDataStore } from '@/features/data/data-store';
@@ -76,6 +77,9 @@ export function DataPage() {
           <RecipePanel />
           <DataExportBar />
           <DriftPanel />
+          <section className="pb-12">
+            <SqlPanel />
+          </section>
           <DataPreview />
         </>
       )}
