@@ -148,6 +148,40 @@ describe('validateIntent — the grammar is a wall, not a suggestion', () => {
   });
 });
 
+describe('ordering operators need a number (V27.3)', () => {
+  it('converts a numeric string threshold', () => {
+    expect(
+      validateIntent({ kind: 'count', filter: { column: 'age', op: '>', value: '30' } }, COLUMNS),
+    ).toEqual({ kind: 'count', filter: { column: 'age', op: '>', value: 30 } });
+  });
+
+  it('refuses a threshold that is not a number at all', () => {
+    expect(
+      validateIntent(
+        { kind: 'count', filter: { column: 'age', op: '>', value: 'vieux' } },
+        COLUMNS,
+      ),
+    ).toBeNull();
+  });
+
+  it('leaves equality filters on text alone — that is how categories are filtered', () => {
+    expect(
+      validateIntent(
+        { kind: 'count', filter: { column: 'sex', op: '=', value: 'female' } },
+        COLUMNS,
+      ),
+    ).toEqual({ kind: 'count', filter: { column: 'sex', op: '=', value: 'female' } });
+  });
+
+  it('reads the exact completion that produced « 0 ligne où fare >= 0 »', () => {
+    expect(
+      intentFromCompletion('{"kind":"count","filter":{"column":"fare","op":">=","value":"0"}}', [
+        { name: 'fare', isNumeric: true, values: [] },
+      ]),
+    ).toEqual({ kind: 'count', filter: { column: 'fare', op: '>=', value: 0 } });
+  });
+});
+
 describe('intentFromCompletion', () => {
   it('survives the wrapping a chat model adds around its JSON', () => {
     expect(intentFromCompletion('```json\n{"kind":"shape"}\n```', COLUMNS)).toEqual({

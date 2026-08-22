@@ -10,6 +10,15 @@ export type AggOp = 'count' | 'mean' | 'median' | 'min' | 'max' | 'sum' | 'std';
 
 export type FilterOp = '>' | '>=' | '<' | '<=' | '=' | '!=';
 
+/**
+ * V27.3 — the four operators that only mean something between numbers. A text
+ * value on one of these used to fall through to the equality branch below, so
+ * `fare >= "0"` silently became `fare == "0"` and answered « 0 lignes » on a
+ * table where every fare is ≥ 0. They are handled apart now, and a value that
+ * cannot be read as a number is a named refusal, never a quiet zero.
+ */
+const ORDERING_OPS: readonly FilterOp[] = ['>', '>=', '<', '<='];
+
 export interface Filter {
   column: string;
   op: FilterOp;
@@ -73,23 +82,33 @@ function columnIndex(table: Table, name: string): number {
 function matchesFilter(cell: Cell, filter: Filter): boolean {
   if (isMissing(cell)) return false;
   const raw = (cell as string).trim();
-  if (typeof filter.value === 'number') {
+  if (ORDERING_OPS.includes(filter.op)) {
+    // A number written as a string is still a number: the model emits `"0"` as
+    // readily as `0`, and both mean the same comparison.
+    const threshold =
+      typeof filter.value === 'number' ? filter.value : parseNumber(String(filter.value));
+    // Unreachable through the grammar wall (`asFilter` refuses it) and through
+    // the keyword parser (it only ever builds numbers) — so if it happens, it
+    // is a bug upstream, and a bug must not pass for a query with no matches.
+    if (threshold === null) throw new Error('filter-not-numeric');
     const parsed = parseNumber(raw);
     if (parsed === null) return false;
     switch (filter.op) {
       case '>':
-        return parsed > filter.value;
+        return parsed > threshold;
       case '>=':
-        return parsed >= filter.value;
+        return parsed >= threshold;
       case '<':
-        return parsed < filter.value;
-      case '<=':
-        return parsed <= filter.value;
-      case '=':
-        return parsed === filter.value;
-      case '!=':
-        return parsed !== filter.value;
+        return parsed < threshold;
+      default:
+        return parsed <= threshold;
     }
+  }
+
+  if (typeof filter.value === 'number') {
+    const parsed = parseNumber(raw);
+    if (parsed === null) return false;
+    return filter.op === '!=' ? parsed !== filter.value : parsed === filter.value;
   }
   const equal = raw.toLowerCase() === String(filter.value).toLowerCase();
   return filter.op === '!=' ? !equal : equal;
