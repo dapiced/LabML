@@ -1,0 +1,136 @@
+LabML — third-party notices
+Copyright (c) 2026 Dominic D'Apice
+
+LabML's own source code is released under the MIT License; see LICENSE.
+
+This file covers third-party material that LabML *redistributes* — model
+weights committed to this repository or served from the deployed site, the
+WebAssembly runtimes self-hosted beside them, and the demo datasets. Build
+dependencies declared in package.json are not repeated here: they are not
+redistributed by the site, and their licenses ship inside node_modules.
+
+Everything listed below runs in the visitor's browser. Nothing here sends data
+anywhere; see the /privacy page for what does and does not cross the network.
+
+--------------------------------------------------------------------------------
+1. Machine learning models committed to this repository
+--------------------------------------------------------------------------------
+
+### EfficientNet-Lite4, INT8 quantized
+    File:      public/models/efficientnet-lite4-11-int8.onnx
+    Source:    ONNX Model Zoo — https://github.com/onnx/models
+    License:   Apache License 2.0
+    Upstream:  EfficientNet-Lite (Google, TensorFlow), Apache License 2.0.
+               The INT8 variant in the Model Zoo is quantized with Intel(R)
+               Neural Compressor.
+    Used for:  image classification over the 1,000 ImageNet-1k classes.
+
+### YOLOX-Nano
+    File:      public/models/yolox-nano.onnx
+    Source:    YOLOX — https://github.com/Megvii-BaseDetection/YOLOX
+    Copyright: Copyright (c) Megvii, Inc. and its affiliates.
+    License:   Apache License 2.0
+    Used for:  object detection over the 80 COCO classes.
+    Note:      chosen over the stronger AGPL-licensed YOLO families precisely
+               because Apache-2.0 permits this redistribution.
+
+### UltraFace RFB-320
+    File:      public/models/ultraface-RFB-320.onnx
+    Source:    Ultra-Light-Fast-Generic-Face-Detector-1MB —
+               https://github.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB
+    Copyright: Copyright (c) Linzaer
+    License:   MIT License
+    Used for:  face detection (location only — the model does not identify
+               anyone, and LabML stores no face data).
+
+The COCO and ImageNet-1k class-name lists bundled with the app (with French
+translations added by this project) come from the respective model sources
+above.
+
+--------------------------------------------------------------------------------
+2. Language model fetched at deploy time
+--------------------------------------------------------------------------------
+
+### Qwen3-0.6B-DQ (ONNX, q4f16)
+    Served at: /llm/onnx-community/Qwen3-0.6B-DQ-ONNX/** (355 MB)
+    Not committed to this repository. scripts/prepare-llm.mjs downloads the
+    weights during the build and splits them into <= 24 MiB parts, which the
+    browser reassembles; the generated manifest records the repository,
+    revision and license alongside the parts.
+    Source:    https://huggingface.co/onnx-community/Qwen3-0.6B-DQ-ONNX
+               ONNX export of https://huggingface.co/Qwen/Qwen3-0.6B
+    Copyright: Copyright (c) Alibaba Cloud (Qwen team)
+    License:   Apache License 2.0
+    Used for:  translating a question into a query. The model never computes
+               an answer — every number comes from the deterministic engine.
+
+--------------------------------------------------------------------------------
+3. Runtimes self-hosted and served by the site
+--------------------------------------------------------------------------------
+
+These are npm dependencies whose binaries are copied into the build and served
+from this origin, because the strict Content-Security-Policy forbids the CDN
+defaults. They are redistributed, so they are listed here.
+
+### ONNX Runtime Web
+    Served at: /ort/ and /ort-llm/
+    Copyright: Copyright (c) Microsoft Corporation
+    License:   MIT License
+    Home:      https://github.com/microsoft/onnxruntime
+
+### DuckDB-Wasm (pinned to 1.28.0)
+    Served at: /duckdb/
+    Copyright: Copyright (c) DuckDB Labs / Stichting DuckDB Foundation
+    License:   MIT License
+    Home:      https://github.com/duckdb/duckdb-wasm
+    Note:      the version is pinned by measurement, not by habit — from 1.29
+               the binaries cross Cloudflare Pages' hard 25 MiB per-file limit.
+
+### Transformers.js (@huggingface/transformers)
+    Bundled into the application JavaScript.
+    Copyright: Copyright (c) Hugging Face
+    License:   Apache License 2.0
+    Home:      https://github.com/huggingface/transformers.js
+
+--------------------------------------------------------------------------------
+4. Demo datasets (public/datasets/)
+--------------------------------------------------------------------------------
+
+### Redistributed from seaborn-data
+    Files:     titanic.csv, iris.csv, mpg.csv
+    Source:    https://github.com/mwaskom/seaborn-data
+    Copyright: Copyright (c) Michael Waskom
+    License:   BSD 3-Clause License (seaborn)
+    Underlying sources:
+      - Titanic passenger list — public domain; widely redistributed via the
+        Vanderbilt Department of Biostatistics dataset archive.
+      - Fisher's Iris (1936) — UCI Machine Learning Repository.
+      - Auto MPG — UCI Machine Learning Repository.
+
+### Synthetic, generated for this project
+    Files:     cafe-sales.csv, cafe-sales-june.csv, cafe-products.csv,
+               energy.csv, fraud.csv, reviews.csv
+    Generated deterministically at seed 42 for demonstration purposes. They
+    contain no real people, transactions, reviews or measurements. Covered by
+    LabML's own MIT License.
+
+### Derived
+    File:      iris-field.csv — a held-out batch derived from iris.csv, used to
+               demonstrate batch scoring. Same terms as its source.
+
+--------------------------------------------------------------------------------
+5. Test fixtures
+--------------------------------------------------------------------------------
+
+    File:      e2e/fixtures/astronaut.jpg
+    Source:    NASA image GPN-2000-001177. NASA imagery is generally not
+               subject to copyright in the United States; see
+               https://www.nasa.gov/nasa-brand-center/images-and-media/
+    Used for:  an end-to-end assertion that detection finds one person and one
+               face on a real photograph.
+
+--------------------------------------------------------------------------------
+
+Full license texts are available at the upstream links above. If you believe
+something is attributed incorrectly or is missing from this file, please open
+an issue — it will be corrected.
