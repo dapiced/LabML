@@ -737,6 +737,25 @@
     "privacy": {
       "title": "Rien ne quitte votre navigateur",
       "body": "Le fichier est lu et nettoyé dans un Web Worker ; la page ne reçoit que le rapport de qualité, des compteurs et quelques lignes d'aperçu. Les exports sont générés localement, et « Ouvrir dans le ML Lab » transmet le jeu nettoyé au labo en mémoire — aucun serveur n'intervient à aucun moment, comme l'impose la Content-Security-Policy stricte de ce site."
+    },
+    "sql": {
+      "title": "SQL analytique",
+      "body": "Un vrai moteur SQL analytique (DuckDB) qui s'exécute dans votre navigateur, sur le fichier que vous venez de charger — jointures, fenêtres, agrégations, sans serveur. Le fichier est lu tel que vous l'avez déposé, avant la recette de nettoyage : ce que vous interrogez est donc exactement ce que vous pouvez rouvrir vous-même.",
+      "open": "Ouvrir la console SQL ({{size}})",
+      "openNote": "Téléchargé une seule fois puis conservé par votre navigateur, comme les modèles de vision. Il ne part rien : le moteur vient de notre domaine et vos données ne le quittent pas.",
+      "loading": "Ouverture du moteur…",
+      "failed": "Le moteur SQL n'a pas pu démarrer ({{reason}}). Le reste du Data Studio n'est pas affecté.",
+      "tables": "Table disponible : {{tables}} — {{file}} (fichier d'origine, avant recette).",
+      "noSource": "Aucun fichier attaché pour l'instant. Ajoutez-en un ci-dessous.",
+      "queryLabel": "Votre requête SQL",
+      "run": "Exécuter",
+      "running": "Exécution…",
+      "addFile": "Ajouter un fichier (CSV, Parquet, JSON)",
+      "rows": "{{total}} lignes.",
+      "rowsTruncated": "{{shown}} premières lignes affichées sur {{total}} au total.",
+      "capNote": "L'affichage est plafonné pour rester fluide ; l'export CSV et l'envoi au ML Lab portent sur les lignes affichées. Ajoutez un LIMIT ou un filtre pour cadrer le résultat.",
+      "exportCsv": "Exporter en CSV",
+      "toLab": "Ouvrir dans le ML Lab"
     }
   },
   "ai": {
