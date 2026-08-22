@@ -737,6 +737,25 @@
     "privacy": {
       "title": "Nothing leaves your browser",
       "body": "The file is parsed and cleaned inside a Web Worker; the page only ever receives the quality report, counters and a few preview rows. Exports are generated locally, and “Open in the ML Lab” hands the cleaned dataset to the lab in memory — no server is involved at any point, as the strict Content-Security-Policy of this site enforces."
+    },
+    "sql": {
+      "title": "Analytical SQL",
+      "body": "A real analytical SQL engine (DuckDB) running inside your browser, over the file you just loaded — joins, window functions, aggregations, no server. The file is read exactly as you dropped it, before the cleaning recipe: what you query is what you can reopen yourself.",
+      "open": "Open the SQL console ({{size}})",
+      "openNote": "Downloaded once and then kept by your browser, like the vision models. Nothing goes out: the engine comes from our domain and your data does not leave it.",
+      "loading": "Starting the engine…",
+      "failed": "The SQL engine could not start ({{reason}}). The rest of the Data Studio is unaffected.",
+      "tables": "Available table: {{tables}} — {{file}} (original file, before the recipe).",
+      "noSource": "No file attached yet. Add one below.",
+      "queryLabel": "Your SQL query",
+      "run": "Run",
+      "running": "Running…",
+      "addFile": "Add a file (CSV, Parquet, JSON)",
+      "rows": "{{total}} rows.",
+      "rowsTruncated": "First {{shown}} rows shown out of {{total}}.",
+      "capNote": "The display is capped to stay responsive; the CSV export and the ML Lab handoff carry the rows shown. Add a LIMIT or a filter to frame the result.",
+      "exportCsv": "Export as CSV",
+      "toLab": "Open in the ML Lab"
     }
   },
   "ai": {

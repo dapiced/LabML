@@ -37,6 +37,13 @@ interface DataState {
   exportedFile: ExportedFile | null;
   /** Cleaned CSV handed to the ML Lab, consumed once by the page. */
   labHandoff: { name: string; content: string } | null;
+  /**
+   * V29 — where the SQL console can re-read the CURRENT file's raw bytes. The
+   * console queries the file as it was dropped, not the cleaned version: the
+   * recipe belongs to the Data Studio, and pretending otherwise would make the
+   * SQL results untraceable to anything the user can point at.
+   */
+  sqlSource: { name: string; file: File | null; url: string | null } | null;
   driftStatus: 'idle' | 'parsing' | 'done';
   driftReport: DriftReport | null;
   compareMeta: DatasetMeta | null;
@@ -58,6 +65,8 @@ interface DataState {
   openInLab: () => void;
   clearExportedFile: () => void;
   clearLabHandoff: () => void;
+  /** V29: hands a query result to the ML Lab, through the existing path. */
+  sendSqlToLab: (name: string, content: string) => void;
   reset: () => void;
 }
 
@@ -85,6 +94,7 @@ const initialData = {
   applying: false,
   exportedFile: null,
   labHandoff: null,
+  sqlSource: null,
   driftStatus: 'idle' as const,
   driftReport: null,
   compareMeta: null,
@@ -174,13 +184,23 @@ export const useDataStore = create<DataState>((set, get) => {
 
     loadFile(file) {
       terminateWorker();
-      set({ ...initialData, options: get().options, status: 'parsing' });
+      set({
+        ...initialData,
+        options: get().options,
+        status: 'parsing',
+        sqlSource: { name: file.name, file, url: null },
+      });
       send({ kind: 'parse-file', file });
     },
 
     loadDemo(fileName) {
       terminateWorker();
-      set({ ...initialData, options: get().options, status: 'parsing' });
+      set({
+        ...initialData,
+        options: get().options,
+        status: 'parsing',
+        sqlSource: { name: fileName, file: null, url: `/datasets/${fileName}` },
+      });
       send({ kind: 'parse-url', url: `/datasets/${fileName}`, name: fileName });
     },
 
@@ -282,6 +302,10 @@ export const useDataStore = create<DataState>((set, get) => {
 
     clearLabHandoff() {
       set({ labHandoff: null });
+    },
+
+    sendSqlToLab(name, content) {
+      set({ labHandoff: { name, content } });
     },
 
     reset() {
