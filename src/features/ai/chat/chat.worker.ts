@@ -7,19 +7,32 @@
 import Papa from 'papaparse';
 import { runQuery, type Intent, type QueryResult } from '@/features/ai/chat/engine';
 import { parseQuestion, type ColumnInfo } from '@/features/ai/chat/parser';
+import type { LoadedModel } from '@/features/ai/llm/interpret';
 import { inferColumnType } from '@/features/ml/data/infer';
 import { isMissing } from '@/features/ml/data/infer';
 import type { Cell, DatasetMeta } from '@/features/ml/data/types';
 
+/** Which interpreter turned the question into a query (V27). */
+export type ChatEngine = 'deterministic' | 'llm';
+
 export type ChatWorkerRequest =
   | { kind: 'parse-file'; file: File }
   | { kind: 'parse-url'; url: string; name: string }
-  | { kind: 'ask'; question: string; lang: string };
+  | { kind: 'ask'; question: string; lang: string; engine: ChatEngine }
+  // V27: capability first, download only on explicit consent.
+  | { kind: 'llm-probe' }
+  | { kind: 'llm-load' };
 
 export type ChatWorkerResponse =
   | { kind: 'ready'; meta: DatasetMeta; columns: ColumnInfo[] }
-  | { kind: 'answer'; payload: QueryResult }
-  | { kind: 'unknown' }
+  /** `engine` says which interpreter produced the query — shown to the user. */
+  | { kind: 'answer'; payload: QueryResult; engine: ChatEngine }
+  | { kind: 'unknown'; engine: ChatEngine }
+  | { kind: 'llm-capability'; available: boolean; webgpu: boolean; totalBytes: number }
+  | { kind: 'llm-progress'; loaded: number; total: number }
+  | { kind: 'llm-ready' }
+  /** Named refusal: 'no-manifest' | 'no-webgpu' | anything the loader threw. */
+  | { kind: 'llm-failed'; reason: string }
   | { kind: 'error'; message: string };
 
 /** Category values kept per non-numeric column, for equality filters. */
@@ -29,6 +42,8 @@ let header: string[] = [];
 let columns: Cell[][] = [];
 let rowCount = 0;
 let columnInfo: ColumnInfo[] = [];
+/** V27: the local model, once the user has accepted its download. */
+let model: LoadedModel | null = null;
 
 function post(message: ChatWorkerResponse) {
   self.postMessage(message);
@@ -131,14 +146,60 @@ self.onmessage = async (event: MessageEvent<ChatWorkerRequest>) => {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const text = await response.text();
       parseText(text, request.name, text.length);
-    } else if (request.kind === 'ask') {
-      if (header.length === 0) throw new Error('no-data');
-      const intent: Intent | null = parseQuestion(request.question, columnInfo, request.lang);
-      if (!intent) {
-        post({ kind: 'unknown' });
+    } else if (request.kind === 'llm-probe') {
+      const { probeCapability } = await import('@/features/ai/llm/interpret');
+      const capability = await probeCapability();
+      post({
+        kind: 'llm-capability',
+        available: capability !== null,
+        webgpu: capability?.webgpu ?? false,
+        totalBytes: capability?.totalBytes ?? 0,
+      });
+    } else if (request.kind === 'llm-load') {
+      const { loadModel, probeCapability } = await import('@/features/ai/llm/interpret');
+      const capability = await probeCapability();
+      if (!capability) {
+        post({ kind: 'llm-failed', reason: 'no-manifest' });
         return;
       }
-      post({ kind: 'answer', payload: runQuery({ header, columns }, intent) });
+      // WebGPU is not optional: the model's quantized embedding kernel has no
+      // WASM implementation, so without it there is nothing to fall back to.
+      if (!capability.webgpu) {
+        post({ kind: 'llm-failed', reason: 'no-webgpu' });
+        return;
+      }
+      try {
+        model = await loadModel(capability.manifest, {
+          onProgress: ({ loaded, total }) => post({ kind: 'llm-progress', loaded, total }),
+        });
+        post({ kind: 'llm-ready' });
+      } catch (error) {
+        model = null;
+        post({
+          kind: 'llm-failed',
+          reason: error instanceof Error ? error.message : String(error),
+        });
+      }
+    } else if (request.kind === 'ask') {
+      if (header.length === 0) throw new Error('no-data');
+      let intent: Intent | null = null;
+      let engine: ChatEngine = 'deterministic';
+      if (request.engine === 'llm' && model) {
+        const result = await model.generate(request.question, columnInfo);
+        if (result.intent) {
+          intent = result.intent;
+          engine = 'llm';
+        }
+        // An answer that failed the grammar check is a refusal, not a guess:
+        // the deterministic parser gets its turn below, and the badge will say
+        // which engine actually produced the query.
+      }
+      intent ??= parseQuestion(request.question, columnInfo, request.lang);
+      if (!intent) {
+        post({ kind: 'unknown', engine: request.engine });
+        return;
+      }
+      post({ kind: 'answer', payload: runQuery({ header, columns }, intent), engine });
     }
   } catch (error) {
     post({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
