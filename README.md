@@ -110,7 +110,7 @@ The project follows three non-negotiable principles:
 - **Performance.** Every section serves a prerendered static shell (hero paints before
   JavaScript); Lighthouse mobile ≈ 0.99 on `/ml` under real throttling. Heavy
   dependencies (Dexie, SheetJS, ONNX Runtime) load lazily.
-- **Quality bar.** 314 unit tests, 57 Playwright end-to-end tests (including offline PWA,
+- **Quality bar.** 352 unit tests, 61 Playwright end-to-end tests (including offline PWA,
   fake-webcam and axe-core WCAG A/AA accessibility checks), strict TypeScript, ESLint,
   Prettier, and Lighthouse budgets — all enforced in CI.
 
@@ -118,7 +118,8 @@ The project follows three non-negotiable principles:
 
 React 19 · TypeScript (strict) · Vite · Tailwind CSS v4 · react-router · zustand ·
 i18next (bilingual EN/FR) · Dexie (IndexedDB) · Papa Parse · SheetJS · ONNX Runtime Web ·
-Vitest + Testing Library · Playwright · GitHub Actions · Cloudflare Pages
+DuckDB-Wasm · Transformers.js · Vitest + Testing Library · Playwright · GitHub Actions ·
+Cloudflare Pages
 
 ## Getting started
 
@@ -137,6 +138,13 @@ npm run dev        # start the dev server
 | `npm run lint` / `npm run format:check` | ESLint / Prettier                  |
 | `npm run build`                         | Production build to `dist/`        |
 | `npm run preview`                       | Serve the production build locally |
+| `npm run llm:prepare`                   | Fetch and split the local LLM      |
+
+The language model behind the data assistant is **not committed** (355 MB). `npm run
+llm:prepare` downloads it into `public/llm/` and splits it into parts under Cloudflare's
+25 MiB per-file limit; CI runs it before the production build. Skip it and everything
+else works — the assistant simply falls back to its deterministic interpreter, which is
+the default in any case.
 
 ## Deployment
 
@@ -146,10 +154,13 @@ CI builds, tests and deploys on every push: pull requests get a Cloudflare Pages
 
 ## Roadmap
 
-Development proceeds in planned "caps" of feature waves; five caps (MVP through model
-reuse) have shipped. The full plan, delivery log and design decisions live in
+Development proceeds in planned "caps" of feature waves; six caps have shipped (MVP
+through the lab meeting the real world — real photos, real text, real file sizes). The full plan, delivery log and design decisions live in
 [PLAN.md](PLAN.md).
 
 ## License
 
 [MIT](LICENSE) © Dominic D'Apice
+
+Redistributed third-party material — the vision and language models, the self-hosted
+WebAssembly runtimes, and the demo datasets — is attributed in [NOTICE](NOTICE).
