@@ -21,7 +21,12 @@ describe('resolveIntent', () => {
   });
 
   it('says nobody understood — and that the model was consulted', async () => {
-    expect(await resolveIntent(() => null, async () => null)).toEqual({
+    expect(
+      await resolveIntent(
+        () => null,
+        async () => null,
+      ),
+    ).toEqual({
       intent: null,
       by: 'none-both',
     });
