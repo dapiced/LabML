@@ -429,6 +429,12 @@ export function ChatPage() {
           <p className="max-w-3xl text-sm leading-relaxed font-medium text-accent-strong">
             {t('ai.chat.honesty.coming')}
           </p>
+          <Link
+            to="/privacy"
+            className="text-sm font-medium text-accent underline decoration-line underline-offset-4 hover:text-accent-strong"
+          >
+            {t('privacy.link')}
+          </Link>
         </Card>
       </section>
 

@@ -9,6 +9,7 @@ const SHELLS: [string, string][] = [
   ['/ai/vision/', 'What does a neural network see?'],
   ['/ai/chat/', 'Ask your data a question.'],
   ['/about/', 'How it works'],
+  ['/privacy/', 'Your data never leaves your browser'],
 ];
 
 test('every section serves a static shell whose hero needs no JavaScript', async ({ request }) => {
