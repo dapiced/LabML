@@ -237,6 +237,34 @@ function groupByColumn(
   return undefined;
 }
 
+/**
+ * A question that carries a condition this grammar could not read must be
+ * REFUSED, never answered as if the condition were not there. "How many
+ * children under 10?" answered with the total row count is a confidently
+ * wrong answer — strictly worse than "I did not understand".
+ *
+ * Two signs of a dropped condition, both requiring that no filter was built:
+ * an ORDERING comparator with nothing to attach it to, and a bare number that
+ * is not part of any column name the question mentioned. Equality words are
+ * deliberately excluded — "what IS the average age" is filler, not a filter.
+ */
+function droppedCondition(
+  text: string,
+  mentions: { column: ColumnInfo }[],
+  filter: Filter | undefined,
+  lexicon: Lexicon,
+): boolean {
+  if (filter) return false;
+  const ordering: FilterOp[] = ['>', '>=', '<', '<='];
+  const hasOrdering = lexicon.comparators.some(
+    ([op, phrases]) => ordering.includes(op) && findAny(text, phrases) !== null,
+  );
+  if (hasOrdering) return true;
+  let rest = text;
+  for (const mention of mentions) rest = rest.split(fold(mention.column.name)).join(' ');
+  return /\d/.test(rest);
+}
+
 export function parseQuestion(
   question: string,
   columns: ColumnInfo[],
@@ -303,13 +331,9 @@ export function parseQuestion(
       const exclude = new Set([column]);
       const groupBy = groupByColumn(text, mentions, lexicon, exclude);
       if (groupBy) exclude.add(groupBy);
-      return {
-        kind: 'aggregate',
-        op: opHit.op,
-        column,
-        groupBy,
-        filter: parseFilter(text, mentions, columns, lexicon, exclude),
-      };
+      const filter = parseFilter(text, mentions, columns, lexicon, exclude);
+      if (droppedCondition(text, mentions, filter, lexicon)) return null;
+      return { kind: 'aggregate', op: opHit.op, column, groupBy, filter };
     }
   }
 
@@ -324,7 +348,9 @@ export function parseQuestion(
         filter: parseFilter(text, mentions, columns, lexicon, new Set([groupBy])),
       };
     }
-    return { kind: 'count', filter: parseFilter(text, mentions, columns, lexicon, new Set()) };
+    const filter = parseFilter(text, mentions, columns, lexicon, new Set());
+    if (droppedCondition(text, mentions, filter, lexicon)) return null;
+    return { kind: 'count', filter };
   }
 
   return null;

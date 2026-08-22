@@ -60,14 +60,19 @@ export function buildUserPrompt(question: string): string {
 
 /** JSON-ish text (the model may wrap it) reduced to its first object. */
 export function extractJson(raw: string): string | null {
-  const start = raw.indexOf('{');
+  // Belt and braces against Qwen3's reasoning mode: a <think> block can hold
+  // braces of its own, and taking the first one would parse the model's
+  // deliberation instead of its answer.
+  const text = raw.replace(/<think>[\s\S]*?<\/think>/g, '').replace(/^[\s\S]*<\/think>/, '');
+  const raw2 = text.trim().length > 0 ? text : raw;
+  const start = raw2.indexOf('{');
   if (start < 0) return null;
   let depth = 0;
-  for (let i = start; i < raw.length; i++) {
-    if (raw[i] === '{') depth += 1;
-    else if (raw[i] === '}') {
+  for (let i = start; i < raw2.length; i++) {
+    if (raw2[i] === '{') depth += 1;
+    else if (raw2[i] === '}') {
       depth -= 1;
-      if (depth === 0) return raw.slice(start, i + 1);
+      if (depth === 0) return raw2.slice(start, i + 1);
     }
   }
   return null;

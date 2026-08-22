@@ -159,3 +159,52 @@ describe('parseQuestion — français', () => {
     ).toMatchObject({ kind: 'count', filter: { column: 'fare', op: '<', value: 7.25 } });
   });
 });
+
+describe('a condition it cannot read is REFUSED, never dropped', () => {
+  // Reported from production (V27 testing): "combien d'enfant en bas de 10 ans"
+  // answered 891 — the whole table — because the parser kept the count and
+  // silently discarded the part it did not understand.
+  it('refuses a French question whose numeric condition it cannot map', () => {
+    expect(parseQuestion("combien d'enfant en bas de 10 ans ?", columns, 'fr')).toBeNull();
+  });
+
+  it('refuses an English question whose numeric condition it cannot map', () => {
+    expect(parseQuestion('how many children under 10 years old?', columns, 'en')).toBeNull();
+  });
+
+  it('refuses an aggregate whose condition it cannot map at all', () => {
+    expect(parseQuestion('average age for kids born before 1900', columns, 'en')).toBeNull();
+  });
+
+  // The guard targets DROPPED conditions, not guessed columns. Here the
+  // condition IS applied — to `fare`, the only numeric column named — which
+  // also happens to be the legitimate reading of "average fare below 12".
+  // Refusing this would cost a real question to catch a fuzzy one.
+  it('keeps a condition it can attach, even when the wording is loose', () => {
+    expect(parseQuestion('average fare for kids below 12', columns, 'en')).toMatchObject({
+      kind: 'aggregate',
+      op: 'mean',
+      column: 'fare',
+      filter: { column: 'fare', op: '<', value: 12 },
+    });
+  });
+
+  it('still answers the same question when the condition names a real column', () => {
+    expect(parseQuestion('how many rows where age is under 10?', columns, 'en')).toEqual({
+      kind: 'count',
+      filter: { column: 'age', op: '<', value: 10 },
+    });
+  });
+
+  it('leaves conditionless questions alone — no number, no comparator, no refusal', () => {
+    expect(parseQuestion('combien de personnes au total ?', columns, 'fr')).toEqual({
+      kind: 'count',
+      filter: undefined,
+    });
+    expect(parseQuestion('What is the average age?', columns, 'en')).toMatchObject({
+      kind: 'aggregate',
+      op: 'mean',
+      column: 'age',
+    });
+  });
+});

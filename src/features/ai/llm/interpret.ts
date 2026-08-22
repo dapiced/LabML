@@ -20,7 +20,7 @@ import type { ColumnInfo } from '@/features/ai/chat/parser';
 /** Where the build script (scripts/prepare-llm.mjs) puts the sharded model. */
 export const LLM_BASE = '/llm/';
 /** Enough for the longest valid query; the JSON we want is far shorter. */
-const MAX_NEW_TOKENS = 64;
+const MAX_NEW_TOKENS = 96;
 
 export interface LlmCapability {
   /** Measured, never assumed: WebGPU decides whether this is usable at all. */
@@ -104,15 +104,33 @@ export async function loadModel(
   return {
     async generate(question, columns) {
       const started = performance.now();
-      const output = (await generator(
+      // Qwen3 is a reasoning model: left to itself it opens a <think> block and
+      // spends the whole token budget arguing with itself before answering.
+      // The chat template turns that off when `enable_thinking` is explicitly
+      // false — so we apply the template ourselves instead of handing the
+      // pipeline a message list and hoping. Without this the model NEVER emits
+      // the JSON and every question silently falls back to the parser.
+      const prompt = generator.tokenizer.apply_chat_template(
         [
           { role: 'system', content: buildSystemPrompt(columns) },
           { role: 'user', content: buildUserPrompt(question) },
         ],
+        // `enable_thinking` is not in the library's option type, but every
+        // unknown key is spread into the Jinja template — which is exactly
+        // where Qwen3 reads it.
+        {
+          tokenize: false,
+          add_generation_prompt: true,
+          enable_thinking: false,
+        } as unknown as { tokenize: false; add_generation_prompt: boolean },
+      ) as string;
+      const output = (await generator(prompt, {
         // Greedy: the same question must give the same query, every time.
-        { max_new_tokens: MAX_NEW_TOKENS, do_sample: false },
-      )) as { generated_text: { role: string; content: string }[] }[];
-      const raw = output[0]?.generated_text?.at(-1)?.content ?? '';
+        max_new_tokens: MAX_NEW_TOKENS,
+        do_sample: false,
+        return_full_text: false,
+      })) as { generated_text: string }[];
+      const raw = output[0]?.generated_text ?? '';
       return { intent: intentFromCompletion(raw, columns), raw, ms: performance.now() - started };
     },
     async dispose() {
