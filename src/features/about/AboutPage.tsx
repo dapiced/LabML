@@ -1,5 +1,6 @@
 import { Database, Link2, ShieldCheck, WifiOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
 
@@ -31,7 +32,15 @@ export function AboutPage() {
       </section>
 
       <section className="pb-12">
-        <h2 className="mb-4 font-display text-2xl font-semibold">{t('about.privacy.title')}</h2>
+        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-display text-2xl font-semibold">{t('about.privacy.title')}</h2>
+          <Link
+            to="/privacy"
+            className="text-sm font-medium text-accent underline decoration-line underline-offset-4 hover:text-accent-strong"
+          >
+            {t('privacy.link')}
+          </Link>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           {PRIVACY_CARDS.map(({ key, Icon }) => (
             <Card key={key} className="flex flex-col gap-2">
