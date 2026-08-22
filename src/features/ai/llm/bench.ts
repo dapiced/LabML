@@ -128,6 +128,21 @@ export const BENCH_CASES: BenchCase[] = [
     want: { kind: 'correlation', a: 'fare', b: 'survived' },
     beyondKeywords: true,
   },
+  // V27.1: the two shapes the measured failures exposed — an implicit numeric
+  // threshold ("enfants" is not a column, `age < 10` is), and a top-k, which
+  // the model had never seen an example of.
+  {
+    q: "combien d'enfants de moins de 10 ans ?",
+    lang: 'fr',
+    want: { kind: 'count', filter: { column: 'age', op: '<', value: 10 } },
+    beyondKeywords: true,
+  },
+  {
+    q: 'les 3 ponts avec le plus de passagers',
+    lang: 'fr',
+    want: { kind: 'topk', groupBy: 'deck', k: 3, op: 'count' },
+    beyondKeywords: true,
+  },
 ];
 
 /** Key-order-independent equality — the grammar has no meaningful ordering. */
@@ -145,6 +160,13 @@ export interface BenchRow {
   beyondKeywords: boolean;
   deterministic: Outcome;
   llm: Outcome;
+  /**
+   * V27.1 — what the app actually answers, in the shipped order: the keyword
+   * grammar's reading when it has one, the model's only otherwise. This is the
+   * number that describes the product; the two columns above describe the
+   * parts.
+   */
+  pipeline: Outcome;
   raw: string;
   ms: number;
 }
@@ -180,12 +202,13 @@ export async function runBench(log: (line: string) => void): Promise<BenchReport
       beyondKeywords: testCase.beyondKeywords,
       deterministic: outcome(det),
       llm: outcome(result.intent),
+      pipeline: det ? outcome(det) : outcome(result.intent),
       raw: result.raw.slice(0, 200),
       ms: Math.round(result.ms),
     });
     const last = rows[rows.length - 1];
     log(
-      `${rows.length}/${BENCH_CASES.length} ${testCase.q.slice(0, 44)} → det=${last.deterministic} lm=${last.llm} (${last.ms} ms)`,
+      `${rows.length}/${BENCH_CASES.length} ${testCase.q.slice(0, 44)} → det=${last.deterministic} lm=${last.llm} app=${last.pipeline} (${last.ms} ms)`,
     );
   }
   await model.dispose();
