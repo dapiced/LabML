@@ -13,6 +13,13 @@ export function Footer() {
           {t('common.privacyStrip')}
         </p>
         <p className="flex items-center gap-3">
+          <Link
+            to="/privacy"
+            className="underline decoration-line underline-offset-4 hover:text-ink"
+          >
+            {t('common.footer.privacy')}
+          </Link>
+          <span aria-hidden="true">·</span>
           <Link to="/about" className="underline decoration-line underline-offset-4 hover:text-ink">
             {t('common.footer.about')}
           </Link>
