@@ -98,6 +98,13 @@ jobs:
         with:
           name: dist
           path: dist
+      # V27: the local language model (355 MB) is fetched and split here, not
+      # committed — 355 MB of binaries in git would slow every clone and every
+      # checkout, for weights only the opt-in chat engine downloads. The script
+      # verifies each file's size and fails loudly rather than shipping a
+      # truncated model.
+      - name: Fetch and shard the local language model
+        run: npm run llm:prepare -- dist/llm
       - name: Ensure the Pages project exists
         run: npx wrangler pages project create labml --production-branch=main || true
       - name: Deploy

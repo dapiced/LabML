@@ -728,6 +728,24 @@
         "filterNote": "sur {{rows}} lignes où {{filter}}"
       },
       "unknown": "Je n'ai pas compris. Je suis un interpréteur déterministe, pas un modèle de langage : demandez une moyenne, une médiane, un min/max, une somme, un comptage sous condition, un top N, une répartition, une corrélation ou les valeurs manquantes — en nommant vos colonnes.",
+      "engine": {
+        "title": "Interpréteur",
+        "deterministic": "Interpréteur déterministe",
+        "deterministicNote": "Instantané, toujours disponible, même réponse à chaque fois",
+        "llm": "Modèle de langage local",
+        "llmNote": "Qwen3-0.6B, {{size}}, téléchargé une seule fois — nécessite WebGPU",
+        "noWebgpu": "Ce navigateur n'a pas WebGPU : le modèle local ne peut pas tourner ici — son noyau d'embedding quantifié n'a pas d'implémentation WASM, et à cette taille il n'existe aucun repli honnête. L'interpréteur déterministe reste entièrement disponible.",
+        "download": "Télécharger le modèle ({{size}})",
+        "downloadNote": "Téléchargé une seule fois, puis conservé par votre navigateur et disponible hors ligne. Rien n'est envoyé : il s'exécute sur votre machine, sur vos données.",
+        "downloading": "Téléchargement du modèle… {{percent}} %",
+        "readyTag": "chargé",
+        "readyNote": "Le modèle ne fait que traduire votre question en requête ; c'est toujours le moteur déterministe qui calcule les chiffres. Quand sa traduction échoue au contrôle de grammaire, l'interpréteur déterministe répond à sa place — et la mention sous chaque réponse dit lequel a répondu.",
+        "failed": "Le modèle local n'a pas pu être chargé ({{reason}}). L'interpréteur déterministe n'est pas affecté.",
+        "by": {
+          "deterministic": "répondu par l'interpréteur déterministe",
+          "llm": "question lue par le modèle local · calculé par le moteur déterministe"
+        }
+      },
       "thinking": "Calcul…",
       "honesty": {
         "title": "Honnête par construction",
