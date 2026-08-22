@@ -30,6 +30,7 @@
     },
     "privacyStrip": "Vos données ne quittent jamais votre navigateur — vérifiez-le vous-même dans l'onglet Réseau.",
     "footer": {
+      "privacy": "Confidentialité",
       "copyright": "© 2026 Dominic D'Apice",
       "about": "Comment ça marche"
     }
@@ -64,6 +65,94 @@
     "openSource": {
       "title": "Sous le capot",
       "body": "Tout le labo — parsing, modèles, métriques — est écrit à la main et couvert par des tests automatisés (unitaires, bout en bout, accessibilité). Aucun service ML externe, aucun CDN : tout est livré avec l’application."
+    }
+  },
+  "privacy": {
+    "eyebrow": "Confidentialité",
+    "title": "Vos données ne quittent jamais votre navigateur",
+    "lede": "Ce n'est pas une politique de confidentialité rédigée par des juristes : c'est une propriété technique de l'application, et vous pouvez la vérifier vous-même en deux minutes, sans nous croire sur parole.",
+    "link": "Comment le vérifier vous-même →",
+    "promise": {
+      "title": "La promesse, en clair",
+      "body": "Quand vous déposez un fichier dans LabML, il est lu par votre navigateur et reste dans la mémoire de l'onglet. Aucune ligne, aucune colonne, aucun nom de fichier, aucune question posée à l'assistant, aucune image de webcam n'est envoyée à un serveur — le nôtre pas plus qu'un autre. Il n'y a pas de compte, pas de téléversement, pas de traceur, pas de mesure d'audience, pas de rapport d'erreur automatique."
+    },
+    "how": {
+      "title": "Comment c'est appliqué — pas seulement affirmé",
+      "csp": {
+        "title": "Le navigateur bloque lui-même les fuites",
+        "body": "Le site est servi avec une Content-Security-Policy stricte dont la directive connect-src 'self' n'autorise aucune connexion vers un autre domaine. Ce n'est pas notre code qui se retient poliment : c'est votre navigateur qui refuserait la requête, même si le code essayait de la faire."
+      },
+      "assets": {
+        "title": "Tout est auto-hébergé",
+        "body": "Aucun script tiers, aucune police depuis un CDN, aucune image distante, aucun widget. Les modèles de vision, le moteur ONNX et les poids du modèle de langage viennent de notre propre domaine — c'est pour cela qu'ils apparaissent dans l'onglet Réseau, et c'est tout ce qui y apparaît."
+      },
+      "workers": {
+        "title": "Le calcul se fait dans des Web Workers",
+        "body": "Lecture du fichier, nettoyage, entraînement, prédictions, questions à l'assistant : tout s'exécute dans des fils d'exécution de votre onglet. Vos données circulent entre la page et ses workers, jamais vers l'extérieur."
+      },
+      "storage": {
+        "title": "Rien n'est conservé sans un clic de votre part",
+        "body": "Par défaut, fermer l'onglet efface tout. Un jeu de données n'est enregistré — dans IndexedDB, sur votre disque, jamais ailleurs — que si vous cliquez explicitement sur « conserver », et le bouton « oublier » le supprime."
+      }
+    },
+    "header": {
+      "title": "L'en-tête réellement servi",
+      "body": "Voici la politique de sécurité renvoyée avec chaque page de ce site. Vous n'avez pas à nous croire : l'onglet Réseau vous la montre, et ce bloc est vérifié à chaque build contre le fichier de configuration réel.",
+      "note": "La ligne qui compte est celle-ci — elle interdit toute requête vers un autre domaine :",
+      "camera": "Et pour la webcam du module Vision, la caméra est autorisée pour ce site uniquement, jamais pour un cadre tiers :"
+    },
+    "verify": {
+      "title": "Vérifiez-le vous-même",
+      "lede": "Quatre contrôles, du plus rapide au plus convaincant. Aucun ne dépend de notre parole ni de notre code.",
+      "offline": {
+        "title": "Coupez le réseau",
+        "body": "Le test le plus court, et le plus difficile à truquer. Ouvrez les outils de développement (F12, ou ⌥⌘I sur Mac), onglet Réseau, passez le menu « No throttling » sur « Offline » — ou coupez simplement le Wi-Fi. Rechargez la page, déposez un CSV, entraînez un modèle, posez une question. Tout continue de fonctionner. Une application qui envoie vos données ailleurs pour les traiter en serait incapable."
+      },
+      "network": {
+        "title": "Regardez l'onglet Réseau pendant que vous travaillez",
+        "body": "Outils de développement → Réseau. Cochez « Conserver le journal », videz la liste, puis déposez votre fichier et lancez un entraînement. Filtrez sur Fetch/XHR : il ne se passe rien. Votre fichier n'est pas transmis, parce qu'il n'y a personne à qui le transmettre."
+      },
+      "headers": {
+        "title": "Lisez la politique de sécurité à la source",
+        "body": "Toujours dans Réseau, cliquez sur la première ligne — le document HTML — puis sur « En-têtes » → « En-têtes de réponse ». Cherchez Content-Security-Policy et la mention connect-src 'self'. C'est la même chaîne que celle affichée plus haut sur cette page."
+      },
+      "storage": {
+        "title": "Ouvrez le stockage local",
+        "body": "Onglet Application → IndexedDB → labml. Vous y voyez exactement ce que vous avez choisi de garder : vos analyses passées, et vos jeux de données seulement si vous l'avez demandé. Le bouton « oublier » du Data Studio vide cette base sous vos yeux."
+      }
+    },
+    "figure": {
+      "title": "Ce que vous devriez voir",
+      "tabs": ["Éléments", "Console", "Réseau", "Application"],
+      "columns": ["Nom", "Statut", "Type"],
+      "preserveLog": "Conserver le journal",
+      "offline": "Offline",
+      "rows": ["/assets/main-….js", "/assets/ChatPage-….js", "/datasets/titanic.csv"],
+      "emptyNote": "Plus rien pendant que vous chargez un fichier et entraînez",
+      "calloutOffline": "← basculez ici, tout continue de marcher",
+      "calloutEmpty": "les seules lignes sont les fichiers de l'application, servis par notre domaine",
+      "caption": "Schéma de l'onglet Réseau — les libellés varient selon le navigateur et la langue. Ce n'est pas une capture de votre écran : c'est ce que vous devriez y trouver.",
+      "alt": "Schéma de l'onglet Réseau des outils de développement : quelques fichiers de l'application, le sélecteur Offline mis en évidence, et aucune requête pendant le travail."
+    },
+    "live": {
+      "title": "La preuve en direct, dans votre navigateur",
+      "body": "Ce panneau lit la chronologie des ressources de cette page — celle-là même qu'affiche l'onglet Réseau — et compte les requêtes par domaine.",
+      "button": "Analyser les requêtes de cette page",
+      "clean": "{{total}} requêtes, toutes vers {{origin}}. Aucune vers un domaine tiers.",
+      "dirty": "{{count}} requête(s) vers un domaine tiers : {{origins}}",
+      "sameOrigin": "vers notre domaine :",
+      "thirdParty": "vers un tiers :",
+      "inline": "sans réseau (data:, blob:) :",
+      "caveat": "Honnêteté sur ce panneau : il lit notre propre chronologie, c'est donc une commodité, pas la preuve ultime. Les requêtes faites depuis un Web Worker ont leur propre chronologie et n'apparaissent pas ici, et une requête bloquée par la politique de sécurité n'y figure jamais. La vraie preuve, ce sont les quatre contrôles ci-dessus : eux ne passent pas par notre code."
+    },
+    "traffic": {
+      "title": "Ce qui passe réellement par le réseau",
+      "body": "Par souci d'exactitude, voici la liste complète. Tout vient de notre domaine, et rien n'est déclenché sans une action de votre part :",
+      "app": "les fichiers de l'application (HTML, JavaScript, styles, polices), au premier chargement, puis mis en cache pour l'usage hors ligne ;",
+      "demo": "les jeux de données de démonstration, uniquement si vous cliquez sur l'un d'eux ;",
+      "vision": "les modèles de vision, uniquement quand vous ouvrez le module Vision ;",
+      "llm": "les poids du modèle de langage local, uniquement si vous acceptez explicitement son téléchargement.",
+      "never": "Ce qui n'y passe jamais : votre fichier, son nom, vos colonnes, vos valeurs, vos questions, vos résultats, vos images de webcam. Aucune analytique, aucun compte, aucun cookie, aucun rapport d'erreur."
     }
   },
   "home": {
