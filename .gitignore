@@ -8,3 +8,6 @@ test-results
 .DS_Store
 .lighthouse
 .lighthouseci
+
+# V27: the local language model is fetched at deploy time, never committed.
+public/llm/
