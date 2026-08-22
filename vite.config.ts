@@ -158,6 +158,16 @@ export default defineConfig({
           dest: 'ort',
           rename: { stripBase: true },
         },
+        // V27: transformers.js pins its OWN onnxruntime-web build, so the
+        // local language model gets its runtime under /ort-llm/. The jsep
+        // variant carries the WebGPU backend the model requires; the plain
+        // and asyncify ones let the library fall back cleanly. All three are
+        // under 25 MiB — the jsep build only by 0.1 MiB, so check on upgrades.
+        {
+          src: 'node_modules/@huggingface/transformers/node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded{,.jsep,.asyncify}.{wasm,mjs}',
+          dest: 'ort-llm',
+          rename: { stripBase: true },
+        },
       ],
     }),
     // Offline-first PWA — the strongest proof that nothing needs a server.
@@ -205,6 +215,16 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        ...(process.env.V27_BENCH
+          ? { bench: fileURLToPath(new URL('./bench-v27.html', import.meta.url)) }
+          : {}),
+      },
+    },
+  },
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
