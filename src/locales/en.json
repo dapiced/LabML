@@ -707,6 +707,8 @@
       },
       "answers": {
         "scalar": "The {{op}} of {{column}} is {{value}} (over {{rows}} rows).",
+        "scalarPartial": "The {{op}} of {{column}} is {{value}} ({{used}} usable values out of {{rows}} rows).",
+        "usedOf": "{{used}} usable values out of {{rows}} rows",
         "count_one": "{{count, number}} row matches",
         "count_other": "{{count, number}} rows match",
         "countFilter": "where {{filter}}",

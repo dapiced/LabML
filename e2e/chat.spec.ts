@@ -26,6 +26,14 @@ test('data assistant answers counting, grouping and honesty questions on titanic
   await expect(grouped).toContainText('38.233'); // 1st class mean age
   await expect(grouped).toContainText('25.141'); // 3rd class mean age
 
+  await input.fill('average age');
+  await page.getByRole('button', { name: 'Ask' }).click();
+  // V27.2: titanic's age column has 177 holes. The mean is built from 714
+  // values, so the sentence must not imply it was built from all 891 rows.
+  const partial = page.getByTestId('chat-assistant').last();
+  await expect(partial).toContainText('29.699', { timeout: 15000 });
+  await expect(partial).toContainText('714 usable values out of 891 rows');
+
   await input.fill('tell me a joke about icebergs');
   await page.getByRole('button', { name: 'Ask' }).click();
   // The refusal no longer claims "I am not a language model" — since V27 one
