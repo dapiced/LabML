@@ -46,11 +46,19 @@ const beyond = report.rows.filter((r) => r.beyondKeywords);
 console.log(`\nchargement : ${report.loadMs} ms · ${report.total} questions`);
 console.log('déterministe :', JSON.stringify(tally('deterministic')));
 console.log('modèle local :', JSON.stringify(tally('llm')));
+// V27.1: the shipped order — deterministic first, model only as a rescue.
+console.log('appli (ordre livré) :', JSON.stringify(tally('pipeline')));
 console.log(
   `au-delà des mots-clés (${beyond.length} questions) : ` +
     `déterministe ${beyond.filter((r) => r.deterministic === 'ok').length}/${beyond.length}, ` +
     `modèle ${beyond.filter((r) => r.llm === 'ok').length}/${beyond.length}`,
 );
+const wrong = report.rows.filter((r) => r.pipeline === 'wrong');
+if (wrong.length > 0) {
+  console.log(`\nréponses fausses (${wrong.length}) — les seules qui coûtent la confiance :`);
+  for (const row of wrong) console.log(`  ${row.q}\n    ${row.raw.replace(/\n/g, ' ')}`);
+}
+
 if (process.env.V27_OUT) {
   writeFileSync(process.env.V27_OUT, JSON.stringify(report, null, 2));
   console.log(`\nrapport écrit dans ${process.env.V27_OUT}`);

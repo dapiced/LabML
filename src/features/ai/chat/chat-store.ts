@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { QueryResult } from '@/features/ai/chat/engine';
 import type { ColumnInfo } from '@/features/ai/chat/parser';
 import type {
+  AnsweredBy,
   ChatEngine,
   ChatWorkerRequest,
   ChatWorkerResponse,
@@ -18,8 +19,11 @@ export interface ChatMessage {
   result?: QueryResult;
   /** True when neither interpreter could understand the question. */
   unknown?: boolean;
-  /** V27: which interpreter produced this query — shown as a badge. */
-  engine?: ChatEngine;
+  /**
+   * V27: which interpreter produced this query — shown as a badge. V27.1: on
+   * a refusal it says nobody understood, never that the model read anything.
+   */
+  engine?: AnsweredBy;
 }
 
 /** V27 local-model lifecycle, all of it visible to the user. */
@@ -91,7 +95,7 @@ export const useChatStore = create<ChatState>((set, get) => {
             thinking: false,
             messages: [
               ...get().messages,
-              { role: 'assistant', unknown: true, engine: message.engine },
+              { role: 'assistant', unknown: true, engine: message.by },
             ],
           });
         } else if (message.kind === 'llm-capability') {
