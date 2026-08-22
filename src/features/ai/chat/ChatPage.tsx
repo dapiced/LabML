@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
+import { EnginePicker } from '@/features/ai/chat/EnginePicker';
 import { useChatStore, type ChatMessage } from '@/features/ai/chat/chat-store';
 import type { GroupRow, QueryResult } from '@/features/ai/chat/engine';
 import { cn } from '@/lib/utils';
@@ -201,6 +202,11 @@ function Bubble({ message }: { message: ChatMessage }) {
       {isUser && message.text}
       {message.unknown && <p className="text-muted">{t('ai.chat.unknown')}</p>}
       {message.result && <Answer result={message.result} />}
+      {!isUser && message.engine && (
+        <p className="mt-2 font-mono text-[0.6rem] tracking-wider text-muted uppercase">
+          {t(`ai.chat.engine.by.${message.engine}`)}
+        </p>
+      )}
     </li>
   );
 }
@@ -334,6 +340,8 @@ export function ChatPage() {
               {t('ai.chat.restart')}
             </Button>
           </div>
+
+          <EnginePicker />
 
           <Card className="flex min-h-64 flex-col gap-3">
             <ol className="flex flex-1 flex-col gap-3" aria-live="polite">
