@@ -143,6 +143,16 @@ export const BENCH_CASES: BenchCase[] = [
     want: { kind: 'topk', groupBy: 'deck', k: 3, op: 'count' },
     beyondKeywords: true,
   },
+  // V27.2: the one question still wrong after V27.1 — read as a correlation
+  // between fare and age. Kept in the exact phrasing it failed on, and
+  // deliberately NOT added to the prompt's examples: the prompt gained a rule
+  // and a different phrasing, so this stays a held-out case.
+  {
+    q: 'est-ce que les femmes payaient plus cher que les hommes ?',
+    lang: 'fr',
+    want: { kind: 'aggregate', op: 'mean', column: 'fare', groupBy: 'sex' },
+    beyondKeywords: true,
+  },
 ];
 
 /** Key-order-independent equality — the grammar has no meaningful ordering. */

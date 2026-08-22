@@ -29,12 +29,25 @@ export interface GroupRow {
   key: string;
   value: number;
   count: number;
+  /**
+   * V27.2 — how many of those rows actually carried a usable number. Set only
+   * when it differs from `count`: an average over a column with holes is not
+   * an average over every row of the group, and the answer must not imply it.
+   */
+  used?: number;
 }
 
 export interface QueryResult {
   intent: Intent;
   /** Rows remaining after the filter (all rows when unfiltered). */
   rowsConsidered: number;
+  /**
+   * V27.2 — values a scalar aggregate actually averaged/summed. Missing and
+   * unparseable cells are skipped, so on Titanic's `age` this is 714 where
+   * `rowsConsidered` is 891. Set only when the two differ — the sentence then
+   * says both numbers instead of implying every row had a value.
+   */
+  valuesUsed?: number;
   scalar?: number;
   groups?: GroupRow[];
   distribution?: { label: string; count: number }[];
@@ -232,11 +245,19 @@ export function runQuery(table: Table, intent: Intent): QueryResult {
     const groups = groupRows(table, intent.groupBy, rows);
     const entries: GroupRow[] = [];
     for (const [key, members] of groups) {
-      const value =
-        intent.op === 'count' || !intent.column
-          ? members.length
-          : aggregate(numericAt(table, intent.column, members), intent.op);
-      if (!Number.isNaN(value)) entries.push({ key, value, count: members.length });
+      if (intent.op === 'count' || !intent.column) {
+        entries.push({ key, value: members.length, count: members.length });
+        continue;
+      }
+      const numbers = numericAt(table, intent.column, members);
+      const value = aggregate(numbers, intent.op);
+      if (Number.isNaN(value)) continue;
+      entries.push({
+        key,
+        value,
+        count: members.length,
+        ...(numbers.length !== members.length && { used: numbers.length }),
+      });
     }
     entries.sort((a, b) => b.value - a.value || a.key.localeCompare(b.key));
     return { intent, rowsConsidered: rows.length, groups: entries.slice(0, intent.k) };
@@ -248,12 +269,25 @@ export function runQuery(table: Table, intent: Intent): QueryResult {
     const groups = groupRows(table, intent.groupBy, rows);
     const entries: GroupRow[] = [];
     for (const [key, members] of groups) {
-      const value = aggregate(numericAt(table, intent.column, members), intent.op);
-      if (!Number.isNaN(value)) entries.push({ key, value, count: members.length });
+      const numbers = numericAt(table, intent.column, members);
+      const value = aggregate(numbers, intent.op);
+      if (Number.isNaN(value)) continue;
+      entries.push({
+        key,
+        value,
+        count: members.length,
+        ...(numbers.length !== members.length && { used: numbers.length }),
+      });
     }
     entries.sort((a, b) => b.value - a.value || a.key.localeCompare(b.key));
     return { intent, rowsConsidered: rows.length, groups: entries.slice(0, MAX_GROUPS) };
   }
-  const scalar = aggregate(numericAt(table, intent.column, rows), intent.op);
-  return { intent, rowsConsidered: rows.length, scalar };
+  const numbers = numericAt(table, intent.column, rows);
+  const scalar = aggregate(numbers, intent.op);
+  return {
+    intent,
+    rowsConsidered: rows.length,
+    scalar,
+    ...(numbers.length !== rows.length && { valuesUsed: numbers.length }),
+  };
 }
