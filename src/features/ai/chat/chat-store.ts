@@ -93,10 +93,7 @@ export const useChatStore = create<ChatState>((set, get) => {
         } else if (message.kind === 'unknown') {
           set({
             thinking: false,
-            messages: [
-              ...get().messages,
-              { role: 'assistant', unknown: true, engine: message.by },
-            ],
+            messages: [...get().messages, { role: 'assistant', unknown: true, engine: message.by }],
           });
         } else if (message.kind === 'llm-capability') {
           set({
