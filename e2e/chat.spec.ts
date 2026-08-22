@@ -30,10 +30,13 @@ test('data assistant answers counting, grouping and honesty questions on titanic
   await page.getByRole('button', { name: 'Ask' }).click();
   // The refusal no longer claims "I am not a language model" — since V27 one
   // can be loaded. What it must still do is refuse rather than invent.
-  await expect(page.getByTestId('chat-assistant').last()).toContainText(
-    'rather say so than invent an answer',
-    { timeout: 15000 },
-  );
+  const refusal = page.getByTestId('chat-assistant').last();
+  await expect(refusal).toContainText('rather say so than invent an answer', { timeout: 15000 });
+  // V27.1: a refusal names nobody. It used to be badged "answered by the
+  // deterministic interpreter", which read as an answer; with the model
+  // selected it claimed the model had read the question. Neither was true.
+  await expect(refusal).toContainText('did not understand');
+  await expect(refusal).not.toContainText('answered by');
 });
 
 test('suggestion chips ask a real question and the hub links here', async ({ page }) => {

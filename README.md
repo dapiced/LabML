@@ -74,8 +74,11 @@ The project follows three non-negotiable principles:
   Cloudflare's limit) can be downloaded on explicit consent to read free-form phrasings:
   it only _translates_ the question into a query — the deterministic engine still
   computes every number, the translation is validated against a closed grammar, and a
-  badge under each answer names which engine produced it. WebGPU required; without it
-  the refusal is named and the deterministic interpreter stays fully available.
+  badge under each answer names which engine produced it. The deterministic parser reads
+  **first** and is never overridden: it can only name a column that exists and a value
+  that occurs in it, so the model is asked only about the questions it gives up on.
+  WebGPU required; without it the refusal is named and the deterministic interpreter
+  stays fully available.
 
 ## Engineering notes
 
