@@ -8,11 +8,14 @@
  * allowed anywhere near the engine — an unparseable or out-of-grammar answer
  * is a REFUSAL that falls back to the deterministic parser, never a guess.
  */
+import { parseNumber } from '@/features/ml/data/infer';
 import type { AggOp, Filter, FilterOp, Intent } from '@/features/ai/chat/engine';
 import type { ColumnInfo } from '@/features/ai/chat/parser';
 
 const AGG_OPS: AggOp[] = ['count', 'mean', 'median', 'min', 'max', 'sum', 'std'];
 const FILTER_OPS: FilterOp[] = ['>', '>=', '<', '<=', '=', '!='];
+/** V27.3 — these four compare numbers; a text threshold is not a comparison. */
+const ORDERING_OPS: FilterOp[] = ['>', '>=', '<', '<='];
 /** Category values quoted per column in the prompt — keeps it short and typed. */
 const MAX_VALUES_SHOWN = 12;
 
@@ -107,9 +110,20 @@ function asFilter(value: unknown, columns: ColumnInfo[]): Filter | null {
   const column = asColumn(raw.column, columns);
   if (!column) return null;
   if (!FILTER_OPS.includes(raw.op as FilterOp)) return null;
+  const op = raw.op as FilterOp;
   const v = raw.value;
   if (typeof v !== 'string' && typeof v !== 'number') return null;
-  return { column, op: raw.op as FilterOp, value: v };
+  // V27.3: `{"column":"fare","op":">=","value":"0"}` — the model is casual
+  // about JSON types, and the engine used to read a text threshold as an
+  // equality test, answering « 0 lignes où fare >= 0 » on a table where every
+  // fare clears 0. A numeric string is converted here; anything else on an
+  // ordering operator is refused, and the deterministic parser gets its turn.
+  if (ORDERING_OPS.includes(op)) {
+    const threshold = typeof v === 'number' ? v : parseNumber(v);
+    if (threshold === null) return null;
+    return { column, op, value: threshold };
+  }
+  return { column, op, value: v };
 }
 
 /**
