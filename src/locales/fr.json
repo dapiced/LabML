@@ -662,7 +662,7 @@
       },
       "chat": {
         "title": "Chat sur vos données",
-        "description": "Posez vos questions en français ou en anglais — moyennes, comptages sous condition, top N, corrélations. Un interpréteur local déterministe, pas un modèle de langage : vos données et vos questions ne quittent jamais le navigateur.",
+        "description": "Posez vos questions en français ou en anglais — moyennes, comptages sous condition, top N, corrélations. Un interpréteur local déterministe par défaut, avec en option un vrai modèle de langage exécuté dans votre navigateur : dans les deux cas, vos données et vos questions ne quittent jamais la machine.",
         "cta": "Ouvrir l'assistant de données"
       }
     },
@@ -727,7 +727,7 @@
         "noMissing": "Aucune cellule manquante — ce jeu de données est complet.",
         "filterNote": "sur {{rows}} lignes où {{filter}}"
       },
-      "unknown": "Je n'ai pas compris. Je suis un interpréteur déterministe, pas un modèle de langage : demandez une moyenne, une médiane, un min/max, une somme, un comptage sous condition, un top N, une répartition, une corrélation ou les valeurs manquantes — en nommant vos colonnes.",
+      "unknown": "Je n'ai pas compris. Demandez une moyenne, une médiane, un min/max, une somme, un comptage sous condition, un top N, une répartition, une corrélation ou les valeurs manquantes — en nommant vos colonnes. Je préfère le dire plutôt que d'inventer une réponse.",
       "engine": {
         "title": "Interpréteur",
         "deterministic": "Interpréteur déterministe",
@@ -736,10 +736,10 @@
         "llmNote": "Qwen3-0.6B, {{size}}, téléchargé une seule fois — nécessite WebGPU",
         "noWebgpu": "Ce navigateur n'a pas WebGPU : le modèle local ne peut pas tourner ici — son noyau d'embedding quantifié n'a pas d'implémentation WASM, et à cette taille il n'existe aucun repli honnête. L'interpréteur déterministe reste entièrement disponible.",
         "download": "Télécharger le modèle ({{size}})",
-        "downloadNote": "Téléchargé une seule fois, puis conservé par votre navigateur et disponible hors ligne. Rien n'est envoyé : il s'exécute sur votre machine, sur vos données.",
+        "downloadNote": "Téléchargé une seule fois, puis conservé par votre navigateur et disponible hors ligne. Rien n'est envoyé : il s'exécute sur votre machine, sur vos données — et l'interpréteur déterministe fonctionne que vous le téléchargiez ou non.",
         "downloading": "Téléchargement du modèle… {{percent}} %",
         "readyTag": "chargé",
-        "readyNote": "Le modèle ne fait que traduire votre question en requête ; c'est toujours le moteur déterministe qui calcule les chiffres. Quand sa traduction échoue au contrôle de grammaire, l'interpréteur déterministe répond à sa place — et la mention sous chaque réponse dit lequel a répondu.",
+        "readyNote": "Comment les deux travaillent ensemble : le modèle se contente de LIRE votre question et de la transformer en calcul — il ne calcule jamais lui-même, donc aucun chiffre ne sort d'un modèle de langage. S'il n'arrive pas à en tirer un calcul valide, l'interpréteur déterministe prend automatiquement le relais. Vous n'obtenez donc jamais de réponse inventée : soit l'un des deux vous a compris, soit on vous dit clairement que non. La mention sous chaque réponse indique lequel a répondu.",
         "failed": "Le modèle local n'a pas pu être chargé ({{reason}}). L'interpréteur déterministe n'est pas affecté.",
         "by": {
           "deterministic": "répondu par l'interpréteur déterministe",
@@ -749,8 +749,8 @@
       "thinking": "Calcul…",
       "honesty": {
         "title": "Honnête par construction",
-        "body": "Cet assistant est un interpréteur local déterministe — pas un modèle de langage. Il ne calcule que ce qu'il comprend entièrement, le dit quand ce n'est pas le cas, et ni vos données ni vos questions ne quittent le navigateur. Un assistant génératif exigerait un modèle derrière une API — un serveur et une clé secrète qui ne doit jamais être embarquée dans un navigateur — et n'arriverait ici qu'avec un proxy côté serveur et un écran de consentement explicite.",
-        "coming": "Bientôt : un vrai modèle de langage — petit, ouvert et exécuté entièrement dans votre navigateur, avec les mêmes règles de confidentialité. L'interpréteur déterministe restera le repli honnête."
+        "body": "Par défaut, cet assistant est un interpréteur local déterministe — pas un modèle de langage. Il ne calcule que ce qu'il comprend entièrement, le dit quand ce n'est pas le cas, et ni vos données ni vos questions ne quittent le navigateur.",
+        "coming": "Depuis la V27, un vrai modèle de langage peut s'y ajouter : Qwen3-0.6B, poids ouverts sous Apache-2.0, auto-hébergé et téléchargé seulement si vous acceptez ses 355 Mo. Il s'exécute entièrement sur votre machine et ne calcule jamais de réponse — il traduit seulement votre question en requête, que le moteur déterministe exécute. Sa traduction passe un contrôle de grammaire fermée ; quand elle échoue, c'est l'interpréteur déterministe qui répond, et une mention sous chaque réponse dit lequel a répondu. Un assistant génératif derrière une API exigerait un serveur et une clé secrète qui ne doit jamais être embarquée dans un navigateur — c'est la route que LabML n'a pas prise."
       },
       "backToAi": "Retour aux modules IA"
     },

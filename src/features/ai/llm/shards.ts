@@ -114,11 +114,16 @@ export function createShardCache(
   };
 }
 
-/** Human-readable size, the way the consent screen must state it. */
+/**
+ * Human-readable size for the consent screen. Decimal MB on purpose: that is
+ * what the browser's own download indicator will show, and announcing 353
+ * while the browser counts 370 would be a small lie in a wave built on not
+ * telling them.
+ */
 export function formatBytes(bytes: number, lang: string): string {
-  const mb = bytes / (1024 * 1024);
-  if (mb >= 1024) {
-    return `${(mb / 1024).toLocaleString(lang, { maximumFractionDigits: 2 })} GB`;
+  const mb = bytes / 1e6;
+  if (mb >= 1000) {
+    return `${(mb / 1000).toLocaleString(lang, { maximumFractionDigits: 2 })} GB`;
   }
   return `${mb.toLocaleString(lang, { maximumFractionDigits: 0 })} MB`;
 }

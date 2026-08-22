@@ -28,9 +28,12 @@ test('data assistant answers counting, grouping and honesty questions on titanic
 
   await input.fill('tell me a joke about icebergs');
   await page.getByRole('button', { name: 'Ask' }).click();
-  await expect(page.getByTestId('chat-assistant').last()).toContainText('not a language model', {
-    timeout: 15000,
-  });
+  // The refusal no longer claims "I am not a language model" — since V27 one
+  // can be loaded. What it must still do is refuse rather than invent.
+  await expect(page.getByTestId('chat-assistant').last()).toContainText(
+    'rather say so than invent an answer',
+    { timeout: 15000 },
+  );
 });
 
 test('suggestion chips ask a real question and the hub links here', async ({ page }) => {
