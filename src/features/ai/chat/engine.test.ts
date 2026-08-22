@@ -121,6 +121,34 @@ describe('runQuery', () => {
     ]);
   });
 
+  // V27.3 — measured in production: the model emitted `"value":"0"` on `fare >= 0`
+  // and the answer read « 0 ligne correspond où fare >= 0 » on a table where
+  // every fare clears zero. The text threshold had fallen through to the
+  // equality branch, so `>=` was quietly testing `== "0"`.
+  it('compares numbers even when the threshold arrives as text', () => {
+    const result = runQuery(table, {
+      kind: 'count',
+      filter: { column: 'price', op: '>=', value: '20' },
+    });
+    // 20, 30, 40, 50, 60 — five rows, not zero.
+    expect(result.scalar).toBe(5);
+  });
+
+  it('refuses an ordering operator it cannot compare, rather than answering zero', () => {
+    expect(() =>
+      runQuery(table, { kind: 'count', filter: { column: 'price', op: '>', value: 'cher' } }),
+    ).toThrow('filter-not-numeric');
+  });
+
+  it('still matches equality on both numbers and text', () => {
+    expect(
+      runQuery(table, { kind: 'count', filter: { column: 'price', op: '=', value: 30 } }).scalar,
+    ).toBe(1);
+    expect(
+      runQuery(table, { kind: 'count', filter: { column: 'city', op: '=', value: 'lyon' } }).scalar,
+    ).toBe(2);
+  });
+
   it('computes correlation on jointly-present numeric pairs', () => {
     const result = runQuery(table, { kind: 'correlation', a: 'price', b: 'quantity' });
     // pairs (10,1) (20,2) (30,3) (50,5) (60,6) — the NA row drops out.
