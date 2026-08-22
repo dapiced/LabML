@@ -69,8 +69,13 @@ The project follows three non-negotiable principles:
   box decoding (grids, IoU, NMS), webcam supported; the photo never leaves the browser.
 - **Data assistant** (`/ai/chat`): plain French or English questions about a loaded
   dataset (averages, counts, top-N, correlations…) answered by a deterministic local
-  interpreter — honestly labeled as _not_ a language model; when it does not understand,
-  it says so.
+  interpreter — when it does not understand, it says so. A **real local language model**
+  (Qwen3-0.6B, 355 MB, Apache-2.0, self-hosted and split into 24 MiB parts to clear
+  Cloudflare's limit) can be downloaded on explicit consent to read free-form phrasings:
+  it only _translates_ the question into a query — the deterministic engine still
+  computes every number, the translation is validated against a closed grammar, and a
+  badge under each answer names which engine produced it. WebGPU required; without it
+  the refusal is named and the deterministic interpreter stays fully available.
 
 ## Engineering notes
 
@@ -94,7 +99,7 @@ The project follows three non-negotiable principles:
 - **Performance.** Every section serves a prerendered static shell (hero paints before
   JavaScript); Lighthouse mobile ≈ 0.99 on `/ml` under real throttling. Heavy
   dependencies (Dexie, SheetJS, ONNX Runtime) load lazily.
-- **Quality bar.** 293 unit tests, 55 Playwright end-to-end tests (including offline PWA,
+- **Quality bar.** 314 unit tests, 57 Playwright end-to-end tests (including offline PWA,
   fake-webcam and axe-core WCAG A/AA accessibility checks), strict TypeScript, ESLint,
   Prettier, and Lighthouse budgets — all enforced in CI.
 

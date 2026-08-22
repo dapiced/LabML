@@ -728,6 +728,24 @@
         "filterNote": "on {{rows}} rows where {{filter}}"
       },
       "unknown": "I did not understand that. I am a deterministic interpreter, not a language model: ask for an average, a median, a min/max, a sum, a count under a condition, a top N, a breakdown, a correlation or the missing values — naming your columns.",
+      "engine": {
+        "title": "Interpreter",
+        "deterministic": "Deterministic interpreter",
+        "deterministicNote": "Instant, always available, same answer every time",
+        "llm": "Local language model",
+        "llmNote": "Qwen3-0.6B, {{size}}, downloaded once — needs WebGPU",
+        "noWebgpu": "This browser has no WebGPU, so the local model cannot run here — its quantized embedding kernel has no WASM implementation, and there is nothing honest to fall back to at its size. The deterministic interpreter stays fully available.",
+        "download": "Download the model ({{size}})",
+        "downloadNote": "Downloaded once, then kept by your browser and available offline. Nothing is uploaded: it runs on your machine, on your data.",
+        "downloading": "Downloading the model… {{percent}}%",
+        "readyTag": "loaded",
+        "readyNote": "The model only translates your question into a query; the deterministic engine still computes every number. When its translation fails the grammar check, the deterministic interpreter answers instead — and the badge under each answer says which one did.",
+        "failed": "The local model could not be loaded ({{reason}}). The deterministic interpreter is unaffected.",
+        "by": {
+          "deterministic": "answered by the deterministic interpreter",
+          "llm": "question read by the local model · computed by the deterministic engine"
+        }
+      },
       "thinking": "Computing…",
       "honesty": {
         "title": "Honest by design",
