@@ -5,15 +5,15 @@
  * structured answers. Same privacy contract as the ML Lab and the Data Studio.
  */
 import Papa from 'papaparse';
-import { runQuery, type Intent, type QueryResult } from '@/features/ai/chat/engine';
+import { runQuery, type QueryResult } from '@/features/ai/chat/engine';
 import { parseQuestion, type ColumnInfo } from '@/features/ai/chat/parser';
+import { resolveIntent, type AnsweredBy, type ChatEngine } from '@/features/ai/chat/route';
 import type { LoadedModel } from '@/features/ai/llm/interpret';
 import { inferColumnType } from '@/features/ml/data/infer';
 import { isMissing } from '@/features/ml/data/infer';
 import type { Cell, DatasetMeta } from '@/features/ml/data/types';
 
-/** Which interpreter turned the question into a query (V27). */
-export type ChatEngine = 'deterministic' | 'llm';
+export type { AnsweredBy, ChatEngine };
 
 export type ChatWorkerRequest =
   | { kind: 'parse-file'; file: File }
@@ -27,7 +27,8 @@ export type ChatWorkerResponse =
   | { kind: 'ready'; meta: DatasetMeta; columns: ColumnInfo[] }
   /** `engine` says which interpreter produced the query — shown to the user. */
   | { kind: 'answer'; payload: QueryResult; engine: ChatEngine }
-  | { kind: 'unknown'; engine: ChatEngine }
+  /** V27.1: a refusal names no interpreter — it says nobody understood. */
+  | { kind: 'unknown'; by: 'none' | 'none-both' }
   | { kind: 'llm-capability'; available: boolean; webgpu: boolean; totalBytes: number }
   | { kind: 'llm-progress'; loaded: number; total: number }
   | { kind: 'llm-ready' }
@@ -182,24 +183,22 @@ self.onmessage = async (event: MessageEvent<ChatWorkerRequest>) => {
       }
     } else if (request.kind === 'ask') {
       if (header.length === 0) throw new Error('no-data');
-      let intent: Intent | null = null;
-      let engine: ChatEngine = 'deterministic';
-      if (request.engine === 'llm' && model) {
-        const result = await model.generate(request.question, columnInfo);
-        if (result.intent) {
-          intent = result.intent;
-          engine = 'llm';
-        }
-        // An answer that failed the grammar check is a refusal, not a guess:
-        // the deterministic parser gets its turn below, and the badge will say
-        // which engine actually produced the query.
-      }
-      intent ??= parseQuestion(request.question, columnInfo, request.lang);
+      // V27.1: the keyword grammar reads first — it is exact by construction,
+      // so a valid reading of its own is never overridden. The model is asked
+      // only about what it gives up on. See route.ts for the measurement that
+      // put them in this order.
+      const local = model; // narrowed once, so the closure below cannot see null
+      const { intent, by } = await resolveIntent(
+        () => parseQuestion(request.question, columnInfo, request.lang),
+        request.engine === 'llm' && local
+          ? async () => (await local.generate(request.question, columnInfo)).intent
+          : null,
+      );
       if (!intent) {
-        post({ kind: 'unknown', engine: request.engine });
+        post({ kind: 'unknown', by });
         return;
       }
-      post({ kind: 'answer', payload: runQuery({ header, columns }, intent), engine });
+      post({ kind: 'answer', payload: runQuery({ header, columns }, intent), engine: by });
     }
   } catch (error) {
     post({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
