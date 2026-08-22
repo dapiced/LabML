@@ -21,7 +21,10 @@ The project follows three non-negotiable principles:
 - **Privacy by architecture.** A strict Content-Security-Policy allows zero third-party
   calls. Data lives in worker memory; persistence (run history, opted-in datasets) uses
   IndexedDB locally; share links carry metrics in the URL fragment, which browsers never
-  send to any server.
+  send to any server. `/privacy` states this in plain language and hands the reader a
+  four-step protocol to verify it in their own DevTools — the policy quoted there is
+  pinned to the served header by a unit test, so the page cannot claim a protection the
+  site stopped shipping.
 - **Honest evaluation.** Every run is scored against a naive baseline on a held-out test
   set. Metrics ship with 95% bootstrap intervals, per-segment breakdowns, calibration
   curves, and explicit refusals when a number would be noise (tiny slices, tiny test sets).

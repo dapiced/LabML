@@ -30,6 +30,7 @@
     },
     "privacyStrip": "Your data never leaves your browser — verify it yourself in the Network tab.",
     "footer": {
+      "privacy": "Privacy",
       "copyright": "© 2026 Dominic D'Apice",
       "about": "How it works"
     }
@@ -64,6 +65,94 @@
     "openSource": {
       "title": "Under the hood",
       "body": "The entire lab — parsing, models, metrics — is hand-written and covered by automated tests (unit, end-to-end, accessibility). No external ML service, no CDN: everything ships with the app."
+    }
+  },
+  "privacy": {
+    "eyebrow": "Privacy",
+    "title": "Your data never leaves your browser",
+    "lede": "This is not a privacy policy written by lawyers: it is a technical property of the application, and you can check it yourself in two minutes without taking our word for anything.",
+    "link": "How to check it yourself →",
+    "promise": {
+      "title": "The promise, plainly",
+      "body": "When you drop a file into LabML, your browser reads it and it stays in the tab's memory. No row, no column, no file name, no question you ask the assistant, no webcam frame is sent to a server — not ours, not anyone's. There is no account, no upload, no tracker, no analytics, no automatic error reporting."
+    },
+    "how": {
+      "title": "How it is enforced — not merely claimed",
+      "csp": {
+        "title": "The browser blocks leaks itself",
+        "body": "The site is served with a strict Content-Security-Policy whose connect-src 'self' directive allows no connection to any other domain. This is not our code politely restraining itself: your browser would refuse the request even if the code tried to make it."
+      },
+      "assets": {
+        "title": "Everything is self-hosted",
+        "body": "No third-party script, no CDN font, no remote image, no widget. The vision models, the ONNX runtime and the language-model weights all come from our own domain — which is why they show up in the Network tab, and why they are all that shows up."
+      },
+      "workers": {
+        "title": "The computing happens in Web Workers",
+        "body": "Parsing, cleaning, training, predictions, questions to the assistant: all of it runs in threads belonging to your tab. Your data travels between the page and its workers, never outward."
+      },
+      "storage": {
+        "title": "Nothing is kept without a click from you",
+        "body": "By default, closing the tab erases everything. A dataset is stored — in IndexedDB, on your own disk, nowhere else — only if you explicitly click « keep », and the « forget » button deletes it."
+      }
+    },
+    "header": {
+      "title": "The header actually served",
+      "body": "Here is the security policy returned with every page of this site. You do not have to believe us: the Network tab shows it to you, and this block is checked against the real configuration file on every build.",
+      "note": "This is the line that matters — it forbids any request to another domain:",
+      "camera": "And for the Vision module's webcam, the camera is allowed for this site only, never for a third-party frame:"
+    },
+    "verify": {
+      "title": "Check it yourself",
+      "lede": "Four checks, from quickest to most convincing. None of them depends on our word or on our code.",
+      "offline": {
+        "title": "Cut the network",
+        "body": "The shortest test, and the hardest to fake. Open the developer tools (F12, or ⌥⌘I on Mac), Network tab, switch the « No throttling » menu to « Offline » — or simply turn off Wi-Fi. Reload the page, drop a CSV, train a model, ask a question. Everything still works. An application that ships your data elsewhere to process it could not."
+      },
+      "network": {
+        "title": "Watch the Network tab while you work",
+        "body": "Developer tools → Network. Tick « Preserve log », clear the list, then drop your file and start a training run. Filter on Fetch/XHR: nothing happens. Your file is not transmitted, because there is nobody to transmit it to."
+      },
+      "headers": {
+        "title": "Read the security policy at the source",
+        "body": "Still in Network, click the first row — the HTML document — then « Headers » → « Response Headers ». Look for Content-Security-Policy and the connect-src 'self' part. It is the very string shown above on this page."
+      },
+      "storage": {
+        "title": "Open local storage",
+        "body": "Application tab → IndexedDB → labml. You see exactly what you chose to keep: your past runs, and your datasets only if you asked for them. The Data Studio's « forget » button empties that database in front of you."
+      }
+    },
+    "figure": {
+      "title": "What you should see",
+      "tabs": ["Elements", "Console", "Network", "Application"],
+      "columns": ["Name", "Status", "Type"],
+      "preserveLog": "Preserve log",
+      "offline": "Offline",
+      "rows": ["/assets/main-….js", "/assets/ChatPage-….js", "/datasets/titanic.csv"],
+      "emptyNote": "Nothing further while you load a file and train",
+      "calloutOffline": "← flip this, everything keeps working",
+      "calloutEmpty": "the only rows are the application's own files, served by our domain",
+      "caption": "Diagram of the Network tab — labels differ between browsers and languages. This is not a capture of your screen: it is what you should find there.",
+      "alt": "Diagram of the developer tools Network tab: a few application files, the Offline selector highlighted, and no request while you work."
+    },
+    "live": {
+      "title": "Live proof, in your own browser",
+      "body": "This panel reads this page's resource timeline — the same one the Network tab displays — and counts the requests per domain.",
+      "button": "Audit this page's requests",
+      "clean": "{{total}} requests, all to {{origin}}. None to a third party.",
+      "dirty": "{{count}} request(s) to a third-party domain: {{origins}}",
+      "sameOrigin": "to our domain:",
+      "thirdParty": "to a third party:",
+      "inline": "no network (data:, blob:):",
+      "caveat": "Honesty about this panel: it reads our own timeline, so it is a convenience, not the final proof. Requests made inside a Web Worker have their own timeline and do not appear here, and a request blocked by the security policy never appears at all. The real proof is the four checks above: they do not go through our code."
+    },
+    "traffic": {
+      "title": "What actually travels over the network",
+      "body": "For the sake of precision, here is the complete list. All of it comes from our domain, and none of it starts without an action from you:",
+      "app": "the application's own files (HTML, JavaScript, styles, fonts), on first load, then cached for offline use;",
+      "demo": "the demo datasets, only if you click one of them;",
+      "vision": "the vision models, only when you open the Vision module;",
+      "llm": "the local language model's weights, only if you explicitly accept the download.",
+      "never": "What never travels: your file, its name, your columns, your values, your questions, your results, your webcam frames. No analytics, no account, no cookie, no error report."
     }
   },
   "home": {

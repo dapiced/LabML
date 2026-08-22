@@ -30,6 +30,7 @@ const SHELL_ROUTES: ShellRoute[] = [
   { dir: 'ai/vision', prefix: 'ai.vision', facade: 'features/ai/vision/VisionPage' },
   { dir: 'ai/chat', prefix: 'ai.chat', facade: 'features/ai/chat/ChatPage' },
   { dir: 'about', prefix: 'about', facade: 'features/about/AboutPage' },
+  { dir: 'privacy', prefix: 'privacy', facade: 'features/privacy/PrivacyPage' },
 ];
 
 /**
