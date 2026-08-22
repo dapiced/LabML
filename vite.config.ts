@@ -169,6 +169,26 @@ export default defineConfig({
           dest: 'ort-llm',
           rename: { stripBase: true },
         },
+        // V29: DuckDB-Wasm, self-hosted like everything else — the library
+        // defaults to jsDelivr, which the CSP forbids. Two builds only: `eh`
+        // (WebAssembly exception handling) and the `mvp` fallback. The `coi`
+        // build is deliberately left out: it needs COOP/COEP headers and
+        // SharedArrayBuffer, which LabML does not turn on.
+        //
+        // Version 1.28.0 is PINNED for a measured reason: from 1.29 the
+        // binaries jumped past Cloudflare Pages' 25 MiB per-file limit
+        // (eh 34.2 MiB, mvp 39.4 MiB) — at 1.28.0 they are 17.3 and 21.1 MiB
+        // and fit with room to spare. Re-measure before any upgrade.
+        {
+          src: 'node_modules/@duckdb/duckdb-wasm/dist/duckdb-{eh,mvp}.wasm',
+          dest: 'duckdb',
+          rename: { stripBase: true },
+        },
+        {
+          src: 'node_modules/@duckdb/duckdb-wasm/dist/duckdb-browser-{eh,mvp}.worker.js',
+          dest: 'duckdb',
+          rename: { stripBase: true },
+        },
       ],
     }),
     // Offline-first PWA — the strongest proof that nothing needs a server.
@@ -203,7 +223,7 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,csv}'],
         // The vision model and ONNX runtime are cached on first use instead of
         // being precached — they would bloat the install for non-vision users.
-        globIgnores: ['models/**', 'ort/**'],
+        globIgnores: ['models/**', 'ort/**', 'ort-llm/**', 'llm/**', 'duckdb/**'],
         navigateFallback: '/index.html',
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         runtimeCaching: [
@@ -211,6 +231,14 @@ export default defineConfig({
             urlPattern: /\/(models|ort)\//,
             handler: 'CacheFirst',
             options: { cacheName: 'labml-vision', expiration: { maxEntries: 12 } },
+          },
+          // V29: the SQL engine is 17–21 MiB depending on the browser. Cached
+          // on first use like the vision models — never precached, so nobody
+          // pays for it before opening the console, and offline afterwards.
+          {
+            urlPattern: /\/duckdb\//,
+            handler: 'CacheFirst',
+            options: { cacheName: 'labml-sql', expiration: { maxEntries: 6 } },
           },
         ],
       },

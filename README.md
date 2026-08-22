@@ -70,6 +70,11 @@ The project follows three non-negotiable principles:
   classes, 77.6% top-1), **YOLOX-Nano** object detection (80 COCO classes) and
   **UltraFace** face detection — boxes drawn on the image, hand-written and unit-tested
   box decoding (grids, IoU, NMS), webcam supported; the photo never leaves the browser.
+- **Analytical SQL** (`/data`): a real OLAP engine — DuckDB-Wasm, MIT, self-hosted and
+  single-threaded — queries the loaded file in the browser, plus any CSV, **Parquet** or
+  JSON attached in the session. Results export to CSV or move to the ML Lab in one click;
+  SQL errors show DuckDB's own message. The engine is pinned to 1.28.0 for a measured
+  reason: from 1.29 its binaries exceed Cloudflare's 25 MiB per-file limit.
 - **Data assistant** (`/ai/chat`): plain French or English questions about a loaded
   dataset (averages, counts, top-N, correlations…) answered by a deterministic local
   interpreter — when it does not understand, it says so. A **real local language model**
