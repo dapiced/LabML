@@ -22,6 +22,16 @@ test('about page passes WCAG A/AA checks', async ({ page }) => {
   await expectNoViolations(page);
 });
 
+test('privacy page passes WCAG A/AA checks', async ({ page }) => {
+  await page.goto('/privacy');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expectNoViolations(page);
+  // The live audit renders numbers and a verdict — check it too, with content.
+  await page.getByTestId('privacy-audit-run').click();
+  await expect(page.getByTestId('privacy-audit-result')).toBeVisible();
+  await expectNoViolations(page);
+});
+
 test('ai hub and vision playground pass WCAG A/AA checks', async ({ page }) => {
   await page.goto('/ai');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
