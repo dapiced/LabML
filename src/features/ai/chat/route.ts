@@ -31,8 +31,7 @@ export type AnsweredBy = ChatEngine | 'none' | 'none-both';
  * dishonest combination — a refusal badged as read by the model — unwritable.
  */
 export type Resolution =
-  | { intent: Intent; by: ChatEngine }
-  | { intent: null; by: 'none' | 'none-both' };
+  { intent: Intent; by: ChatEngine } | { intent: null; by: 'none' | 'none-both' };
 
 /**
  * @param deterministic the keyword grammar — always tried, always first.
