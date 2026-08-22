@@ -22,10 +22,11 @@ function formatNumber(value: number, lang: string): string {
 }
 
 function BarTable({ rows, lang }: { rows: GroupRow[]; lang: string }) {
+  const { t } = useTranslation();
   const max = Math.max(...rows.map((row) => Math.abs(row.value)), 1e-12);
   return (
     <ul className="mt-2 flex flex-col gap-1.5">
-      {rows.map(({ key, value, count }) => (
+      {rows.map(({ key, value, count, used }) => (
         <li key={key} className="flex items-center gap-2">
           <span className="w-28 shrink-0 truncate font-mono text-[0.68rem]">{key}</span>
           <div className="h-2 max-w-56 flex-1 rounded-r-[2px] bg-surface-2" aria-hidden="true">
@@ -37,7 +38,21 @@ function BarTable({ rows, lang }: { rows: GroupRow[]; lang: string }) {
           <span className="shrink-0 font-mono text-[0.68rem] tabular-nums">
             {formatNumber(value, lang)}
           </span>
-          <span className="shrink-0 font-mono text-[0.6rem] text-muted">(n={count})</span>
+          {/* V27.2: a mean over a column with holes is not a mean over every
+              row of the group — when they differ, both numbers are shown. */}
+          <span
+            className="shrink-0 font-mono text-[0.6rem] text-muted"
+            title={
+              used === undefined
+                ? undefined
+                : t('ai.chat.answers.usedOf', {
+                    used: used.toLocaleString(lang),
+                    rows: count.toLocaleString(lang),
+                  })
+            }
+          >
+            (n={used === undefined ? count : `${used}/${count}`})
+          </span>
         </li>
       ))}
     </ul>
@@ -172,12 +187,21 @@ function Answer({ result }: { result: QueryResult }) {
     }
     return (
       <p data-testid="chat-scalar">
-        {t('ai.chat.answers.scalar', {
-          op: t(`ai.chat.ops.${intent.op}`),
-          column: intent.column,
-          value: result.scalar === undefined ? '—' : formatNumber(result.scalar, lang),
-          rows: result.rowsConsidered.toLocaleString(lang),
-        })}
+        {t(
+          // V27.2: `rowsConsidered` counts rows, not values. When the column
+          // has holes, saying "over 891 rows" of a mean built from 714 is a
+          // small lie — so the sentence names both numbers instead.
+          result.valuesUsed === undefined
+            ? 'ai.chat.answers.scalar'
+            : 'ai.chat.answers.scalarPartial',
+          {
+            op: t(`ai.chat.ops.${intent.op}`),
+            column: intent.column,
+            value: result.scalar === undefined ? '—' : formatNumber(result.scalar, lang),
+            rows: result.rowsConsidered.toLocaleString(lang),
+            used: (result.valuesUsed ?? result.rowsConsidered).toLocaleString(lang),
+          },
+        )}
         {filter ? ` — ${filter}` : ''}
       </p>
     );

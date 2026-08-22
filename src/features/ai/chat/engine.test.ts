@@ -90,6 +90,37 @@ describe('runQuery', () => {
     expect(runQuery(table, { kind: 'shape' }).shape).toEqual({ rows: 6, columns: 3 });
   });
 
+  // V27.2 — `rowsConsidered` counts rows, not values: a mean skips the cells it
+  // cannot read, and the answer has to say so rather than imply every row had a
+  // number. Correlation already reported usable pairs; aggregates now match.
+  it('reports how many values a mean actually used', () => {
+    const result = runQuery(table, { kind: 'aggregate', op: 'mean', column: 'quantity' });
+    // (1+2+3+5+6)/5 = 3.4 — the 'NA' row contributes nothing.
+    expect(result.scalar).toBeCloseTo(3.4, 10);
+    expect(result.rowsConsidered).toBe(6);
+    expect(result.valuesUsed).toBe(5);
+  });
+
+  it('leaves valuesUsed unset when every row carried a number', () => {
+    const result = runQuery(table, { kind: 'aggregate', op: 'mean', column: 'price' });
+    expect(result.rowsConsidered).toBe(6);
+    expect(result.valuesUsed).toBeUndefined();
+  });
+
+  it('marks the groups whose average rests on fewer rows than they hold', () => {
+    const result = runQuery(table, {
+      kind: 'aggregate',
+      op: 'mean',
+      column: 'quantity',
+      groupBy: 'city',
+    });
+    // Paris has three readable quantities; Lyon holds two rows but one is 'NA'.
+    expect(result.groups).toEqual([
+      { key: 'Paris', value: 3, count: 3 },
+      { key: 'Lyon', value: 2, count: 2, used: 1 },
+    ]);
+  });
+
   it('computes correlation on jointly-present numeric pairs', () => {
     const result = runQuery(table, { kind: 'correlation', a: 'price', b: 'quantity' });
     // pairs (10,1) (20,2) (30,3) (50,5) (60,6) — the NA row drops out.

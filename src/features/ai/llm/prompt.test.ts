@@ -40,6 +40,15 @@ describe('buildSystemPrompt', () => {
     expect(prompt).toContain('must be one of the values listed for THAT column');
     expect(prompt).toContain('DIFFERENT table');
   });
+
+  // V27.2 — measured on real hardware: « est-ce que les femmes payaient plus
+  // cher que les hommes ? » came back as a correlation between fare and age,
+  // a column the question never mentions. The rule says both halves of that.
+  it('rules out correlation for a comparison between two groups', () => {
+    const prompt = buildSystemPrompt(COLUMNS);
+    expect(prompt).toContain('NEVER a correlation');
+    expect(prompt).toContain('never pick a column the question does not mention');
+  });
 });
 
 describe('extractJson', () => {

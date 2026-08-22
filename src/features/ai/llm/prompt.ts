@@ -52,12 +52,14 @@ Rules:
 2. A filter value on a text column must be one of the values listed for THAT column. If the value you want is not listed there, pick the column whose values do contain it.
 3. Comparing two groups is not a count: use aggregate with groupBy set to the column that defines the groups.
 4. An age or price threshold is a filter with < or >, on the numeric column it refers to.
-5. The examples below describe a DIFFERENT table. Never reuse a column name from them unless that exact name is in the list above.
+5. A question that compares two groups (women vs men, one class against another) is an aggregate with groupBy on the column whose values name those groups — NEVER a correlation. Correlation relates two number columns and nothing else; never pick a column the question does not mention.
+6. The examples below describe a DIFFERENT table. Never reuse a column name from them unless that exact name is in the list above.
 
 Examples:
 Q: average age of women -> {"kind":"aggregate","op":"mean","column":"age","filter":{"column":"sex","op":"=","value":"female"}}
 Q: a quel age moyen voyageaient les passagers ? -> {"kind":"aggregate","op":"mean","column":"age"}
 Q: did women pay more than men? -> {"kind":"aggregate","op":"mean","column":"fare","groupBy":"sex"}
+Q: les hommes voyageaient-ils plus jeunes que les femmes ? -> {"kind":"aggregate","op":"mean","column":"age","groupBy":"sex"}
 Q: combien d'enfants de moins de 10 ans ? -> {"kind":"count","filter":{"column":"age","op":"<","value":10}}
 Q: combien de lignes ? -> {"kind":"count"}
 Q: top 3 des ports par nombre de passagers -> {"kind":"topk","groupBy":"embark_town","k":3,"op":"count"}
