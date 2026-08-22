@@ -733,24 +733,26 @@
         "deterministic": "Interpréteur déterministe",
         "deterministicNote": "Instantané, toujours disponible, même réponse à chaque fois",
         "llm": "Modèle de langage local",
-        "llmNote": "Qwen3-0.6B, {{size}}, téléchargé une seule fois — nécessite WebGPU",
+        "llmNote": "Qwen3-0.6B, {{size}}, téléchargé une seule fois — nécessite WebGPU. Appelé en renfort quand l'interpréteur déterministe ne comprend pas",
         "noWebgpu": "Ce navigateur n'a pas WebGPU : le modèle local ne peut pas tourner ici — son noyau d'embedding quantifié n'a pas d'implémentation WASM, et à cette taille il n'existe aucun repli honnête. L'interpréteur déterministe reste entièrement disponible.",
         "download": "Télécharger le modèle ({{size}})",
         "downloadNote": "Téléchargé une seule fois, puis conservé par votre navigateur et disponible hors ligne. Rien n'est envoyé : il s'exécute sur votre machine, sur vos données — et l'interpréteur déterministe fonctionne que vous le téléchargiez ou non.",
         "downloading": "Téléchargement du modèle… {{percent}} %",
         "readyTag": "chargé",
-        "readyNote": "Comment les deux travaillent ensemble : le modèle se contente de LIRE votre question et de la transformer en calcul — il ne calcule jamais lui-même, donc aucun chiffre ne sort d'un modèle de langage. S'il n'arrive pas à en tirer un calcul valide, l'interpréteur déterministe prend automatiquement le relais. Vous n'obtenez donc jamais de réponse inventée : soit l'un des deux vous a compris, soit on vous dit clairement que non. La mention sous chaque réponse indique lequel a répondu.",
+        "readyNote": "Comment les deux travaillent ensemble : l'interpréteur déterministe lit votre question en premier — il ne peut nommer qu'une colonne qui existe et une valeur qui s'y trouve vraiment, donc quand il comprend, personne ne le contredit. Quand il ne comprend pas, le modèle local prend le relais : il se contente de LIRE votre question et de la transformer en calcul, il ne calcule jamais lui-même, donc aucun chiffre ne sort d'un modèle de langage. Si aucun des deux n'y arrive, on vous le dit — jamais de réponse inventée. La mention sous chaque réponse indique qui a répondu.",
         "failed": "Le modèle local n'a pas pu être chargé ({{reason}}). L'interpréteur déterministe n'est pas affecté.",
         "by": {
           "deterministic": "répondu par l'interpréteur déterministe",
-          "llm": "question lue par le modèle local · calculé par le moteur déterministe"
+          "llm": "question lue par le modèle local · calculé par le moteur déterministe",
+          "none": "l'interpréteur déterministe n'a pas compris",
+          "none-both": "ni l'interpréteur déterministe, ni le modèle local n'ont compris"
         }
       },
       "thinking": "Calcul…",
       "honesty": {
         "title": "Honnête par construction",
         "body": "Par défaut, cet assistant est un interpréteur local déterministe — pas un modèle de langage. Il ne calcule que ce qu'il comprend entièrement, le dit quand ce n'est pas le cas, et ni vos données ni vos questions ne quittent le navigateur.",
-        "coming": "Depuis la V27, un vrai modèle de langage peut s'y ajouter : Qwen3-0.6B, poids ouverts sous Apache-2.0, auto-hébergé et téléchargé seulement si vous acceptez ses 355 Mo. Il s'exécute entièrement sur votre machine et ne calcule jamais de réponse — il traduit seulement votre question en requête, que le moteur déterministe exécute. Sa traduction passe un contrôle de grammaire fermée ; quand elle échoue, c'est l'interpréteur déterministe qui répond, et une mention sous chaque réponse dit lequel a répondu. Un assistant génératif derrière une API exigerait un serveur et une clé secrète qui ne doit jamais être embarquée dans un navigateur — c'est la route que LabML n'a pas prise."
+        "coming": "Depuis la V27, un vrai modèle de langage peut s'y ajouter : Qwen3-0.6B, poids ouverts sous Apache-2.0, auto-hébergé et téléchargé seulement si vous acceptez ses 355 Mo. Il s'exécute entièrement sur votre machine et ne calcule jamais de réponse — il traduit seulement votre question en requête, que le moteur déterministe exécute. L'interpréteur déterministe lit toujours en premier ; le modèle n'est appelé que sur les questions que celui-ci ne comprend pas, et sa traduction passe alors un contrôle de grammaire fermée. Une mention sous chaque réponse dit qui a répondu — ou que personne n'a compris. Un assistant génératif derrière une API exigerait un serveur et une clé secrète qui ne doit jamais être embarquée dans un navigateur — c'est la route que LabML n'a pas prise."
       },
       "backToAi": "Retour aux modules IA"
     },

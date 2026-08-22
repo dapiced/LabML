@@ -23,6 +23,23 @@ describe('buildSystemPrompt', () => {
     expect(prompt).toContain('"kind":"aggregate"');
     expect(prompt).toContain('"kind":"correlation"');
   });
+
+  // V27.1 — the three holes the measured failures came out of: no groupBy
+  // example at all (a comparison was read as a count), no rule tying a filter
+  // value to the column that actually holds it (embarked = Cherbourg, 0 rows),
+  // and no numeric-threshold example.
+  it('shows a grouped comparison, a top-k and a numeric threshold', () => {
+    const prompt = buildSystemPrompt(COLUMNS);
+    expect(prompt).toContain('"groupBy":"sex"');
+    expect(prompt).toContain('"kind":"topk"');
+    expect(prompt).toContain('"op":"<","value":10');
+  });
+
+  it('ties a filter value to the column whose values list contains it', () => {
+    const prompt = buildSystemPrompt(COLUMNS);
+    expect(prompt).toContain('must be one of the values listed for THAT column');
+    expect(prompt).toContain('DIFFERENT table');
+  });
 });
 
 describe('extractJson', () => {
