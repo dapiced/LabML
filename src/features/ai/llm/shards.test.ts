@@ -123,7 +123,7 @@ describe('createShardCache', () => {
 
 describe('formatBytes', () => {
   it('states the size the way a consent screen must', () => {
-    expect(formatBytes(355 * 1024 * 1024, 'en')).toBe('355 MB');
-    expect(formatBytes(2 * 1024 * 1024 * 1024, 'en')).toBe('2 GB');
+    expect(formatBytes(370_000_000, 'en')).toBe('370 MB');
+    expect(formatBytes(2_000_000_000, 'en')).toBe('2 GB');
   });
 });

@@ -662,7 +662,7 @@
       },
       "chat": {
         "title": "Chat over your data",
-        "description": "Ask questions in plain French or English — averages, counts with conditions, top N, correlations. A deterministic local interpreter, not a language model: your data and your questions never leave the browser.",
+        "description": "Ask questions in plain French or English — averages, counts with conditions, top N, correlations. A deterministic local interpreter by default, with a real language model available as an option, running in your browser: either way, your data and your questions never leave the machine.",
         "cta": "Open the data assistant"
       }
     },
@@ -727,7 +727,7 @@
         "noMissing": "No missing cells — this dataset is complete.",
         "filterNote": "on {{rows}} rows where {{filter}}"
       },
-      "unknown": "I did not understand that. I am a deterministic interpreter, not a language model: ask for an average, a median, a min/max, a sum, a count under a condition, a top N, a breakdown, a correlation or the missing values — naming your columns.",
+      "unknown": "I did not understand that. Ask for an average, a median, a min/max, a sum, a count under a condition, a top N, a breakdown, a correlation or the missing values — naming your columns. I would rather say so than invent an answer.",
       "engine": {
         "title": "Interpreter",
         "deterministic": "Deterministic interpreter",
@@ -736,10 +736,10 @@
         "llmNote": "Qwen3-0.6B, {{size}}, downloaded once — needs WebGPU",
         "noWebgpu": "This browser has no WebGPU, so the local model cannot run here — its quantized embedding kernel has no WASM implementation, and there is nothing honest to fall back to at its size. The deterministic interpreter stays fully available.",
         "download": "Download the model ({{size}})",
-        "downloadNote": "Downloaded once, then kept by your browser and available offline. Nothing is uploaded: it runs on your machine, on your data.",
+        "downloadNote": "Downloaded once, then kept by your browser and available offline. Nothing is uploaded: it runs on your machine, on your data — and the deterministic interpreter keeps working whether you download it or not.",
         "downloading": "Downloading the model… {{percent}}%",
         "readyTag": "loaded",
-        "readyNote": "The model only translates your question into a query; the deterministic engine still computes every number. When its translation fails the grammar check, the deterministic interpreter answers instead — and the badge under each answer says which one did.",
+        "readyNote": "How the two work together: the model only READS your question and turns it into a calculation — it never computes anything itself, so no number ever comes from a language model. If it cannot turn your question into a valid calculation, the deterministic interpreter automatically takes over. You therefore never get an invented answer: either one of the two understood you, or you are told plainly that neither did. The line under each answer says which one replied.",
         "failed": "The local model could not be loaded ({{reason}}). The deterministic interpreter is unaffected.",
         "by": {
           "deterministic": "answered by the deterministic interpreter",
@@ -749,8 +749,8 @@
       "thinking": "Computing…",
       "honesty": {
         "title": "Honest by design",
-        "body": "This assistant is a deterministic local interpreter — not a language model. It only computes what it fully understands, says so when it does not, and neither your data nor your questions ever leave the browser. A generative assistant would need a model behind an API — a server and a secret key that must never ship in a browser — and would only land here with a server-side proxy and an explicit consent screen.",
-        "coming": "Coming soon: a real language model — small, open and running entirely in your browser, under the same privacy rules. The deterministic interpreter stays as the honest fallback."
+        "body": "By default this assistant is a deterministic local interpreter — not a language model. It only computes what it fully understands, says so when it does not, and neither your data nor your questions ever leave the browser.",
+        "coming": "Since V27 a real language model can be added: Qwen3-0.6B, open weights under Apache-2.0, self-hosted and downloaded only if you accept its 355 MB. It runs entirely on your machine and it never computes an answer — it only translates your question into a query, which the deterministic engine executes. Its translation is checked against a closed grammar; when it fails that check the deterministic interpreter answers instead, and a note under every answer says which engine produced it. A generative assistant behind an API would need a server and a secret key that must never ship in a browser — that is the road LabML did not take."
       },
       "backToAi": "Back to AI modules"
     },

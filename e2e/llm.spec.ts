@@ -51,7 +51,7 @@ test('a model offered on a machine without WebGPU is refused BY NAME, with its w
   const picker = page.getByTestId('engine-picker');
   await expect(picker).toBeVisible({ timeout: 20_000 });
   // The weight is stated up front, before anything is fetched.
-  await expect(picker).toContainText('355 MB');
+  await expect(picker).toContainText('372 MB');
   await expect(page.getByTestId('llm-no-webgpu')).toContainText('no WebGPU');
   // The model cannot be selected, and the deterministic engine still answers.
   await expect(page.getByTestId('engine-llm')).toBeDisabled();
