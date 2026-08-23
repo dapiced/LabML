@@ -85,6 +85,18 @@ test('detection finds the person and the face on a real portrait', async ({ page
   // Boxes are drawn over the image: one solid object rect + one dashed face rect.
   const annotated = page.getByTestId('vision-annotated');
   await expect(annotated.locator('svg rect')).toHaveCount(2);
+
+  // V31 (C): the classifier answers « football helmet » at 86.6 % on this
+  // portrait — confidently, because ImageNet-1k holds no class for a person and
+  // a softmax cannot abstain. The page must say so instead of repeating it.
+  await expect(page.getByTestId('vision-subject')).toHaveAttribute(
+    'data-verdict',
+    'no-class-for-people',
+  );
+  await expect(page.getByTestId('vision-verdict')).toContainText('no class for one');
+  // The label is framed, never hidden — a number nobody can see is a number
+  // nobody can check.
+  await expect(page.getByTestId('vision-prediction')).toHaveCount(5);
 });
 
 test('webcam capture analyzes a live frame (fake camera)', async ({ page }) => {

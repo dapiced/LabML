@@ -1,0 +1,80 @@
+{
+  "pizza": {
+    "commons": "File:Bar Pizza on Thick Plate.jpg",
+    "licence": "CC0",
+    "author": "Alex114721",
+    "source": "https://commons.wikimedia.org/wiki/File:Bar_Pizza_on_Thick_Plate.jpg"
+  },
+  "soccer_ball": {
+    "commons": "File:Soccer ball on ground.jpg",
+    "licence": "CC0",
+    "author": "Petey21",
+    "source": "https://commons.wikimedia.org/wiki/File:Soccer_ball_on_ground.jpg"
+  },
+  "teapot": {
+    "commons": "File:Worcester Porcelain Factory (British) - Teapot - 2009.108.a - Cleveland Museum of Art.jpg",
+    "licence": "CC0",
+    "author": "—",
+    "source": "https://commons.wikimedia.org/wiki/File:Worcester_Porcelain_Factory_(British)_-_Teapot_-_2009.108.a_-_Cleveland_Museum_of_Art.jpg"
+  },
+  "goldfish": {
+    "commons": "File:Carassius auratus 197778318.jpg",
+    "licence": "CC0",
+    "author": "Jackson Kusack",
+    "source": "https://commons.wikimedia.org/wiki/File:Carassius_auratus_197778318.jpg"
+  },
+  "wine_bottle": {
+    "commons": "File:Bottle and glass of red wine.jpg",
+    "licence": "CC0",
+    "author": "congerdesign",
+    "source": "https://commons.wikimedia.org/wiki/File:Bottle_and_glass_of_red_wine.jpg"
+  },
+  "airliner": {
+    "commons": "File:Aero Spacelines Pregnant Guppy in flight (MSFC-9801783).jpg",
+    "licence": "Public domain",
+    "author": "NASA",
+    "source": "https://commons.wikimedia.org/wiki/File:Aero_Spacelines_Pregnant_Guppy_in_flight_(MSFC-9801783).jpg"
+  },
+  "school_bus": {
+    "commons": "File:School bus LAUSD 7616U.jpg",
+    "licence": "CC BY 2.0",
+    "author": "Fahim Fadz.",
+    "source": "https://commons.wikimedia.org/wiki/File:School_bus_LAUSD_7616U.jpg"
+  },
+  "group_people": {
+    "commons": "File:CEE Youth Group Yerevan Meeting 2025, 2nd Day 28.jpg",
+    "licence": "CC0",
+    "author": "Հակուլիկ",
+    "source": "https://commons.wikimedia.org/wiki/File:CEE_Youth_Group_Yerevan_Meeting_2025,_2nd_Day_28.jpg"
+  },
+  "handwriting": {
+    "commons": "File:EFTA00003007-Beach-House - Handwritten note on lined paper reads Beach House placed on gravel ground next to a hiking boot.jpg",
+    "licence": "Public domain",
+    "author": "Federal Bureau of Investigation",
+    "source": "https://commons.wikimedia.org/wiki/File:EFTA00003007-Beach-House_-_Handwritten_note_on_lined_paper_reads_Beach_House_placed_on_gravel_ground_next_to_a_hiking_boot.jpg"
+  },
+  "sports_car": {
+    "commons": "File:Red sports car at Tokyo University (4480644169).jpg",
+    "licence": "CC BY 2.0",
+    "author": "David Hall from Stockholm, Sweden",
+    "source": "https://commons.wikimedia.org/wiki/File:Red_sports_car_at_Tokyo_University_(4480644169).jpg"
+  },
+  "strawberry": {
+    "commons": "File:Strawberries at Ljubljana Central Market.JPG",
+    "licence": "CC BY 4.0",
+    "author": "domdomegg",
+    "source": "https://commons.wikimedia.org/wiki/File:Strawberries_at_Ljubljana_Central_Market.JPG"
+  },
+  "cats_sofa": {
+    "commons": "File:Red tabby cat, black cat, and white cat sitting on a chair.jpg",
+    "licence": "CC0",
+    "author": "Roc0ast3r",
+    "source": "https://commons.wikimedia.org/wiki/File:Red_tabby_cat,_black_cat,_and_white_cat_sitting_on_a_chair.jpg"
+  },
+  "umbrella_group": {
+    "commons": "File:US Navy 040611-N-0502D-083 Former British Prime Minister Margaret Thatcher is shielded from the rain as she arrives at Andrews Air Force Base, Md.jpg",
+    "licence": "Public domain",
+    "author": "U.S. Navy photo by Journalist 1st Class M. J. Darb",
+    "source": "https://commons.wikimedia.org/wiki/File:US_Navy_040611-N-0502D-083_Former_British_Prime_Minister_Margaret_Thatcher_is_shielded_from_the_rain_as_she_arrives_at_Andrews_Air_Force_Base,_Md.jpg"
+  }
+}
