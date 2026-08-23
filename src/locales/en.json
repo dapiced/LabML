@@ -646,6 +646,17 @@
         "rmse": "RMSE",
         "mae": "MAE",
         "r2": "R²"
+      },
+      "read": {
+        "title": "How this file was read",
+        "delimiter": "Delimiter: {{delimiter}}",
+        "tab": "tab",
+        "encodingUtf8": "Encoding: UTF-8.",
+        "encodingFallback": "Encoding: windows-1252 — UTF-8 decoding failed on these bytes, so this is a certainty, not a preference. Accents would otherwise have come through as replacement characters.",
+        "decimal_one": "Decimal comma detected and converted in {{count}} column: {{columns}}. The figure in brackets is how many values proved it.",
+        "decimal_other": "Decimal comma detected and converted in {{count}} columns: {{columns}}. The figure in brackets is how many values proved it.",
+        "grouped": "Thousands separators were removed as well.",
+        "hint": "A column is only rewritten when nearly all of its values are numbers in that format and it would otherwise not be numeric at all. Anything else is left exactly as written. If this reading is wrong, reload the file — the detection is per column, not per file."
       }
     }
   },
