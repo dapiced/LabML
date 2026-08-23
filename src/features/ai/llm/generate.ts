@@ -25,6 +25,21 @@ import type { ColumnInfo } from '@/features/ai/chat/parser';
 export const MAX_NEW_TOKENS = 96;
 
 /**
+ * Whether the answer is decoded inside the query grammar. TRUE is what the
+ * browser does, so it is what the bench must do by default.
+ *
+ * It lives here, in one place, because of a defect this constant exists to
+ * make impossible: V30's first CI bench measured **free** decoding — the flag
+ * was opt-in and the workflow did not set it — so the number it published
+ * described a configuration nobody ships. A bench that measures something
+ * other than the product is worse than no bench: it is a wrong number with a
+ * green tick beside it. Turning the constraint OFF is now the thing that takes
+ * an explicit flag, and the only reason to do it is to reproduce the pre-V30
+ * behaviour for comparison.
+ */
+export const DECODE_CONSTRAINED_BY_DEFAULT = true;
+
+/**
  * The shape of a transformers.js text-generation pipeline, described
  * structurally so this module never imports the library — it is loaded on
  * demand in the browser and must not be pulled into the main bundle.
