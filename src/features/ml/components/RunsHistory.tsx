@@ -12,6 +12,7 @@ import { formatSize } from '@/features/ml/projects/dataset-storage';
 import { useLabStore } from '@/features/ml/lab-store';
 import { cn } from '@/lib/utils';
 import type { RunRecord } from '@/features/ml/projects/types';
+import { bestResult } from '@/features/ml/train/ranking';
 
 /** Datasets kept in the browser (v19) — reopen or forget, all local. */
 function SavedDatasets() {
@@ -92,11 +93,9 @@ function SavedDatasets() {
 }
 
 function bestOf(record: RunRecord) {
-  const ok = record.results.filter((r) => r.ok);
-  const isClassification = record.taskType !== 'regression';
-  return [...ok].sort((a, b) =>
-    isClassification ? b.primary - a.primary : a.primary - b.primary,
-  )[0];
+  // V35: same ranking rule as the leaderboard — validation when the run has
+  // it, test otherwise. The history must not crown a different model.
+  return bestResult(record.results, record.taskType) ?? undefined;
 }
 
 /** Local run history (IndexedDB) — rename, delete, view, compare two runs. */

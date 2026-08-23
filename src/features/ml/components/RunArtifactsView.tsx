@@ -46,7 +46,7 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'en';
   const { tuning, explanation, exploration, forecast, batchScore, threshold, segments } = artifacts;
-  const { uncertainty, learningCurve } = artifacts;
+  const { uncertainty, learningCurve, robustRank } = artifacts;
   if (
     !tuning &&
     !explanation &&
@@ -56,7 +56,8 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
     !threshold &&
     !segments &&
     !uncertainty &&
-    !learningCurve
+    !learningCurve &&
+    !robustRank
   ) {
     return null;
   }
@@ -288,6 +289,51 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
                 )}
               </p>
             )}
+          </ArtifactCard>
+        )}
+
+        {robustRank && (
+          <ArtifactCard title={t('ml.lab.robust.title')}>
+            <table className="w-full text-left text-sm tabular-nums">
+              <thead>
+                <tr className="font-mono text-[0.68rem] tracking-wider text-muted uppercase">
+                  <th className="py-1 pr-3 font-medium">{t('ml.lab.leaderboard.model')}</th>
+                  <th className="py-1 pr-3 font-medium">{t('ml.lab.robust.mean')}</th>
+                  <th className="py-1 pr-3 font-medium">{t('ml.lab.robust.sd')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {robustRank.entries.map((entry) => (
+                  <tr key={entry.model} className="border-t border-line">
+                    <td className="py-1 pr-3">{t(`ml.lab.models.${entry.model}`)}</td>
+                    <td className="py-1 pr-3 font-medium">{score(entry.mean)}</td>
+                    <td className="py-1 pr-3 text-muted">± {score(entry.sd)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {robustRank.topPair && (
+              <p className="text-xs">
+                {t(
+                  robustRank.topPair.leaderWins >= robustRank.reps * 2 - 1
+                    ? 'ml.lab.robust.verdictStable'
+                    : 'ml.lab.robust.verdictNoise',
+                  {
+                    leader: t(`ml.lab.models.${robustRank.topPair.leader}`),
+                    runnerUp: t(`ml.lab.models.${robustRank.topPair.runnerUp}`),
+                    wins: robustRank.topPair.leaderWins,
+                    folds: robustRank.topPair.folds,
+                  },
+                )}
+              </p>
+            )}
+            <p className="font-mono text-[0.68rem] text-muted">
+              {t('ml.lab.robust.note', {
+                folds: robustRank.reps * 2,
+                reps: robustRank.reps,
+                rows: robustRank.rows.toLocaleString(lang),
+              })}
+            </p>
           </ArtifactCard>
         )}
 

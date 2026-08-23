@@ -7,6 +7,7 @@ import type { UncertaintyAnalysis } from '@/features/ml/train/uncertainty';
 import type { ModelKey } from '@/features/ml/train/types';
 import type { TuneOutcome } from '@/features/ml/train/search';
 import type { LearningCurveOutcome } from '@/features/ml/train/learning-curve';
+import type { RobustRankResult } from '@/features/ml/train/robust';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
 import type { ForecastPayload } from '@/features/ml/timeseries/run';
 import type { InsightsPayload, ModelResult, TrainSummary } from '@/features/ml/train/types';
@@ -44,6 +45,8 @@ export interface RunArtifacts {
   uncertainty?: UncertaintyAnalysis;
   /** v26: metric vs training size, with the plain-language verdict. */
   learningCurve?: LearningCurveOutcome;
+  /** v35: 5x2 CV ranking on train+validation - mean, spread, top-pair wins. */
+  robustRank?: RobustRankResult;
 }
 
 /**

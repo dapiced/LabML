@@ -12,6 +12,9 @@ import type { ModelResult } from '@/features/ml/train/types';
 import type { Cell, ColumnProfile } from '@/features/ml/data/types';
 
 // V25: sampling is ANNOUNCED, seeded and nested — these tests freeze all three.
+// V35 added a third split: the announced cap still counts USABLE rows, but they
+// are now shared between train, validation and test, and the per-family caps
+// bite on a train split that is 20% smaller. The sizes below account for that.
 
 describe('nestedSampleOrder', () => {
   it('is a deterministic permutation of 0..count-1', () => {
@@ -58,16 +61,21 @@ describe('prepareData — announced global sample (V25)', () => {
     const config = { target: 'label', features: ['x1', 'x2'], seed: 42, testRatio: 0.2 };
     const prepared = prepareData(columns, profiles, config);
     expect(prepared.sampledFrom).toBe(120_000);
-    expect(prepared.train.length + prepared.test.length).toBe(GLOBAL_SAMPLE_CAP);
+    expect(prepared.train.length + prepared.validation.length + prepared.test.length).toBe(
+      GLOBAL_SAMPLE_CAP,
+    );
     // The class balance survives the sample (quantile stratification).
     const labels = columns.get('label')!;
     const yesTotal = labels.filter((v) => v === 'yes').length;
     const expected = Math.round((yesTotal * GLOBAL_SAMPLE_CAP) / 120_000);
-    const yes = [...prepared.train, ...prepared.test].filter((i) => labels[i] === 'yes').length;
+    const yes = [...prepared.train, ...prepared.validation, ...prepared.test].filter(
+      (i) => labels[i] === 'yes',
+    ).length;
     expect(Math.abs(yes - expected)).toBeLessThanOrEqual(5);
     // Deterministic: the same seed picks the same rows.
     const again = prepareData(columns, profiles, config);
     expect(again.train).toEqual(prepared.train);
+    expect(again.validation).toEqual(prepared.validation);
     expect(again.test).toEqual(prepared.test);
   });
 
@@ -80,7 +88,7 @@ describe('prepareData — announced global sample (V25)', () => {
       testRatio: 0.2,
     });
     expect(prepared.sampledFrom).toBeUndefined();
-    expect(prepared.train.length + prepared.test.length).toBe(5_000);
+    expect(prepared.train.length + prepared.validation.length + prepared.test.length).toBe(5_000);
   });
 });
 
@@ -108,8 +116,9 @@ async function trainOn(
 
 describe('runTraining — announced per-family caps (V25)', () => {
   it('records the exact trainedRows for capped and uncapped families alike', async () => {
-    // 2 600 rows -> 2 080 train: tree (2 000) and forest (1 000) engage, the rest do not.
-    const { outcome, results } = await trainOn(2_600);
+    // 3 300 rows -> 2 640 after the test split -> 2 112 train once validation is
+    // carved out: tree (2 000) and forest (1 000) engage, the rest do not.
+    const { outcome, results } = await trainOn(3_300);
     const trainRows = outcome.summary.trainRows;
     expect(trainRows).toBeGreaterThan(2_000); // tree's cap must actually engage
     expect(outcome.summary.sampledFrom).toBeUndefined();
@@ -119,14 +128,15 @@ describe('runTraining — announced per-family caps (V25)', () => {
       expect(results.get(key)!.trainedRows, key).toBe(trainRows);
     }
     // Deterministic: the same seed trains the capped families on the same rows.
-    const repeat = await trainOn(2_600);
+    const repeat = await trainOn(3_300);
     expect(repeat.results.get('forest')!.metrics).toEqual(results.get('forest')!.metrics);
     expect(repeat.results.get('tree')!.metrics).toEqual(results.get('tree')!.metrics);
   }, 60_000);
 
   it('caps k-NN at 5 000 announced rows — the old silent subsample is gone', async () => {
-    // 7 000 rows -> 5 600 train: knn (5 000) engages on top of tree and forest.
-    const { outcome, results } = await trainOn(7_000);
+    // 8 000 rows -> 6 400 after the test split -> 5 120 train once validation is
+    // carved out: knn (5 000) engages on top of tree and forest.
+    const { outcome, results } = await trainOn(8_000);
     expect(results.get('knn')!.trainedRows).toBe(MODEL_TRAIN_CAPS.knn);
     expect(results.get('gbdt')!.trainedRows).toBe(outcome.summary.trainRows);
     // Capped families still beat the baseline on this separable dataset —

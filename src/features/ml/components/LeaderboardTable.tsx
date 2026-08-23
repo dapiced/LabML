@@ -1,6 +1,7 @@
-import { Eye } from 'lucide-react';
+import { AlertTriangle, Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
+import { championGap, rankingValue, sortResults } from '@/features/ml/train/ranking';
 import type { TaskType } from '@/features/ml/data/types';
 import type { ModelResult, TrainSummary } from '@/features/ml/train/types';
 import { cn } from '@/lib/utils';
@@ -26,6 +27,13 @@ interface LeaderboardTableProps {
  * Presentational model ranking — used live in the lab and read-only in
  * stored/shared run views. Classification ranks by accuracy (higher wins),
  * regression by RMSE (lower wins), with the delta vs baseline made explicit.
+ *
+ * V35: when a run carries validation scores, the table ranks and crowns on
+ * the VALIDATION metric and shows the test metric beside it — selecting on
+ * the reporting set made the crowned number the optimistic max of nine
+ * draws. The champion line spells out the val→test gap: that gap is the
+ * most useful lesson the lab can teach. Runs stored before V35 carry no
+ * validation scores and keep their historical, test-ranked display.
  */
 export function LeaderboardTable({
   results,
@@ -37,14 +45,17 @@ export function LeaderboardTable({
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'en';
   const isClassification = taskType !== 'regression';
-  const ok = results.filter((r) => r.ok);
   const failed = results.filter((r) => !r.ok);
-  const sorted = [...ok].sort((a, b) =>
-    isClassification ? b.primary - a.primary : a.primary - b.primary,
-  );
-  const baseline = ok.find((r) => r.key === 'baseline');
+  const sorted = sortResults(results, taskType);
+  const baseline = sorted.find((r) => r.key === 'baseline');
   const bestKey = sorted[0]?.key;
-  const maxPrimary = Math.max(...ok.map((r) => r.primary), 1e-9);
+  const hasValidation = sorted.some((r) => r.valPrimary !== undefined);
+  const champion = championGap(results, taskType);
+  const maxPrimary = Math.max(...sorted.map((r) => rankingValue(r)), 1e-9);
+  const leakWarnings = summary?.leakWarnings ?? [];
+
+  const metricsOf = (result: ModelResult) =>
+    hasValidation ? (result.valMetrics ?? result.metrics) : result.metrics;
 
   const metricColumns: { key: keyof ModelResult['metrics']; label: string }[] = isClassification
     ? [
@@ -60,25 +71,51 @@ export function LeaderboardTable({
   function delta(result: ModelResult): string {
     if (!baseline || result.key === 'baseline') return '—';
     const value = isClassification
-      ? result.primary - baseline.primary
-      : baseline.primary - result.primary;
+      ? rankingValue(result) - rankingValue(baseline)
+      : rankingValue(baseline) - rankingValue(result);
     const sign = value > 0 ? '+' : '';
     return `${sign}${value.toFixed(3)}`;
   }
+
+  const primaryHeader = isClassification
+    ? t(hasValidation ? 'ml.lab.leaderboard.accuracyVal' : 'ml.lab.leaderboard.accuracy')
+    : t(hasValidation ? 'ml.lab.leaderboard.rmseVal' : 'ml.lab.leaderboard.rmse');
 
   return (
     <div
       data-testid="leaderboard"
       className="overflow-x-auto rounded-2xl border border-line bg-surface"
     >
+      {leakWarnings.length > 0 && (
+        <div
+          data-testid="leak-warning"
+          className="flex items-start gap-2 border-b border-line bg-copper-soft px-3 py-2.5 text-sm"
+        >
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-copper" aria-hidden="true" />
+          <div>
+            {leakWarnings.map((warning) => (
+              <p key={warning.column}>
+                {t('ml.lab.leaderboard.leakWarning', {
+                  column: warning.column,
+                  score: (warning.score * 100).toFixed(1),
+                })}
+              </p>
+            ))}
+            <p className="text-xs text-muted">{t('ml.lab.leaderboard.leakAdvice')}</p>
+          </div>
+        </div>
+      )}
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="bg-surface-2 font-mono text-[0.68rem] tracking-wider uppercase">
             <th className="px-3 py-2 font-medium">#</th>
             <th className="px-3 py-2 font-medium">{t('ml.lab.leaderboard.model')}</th>
-            <th className="px-3 py-2 font-medium">
-              {isClassification ? t('ml.lab.leaderboard.accuracy') : t('ml.lab.leaderboard.rmse')}
-            </th>
+            <th className="px-3 py-2 font-medium">{primaryHeader}</th>
+            {hasValidation && (
+              <th className="px-3 py-2 font-medium" title={t('ml.lab.leaderboard.testTitle')}>
+                {t('ml.lab.leaderboard.test')}
+              </th>
+            )}
             <th className="px-3 py-2 font-medium">{t('ml.lab.leaderboard.delta')}</th>
             {metricColumns.map(({ key, label }) => (
               <th key={key} className="px-3 py-2 font-medium">
@@ -121,13 +158,16 @@ export function LeaderboardTable({
                     <span className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-surface-2">
                       <span
                         className="block h-full rounded-full bg-accent/75"
-                        style={{ width: `${(result.primary / maxPrimary) * 100}%` }}
+                        style={{ width: `${(rankingValue(result) / maxPrimary) * 100}%` }}
                       />
                     </span>
                   )}
-                  <span className="font-medium">{formatMetric(result.primary)}</span>
+                  <span className="font-medium">{formatMetric(rankingValue(result))}</span>
                 </span>
               </td>
+              {hasValidation && (
+                <td className="px-3 py-2 text-muted">{formatMetric(result.primary)}</td>
+              )}
               <td
                 className={cn(
                   'px-3 py-2',
@@ -138,7 +178,7 @@ export function LeaderboardTable({
               </td>
               {metricColumns.map(({ key }) => (
                 <td key={key} className="px-3 py-2">
-                  {formatMetric(result.metrics[key])}
+                  {formatMetric(metricsOf(result)[key])}
                 </td>
               ))}
               <td className="px-3 py-2 font-mono text-xs whitespace-nowrap">
@@ -178,27 +218,67 @@ export function LeaderboardTable({
                   <Badge variant="copper">{t('ml.lab.leaderboard.failed')}</Badge>
                 </span>
               </td>
-              <td className="px-3 py-2" colSpan={4 + metricColumns.length}>
+              <td
+                className="px-3 py-2"
+                colSpan={4 + metricColumns.length + (hasValidation ? 1 : 0)}
+              >
                 <span className="font-mono text-xs">{result.error}</span>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      {champion && (
+        <p data-testid="champion-gap" className="border-t border-line px-3 py-2 text-xs">
+          {t('ml.lab.leaderboard.championLine', {
+            model: t(`ml.lab.models.${champion.model.key}`),
+            val: formatMetric(champion.val),
+            test: formatMetric(champion.test),
+            gap: `${champion.gap > 0 ? '+' : ''}${champion.gap.toFixed(3)}`,
+          })}{' '}
+          <span className="text-muted">{t('ml.lab.leaderboard.championWhy')}</span>
+        </p>
+      )}
       {summary && (
         <p className="border-t border-line px-3 py-2 font-mono text-[0.68rem] text-muted">
-          {t('ml.lab.leaderboard.runInfo', {
-            seed: summary.seed,
-            train: summary.trainRows,
-            test: summary.testRows,
-            features: summary.featureCount,
-          })}
+          {summary.validationRows !== undefined
+            ? t('ml.lab.leaderboard.runInfoVal', {
+                seed: summary.seed,
+                train: summary.trainRows,
+                val: summary.validationRows,
+                test: summary.testRows,
+                features: summary.featureCount,
+              })
+            : t('ml.lab.leaderboard.runInfo', {
+                seed: summary.seed,
+                train: summary.trainRows,
+                test: summary.testRows,
+                features: summary.featureCount,
+              })}
+          {summary.split !== undefined && (
+            <>
+              {' '}
+              ·{' '}
+              {t(
+                summary.split.mode === 'chronological'
+                  ? 'ml.lab.leaderboard.splitChronological'
+                  : 'ml.lab.leaderboard.splitGroup',
+                { column: summary.split.column },
+              )}
+              {summary.split.dropped !== undefined &&
+                ` ${t('ml.lab.leaderboard.splitDropped', { count: summary.split.dropped })}`}
+            </>
+          )}
           {summary.sampledFrom !== undefined && (
             <>
               {' '}
               ·{' '}
               {t('ml.lab.leaderboard.sampledFrom', {
-                cap: (summary.trainRows + summary.testRows).toLocaleString(lang),
+                cap: (
+                  summary.trainRows +
+                  (summary.validationRows ?? 0) +
+                  summary.testRows
+                ).toLocaleString(lang),
                 from: summary.sampledFrom.toLocaleString(lang),
               })}
             </>

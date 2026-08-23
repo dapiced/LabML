@@ -9,6 +9,20 @@ export interface TrainConfig {
   features: string[];
   seed: number;
   testRatio: number;
+  /**
+   * V35: how rows are assigned to the splits. Absent = seeded random
+   * (stratified on classification). 'chronological' orders rows by the named
+   * date column — oldest train, newest test — because a random split on dated
+   * data puts the future in training. 'group' keeps every row sharing the
+   * named column's value on the same side — the same customer in both train
+   * and test is the same leak.
+   */
+  split?: SplitChoice;
+}
+
+export interface SplitChoice {
+  mode: 'chronological' | 'group';
+  column: string;
 }
 
 /** Metric values per model; keys depend on the task type. */
@@ -36,6 +50,16 @@ export interface ModelResult {
    * Absent on runs stored before V25 and on failed models.
    */
   trainedRows?: number;
+  /**
+   * V35: the same metrics on the validation split. When present, the
+   * leaderboard ranks and crowns on THESE — taking the maximum of nine test
+   * scores biased the headline number upward — and reports the champion's
+   * test score next to it, gap included. Absent on runs stored before V35
+   * and on datasets too small for a third split (refused by name).
+   */
+  valMetrics?: MetricMap;
+  /** Primary validation metric (accuracy or RMSE); see valMetrics. */
+  valPrimary?: number;
 }
 
 export interface InsightsPayload {
@@ -59,6 +83,14 @@ export interface InsightsPayload {
    * there is no single axis to project the shift onto.
    */
   words?: { column: string; term: string; effect: number; rows: number }[];
+  /**
+   * V35: the word-effect method could not measure anything and says so.
+   * 'saturated' = the model answers with only one or two distinct
+   * probabilities (Gaussian Naive Bayes on many TF-IDF features does), so
+   * every occlusion shifts it by exactly zero. Silence would read as
+   * "no word matters", which is a different — and false — statement.
+   */
+  wordsRefused?: 'saturated';
   /**
    * Partial dependence of the prediction on the top numeric columns
    * (binary classification: mean probability of the positive class;
@@ -94,4 +126,24 @@ export interface TrainSummary {
    * Absent when every usable row was used — sampling is never silent.
    */
   sampledFrom?: number;
+  /**
+   * V35: rows held out for model selection. Absent when the dataset was too
+   * small for a third split (refused by name — the leaderboard then ranks on
+   * test, as before V35, and says nothing it cannot back).
+   */
+  validationRows?: number;
+  /** V35: non-random split, when one was chosen — always announced. */
+  split?: {
+    mode: 'chronological' | 'group';
+    column: string;
+    /** Rows excluded because the split column had no usable value there. */
+    dropped?: number;
+  };
+  /**
+   * V35: single columns that predict the target (almost) alone, measured by a
+   * one-column stump fitted on train and scored on the held-out selection
+   * split. A lone column at 99% is nearly always target leakage — shown as a
+   * warning, never as a victory.
+   */
+  leakWarnings?: { column: string; score: number }[];
 }
