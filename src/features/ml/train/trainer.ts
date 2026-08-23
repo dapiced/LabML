@@ -5,6 +5,12 @@ import { MODEL_TRAIN_CAPS, modelZoo, type TrainedModel } from '@/features/ml/tra
 import { fitPipeline, splitIndices, usableRows } from '@/features/ml/train/pipeline';
 import { mulberry32, nestedSampleOrder, shuffleInPlace } from '@/features/ml/train/random';
 import { leakScan } from '@/features/ml/train/leakage';
+import {
+  balancedWeights,
+  majorityShare,
+  IMBALANCE_THRESHOLD,
+} from '@/features/ml/train/class-weight';
+import { buildEnsemble, planEnsemble } from '@/features/ml/train/ensemble';
 import { parseDate } from '@/features/ml/timeseries/series';
 import type { Cell, ColumnProfile } from '@/features/ml/data/types';
 import type {
@@ -394,6 +400,8 @@ export async function runTraining(
 
   const zoo = modelZoo(isClassification ? 'classification' : 'regression');
   const models = new Map<ModelKey, TrainedModel>();
+  // Kept so the ensemble can pick its members by the shared ranking rule.
+  const emitted = new Map<ModelKey, ModelResult>();
 
   // V25: one seeded order shared by every capped family — family K trains on
   // the first K positions, so smaller caps are subsets of larger ones (nested)
@@ -404,10 +412,18 @@ export async function runTraining(
     return sampleOrder.slice(0, cap).sort((a, b) => a - b);
   };
 
+  // V36: class weights, only when asked for and only on classification.
+  // Off by default — on a balanced target weighting changes nothing.
+  const weights =
+    config.classWeighting === 'balanced' && isClassification
+      ? balancedWeights(trainY, classes.length)
+      : undefined;
+
   const context = {
     task: isClassification ? ('classification' as const) : ('regression' as const),
     classCount: classes.length,
     seed: config.seed,
+    ...(weights !== undefined && { classWeights: weights }),
   };
 
   for (let index = 0; index < zoo.length; index++) {
@@ -446,7 +462,7 @@ export async function runTraining(
       }
 
       const latency = measureLatency(model, testX);
-      callbacks.onModelResult({
+      const emittedResult: ModelResult = {
         key: def.key,
         ok: true,
         metrics,
@@ -459,7 +475,9 @@ export async function runTraining(
           valMetrics: validationScore.metrics,
           valPrimary: validationScore.primary,
         }),
-      });
+      };
+      emitted.set(def.key, emittedResult);
+      callbacks.onModelResult(emittedResult);
     } catch (error) {
       callbacks.onModelResult({
         key: def.key,
@@ -473,6 +491,47 @@ export async function runTraining(
       });
     }
     await yieldToQueue();
+  }
+
+  // V36: the ensemble of the top families — free in compute, they are already
+  // fitted. Refused by name when fewer than two real candidates exist.
+  const zooResults = [...models.keys()].map((key) => emitted.get(key)!).filter(Boolean);
+  const plan = planEnsemble(zooResults, task.type, models);
+  if (plan !== null && !callbacks.isCancelled()) {
+    try {
+      const started = performance.now();
+      const ensemble = buildEnsemble(plan, models, classes.length);
+      const trainMs = performance.now() - started;
+      models.set('ensemble', ensemble);
+      const { metrics, primary } = scoreModel(
+        ensemble,
+        testX,
+        testY,
+        isClassification,
+        classes.length,
+      );
+      const validationScore =
+        valX !== null && valY !== null
+          ? scoreModel(ensemble, valX, valY, isClassification, classes.length)
+          : null;
+      const latency = measureLatency(ensemble, testX);
+      callbacks.onModelResult({
+        key: 'ensemble',
+        ok: true,
+        metrics,
+        primary,
+        trainMs,
+        inferP50Ms: latency.p50,
+        inferP95Ms: latency.p95,
+        ...(validationScore !== null && {
+          valMetrics: validationScore.metrics,
+          valPrimary: validationScore.primary,
+        }),
+      });
+    } catch {
+      // An ensemble that cannot be built is simply absent — the zoo stands.
+      models.delete('ensemble');
+    }
   }
 
   return {
@@ -490,6 +549,12 @@ export async function runTraining(
       ...(validation.length > 0 && { validationRows: validation.length }),
       ...(prepared.splitInfo !== undefined && { split: prepared.splitInfo }),
       ...(leakWarnings.length > 0 && { leakWarnings }),
+      ...(isClassification && {
+        majorityShare: majorityShare(trainY, classes.length),
+        imbalanced: majorityShare(trainY, classes.length) >= IMBALANCE_THRESHOLD,
+      }),
+      ...(weights !== undefined && { classWeighting: 'balanced' as const }),
+      ...(plan !== null && { ensemble: plan }),
     },
     artifacts: {
       models,

@@ -46,7 +46,7 @@ export type WorkerRequest =
   | { kind: 'export-predictions'; model: ModelKey }
   | { kind: 'score-batch-file'; file: File; model: ModelKey }
   | { kind: 'score-batch-url'; url: string; name: string; model: ModelKey }
-  | { kind: 'threshold-analysis'; model: ModelKey }
+  | { kind: 'threshold-analysis'; model: ModelKey; focusClass?: number }
   | { kind: 'segment-analysis'; model: ModelKey }
   | { kind: 'uncertainty-analysis' }
   // v22: an exported model comes back to score files, no retraining.
