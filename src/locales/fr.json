@@ -221,6 +221,8 @@
       "errorBody": "Le fichier semble vide ou non tabulaire. Essayez un CSV avec une ligne d'en-têtes.",
       "errorTooLargeTitle": "Fichier trop grand pour la mémoire du navigateur",
       "errorTooLarge": "Ce fichier dépasse le budget de {{max}} cellules (lignes × colonnes) que le labo garde en mémoire — lecture arrêtée, volontairement, à {{rows}} lignes × {{cols}} colonnes. Scindez le fichier ou retirez des colonnes, puis réessayez.",
+      "errorDatasetMissingTitle": "Ce jeu de données n’est plus dans ce navigateur",
+      "errorDatasetMissing": "Il avait été conservé ici, mais le stockage local ne le contient plus — il a été oublié, ou le navigateur a vidé ses données de site. Rien n’a été lu de travers : déposez à nouveau le fichier pour repartir.",
       "retry": "Essayer un autre fichier",
       "rows": "lignes",
       "columns": "colonnes",
