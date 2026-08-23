@@ -28,6 +28,7 @@ import { BENCH_CASES, BENCH_COLUMNS, score } from '@/features/ai/llm/corpus';
 import {
   createConstrainer,
   generateIntent,
+  DECODE_CONSTRAINED_BY_DEFAULT,
   type Constrainer,
   type LogitsModule,
   type RawGenerator,
@@ -53,8 +54,15 @@ const REPO = process.env.LABML_LLM_REPO ?? 'onnx-community/Qwen3-0.6B-DQ-ONNX';
 const DTYPE = process.env.LABML_LLM_DTYPE ?? 'q4f16';
 const LABEL = process.env.LABML_LLM_LABEL ?? 'banc V30 (CPU, onnxruntime-node)';
 const OUT = process.env.LABML_LLM_OUT;
-/** V30 (B): decode inside the grammar. Off reproduces the V27 behaviour exactly. */
-const CONSTRAINED = process.env.LABML_LLM_CONSTRAIN === '1';
+/**
+ * Decode inside the grammar — the shipped default, shared with the browser so
+ * the two cannot drift. `LABML_LLM_FREE=1` turns it off, which is the only way
+ * to reproduce the pre-V30 behaviour for comparison. The flag points this way
+ * round on purpose: the first CI run of this bench measured free decoding
+ * because the constraint was opt-in and the workflow did not opt in, and
+ * published a number for a configuration nobody ships.
+ */
+const CONSTRAINED = process.env.LABML_LLM_FREE === '1' ? false : DECODE_CONSTRAINED_BY_DEFAULT;
 /** A short run while iterating; a full run is the only one worth publishing. */
 const LIMIT = Number(process.env.LABML_LLM_LIMIT ?? BENCH_CASES.length);
 /** Loading 355 MB and answering 55 questions on a CPU is minutes, not seconds. */
