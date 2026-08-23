@@ -3,17 +3,9 @@ import { useRef, useState, type DragEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Eyebrow } from '@/components/ui/eyebrow';
+import { DEMO_DATASETS } from '@/features/ml/demos';
 import { useLabStore } from '@/features/ml/lab-store';
 import { cn } from '@/lib/utils';
-
-const DEMO_DATASETS = [
-  { file: 'iris.csv', size: '4 KB', task: 'multiclass' },
-  { file: 'titanic.csv', size: '56 KB', task: 'binary' },
-  { file: 'fraud.csv', size: '20 KB', task: 'binary' },
-  { file: 'mpg.csv', size: '21 KB', task: 'regression' },
-  { file: 'energy.csv', size: '5 KB', task: 'timeseries' },
-  { file: 'reviews.csv', size: '28 KB', task: 'text' },
-] as const;
 
 export function DropZone() {
   const { t } = useTranslation();
