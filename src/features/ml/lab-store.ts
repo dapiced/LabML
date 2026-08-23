@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { ReadFormat } from '@/features/ml/data/locale';
 import type { RunArtifacts, RunRecord } from '@/features/ml/projects/types';
 import type {
   ColumnSuggestion,
@@ -43,6 +44,8 @@ interface LabState {
   meta: DatasetMeta | null;
   profiles: ColumnProfile[];
   preview: Record<string, string>[];
+  /** V38: how the file was read — null until a file has been parsed. */
+  readFormat: ReadFormat | null;
   /** Target-independent suggestions computed at parse time. */
   baseline: ColumnSuggestion[];
   target: string | null;
@@ -196,6 +199,7 @@ const initialData = {
   meta: null,
   profiles: [],
   preview: [],
+  readFormat: null,
   baseline: [],
   target: null,
   task: null,
@@ -308,13 +312,14 @@ export const useLabStore = create<LabState>((set, get) => {
         if (message.kind === 'progress') {
           set({ rowsParsed: message.rows });
         } else if (message.kind === 'parsed') {
-          const { meta, profiles, preview, suggestions } = message.payload;
+          const { meta, profiles, preview, suggestions, readFormat } = message.payload;
           set({
             status: 'ready',
             meta,
             profiles,
             preview,
             baseline: suggestions,
+            readFormat: readFormat ?? null,
             rowsParsed: meta.rowCount,
           });
         } else if (message.kind === 'target-analyzed') {
