@@ -1024,6 +1024,13 @@
         "note": "EfficientNet-Lite4 (77,6 % top-1 ImageNet) répond toujours par la plus proche de ses 1 000 classes — même sur une image qu'il ne comprend pas — et ses noms de classes restent en anglais.",
         "preview": "Image analysée",
         "subject": "Sujet principal — top 5 ImageNet",
+        "verdict": {
+          "people_one": "Une personne est sur cette image — ImageNet-1k n’a aucune classe pour ça.",
+          "people_other": "{{count}} personnes sont sur cette image — ImageNet-1k n’a aucune classe pour une personne.",
+          "peopleWhy": "Sur ses 1 000 étiquettes, 118 nomment des races de chien et aucune ne nomme un être humain. Le classifieur ne peut pas s’abstenir : il renormalise sur les mille et renvoie la plus proche, ici « {{label}} » à {{p}} %. Ce n’est pas ce que montre la photo. Ce sont les détecteurs ci-dessous, qui eux connaissent les personnes, qui le disent.",
+          "unsure": "Trop incertain pour nommer : « {{label}} » à {{p}} %.",
+          "unsureWhy": "Sous {{floor}} %, les premières classes sont quasi à égalité et nommer la gagnante affiche une confiance que le réseau n’a pas. Les cinq candidates restent listées — à lire comme une liste courte, pas comme une réponse. Ce seuil vient du banc de quatorze images : aucune bonne réponse mesurée sous 70,5 %, aucune mauvaise au-dessus de 41,2 %. Quatorze images, c’est une base étroite, et le seuil est annoncé pour pouvoir être re-mesuré."
+        },
         "annotated": "Image analysée avec boîtes de détection",
         "objectsNone": "Aucun objet détecté — rien au-dessus de la barre de confiance de 35 %.",
         "objectCount_one": "{{count}} objet détecté",
