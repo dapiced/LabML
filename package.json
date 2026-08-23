@@ -13,6 +13,8 @@
     "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
     "llm:prepare": "node scripts/prepare-llm.mjs",
     "llm:bench": "node scripts/run-llm-bench.mjs",
+    "llm:bench:node": "LABML_LLM_BENCH=1 vitest run src/features/ai/llm/bench.node.test.ts",
+    "llm:fetch": "node scripts/prepare-llm.mjs .llm-cache --flat",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

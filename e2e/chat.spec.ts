@@ -60,3 +60,37 @@ test('suggestion chips ask a real question and the hub links here', async ({ pag
   await expect(answer).toContainText('Missing cells', { timeout: 15000 });
   await expect(answer).toContainText('deck'); // titanic's famously incomplete column
 });
+
+test('V30 — a question it only half reads is refused, not answered short', async ({ page }) => {
+  await page.goto('/ai/chat');
+  await page.getByRole('button', { name: /titanic\.csv/ }).click();
+  await expect(page.getByText('891 rows · 15 columns')).toBeVisible();
+
+  const input = page.getByLabel('Your question');
+  const ask = page.getByRole('button', { name: 'Ask' });
+
+  // Before V30 this answered 891 — the whole table — because the keyword
+  // grammar knows "how many" and knows nothing about "women", so it kept the
+  // count and dropped the condition. The number was wrong and the badge said
+  // the deterministic interpreter had read the question.
+  await input.fill('how many women?');
+  await ask.click();
+  const refused = page.getByTestId('chat-assistant').last();
+  await expect(refused).toContainText('did not understand', { timeout: 15000 });
+  await expect(refused).not.toContainText('891 rows match');
+
+  // Same shape in French, and the same refusal.
+  await input.fill('average age of women');
+  await ask.click();
+  await expect(page.getByTestId('chat-assistant').last()).toContainText('did not understand', {
+    timeout: 15000,
+  });
+
+  // What it DOES read, it still answers — the guard did not cost the questions
+  // the grammar genuinely understands.
+  await input.fill('How many rows where sex is female?');
+  await ask.click();
+  await expect(page.getByTestId('chat-assistant').last()).toContainText('314 rows match', {
+    timeout: 15000,
+  });
+});
