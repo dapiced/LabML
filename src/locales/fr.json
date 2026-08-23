@@ -301,7 +301,16 @@
         "splitGroup": "découpe par groupe sur {{column}} (aucun groupe des deux côtés)",
         "splitDropped": "— {{count}} lignes écartées, date inexploitable",
         "leakWarning": "« {{column}} » prédit à elle seule la cible à {{score}} % sur le jeu de validation.",
-        "leakAdvice": "Une colonne seule qui lit aussi bien la cible est presque toujours une fuite — une information qui n'existerait pas au moment de prédire. Excluez-la et réentraînez, ou confirmez qu'elle est légitimement disponible."
+        "leakAdvice": "Une colonne seule qui lit aussi bien la cible est presque toujours une fuite — une information qui n'existerait pas au moment de prédire. Excluez-la et réentraînez, ou confirmez qu'elle est légitimement disponible.",
+        "rankBy": "Classer par",
+        "ensembleNote": "Ensemble : la moyenne de {{members}} — déjà entraînés, donc gratuit. La baseline n'en fait jamais partie.",
+        "ensembleVote": "vote majoritaire",
+        "ensembleProbability": "probabilités moyennées",
+        "ensembleMean": "prédictions moyennées",
+        "weighting": "pondération de classes : équilibrée ({{loss}} pondèrent la perte, {{resample}} utilisent un rééchantillonnage équilibré seedé)",
+        "imbalanceHint": "La classe majoritaire occupe {{share}} % des lignes d'entraînement. L'accuracy récompense le fait de toujours la répondre — classez sur F1 ou rappel, et essayez la pondération de classes.",
+        "weightToggle": "Équilibrer les classes",
+        "weightToggleHint": "Pondère la perte à l'entraînement (régression logistique, gradient boosting) ou rééchantillonne les lignes (arbre, forêt) pour que la classe rare compte autant que la commune."
       },
       "models": {
         "baseline": "Baseline naïve",
@@ -312,7 +321,8 @@
         "tree": "Arbre de décision",
         "forest": "Forêt aléatoire",
         "gbdt": "Gradient boosting",
-        "mlp": "Réseau de neurones (MLP)"
+        "mlp": "Réseau de neurones (MLP)",
+        "ensemble": "Ensemble (top 3)"
       },
       "forecast": {
         "title": "Séries temporelles",
@@ -428,7 +438,9 @@
         "f1": "F1",
         "accuracy": "accuracy",
         "cost": "coût total",
-        "note": "Une probabilité n’est pas une décision. Au-dessus du seuil, la ligne est marquée « positive » — le déplacer échange des fausses alertes contre des cas manqués, et le bon échange dépend de ce que chaque erreur VOUS coûte. Le point sur la courbe est votre choix courant ; il est sauvegardé avec le run."
+        "note": "Une probabilité n’est pas une décision. Au-dessus du seuil, la ligne est marquée « positive » — le déplacer échange des fausses alertes contre des cas manqués, et le bon échange dépend de ce que chaque erreur VOUS coûte. Le point sur la courbe est votre choix courant ; il est sauvegardé avec le run.",
+        "focusClass": "Classe lue contre toutes les autres",
+        "oneVsRestNote": "Un-contre-tous : ceci lit à quel point le modèle sépare « {{class}} » de toutes les autres classes. Ce n'est pas une règle de décision multiclasse complète — deux classes peuvent dépasser leur seuil, et rien ici ne dit laquelle l'emporterait."
       },
       "segments": {
         "title": "Où le modèle échoue",
@@ -613,6 +625,16 @@
         "verdictStable": "{{leader}} a battu {{runnerUp}} sur {{wins}} plis sur {{folds}} — l'ordre entre eux est stable.",
         "verdictNoise": "{{leader}} n'a battu {{runnerUp}} que sur {{wins}} plis sur {{folds}} — l'ordre entre eux est dans le bruit : traitez-les comme à égalité.",
         "note": "{{folds}} plis ({{reps}} répétitions × 2 moitiés) sur {{rows}} lignes d'entraînement et de validation. Le pipeline est réajusté dans chaque pli ; le jeu de test n'est jamais touché."
+      },
+      "metricNames": {
+        "accuracy": "Accuracy",
+        "f1": "F1",
+        "recall": "Rappel",
+        "precision": "Précision",
+        "auc": "ROC-AUC",
+        "rmse": "RMSE",
+        "mae": "MAE",
+        "r2": "R²"
       }
     }
   },

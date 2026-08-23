@@ -16,7 +16,7 @@ import type { UncertaintyAnalysis } from '@/features/ml/train/uncertainty';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
 import type { LearningCurveOutcome } from '@/features/ml/train/learning-curve';
 import type { RobustRankResult } from '@/features/ml/train/robust';
-import type { SplitChoice } from '@/features/ml/train/types';
+import type { RankingMetric, SplitChoice } from '@/features/ml/train/types';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
 import type { ForecastPayload } from '@/features/ml/timeseries/run';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
@@ -54,6 +54,12 @@ interface LabState {
   overrides: Record<string, 'include' | 'exclude'>;
   /** V35: announced non-random split, chosen in the UI. Null = seeded random. */
   splitChoice: SplitChoice | null;
+  /** V36: class weighting, off by default — a knob that does nothing is worse than none. */
+  classWeighting: boolean;
+  /** V36: which metric the leaderboard ranks on. Null = the task's default. */
+  rankMetric: RankingMetric | null;
+  /** V36: which class the threshold panel reads one-vs-rest (multiclass only). */
+  thresholdClass: number;
   trainStatus: TrainStatus;
   modelProgress: { key: ModelKey; index: number; total: number } | null;
   results: ModelResult[];
@@ -123,6 +129,9 @@ interface LabState {
   robustRank: () => void;
   cancelRobust: () => void;
   setSplitChoice: (choice: SplitChoice | null) => void;
+  setClassWeighting: (on: boolean) => void;
+  setRankMetric: (metric: RankingMetric | null) => void;
+  setThresholdClass: (index: number) => void;
   cancelCurve: () => void;
   explore: () => void;
   forecast: (dateColumn: string, valueColumn: string) => void;
@@ -179,6 +188,9 @@ const initialTraining = {
 const initialData = {
   status: 'idle' as LabStatus,
   splitChoice: null as SplitChoice | null,
+  classWeighting: false,
+  rankMetric: null as RankingMetric | null,
+  thresholdClass: 0,
   error: null,
   rowsParsed: 0,
   meta: null,
@@ -334,7 +346,11 @@ export const useLabStore = create<LabState>((set, get) => {
         } else if (message.kind === 'insights') {
           set({ insights: message.payload, whatIf: null });
           // Imbalance tools ride along; the worker answers null when N/A.
-          send({ kind: 'threshold-analysis', model: message.payload.model });
+          send({
+            kind: 'threshold-analysis',
+            model: message.payload.model,
+            focusClass: get().thresholdClass,
+          });
           send({ kind: 'segment-analysis', model: message.payload.model });
           // First insights after a completed run = winning model → auto-save.
           const state = get();
@@ -594,6 +610,7 @@ export const useLabStore = create<LabState>((set, get) => {
           seed: TRAIN_SEED,
           testRatio: TEST_RATIO,
           ...(state.splitChoice !== null && { split: state.splitChoice }),
+          ...(state.classWeighting && { classWeighting: 'balanced' as const }),
         },
       });
     },
@@ -650,6 +667,7 @@ export const useLabStore = create<LabState>((set, get) => {
           seed: TRAIN_SEED,
           testRatio: TEST_RATIO,
           ...(state.splitChoice !== null && { split: state.splitChoice }),
+          ...(state.classWeighting && { classWeighting: 'balanced' as const }),
         },
       });
     },
@@ -675,6 +693,7 @@ export const useLabStore = create<LabState>((set, get) => {
           seed: TRAIN_SEED,
           testRatio: TEST_RATIO,
           ...(state.splitChoice !== null && { split: state.splitChoice }),
+          ...(state.classWeighting && { classWeighting: 'balanced' as const }),
         },
       });
     },
@@ -699,6 +718,7 @@ export const useLabStore = create<LabState>((set, get) => {
           seed: TRAIN_SEED,
           testRatio: TEST_RATIO,
           ...(state.splitChoice !== null && { split: state.splitChoice }),
+          ...(state.classWeighting && { classWeighting: 'balanced' as const }),
         },
       });
     },
@@ -711,6 +731,25 @@ export const useLabStore = create<LabState>((set, get) => {
     setSplitChoice(choice) {
       if (get().trainStatus === 'training') return;
       set({ splitChoice: choice });
+    },
+
+    setClassWeighting(on) {
+      if (get().trainStatus === 'training') return;
+      set({ classWeighting: on });
+    },
+
+    // Ranking is a reading of results already computed — no retraining.
+    setRankMetric(metric) {
+      set({ rankMetric: metric });
+    },
+
+    setThresholdClass(index) {
+      const state = get();
+      if (state.thresholdClass === index || state.trainStatus !== 'done') return;
+      set({ thresholdClass: index, thresholdAnalysis: null });
+      if (state.insights) {
+        send({ kind: 'threshold-analysis', model: state.insights.model, focusClass: index });
+      }
     },
 
     explore() {
