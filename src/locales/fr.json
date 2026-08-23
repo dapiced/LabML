@@ -978,14 +978,17 @@
         "downloadNote": "Téléchargé une seule fois, puis conservé par votre navigateur et disponible hors ligne. Rien n'est envoyé : il s'exécute sur votre machine, sur vos données — et l'interpréteur déterministe fonctionne que vous le téléchargiez ou non.",
         "downloading": "Téléchargement du modèle… {{percent}} %",
         "readyTag": "chargé",
-        "readyNote": "Comment les deux travaillent ensemble : l'interpréteur déterministe lit votre question en premier — il ne peut nommer qu'une colonne qui existe et une valeur qui s'y trouve vraiment, donc quand il comprend, personne ne le contredit. Quand il ne comprend pas, le modèle local prend le relais : il se contente de LIRE votre question et de la transformer en calcul, il ne calcule jamais lui-même, donc aucun chiffre ne sort d'un modèle de langage. Si aucun des deux n'y arrive, on vous le dit — jamais de réponse inventée. La mention sous chaque réponse indique qui a répondu.",
+        "readyNote": "Comment les deux travaillent ensemble : l'interpréteur déterministe lit votre question en premier — il ne peut nommer qu'une colonne qui existe et une valeur qui s'y trouve vraiment, donc quand il comprend, personne ne le contredit. Et il ne dit comprendre que s'il a lu TOUTE la question : si un mot lui échappe, il refuse au lieu de répondre à une question plus courte. Le modèle local prend alors le relais : il se contente de LIRE votre question et de la transformer en calcul, il ne calcule jamais lui-même, donc aucun chiffre ne sort d'un modèle de langage. Si aucun des deux n'y arrive, on vous le dit — jamais de réponse inventée. La mention sous chaque réponse indique qui a répondu.",
         "failed": "Le modèle local n'a pas pu être chargé ({{reason}}). L'interpréteur déterministe n'est pas affecté.",
         "by": {
           "deterministic": "répondu par l'interpréteur déterministe",
           "llm": "question lue par le modèle local · calculé par le moteur déterministe",
           "none": "l'interpréteur déterministe n'a pas compris",
           "none-both": "ni l'interpréteur déterministe, ni le modèle local n'ont compris"
-        }
+        },
+        "constrainedTag": "sous grammaire",
+        "constrainedNote": "Le modèle écrit sa requête sous contrainte : à chaque jeton, tout ce qui sortirait de la grammaire de requêtes est rendu impossible à choisir. Il ne peut donc pas inventer une colonne, un opérateur ni une valeur que votre colonne n'a pas. Il lui reste un mot pour dire non, et c'est délibéré : forcer une réponse valable transformerait un « je n'ai pas compris » en un chiffre faux.",
+        "unconstrainedNote": "Décodage sous grammaire indisponible sur ce modèle : ses réponses sont toujours vérifiées avant d'être exécutées, mais rien ne les empêche d'être malformées."
       },
       "thinking": "Calcul…",
       "honesty": {

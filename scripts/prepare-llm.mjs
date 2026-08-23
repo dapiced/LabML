@@ -6,7 +6,14 @@
  * weights are NOT committed: 355 MB of binaries would slow every clone and
  * every CI checkout, for a model only the opt-in chat engine downloads.
  *
- *   node scripts/prepare-llm.mjs <outDir>      # default: dist/llm
+ *   node scripts/prepare-llm.mjs <outDir>          # default: dist/llm
+ *   node scripts/prepare-llm.mjs <outDir> --flat  # unsharded, for the Node bench
+ *
+ * V30 — `--flat` writes the same pinned files without splitting them, which is
+ * what `npm run llm:bench:node` needs: onnxruntime-node reads the weights from
+ * disk directly and has no 25 MiB limit to work around. It is the same
+ * download, the same size checks, and the same revision as the deployed copy —
+ * so the bench measures the model production actually ships, not a lookalike.
  *
  * Every file is checked against the byte sizes pinned below. A mismatch is a
  * hard failure: shipping a truncated model would fail in the browser, later,
@@ -72,7 +79,9 @@ async function write(outDir, relative, bytes) {
 }
 
 async function main() {
-  const outDir = process.argv[2] ?? 'dist/llm';
+  const args = process.argv.slice(2).filter((a) => a !== '--flat');
+  const flat = process.argv.includes('--flat');
+  const outDir = args[0] ?? 'dist/llm';
   const root = join(outDir, REPO);
   const files = [];
   let totalBytes = 0;
@@ -80,7 +89,7 @@ async function main() {
   for (const path of [...Object.keys(FILES), 'LICENSE']) {
     const bytes = await download(path);
     totalBytes += bytes.byteLength;
-    if (bytes.byteLength <= SHARD_BYTES) {
+    if (flat || bytes.byteLength <= SHARD_BYTES) {
       await write(root, path, bytes);
       console.log(`  entier  ${path} (${(bytes.byteLength / 1e6).toFixed(1)} Mo)`);
       continue;
@@ -102,6 +111,14 @@ async function main() {
   const manifest = { repo: REPO, revision: REVISION, license: LICENSE, totalBytes, files };
   await write(outDir, 'manifest.json', JSON.stringify(manifest, null, 2));
   console.log(`\nmanifeste écrit — ${(totalBytes / 1e6).toFixed(0)} Mo au total`);
+
+  // The 25 MiB guard below is about Cloudflare Pages. A flat copy never goes
+  // there — it is read from local disk by the bench — so the guard would fail
+  // on a layout that is correct for its purpose.
+  if (flat) {
+    console.log('copie à plat (banc Node) — garde des 25 Mio sans objet ✓');
+    return;
+  }
 
   // A last guard: nothing we just wrote may exceed the platform limit.
   const oversized = [];

@@ -31,7 +31,7 @@ export type ChatWorkerResponse =
   | { kind: 'unknown'; by: 'none' | 'none-both' }
   | { kind: 'llm-capability'; available: boolean; webgpu: boolean; totalBytes: number }
   | { kind: 'llm-progress'; loaded: number; total: number }
-  | { kind: 'llm-ready' }
+  | { kind: 'llm-ready'; constrained: boolean }
   /** Named refusal: 'no-manifest' | 'no-webgpu' | anything the loader threw. */
   | { kind: 'llm-failed'; reason: string }
   | { kind: 'error'; message: string };
@@ -72,21 +72,21 @@ function resetState() {
   columnInfo = [];
 }
 
+/** Enough to tell a 0/1 flag from a quantity; counting further changes nothing. */
+const DISTINCT_CAP = 12;
+
 function buildColumnInfo(): ColumnInfo[] {
   return header.map((name, i) => {
     const type = inferColumnType(name, columns[i]);
     const isNumeric = type === 'numeric' || type === 'id';
-    let values: string[] = [];
-    if (!isNumeric) {
-      const distinct = new Set<string>();
-      for (const cell of columns[i]) {
-        if (isMissing(cell)) continue;
-        distinct.add((cell as string).trim());
-        if (distinct.size > MAX_VALUES) break;
-      }
-      if (distinct.size <= MAX_VALUES) values = [...distinct].sort();
+    const distinct = new Set<string>();
+    for (const cell of columns[i]) {
+      if (isMissing(cell)) continue;
+      distinct.add((cell as string).trim());
+      if (distinct.size > Math.max(MAX_VALUES, DISTINCT_CAP)) break;
     }
-    return { name, isNumeric, values };
+    const values = !isNumeric && distinct.size <= MAX_VALUES ? [...distinct].sort() : [];
+    return { name, isNumeric, values, distinct: distinct.size };
   });
 }
 
@@ -173,7 +173,7 @@ self.onmessage = async (event: MessageEvent<ChatWorkerRequest>) => {
         model = await loadModel(capability.manifest, {
           onProgress: ({ loaded, total }) => post({ kind: 'llm-progress', loaded, total }),
         });
-        post({ kind: 'llm-ready' });
+        post({ kind: 'llm-ready', constrained: model.constrained });
       } catch (error) {
         model = null;
         post({
