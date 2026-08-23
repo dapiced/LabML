@@ -27,6 +27,16 @@ export interface TrainerCallbacks {
   isCancelled(): boolean;
 }
 
+/**
+ * V37: a family already trained elsewhere (a helper worker), handed back as a
+ * rebuilt predictor plus its measured scores. The sequential loop then skips
+ * that family instead of fitting it twice.
+ */
+export interface PretrainedFamily {
+  model: TrainedModel;
+  result: ModelResult;
+}
+
 /** Everything kept in worker memory after a run, for insights and what-if. */
 export interface TrainArtifacts {
   models: Map<ModelKey, TrainedModel>;
@@ -103,6 +113,26 @@ export interface PreparedData {
  * Everything up to the split, shared by training and hyperparameter search so
  * both see the exact same rows (the search never touches the test indices).
  */
+/**
+ * V37: classification or regression, resolved without preparing the data. The
+ * parallel planner needs the answer before any split happens, and it must not
+ * be the code that fails first: this returns null where `prepareData` throws a
+ * named error, so an unusable target is still reported by the trainer that has
+ * always reported it.
+ */
+export function detectTaskType(
+  columns: Map<string, Cell[]>,
+  profiles: ColumnProfile[],
+  config: TrainConfig,
+): 'classification' | 'regression' | null {
+  const targetProfile = profiles.find((p) => p.name === config.target);
+  const targetValues = columns.get(config.target);
+  if (!targetProfile || !targetValues) return null;
+  const task = detectTask(targetProfile, targetValues);
+  if (!task) return null;
+  return task.type === 'regression' ? 'regression' : 'classification';
+}
+
 export function prepareData(
   columns: Map<string, Cell[]>,
   profiles: ColumnProfile[],
@@ -309,7 +339,11 @@ export function scoreModel(
   isClassification: boolean,
   classCount: number,
 ): { metrics: MetricMap; primary: number } {
-  const predictions = model.predict(X);
+  // V37: one pass where the family offers one — for k-NN, labels and
+  // probabilities are the same neighbour search, and asking twice doubled the
+  // single largest cost in the app. The numbers are identical either way.
+  const both = model.predictWithProba?.(X) ?? null;
+  const predictions = both?.labels ?? model.predict(X);
   const metrics: MetricMap = {};
   let primary: number;
   if (isClassification) {
@@ -319,7 +353,7 @@ export function scoreModel(
     metrics.recall = prf.recall;
     metrics.f1 = prf.f1;
     if (model.predictProba) {
-      const probabilities = model.predictProba(X);
+      const probabilities = both?.proba ?? model.predictProba(X);
       metrics.logLoss = logLoss(y, probabilities);
       if (classCount === 2) {
         const auc = rocAuc(
@@ -362,6 +396,8 @@ export async function runTraining(
   profiles: ColumnProfile[],
   config: TrainConfig,
   callbacks: TrainerCallbacks,
+  /** V37: families already fitted in parallel — skipped by the loop below. */
+  pretrained?: Map<ModelKey, PretrainedFamily>,
 ): Promise<TrainOutcome | null> {
   const startedAt = performance.now();
   const prepared = prepareData(columns, profiles, config);
@@ -432,6 +468,26 @@ export async function runTraining(
     callbacks.onModelStart(def.key, index, zoo.length);
     await yieldToQueue();
     if (callbacks.isCancelled()) return null;
+
+    // V37: a helper already fitted this one — reuse it rather than refit.
+    const ready = pretrained?.get(def.key);
+    if (ready !== undefined) {
+      models.set(def.key, ready.model);
+      // Latency is the one number a helper cannot report: its timing would
+      // describe another core under contention. Measure it here, on the
+      // rebuilt predictor, exactly as the sequential path does — otherwise the
+      // column would silently read 0 ms for every parallel family.
+      const latency = measureLatency(ready.model, testX);
+      const result: ModelResult = {
+        ...ready.result,
+        inferP50Ms: latency.p50,
+        inferP95Ms: latency.p95,
+      };
+      emitted.set(def.key, result);
+      callbacks.onModelResult(result);
+      await yieldToQueue();
+      continue;
+    }
 
     try {
       const cap = MODEL_TRAIN_CAPS[def.key];

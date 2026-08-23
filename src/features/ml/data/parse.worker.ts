@@ -6,6 +6,7 @@ import { analyzeTarget, baselineSuggestions } from '@/features/ml/data/suggest';
 import { computeInsights, computeWhatIf } from '@/features/ml/train/insights';
 import { runLearningCurve } from '@/features/ml/train/learning-curve';
 import { robustRank } from '@/features/ml/train/robust';
+import { trainInParallel } from '@/features/ml/train/parallel-run';
 import { runSearch } from '@/features/ml/train/search';
 import { runExploration } from '@/features/ml/unsupervised/explore';
 import { runForecast } from '@/features/ml/timeseries/run';
@@ -16,7 +17,7 @@ import { scoreBatch, scoreRows } from '@/features/ml/train/score';
 import { analyzeSegments } from '@/features/ml/train/segments';
 import { analyzeThresholds } from '@/features/ml/train/threshold-analysis';
 import { analyzeUncertainty, type ModelLosses } from '@/features/ml/train/uncertainty';
-import { runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
+import { detectTaskType, runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
 import type { Cell, ColumnProfile, ParseResultPayload } from '@/features/ml/data/types';
 import type { ModelKey } from '@/features/ml/train/types';
 import type { WorkerRequest, WorkerResponse } from '@/features/ml/worker-protocol';
@@ -264,15 +265,50 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       const profiles: ColumnProfile[] = header.map((column, i) =>
         profileColumn(column, columns[i]),
       );
-      const outcome = await runTraining(columnsAsMap(), profiles, request.config, {
-        onModelStart: (key, index, total) => post({ kind: 'model-start', key, index, total }),
-        onModelResult: (result) => post({ kind: 'model-result', result }),
-        isCancelled: () => cancelTraining,
-      });
+      // V37: the heavy families first, on other cores. Best-effort — anything
+      // that does not come back is fitted by the sequential loop below. An
+      // undetectable task skips the parallel phase entirely so that runTraining
+      // stays the code that raises the named error.
+      const taskType = detectTaskType(columnsAsMap(), profiles, request.config);
+      const parallel =
+        taskType === null
+          ? { pretrained: undefined, report: null }
+          : await trainInParallel(
+              header,
+              columns,
+              request.config,
+              taskType === 'classification',
+              () => undefined,
+              () => cancelTraining,
+            );
+
+      const outcome = await runTraining(
+        columnsAsMap(),
+        profiles,
+        request.config,
+        {
+          onModelStart: (key, index, total) => post({ kind: 'model-start', key, index, total }),
+          onModelResult: (result) => post({ kind: 'model-result', result }),
+          isCancelled: () => cancelTraining,
+        },
+        parallel.pretrained,
+      );
       if (outcome) {
         artifacts = outcome.artifacts;
         lastFeatureColumns = outcome.summary.featureColumns;
-        post({ kind: 'train-complete', summary: outcome.summary });
+        post({
+          kind: 'train-complete',
+          summary:
+            parallel.report === null
+              ? outcome.summary
+              : {
+                  ...outcome.summary,
+                  parallel: {
+                    helpers: parallel.report.helpers,
+                    families: parallel.report.families,
+                  },
+                },
+        });
       } else {
         post({ kind: 'train-cancelled' });
       }

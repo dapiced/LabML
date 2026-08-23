@@ -56,6 +56,30 @@ function argmaxRows(proba: (rows: number[][]) => number[][]) {
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/**
+ * V37: exported for the parallel trainer. A model cannot cross a worker
+ * boundary — `predict` is a closure, and structured clone drops functions —
+ * so a helper worker returns `toJSON()` as a JSON string and the main worker
+ * parses it and rebuilds the predictor here. Passing the object instead of the
+ * string does NOT work: structured clone keeps shapes JSON drops, and ml-cart's
+ * `load()` then rebuilds a tree that throws on its first prediction. Going
+ * through JSON is what makes a parallel run and an imported model the same
+ * object rather than merely similar ones.
+ */
+export function rebuildTrainedModel(
+  kind: string,
+  params: any,
+  isClassification: boolean,
+): TrainedModel {
+  // The rebuild path produces a predictor, not an exporter: nothing in
+  // `rebuildModel` defines `toJSON`, because an imported model has no reason
+  // to be re-exported. A family trained in a helper does — it is a normal row
+  // of a normal run, and the export button must still work on it. The
+  // parameters we were handed ARE what V22 writes to the file, so they go
+  // straight back out.
+  return { ...rebuildModel(kind, params, isClassification), toJSON: () => params };
+}
+
 function rebuildModel(kind: string, p: any, isClassification: boolean): TrainedModel {
   if (kind === 'baseline') {
     if (p.task === 'regression') return { predict: (X) => X.map(() => p.mean as number) };
