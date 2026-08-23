@@ -646,6 +646,17 @@
         "rmse": "RMSE",
         "mae": "MAE",
         "r2": "R²"
+      },
+      "read": {
+        "title": "Comment ce fichier a été lu",
+        "delimiter": "Délimiteur : {{delimiter}}",
+        "tab": "tabulation",
+        "encodingUtf8": "Encodage : UTF-8.",
+        "encodingFallback": "Encodage : windows-1252 — le décodage UTF-8 a échoué sur ces octets, c'est donc une certitude et non une préférence. Les accents seraient sinon arrivés en caractères de remplacement.",
+        "decimal_one": "Virgule décimale détectée et convertie dans {{count}} colonne : {{columns}}. Le chiffre entre parenthèses est le nombre de valeurs qui l'ont prouvé.",
+        "decimal_other": "Virgule décimale détectée et convertie dans {{count}} colonnes : {{columns}}. Le chiffre entre parenthèses est le nombre de valeurs qui l'ont prouvé.",
+        "grouped": "Les séparateurs de milliers ont également été retirés.",
+        "hint": "Une colonne n'est réécrite que si presque toutes ses valeurs sont des nombres dans ce format ET qu'elle ne serait sinon pas numérique du tout. Tout le reste est laissé exactement tel qu'écrit. Si cette lecture est fausse, rechargez le fichier — la détection se fait colonne par colonne, pas fichier par fichier."
       }
     }
   },

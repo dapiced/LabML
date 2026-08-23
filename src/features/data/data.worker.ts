@@ -12,6 +12,14 @@ import { buildDriftReport } from '@/features/data/quality/drift';
 import { joinDatasets } from '@/features/data/quality/join';
 import { DEFAULT_RECIPE } from '@/features/data/quality/types';
 import type { Cell } from '@/features/ml/data/types';
+import {
+  applyDecimalFormats,
+  buildReadFormat,
+  papaConfig,
+  sniffFile,
+  sniffText,
+} from '@/features/ml/data/read';
+import type { ReadFormat } from '@/features/ml/data/locale';
 import type { DataWorkerRequest, DataWorkerResponse } from '@/features/data/data-protocol';
 
 const PREVIEW_ROWS = 8;
@@ -98,8 +106,12 @@ function resetCompare() {
   compareColumns = [];
   compareRowCount = 0;
   joinPending = false;
+  readFormat = null;
   joinName = '';
 }
+
+/** V38: how the current file was actually read — announced, never assumed. */
+let readFormat: ReadFormat | null = null;
 
 function mainPayload() {
   return {
@@ -109,10 +121,11 @@ function mainPayload() {
     columnTypes: Object.fromEntries(
       header.map((name, i) => [name, inferColumnType(name, columns[i])]),
     ),
+    ...(readFormat !== null && { readFormat }),
   };
 }
 
-function finishParse(name: string, bytes: number) {
+function finishParse(name: string, bytes: number, sniffed?: Sniffed) {
   if (target === 'compare') {
     if (compareHeader.length === 0 || compareRowCount === 0) {
       post({ kind: 'error', message: 'empty' });
@@ -143,37 +156,50 @@ function finishParse(name: string, bytes: number) {
   }
   sourceName = name;
   sourceBytes = bytes;
+  // V38: whole columns, after ingestion — the same reader the ML Lab uses, so
+  // a file read one way in the Studio is read the same way in the Lab.
+  if (sniffed !== undefined) {
+    readFormat = buildReadFormat(sniffed, applyDecimalFormats(header, columns));
+  }
   cleanedHeader = header;
   cleanedColumns = columns;
   post({ kind: 'parsed', payload: mainPayload() });
 }
 
+type Sniffed = Awaited<ReturnType<typeof sniffFile>>;
+
 function parseText(text: string, name: string, bytes: number) {
   resetState();
+  const sniffed = sniffText(text);
   Papa.parse<string[]>(text, {
-    skipEmptyLines: true,
+    ...papaConfig(sniffed.delimiter),
     complete: (results) => {
       ingestRows(results.data);
-      finishParse(name, bytes);
+      finishParse(name, bytes, sniffed);
     },
   });
 }
 
-function parseFile(file: File) {
+async function parseFile(file: File) {
   resetState();
+  const sniffed = await sniffFile(file);
   Papa.parse<string[]>(file, {
-    skipEmptyLines: true,
+    ...papaConfig(sniffed.delimiter, sniffed.encoding.encoding),
     chunk: (results) => ingestRows(results.data),
-    complete: () => finishParse(file.name, file.size),
+    complete: () => finishParse(file.name, file.size, sniffed),
     error: (error) => post({ kind: 'error', message: error.message }),
   });
 }
 
-function parseCompareFile(file: File) {
+async function parseCompareFile(file: File) {
+  // A drift or join file is read exactly like the main one: comparing a
+  // French export against a normalised dataset would report drift that is
+  // nothing but a decimal separator.
+  const sniffed = await sniffFile(file);
   Papa.parse<string[]>(file, {
-    skipEmptyLines: true,
+    ...papaConfig(sniffed.delimiter, sniffed.encoding.encoding),
     chunk: (results) => ingestRows(results.data),
-    complete: () => finishParse(file.name, file.size),
+    complete: () => finishParse(file.name, file.size, sniffed),
     error: (error) => post({ kind: 'error', message: error.message }),
   });
 }
@@ -186,11 +212,13 @@ async function parseCompareExcel(file: File) {
     post({ kind: 'error', message: 'empty' });
     return;
   }
-  Papa.parse<string[]>(XLSX.utils.sheet_to_csv(firstSheet), {
-    skipEmptyLines: true,
+  const csv = XLSX.utils.sheet_to_csv(firstSheet);
+  const sniffed = sniffText(csv);
+  Papa.parse<string[]>(csv, {
+    ...papaConfig(sniffed.delimiter),
     complete: (results) => {
       ingestRows(results.data);
-      finishParse(file.name, file.size);
+      finishParse(file.name, file.size, sniffed);
     },
   });
 }
@@ -222,7 +250,7 @@ self.onmessage = async (event: MessageEvent<DataWorkerRequest>) => {
     if (request.kind === 'parse-file') {
       resetCompare();
       if (/\.(xlsx|xls)$/i.test(request.file.name)) await parseExcel(request.file);
-      else parseFile(request.file);
+      else await parseFile(request.file);
     } else if (request.kind === 'parse-compare-file') {
       if (header.length === 0) throw new Error('no-data');
       target = 'compare';
@@ -231,7 +259,7 @@ self.onmessage = async (event: MessageEvent<DataWorkerRequest>) => {
       compareRowCount = 0;
       joinPending = false;
       if (/\.(xlsx|xls)$/i.test(request.file.name)) await parseCompareExcel(request.file);
-      else parseCompareFile(request.file);
+      else await parseCompareFile(request.file);
     } else if (request.kind === 'parse-compare-url') {
       if (header.length === 0) throw new Error('no-data');
       target = 'compare';
@@ -242,11 +270,12 @@ self.onmessage = async (event: MessageEvent<DataWorkerRequest>) => {
       const response = await fetch(request.url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const text = await response.text();
+      const sniffed = sniffText(text);
       Papa.parse<string[]>(text, {
-        skipEmptyLines: true,
+        ...papaConfig(sniffed.delimiter),
         complete: (results) => {
           ingestRows(results.data);
-          finishParse(request.name, text.length);
+          finishParse(request.name, text.length, sniffed);
         },
       });
     } else if (request.kind === 'parse-join-file') {
@@ -257,7 +286,7 @@ self.onmessage = async (event: MessageEvent<DataWorkerRequest>) => {
       compareRowCount = 0;
       joinPending = true;
       if (/\.(xlsx|xls)$/i.test(request.file.name)) await parseCompareExcel(request.file);
-      else parseCompareFile(request.file);
+      else await parseCompareFile(request.file);
     } else if (request.kind === 'parse-join-url') {
       if (header.length === 0) throw new Error('no-data');
       target = 'compare';
@@ -268,11 +297,12 @@ self.onmessage = async (event: MessageEvent<DataWorkerRequest>) => {
       const response = await fetch(request.url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const text = await response.text();
+      const sniffed = sniffText(text);
       Papa.parse<string[]>(text, {
-        skipEmptyLines: true,
+        ...papaConfig(sniffed.delimiter),
         complete: (results) => {
           ingestRows(results.data);
-          finishParse(request.name, text.length);
+          finishParse(request.name, text.length, sniffed);
         },
       });
     } else if (request.kind === 'apply-join') {
