@@ -3,7 +3,14 @@ import { inferColumnType, isMissing, parseNumber } from '@/features/ml/data/infe
 import { parseDate } from '@/features/ml/timeseries/series';
 import { duplicateRowIndices, messyGroups, outlierFences } from '@/features/data/quality/checks';
 import type { Cell } from '@/features/ml/data/types';
-import type { CleanStats, ForcedType, RecipeOptions } from '@/features/data/quality/types';
+import {
+  MISSING_CATEGORY,
+  type CleanStats,
+  type ColumnStep,
+  type ForcedType,
+  type MissingStrategy,
+  type RecipeOptions,
+} from '@/features/data/quality/types';
 
 /** Same threshold as the quality report. */
 const NEAR_EMPTY_RATIO = 0.95;
@@ -27,6 +34,20 @@ function medianOf(values: Cell[]): number | null {
   return numbers.length % 2 === 1 ? numbers[mid] : (numbers[mid - 1] + numbers[mid]) / 2;
 }
 
+function meanOf(values: Cell[]): number | null {
+  let sum = 0;
+  let count = 0;
+  for (const value of values) {
+    if (isMissing(value)) continue;
+    const parsed = parseNumber(value as string);
+    if (parsed !== null) {
+      sum += parsed;
+      count += 1;
+    }
+  }
+  return count === 0 ? null : sum / count;
+}
+
 function modeOf(values: Cell[]): string | null {
   const counts = new Map<string, number>();
   for (const value of values) {
@@ -43,6 +64,61 @@ function modeOf(values: Cell[]): string | null {
     }
   }
   return best;
+}
+
+/**
+ * V39: the strategy that actually applies to one column — its own override if
+ * it has one, otherwise the file-wide default translated into the per-column
+ * vocabulary. `impute` was never a strategy, only an instruction to pick one;
+ * it becomes the median on a numeric column and the mode everywhere else,
+ * which is exactly what the global path did before V39.
+ */
+export function strategyFor(
+  step: ColumnStep | undefined,
+  globalMissing: RecipeOptions['missing'],
+  type: string,
+): MissingStrategy {
+  if (step?.missing !== undefined) return step.missing;
+  if (globalMissing === 'keep') return 'keep';
+  if (globalMissing === 'dropRows') return 'dropRows';
+  return type === 'numeric' ? 'median' : 'mode';
+}
+
+/** V39: the name of the indicator column added beside `column`. */
+export function indicatorName(column: string): string {
+  return `${column}_absent`;
+}
+
+/**
+ * V39: the single value one strategy fills a column's blanks with, or null
+ * when the column cannot support it — a median over a column holding no
+ * parseable number returns nothing, and returning nothing is the honest
+ * answer. `constant` is used verbatim, including an empty string, because the
+ * user typed it on purpose.
+ */
+function fillValueFor(
+  strategy: MissingStrategy,
+  step: ColumnStep | undefined,
+  column: Cell[],
+): string | null {
+  switch (strategy) {
+    case 'median': {
+      const median = medianOf(column);
+      return median === null ? null : formatNumber(median);
+    }
+    case 'mean': {
+      const mean = meanOf(column);
+      return mean === null ? null : formatNumber(mean);
+    }
+    case 'mode':
+      return modeOf(column);
+    case 'constant':
+      return step?.constant ?? null;
+    case 'category':
+      return MISSING_CATEGORY;
+    default:
+      return null;
+  }
 }
 
 function dropRows(columns: Cell[][], toDrop: Set<number>): Cell[][] {
@@ -73,6 +149,9 @@ export function applyRecipe(
     droppedDuplicateRows: 0,
     droppedColumns: [],
     imputedCells: 0,
+    indicatorColumns: [],
+    imputedWithoutIndicator: [],
+    droppedByColumn: {},
     droppedMissingRows: 0,
     clippedCells: 0,
     derivedColumns: [],
@@ -171,47 +250,115 @@ export function applyRecipe(
     if (duplicates.size > 0) columns = dropRows(columns, duplicates);
   }
 
-  if (options.missing === 'dropRows' && columns.length > 0) {
-    const toDrop = new Set<number>();
-    for (let r = 0; r < columns[0].length; r++) {
-      if (columns.some((column) => isMissing(column[r]))) toDrop.add(r);
-    }
-    stats.droppedMissingRows = toDrop.size;
-    if (toDrop.size > 0) columns = dropRows(columns, toDrop);
-  } else if (options.missing === 'impute') {
+  // V39: missing values, column by column. Two passes, and the order between
+  // them is the whole point: every indicator is written BEFORE any blank is
+  // filled, so an indicator always records where the blanks really were —
+  // never where they were left after some other column's rule ran.
+  if (columns.length > 0) {
+    const indicators: { at: number; name: string; values: Cell[] }[] = [];
     for (let i = 0; i < outHeader.length; i++) {
+      const step = options.columns[outHeader[i]];
+      if (step?.indicator !== true) continue;
       const column = columns[i];
-      const type = typeOf(outHeader[i], column);
-      const median = type === 'numeric' ? medianOf(column) : null;
-      const replacement = median !== null ? formatNumber(median) : modeOf(column);
+      if (!column.some((value) => isMissing(value))) continue; // nothing to mark
+      indicators.push({
+        at: i,
+        name: indicatorName(outHeader[i]),
+        values: column.map((value) => (isMissing(value) ? '1' : '0')),
+      });
+    }
+
+    // Pass 2: rows to drop, gathered across every column that asked, then
+    // applied once — dropping per column in sequence would shift the indices
+    // the next column is about to use.
+    const toDrop = new Set<number>();
+    const dropSources: { column: string; rows: number[] }[] = [];
+    for (let i = 0; i < outHeader.length; i++) {
+      const name = outHeader[i];
+      const column = columns[i];
+      if (
+        strategyFor(options.columns[name], options.missing, typeOf(name, column)) !== 'dropRows'
+      ) {
+        continue;
+      }
+      const rows: number[] = [];
+      for (let r = 0; r < column.length; r++) {
+        if (isMissing(column[r])) {
+          rows.push(r);
+          toDrop.add(r);
+        }
+      }
+      if (rows.length > 0) dropSources.push({ column: name, rows });
+    }
+
+    // Pass 3: fill what stays. Computed on the pre-drop column, which is the
+    // same set of values the report described.
+    for (let i = 0; i < outHeader.length; i++) {
+      const name = outHeader[i];
+      const column = columns[i];
+      const type = typeOf(name, column);
+      const step = options.columns[name];
+      const strategy = strategyFor(step, options.missing, type);
+      if (strategy === 'keep' || strategy === 'dropRows') continue;
+
+      const replacement = fillValueFor(strategy, step, column);
+      // A refusal by name rather than a silent no-op: a mean over a column
+      // with no parseable number has nothing to return, so the blanks stay
+      // blank and the column is not counted as imputed.
       if (replacement === null) continue;
+
+      let filled = 0;
       for (let r = 0; r < column.length; r++) {
         if (isMissing(column[r])) {
           column[r] = replacement;
-          stats.imputedCells += 1;
+          filled += 1;
         }
       }
+      if (filled === 0) continue;
+      stats.imputedCells += filled;
+      if (step?.indicator !== true) stats.imputedWithoutIndicator.push(name);
+    }
+
+    if (toDrop.size > 0) {
+      stats.droppedMissingRows = toDrop.size;
+      for (const source of dropSources) {
+        stats.droppedByColumn[source.column] = source.rows.length;
+      }
+      columns = dropRows(columns, toDrop);
+      for (const indicator of indicators) {
+        indicator.values = indicator.values.filter((_, index) => !toDrop.has(index));
+      }
+    }
+
+    // Indicators are spliced in right after the column they describe, walking
+    // from the right so the earlier insertion points stay valid.
+    for (const indicator of [...indicators].sort((a, b) => b.at - a.at)) {
+      outHeader.splice(indicator.at + 1, 0, indicator.name);
+      columns.splice(indicator.at + 1, 0, indicator.values);
+      stats.indicatorColumns.unshift(indicator.name);
     }
   }
 
-  if (options.clipOutliers) {
-    for (let i = 0; i < outHeader.length; i++) {
-      const column = columns[i];
-      if (typeOf(outHeader[i], column) !== 'numeric') continue;
-      const fences = outlierFences(column);
-      if (!fences) continue;
-      for (let r = 0; r < column.length; r++) {
-        const raw = column[r];
-        if (raw === null || isMissing(raw)) continue;
-        const parsed = parseNumber(raw);
-        if (parsed === null) continue;
-        if (parsed < fences.low) {
-          column[r] = formatNumber(fences.low);
-          stats.clippedCells += 1;
-        } else if (parsed > fences.high) {
-          column[r] = formatNumber(fences.high);
-          stats.clippedCells += 1;
-        }
+  // V39: clipping is a per-column decision too — the global flag is the
+  // default, and a column may opt in or out of it on its own.
+  for (let i = 0; i < outHeader.length; i++) {
+    const column = columns[i];
+    const clip = options.columns[outHeader[i]]?.clipOutliers ?? options.clipOutliers;
+    if (!clip) continue;
+    if (typeOf(outHeader[i], column) !== 'numeric') continue;
+    const fences = outlierFences(column);
+    if (!fences) continue;
+    for (let r = 0; r < column.length; r++) {
+      const raw = column[r];
+      if (raw === null || isMissing(raw)) continue;
+      const parsed = parseNumber(raw);
+      if (parsed === null) continue;
+      if (parsed < fences.low) {
+        column[r] = formatNumber(fences.low);
+        stats.clippedCells += 1;
+      } else if (parsed > fences.high) {
+        column[r] = formatNumber(fences.high);
+        stats.clippedCells += 1;
       }
     }
   }

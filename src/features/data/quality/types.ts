@@ -58,6 +58,51 @@ export interface QualityReport {
 /** Forceable column types — they steer the cleaning, not the "before" report. */
 export type ForcedType = 'numeric' | 'categorical' | 'text' | 'date';
 
+/**
+ * V39: what to do with the blanks in ONE column.
+ *
+ * `keep` and `dropRows` were the only whole-file choices before; the rest are
+ * new, and they exist because a single global strategy is the kind of default
+ * that looks tidy and quietly makes the data worse — a median is right for an
+ * age and meaningless for a postcode.
+ */
+export type MissingStrategy =
+  | 'keep'
+  /** Drop every row where THIS column is blank. */
+  | 'dropRows'
+  | 'median'
+  | 'mean'
+  /** The most frequent value — the only sensible fill for a category. */
+  | 'mode'
+  /** A value the user typed, used verbatim. */
+  | 'constant'
+  /** A « MANQUANT » level: absence becomes a category of its own. */
+  | 'category';
+
+/** V39: the label `category` fills in with — a level, not a guess. */
+export const MISSING_CATEGORY = 'MANQUANT';
+
+/**
+ * V39: one column's overrides. Every field is optional: an absent field means
+ * « follow the global setting », so the file-wide options become defaults
+ * rather than commands, and an untouched column behaves exactly as before.
+ */
+export interface ColumnStep {
+  /** Overrides `missing` for this column. */
+  missing?: MissingStrategy;
+  /** The value used when `missing` is `constant`. */
+  constant?: string;
+  /**
+   * Add a `<column>_absent` column recording where the blanks were, BEFORE
+   * filling them. Imputing without marking destroys information: a blank
+   * field is rarely blank at random, and the fact of the blank is frequently
+   * predictive in its own right.
+   */
+  indicator?: boolean;
+  /** Overrides `clipOutliers` for this column. */
+  clipOutliers?: boolean;
+}
+
 export interface RecipeOptions {
   /** Trim leading/trailing whitespace in every cell. */
   trimWhitespace: boolean;
@@ -76,6 +121,12 @@ export interface RecipeOptions {
   dropAnomalies: boolean;
   /** Per-column type overrides; absent columns keep their inferred type. */
   types: Record<string, ForcedType>;
+  /**
+   * V39: per-column steps. The global settings above are the defaults a column
+   * may override; a column with no entry here is treated exactly as it was
+   * before V39, which is what keeps every previously exported recipe valid.
+   */
+  columns: Record<string, ColumnStep>;
 }
 
 export interface CleanStats {
@@ -87,6 +138,16 @@ export interface CleanStats {
   droppedMissingRows: number;
   clippedCells: number;
   derivedColumns: string[];
+  /** V39: `<column>_absent` columns added, in the order they were added. */
+  indicatorColumns: string[];
+  /**
+   * V39: columns that were imputed WITHOUT an indicator. Not an error — just
+   * the thing the UI must say out loud, because filling a blank silently
+   * erases the fact that it was blank.
+   */
+  imputedWithoutIndicator: string[];
+  /** V39: how many rows each per-column `dropRows` removed, by column. */
+  droppedByColumn: Record<string, number>;
   droppedAnomalyRows: number;
   /** Shape after cleaning. */
   rowCount: number;
@@ -103,9 +164,19 @@ export const DEFAULT_RECIPE: RecipeOptions = {
   deriveDates: false,
   dropAnomalies: false,
   types: {},
+  columns: {},
 };
 
 const FORCED_TYPES: ForcedType[] = ['numeric', 'categorical', 'text', 'date'];
+const MISSING_STRATEGIES: MissingStrategy[] = [
+  'keep',
+  'dropRows',
+  'median',
+  'mean',
+  'mode',
+  'constant',
+  'category',
+];
 const MISSING_MODES = ['keep', 'impute', 'dropRows'] as const;
 const BOOLEAN_KEYS = [
   'trimWhitespace',
@@ -137,7 +208,7 @@ export function parseRecipeFile(
   if (typeof record.options !== 'object' || record.options === null) return null;
   const raw = record.options as Record<string, unknown>;
 
-  const options: RecipeOptions = { ...DEFAULT_RECIPE, types: {} };
+  const options: RecipeOptions = { ...DEFAULT_RECIPE, types: {}, columns: {} };
   const flags = options as Record<(typeof BOOLEAN_KEYS)[number], boolean>;
   for (const key of BOOLEAN_KEYS) {
     if (typeof raw[key] === 'boolean') flags[key] = raw[key];
@@ -148,6 +219,26 @@ export function parseRecipeFile(
   if (typeof raw.types === 'object' && raw.types !== null) {
     for (const [column, type] of Object.entries(raw.types as Record<string, unknown>)) {
       if (FORCED_TYPES.includes(type as ForcedType)) options.types[column] = type as ForcedType;
+    }
+  }
+  // V39: per-column steps. Same contract as everything above — a step whose
+  // strategy this version does not know is skipped rather than guessed at, and
+  // a recipe exported before V39 simply has no `columns` key and replays as it
+  // always did.
+  if (typeof raw.columns === 'object' && raw.columns !== null) {
+    for (const [column, value] of Object.entries(raw.columns as Record<string, unknown>)) {
+      if (typeof value !== 'object' || value === null) continue;
+      const entry = value as Record<string, unknown>;
+      const step: ColumnStep = {};
+      if (MISSING_STRATEGIES.includes(entry.missing as MissingStrategy)) {
+        step.missing = entry.missing as MissingStrategy;
+      }
+      if (typeof entry.constant === 'string') step.constant = entry.constant;
+      if (typeof entry.indicator === 'boolean') step.indicator = entry.indicator;
+      if (typeof entry.clipOutliers === 'boolean') step.clipOutliers = entry.clipOutliers;
+      // A step that survived nothing is not a step: keeping it would put an
+      // empty override in the recipe and make the list of decisions lie.
+      if (Object.keys(step).length > 0) options.columns[column] = step;
     }
   }
   return {

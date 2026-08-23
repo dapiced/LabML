@@ -774,7 +774,25 @@
         "columnsList_one": "{{count, number}} colonne supprimée : {{columns}}",
         "columnsList_other": "{{count, number}} colonnes supprimées : {{columns}}"
       },
-      "result": "Après nettoyage : {{rows}} lignes · {{columns}} colonnes."
+      "result": "Après nettoyage : {{rows}} lignes · {{columns}} colonnes.",
+      "columnsTitle": "Étapes par colonne",
+      "columnsHint": "Les réglages ci-dessus sont les défauts. Une colonne peut les surcharger — une médiane a du sens pour un âge et aucun pour un code postal.",
+      "strategyFor": "Stratégie pour les valeurs manquantes de {{column}}",
+      "strategyAuto": "défaut ({{strategy}})",
+      "constantFor": "Valeur de remplissage pour {{column}}",
+      "constantPlaceholder": "valeur",
+      "indicator": "marquer dans {{column}}",
+      "strategy": {
+        "keep": "laisser vide",
+        "dropRows": "supprimer ces lignes",
+        "median": "médiane",
+        "mean": "moyenne",
+        "mode": "valeur la plus fréquente",
+        "constant": "une constante",
+        "category": "une catégorie « MANQUANT »"
+      },
+      "unmarked_one": "{{count}} colonne a été remplie sans marquer où étaient les vides : {{columns}}. Un champ vide l'est rarement au hasard — le fait même du vide est souvent prédictif, et le remplir en silence efface cette information.",
+      "unmarked_other": "{{count}} colonnes ont été remplies sans marquer où étaient les vides : {{columns}}. Un champ vide l'est rarement au hasard — le fait même du vide est souvent prédictif, et le remplir en silence efface cette information."
     },
     "preview": {
       "title": "Aperçu",
