@@ -63,6 +63,11 @@ The project follows three non-negotiable principles:
 - **Replayable cleaning recipe** — trim, merge variants, deduplicate, impute, clamp
   outliers, force column types, expand dates — exportable as JSON and re-runnable on new
   files, with a seeded **isolation-forest anomaly step** for multivariate outliers.
+- **Per-column steps**: the file-wide settings are defaults a column may override —
+  median, mean, most-frequent, a constant, or a « MANQUANT » category. Every imputed
+  column can add a `<column>_absent` **missing indicator**, written before anything is
+  filled; columns filled _without_ one are named out loud, because a blank field is
+  rarely blank at random and filling it silently erases that.
 - **Left-join a second file** on a shared key: match rate, duplicates and orphans are
   named, never silent; the joined result becomes the working dataset.
 - **Drift check**: compare a new batch against the reference — schema diff, PSI per
@@ -119,7 +124,7 @@ The project follows three non-negotiable principles:
 - **Performance.** Every section serves a prerendered static shell (hero paints before
   JavaScript); Lighthouse mobile ≈ 0.99 on `/ml` under real throttling. Heavy
   dependencies (Dexie, SheetJS, ONNX Runtime) load lazily.
-- **Quality bar.** 446 unit tests, 73 Playwright end-to-end tests (including offline PWA,
+- **Quality bar.** 461 unit tests, 75 Playwright end-to-end tests (including offline PWA,
   fake-webcam and axe-core WCAG A/AA accessibility checks), strict TypeScript, ESLint,
   Prettier, and Lighthouse budgets — all enforced in CI.
 

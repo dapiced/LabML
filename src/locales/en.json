@@ -774,7 +774,25 @@
         "columnsList_one": "{{count, number}} column removed: {{columns}}",
         "columnsList_other": "{{count, number}} columns removed: {{columns}}"
       },
-      "result": "After cleaning: {{rows}} rows · {{columns}} columns."
+      "result": "After cleaning: {{rows}} rows · {{columns}} columns.",
+      "columnsTitle": "Per-column steps",
+      "columnsHint": "The settings above are the defaults. A column may override them — a median makes sense for an age and none at all for a postcode.",
+      "strategyFor": "Missing-value strategy for {{column}}",
+      "strategyAuto": "default ({{strategy}})",
+      "constantFor": "Fill value for {{column}}",
+      "constantPlaceholder": "value",
+      "indicator": "mark in {{column}}",
+      "strategy": {
+        "keep": "leave blank",
+        "dropRows": "drop those rows",
+        "median": "median",
+        "mean": "mean",
+        "mode": "most frequent",
+        "constant": "a constant",
+        "category": "a « MANQUANT » category"
+      },
+      "unmarked_one": "{{count}} column was filled without marking where the blanks were: {{columns}}. A blank field is rarely blank at random — the fact of the blank is often predictive on its own, and filling it silently erases that.",
+      "unmarked_other": "{{count}} columns were filled without marking where the blanks were: {{columns}}. A blank field is rarely blank at random — the fact of the blank is often predictive on its own, and filling it silently erases that."
     },
     "preview": {
       "title": "Preview",
