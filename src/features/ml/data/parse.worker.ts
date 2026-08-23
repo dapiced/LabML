@@ -391,7 +391,10 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       });
     } else if (request.kind === 'threshold-analysis') {
       if (!artifacts) throw new Error('no-run');
-      post({ kind: 'threshold-result', payload: analyzeThresholds(artifacts, request.model) });
+      post({
+        kind: 'threshold-result',
+        payload: analyzeThresholds(artifacts, request.model, request.focusClass),
+      });
     } else if (request.kind === 'uncertainty-analysis') {
       if (!artifacts) throw new Error('no-run');
       const art = artifacts;

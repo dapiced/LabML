@@ -40,8 +40,13 @@ describe('runTraining — classification', () => {
     const outcome = await runTraining(columns, profiles, config, callbacks);
     expect(outcome).not.toBeNull();
     const summary = outcome!.summary;
-    expect(results).toHaveLength(8);
+    // V36: the eight zoo families, plus the ensemble built from the top three.
+    expect(results).toHaveLength(9);
     expect(results.every((r) => r.ok)).toBe(true);
+    const ensemble = results.find((r) => r.key === 'ensemble');
+    expect(ensemble).toBeDefined();
+    expect(summary.ensemble?.members).toHaveLength(3);
+    expect(summary.ensemble?.members).not.toContain('baseline');
 
     const baseline = results.find((r) => r.key === 'baseline')!;
     expect(baseline.metrics.accuracy).toBeCloseTo(0.5, 1);
@@ -54,7 +59,7 @@ describe('runTraining — classification', () => {
     // V24: free text is a feature now — it joins the pipeline as a TF-IDF block.
     expect(summary.featureColumns).toEqual(['f1', 'f2', 'note']);
     expect(summary.skippedColumns).toEqual([]);
-    expect(outcome!.artifacts.models.size).toBe(8);
+    expect(outcome!.artifacts.models.size).toBe(9); // zoo + ensemble
     expect(outcome!.artifacts.testY).toHaveLength(summary.testRows);
   });
 
@@ -85,7 +90,9 @@ describe('runTraining — regression', () => {
     const { results, callbacks } = collector();
     const outcome = await runTraining(columns, profiles, config, callbacks);
     expect(outcome!.summary.taskType).toBe('regression');
-    expect(results).toHaveLength(7);
+    // V36: seven regression families + the mean-of-top-three ensemble.
+    expect(results).toHaveLength(8);
+    expect(outcome!.summary.ensemble?.method).toBe('mean');
     expect(results.every((r) => r.ok)).toBe(true);
     const linear = results.find((r) => r.key === 'linear')!;
     expect(linear.metrics.r2!).toBeGreaterThan(0.99);

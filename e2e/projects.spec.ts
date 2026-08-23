@@ -35,7 +35,8 @@ test('runs are saved locally, survive a reload, and can be renamed and deleted',
   await history.getByRole('link', { name: 'my first run' }).click();
   await expect(page).toHaveURL(/\/ml\/run\/\d+$/);
   await expect(page.getByTestId('run-view')).toBeVisible();
-  await expect(page.getByTestId('leaderboard').locator('tbody tr')).toHaveCount(8);
+  // V36: eight zoo families + the ensemble built from the top three.
+  await expect(page.getByTestId('leaderboard').locator('tbody tr')).toHaveCount(9);
 
   // Delete from the history.
   await page.getByRole('link', { name: 'Back to the lab' }).click();
@@ -53,7 +54,8 @@ test('share link opens a data-free read-only view', async ({ page, context }) =>
 
   await page.goto(url);
   await expect(page.getByTestId('run-view')).toBeVisible();
-  await expect(page.getByTestId('leaderboard').locator('tbody tr')).toHaveCount(8);
+  // V36: eight zoo families + the ensemble built from the top three.
+  await expect(page.getByTestId('leaderboard').locator('tbody tr')).toHaveCount(9);
   await expect(page.getByText('never the original data', { exact: false })).toBeVisible();
 });
 

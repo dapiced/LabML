@@ -1,9 +1,16 @@
 import { AlertTriangle, Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
-import { championGap, rankingValue, sortResults } from '@/features/ml/train/ranking';
+import {
+  championGap,
+  defaultMetric,
+  METRIC_DIRECTION,
+  rankableMetrics,
+  rankingValue,
+  sortResults,
+} from '@/features/ml/train/ranking';
 import type { TaskType } from '@/features/ml/data/types';
-import type { ModelResult, TrainSummary } from '@/features/ml/train/types';
+import type { ModelResult, RankingMetric, TrainSummary } from '@/features/ml/train/types';
 import { cn } from '@/lib/utils';
 
 function formatMetric(value: number | undefined, digits = 3): string {
@@ -21,6 +28,9 @@ interface LeaderboardTableProps {
   taskType: TaskType;
   inspectedModel?: ModelResult['key'] | null;
   onSelectModel?: (model: ModelResult['key']) => void;
+  /** V36: the metric the table ranks on. Undefined = the task's default. */
+  rankMetric?: RankingMetric | null;
+  onRankMetric?: (metric: RankingMetric | null) => void;
 }
 
 /**
@@ -41,17 +51,22 @@ export function LeaderboardTable({
   taskType,
   inspectedModel,
   onSelectModel,
+  rankMetric,
+  onRankMetric,
 }: LeaderboardTableProps) {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'en';
   const isClassification = taskType !== 'regression';
   const failed = results.filter((r) => !r.ok);
-  const sorted = sortResults(results, taskType);
+  // V36: rank on the chosen metric — accuracy is the wrong criterion on an
+  // imbalanced target, and the order genuinely changes with the choice.
+  const metric = rankMetric ?? undefined;
+  const sorted = sortResults(results, taskType, metric);
   const baseline = sorted.find((r) => r.key === 'baseline');
   const bestKey = sorted[0]?.key;
   const hasValidation = sorted.some((r) => r.valPrimary !== undefined);
-  const champion = championGap(results, taskType);
-  const maxPrimary = Math.max(...sorted.map((r) => rankingValue(r)), 1e-9);
+  const champion = championGap(results, taskType, metric);
+  const maxPrimary = Math.max(...sorted.map((r) => Math.abs(rankingValue(r, metric))), 1e-9);
   const leakWarnings = summary?.leakWarnings ?? [];
 
   const metricsOf = (result: ModelResult) =>
@@ -70,22 +85,55 @@ export function LeaderboardTable({
 
   function delta(result: ModelResult): string {
     if (!baseline || result.key === 'baseline') return '—';
-    const value = isClassification
-      ? rankingValue(result) - rankingValue(baseline)
-      : rankingValue(baseline) - rankingValue(result);
+    // The delta follows the METRIC's direction, not the task's — ranking on
+    // RMSE and on R² point opposite ways within the same regression run.
+    const higherWins =
+      metric === undefined ? isClassification : METRIC_DIRECTION[metric] === 'higher';
+    const value = higherWins
+      ? rankingValue(result, metric) - rankingValue(baseline, metric)
+      : rankingValue(baseline, metric) - rankingValue(result, metric);
     const sign = value > 0 ? '+' : '';
     return `${sign}${value.toFixed(3)}`;
   }
 
-  const primaryHeader = isClassification
-    ? t(hasValidation ? 'ml.lab.leaderboard.accuracyVal' : 'ml.lab.leaderboard.accuracy')
-    : t(hasValidation ? 'ml.lab.leaderboard.rmseVal' : 'ml.lab.leaderboard.rmse');
+  const activeMetric = metric ?? defaultMetric(taskType);
+  const metricLabel = t(`ml.lab.metricNames.${activeMetric}`);
+  const primaryHeader = hasValidation ? `${metricLabel} (val)` : metricLabel;
 
   return (
     <div
       data-testid="leaderboard"
       className="overflow-x-auto rounded-2xl border border-line bg-surface"
     >
+      {onRankMetric && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2 text-xs">
+          <label className="flex items-center gap-2">
+            {t('ml.lab.leaderboard.rankBy')}
+            <select
+              data-testid="rank-metric"
+              className="rounded-lg border border-line bg-surface px-2 py-1 text-xs"
+              value={activeMetric}
+              onChange={(event) => {
+                const chosen = event.target.value as RankingMetric;
+                onRankMetric(chosen === defaultMetric(taskType) ? null : chosen);
+              }}
+            >
+              {rankableMetrics(taskType).map((option) => (
+                <option key={option} value={option}>
+                  {t(`ml.lab.metricNames.${option}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+          {summary?.imbalanced && (
+            <span className="text-muted" data-testid="imbalance-hint">
+              {t('ml.lab.leaderboard.imbalanceHint', {
+                share: ((summary.majorityShare ?? 0) * 100).toFixed(0),
+              })}
+            </span>
+          )}
+        </div>
+      )}
       {leakWarnings.length > 0 && (
         <div
           data-testid="leak-warning"
@@ -281,6 +329,36 @@ export function LeaderboardTable({
                 ).toLocaleString(lang),
                 from: summary.sampledFrom.toLocaleString(lang),
               })}
+            </>
+          )}
+          {summary.classWeighting !== undefined && (
+            <>
+              {' '}
+              ·{' '}
+              {t('ml.lab.leaderboard.weighting', {
+                loss: 'logistic, gbdt',
+                resample: 'tree, forest',
+              })}
+            </>
+          )}
+          {summary.ensemble !== undefined && (
+            <>
+              {' '}
+              ·{' '}
+              {t('ml.lab.leaderboard.ensembleNote', {
+                members: summary.ensemble.members
+                  .map((key) => t(`ml.lab.models.${key}`))
+                  .join(', '),
+              })}{' '}
+              (
+              {t(
+                summary.ensemble.method === 'vote'
+                  ? 'ml.lab.leaderboard.ensembleVote'
+                  : summary.ensemble.method === 'mean'
+                    ? 'ml.lab.leaderboard.ensembleMean'
+                    : 'ml.lab.leaderboard.ensembleProbability',
+              )}
+              )
             </>
           )}
           {summary.skippedColumns.length > 0 && (
