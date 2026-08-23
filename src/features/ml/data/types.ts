@@ -1,3 +1,4 @@
+import type { ReadFormat } from '@/features/ml/data/locale';
 /** Raw cell as read from the file; null = missing. */
 export type Cell = string | null;
 
@@ -68,6 +69,12 @@ export interface ParseResultPayload {
   preview: Record<string, string>[];
   /** Columns suggested for exclusion independently of the target. */
   suggestions: ColumnSuggestion[];
+  /**
+   * V38: how the file was actually read — encoding, delimiter, and any column
+   * rewritten from the French decimal form, each with the count that proved
+   * it. Absent only for sources that never went through the reader.
+   */
+  readFormat?: ReadFormat;
 }
 
 // Worker request/response unions live in `@/features/ml/worker-protocol` — they
