@@ -46,6 +46,7 @@ export function DataDropZone() {
         <span className="max-w-md text-sm text-muted">{t('data.drop.hint')}</span>
       </button>
       <input
+        data-testid="data-file-input"
         ref={inputRef}
         type="file"
         accept=".csv,.tsv,.txt,.xlsx,.xls,text/csv"

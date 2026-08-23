@@ -135,9 +135,13 @@ export function applyRecipe(
   header: string[],
   source: Cell[][],
   options: RecipeOptions,
-): { header: string[]; columns: Cell[][]; stats: CleanStats } {
+): { header: string[]; columns: Cell[][]; stats: CleanStats; survivingRows: number[] } {
   let outHeader = [...header];
   let columns = source.map((column) => [...column]);
+  // V40: the index in `source` that each current row came from. Every step
+  // that drops rows filters this alongside the data, so the diff can attribute
+  // a change to the row it actually came from.
+  let surviving = Array.from({ length: source[0]?.length ?? 0 }, (_, index) => index);
   // Forced types steer every type-sensitive step; inference is the fallback.
   const typeOf = (name: string, values: Cell[]) => {
     const overrides = options.types as Partial<Record<string, ForcedType>> | undefined;
@@ -247,7 +251,10 @@ export function applyRecipe(
   if (options.dropDuplicates && columns.length > 0) {
     const duplicates = new Set(duplicateRowIndices(columns, columns[0].length));
     stats.droppedDuplicateRows = duplicates.size;
-    if (duplicates.size > 0) columns = dropRows(columns, duplicates);
+    if (duplicates.size > 0) {
+      columns = dropRows(columns, duplicates);
+      surviving = surviving.filter((_, index) => !duplicates.has(index));
+    }
   }
 
   // V39: missing values, column by column. Two passes, and the order between
@@ -325,6 +332,7 @@ export function applyRecipe(
         stats.droppedByColumn[source.column] = source.rows.length;
       }
       columns = dropRows(columns, toDrop);
+      surviving = surviving.filter((_, index) => !toDrop.has(index));
       for (const indicator of indicators) {
         indicator.values = indicator.values.filter((_, index) => !toDrop.has(index));
       }
@@ -377,11 +385,15 @@ export function applyRecipe(
       }
       if (stats.droppedAnomalyRows > 0) {
         columns = columns.map((column) => keep.map((r) => column[r]));
+        surviving = keep.map((r) => surviving[r]);
       }
     }
   }
 
   stats.rowCount = columns[0]?.length ?? 0;
   stats.columnCount = outHeader.length;
-  return { header: outHeader, columns, stats };
+  // V40: which SOURCE row each surviving row came from. Without this the diff
+  // would pair row 7 with a different row 7 the moment anything was dropped,
+  // and report every subsequent row as changed.
+  return { header: outHeader, columns, stats, survivingRows: surviving };
 }
