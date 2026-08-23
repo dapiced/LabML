@@ -14,3 +14,6 @@ public/llm/
 
 # V30: the Node bench keeps a flat copy of the same pinned weights here.
 .llm-cache/
+
+# V31: scratch space for vision-bench image acquisition.
+.vision-bench/
