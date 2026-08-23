@@ -13,6 +13,7 @@ const KEEP_ALL: RecipeOptions = {
   dropAnomalies: false,
   deriveDates: false,
   types: {},
+  columns: {},
 };
 
 function dataset(): { header: string[]; columns: Cell[][] } {

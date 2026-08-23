@@ -16,7 +16,7 @@ export function DataPreview() {
   const headers = Object.keys(rows[0]);
 
   return (
-    <section className="flex flex-col gap-3 pb-12">
+    <section className="flex flex-col gap-3 pb-12" data-testid="data-preview">
       <div className="flex items-center gap-3">
         <h2 className="font-display text-2xl font-semibold">{t('data.preview.title')}</h2>
         <div className="flex gap-1" role="group" aria-label={t('data.preview.title')}>
