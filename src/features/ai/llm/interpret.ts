@@ -11,6 +11,7 @@
 import {
   createConstrainer,
   generateIntent,
+  DECODE_CONSTRAINED_BY_DEFAULT,
   type Constrainer,
   type InterpretResult,
   type LogitsModule,
@@ -109,10 +110,10 @@ export async function loadModel(
     device: 'webgpu',
   });
 
-  const constrain: Constrainer | null =
-    options.constrained === false
-      ? null
-      : createConstrainer(library as unknown as LogitsModule, generator.tokenizer);
+  const constrained = options.constrained ?? DECODE_CONSTRAINED_BY_DEFAULT;
+  const constrain: Constrainer | null = constrained
+    ? createConstrainer(library as unknown as LogitsModule, generator.tokenizer)
+    : null;
 
   return {
     constrained: constrain !== null,
