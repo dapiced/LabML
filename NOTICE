@@ -129,6 +129,54 @@ defaults. They are redistributed, so they are listed here.
     Used for:  an end-to-end assertion that detection finds one person and one
                face on a real photograph.
 
+    Directory: e2e/fixtures/vision/ — the V31 vision bench corpus.
+    Every file was downloaded from Wikimedia Commons, downscaled to 640 px,
+    and looked at before being kept: a corpus whose ground truth is a guess
+    measures the guess. Licences are CC0, public domain, or CC BY only —
+    never CC BY-SA, whose share-alike term would propagate into this MIT
+    repository. Machine-readable details, including each file's Commons page,
+    are in e2e/fixtures/vision/SOURCES.json.
+
+    airliner.jpg
+        Public domain · NASA
+        https://commons.wikimedia.org/wiki/File:Aero_Spacelines_Pregnant_Guppy_in_flight_(MSFC-9801783).jpg
+    cats_sofa.jpg
+        CC0 · Roc0ast3r
+        https://commons.wikimedia.org/wiki/File:Red_tabby_cat,_black_cat,_and_white_cat_sitting_on_a_chair.jpg
+    goldfish.jpg
+        CC0 · Jackson Kusack
+        https://commons.wikimedia.org/wiki/File:Carassius_auratus_197778318.jpg
+    group_people.jpg
+        CC0 · Հակուլիկ
+        https://commons.wikimedia.org/wiki/File:CEE_Youth_Group_Yerevan_Meeting_2025,_2nd_Day_28.jpg
+    handwriting.jpg
+        Public domain · Federal Bureau of Investigation
+        https://commons.wikimedia.org/wiki/File:EFTA00003007-Beach-House_-_Handwritten_note_on_lined_paper_reads_Beach_House_placed_on_gravel_ground_next_to_a_hiking_boot.jpg
+    pizza.jpg
+        CC0 · Alex114721
+        https://commons.wikimedia.org/wiki/File:Bar_Pizza_on_Thick_Plate.jpg
+    school_bus.jpg
+        CC BY 2.0 · Fahim Fadz.
+        https://commons.wikimedia.org/wiki/File:School_bus_LAUSD_7616U.jpg
+    soccer_ball.jpg
+        CC0 · Petey21
+        https://commons.wikimedia.org/wiki/File:Soccer_ball_on_ground.jpg
+    sports_car.jpg
+        CC BY 2.0 · David Hall from Stockholm, Sweden
+        https://commons.wikimedia.org/wiki/File:Red_sports_car_at_Tokyo_University_(4480644169).jpg
+    strawberry.jpg
+        CC BY 4.0 · domdomegg
+        https://commons.wikimedia.org/wiki/File:Strawberries_at_Ljubljana_Central_Market.JPG
+    teapot.jpg
+        CC0 · see the Commons page
+        https://commons.wikimedia.org/wiki/File:Worcester_Porcelain_Factory_(British)_-_Teapot_-_2009.108.a_-_Cleveland_Museum_of_Art.jpg
+    umbrella_group.jpg
+        Public domain · U.S. Navy photo by Journalist 1st Class M. J. Darb
+        https://commons.wikimedia.org/wiki/File:US_Navy_040611-N-0502D-083_Former_British_Prime_Minister_Margaret_Thatcher_is_shielded_from_the_rain_as_she_arrives_at_Andrews_Air_Force_Base,_Md.jpg
+    wine_bottle.jpg
+        CC0 · congerdesign
+        https://commons.wikimedia.org/wiki/File:Bottle_and_glass_of_red_wine.jpg
+
 --------------------------------------------------------------------------------
 
 Full license texts are available at the upstream links above. If you believe

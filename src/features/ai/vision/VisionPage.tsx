@@ -1,4 +1,14 @@
-import { ArrowLeft, Camera, ImageUp, Loader2, ShieldCheck, X, Zap } from 'lucide-react';
+import {
+  ArrowLeft,
+  Camera,
+  CircleHelp,
+  ImageUp,
+  Loader2,
+  ShieldCheck,
+  UserRound,
+  X,
+  Zap,
+} from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -18,6 +28,7 @@ import {
   YOLOX_INPUT,
   yoloxTensorFromRgba,
 } from '@/features/ai/vision/preprocess';
+import { CONFIDENCE_FLOOR, judgeSubject } from '@/features/ai/vision/verdict';
 import type { VisionRequest, VisionResponse } from '@/features/ai/vision/vision.worker';
 import { cn } from '@/lib/utils';
 
@@ -249,6 +260,10 @@ export function VisionPage() {
   const busy = status === 'loading' || status === 'classifying';
   const lang = i18n.language;
   const objectGroups = result ? groupObjects(result.objects, lang) : [];
+  // What the page is allowed to CLAIM about the subject — the classifier
+  // itself cannot abstain, so the refusal is decided outside it (verdict.ts).
+  const verdict = result ? judgeSubject(result.top, result.objects, result.faces) : null;
+  const top1 = result?.top[0];
   // SVG overlay geometry is in image pixels: scale strokes/text with the image.
   const unit = result ? Math.max(result.width, result.height) / 100 : 1;
 
@@ -470,10 +485,45 @@ export function VisionPage() {
                   : t('ai.vision.results.faceCount', { count: result.faces.length })}
               </p>
 
-              <div>
+              <div data-testid="vision-subject" data-verdict={verdict?.kind ?? 'named'}>
                 <h3 className="font-mono text-xs font-semibold tracking-[0.14em] text-muted uppercase">
                   {t('ai.vision.results.subject')}
                 </h3>
+                {/* The label is never hidden — it is framed. A number the reader
+                    cannot see is a number they cannot check; the verdict says
+                    what the number is worth and leaves it on screen. */}
+                {verdict && top1 && verdict.kind !== 'named' && (
+                  <div
+                    data-testid="vision-verdict"
+                    className="mt-3 flex gap-2.5 rounded-lg border border-copper bg-copper-soft p-3 text-copper"
+                  >
+                    {verdict.kind === 'no-class-for-people' ? (
+                      <UserRound className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                    ) : (
+                      <CircleHelp className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                    )}
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm font-semibold">
+                        {verdict.kind === 'no-class-for-people'
+                          ? t('ai.vision.results.verdict.people', { count: verdict.people })
+                          : t('ai.vision.results.verdict.unsure', {
+                              label: top1.label,
+                              p: (top1.p * 100).toFixed(1),
+                            })}
+                      </p>
+                      <p className="text-xs leading-relaxed">
+                        {verdict.kind === 'no-class-for-people'
+                          ? t('ai.vision.results.verdict.peopleWhy', {
+                              label: top1.label,
+                              p: (top1.p * 100).toFixed(1),
+                            })
+                          : t('ai.vision.results.verdict.unsureWhy', {
+                              floor: Math.round(CONFIDENCE_FLOOR * 100),
+                            })}
+                      </p>
+                    </div>
+                  </div>
+                )}
                 <ol className="mt-3 flex flex-col gap-3">
                   {result.top.map(({ label, p }, rank) => (
                     <li key={label} data-testid="vision-prediction" className="flex flex-col gap-1">
