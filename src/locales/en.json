@@ -978,14 +978,17 @@
         "downloadNote": "Downloaded once, then kept by your browser and available offline. Nothing is uploaded: it runs on your machine, on your data — and the deterministic interpreter keeps working whether you download it or not.",
         "downloading": "Downloading the model… {{percent}}%",
         "readyTag": "loaded",
-        "readyNote": "How the two work together: the deterministic interpreter reads your question first — it can only ever name a column that exists and a value that really occurs in it, so when it understands, nothing overrides it. When it does not, the local model takes over: it only READS your question and turns it into a calculation, it never computes anything itself, so no number ever comes from a language model. If neither manages, you are told so — never an invented answer. The line under each answer says who replied.",
+        "readyNote": "How the two work together: the deterministic interpreter reads your question first — it can only ever name a column that exists and a value that really occurs in it, so when it understands, nothing overrides it. And it only claims to understand once it has read the WHOLE question: if one word escapes it, it refuses rather than answer a shorter question. The local model then takes over: it only READS your question and turns it into a calculation, it never computes anything itself, so no number ever comes from a language model. If neither manages, you are told so — never an invented answer. The line under each answer says who replied.",
         "failed": "The local model could not be loaded ({{reason}}). The deterministic interpreter is unaffected.",
         "by": {
           "deterministic": "answered by the deterministic interpreter",
           "llm": "question read by the local model · computed by the deterministic engine",
           "none": "the deterministic interpreter did not understand",
           "none-both": "neither the deterministic interpreter nor the local model understood"
-        }
+        },
+        "constrainedTag": "grammar-constrained",
+        "constrainedNote": "The model writes its query under constraint: at every token, anything outside the query grammar is made impossible to pick. It cannot invent a column, an operator, or a value your column does not hold. It keeps one way of saying no, deliberately: forcing a valid answer would turn « I did not understand » into a wrong number.",
+        "unconstrainedNote": "Grammar-constrained decoding is unavailable for this model: its answers are still checked before they run, but nothing stops them from being malformed in the first place."
       },
       "thinking": "Computing…",
       "honesty": {

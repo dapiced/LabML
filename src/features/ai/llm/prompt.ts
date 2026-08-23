@@ -9,6 +9,7 @@
  * is a REFUSAL that falls back to the deterministic parser, never a guess.
  */
 import { parseNumber } from '@/features/ml/data/infer';
+import { buildExamples } from '@/features/ai/llm/examples';
 import type { AggOp, Filter, FilterOp, Intent } from '@/features/ai/chat/engine';
 import type { ColumnInfo } from '@/features/ai/chat/parser';
 
@@ -45,6 +46,7 @@ Reply with ONE JSON object and nothing else. Allowed shapes:
 {"kind":"correlation","a":COL,"b":COL}
 {"kind":"shape"}
 {"kind":"missing"}
+{"kind":"none"}
 
 OP is one of: ${AGG_OPS.join(', ')}.
 FILTER is {"column":COL,"op":CMP,"value":V} where CMP is one of: ${FILTER_OPS.join(', ')}.
@@ -56,18 +58,11 @@ Rules:
 3. Comparing two groups is not a count: use aggregate with groupBy set to the column that defines the groups.
 4. An age or price threshold is a filter with < or >, on the numeric column it refers to.
 5. A question that compares two groups (women vs men, one class against another) is an aggregate with groupBy on the column whose values name those groups — NEVER a correlation. Correlation relates two number columns and nothing else; never pick a column the question does not mention.
-6. The examples below describe a DIFFERENT table. Never reuse a column name from them unless that exact name is in the list above.
+6. A filter VALUE must come from the question itself: a number the question states, or a category listed above. If the question names neither, write no filter at all — never invent a threshold.
+7. If the question is not something this table can answer — a prediction, a drawing, a fact about the world — reply {"kind":"none"}. That is a real answer, and it is better than a query that answers a different question.
 
-Examples:
-Q: average age of women -> {"kind":"aggregate","op":"mean","column":"age","filter":{"column":"sex","op":"=","value":"female"}}
-Q: a quel age moyen voyageaient les passagers ? -> {"kind":"aggregate","op":"mean","column":"age"}
-Q: did women pay more than men? -> {"kind":"aggregate","op":"mean","column":"fare","groupBy":"sex"}
-Q: les hommes voyageaient-ils plus jeunes que les femmes ? -> {"kind":"aggregate","op":"mean","column":"age","groupBy":"sex"}
-Q: combien d'enfants de moins de 10 ans ? -> {"kind":"count","filter":{"column":"age","op":"<","value":10}}
-Q: combien de lignes ? -> {"kind":"count"}
-Q: top 3 des ports par nombre de passagers -> {"kind":"topk","groupBy":"embark_town","k":3,"op":"count"}
-Q: repartition des classes -> {"kind":"distribution","column":"pclass"}
-Q: lien entre age et prix -> {"kind":"correlation","a":"age","b":"fare"}`;
+Examples (this table, these columns):
+${buildExamples(columns).join('\n')}`;
 }
 
 export function buildUserPrompt(question: string): string {
@@ -144,6 +139,12 @@ export function validateIntent(parsed: unknown, columns: ColumnInfo[]): Intent |
       return { kind: 'shape' };
     case 'missing':
       return { kind: 'missing' };
+    // V30: the model's own way of saying « this table cannot answer that ».
+    // It is not an Intent, and null is exactly what the caller does with a
+    // refusal — but the case is written out so that a reader sees the refusal
+    // is DESIGNED, not the default branch catching an unknown kind.
+    case 'none':
+      return null;
     case 'count':
       return withFilter({ kind: 'count' } as Intent);
     case 'distribution': {

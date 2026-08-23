@@ -8,19 +8,25 @@
  * and an answer that fails the grammar check. Each one falls back to the
  * deterministic parser, which stays the default engine.
  */
-import { buildSystemPrompt, buildUserPrompt, intentFromCompletion } from '@/features/ai/llm/prompt';
+import {
+  createConstrainer,
+  generateIntent,
+  type Constrainer,
+  type InterpretResult,
+  type LogitsModule,
+  type RawGenerator,
+} from '@/features/ai/llm/generate';
 import {
   createShardCache,
   type DownloadProgress,
   type LlmManifest,
 } from '@/features/ai/llm/shards';
-import type { Intent } from '@/features/ai/chat/engine';
 import type { ColumnInfo } from '@/features/ai/chat/parser';
 
 /** Where the build script (scripts/prepare-llm.mjs) puts the sharded model. */
 export const LLM_BASE = '/llm/';
-/** Enough for the longest valid query; the JSON we want is far shorter. */
-const MAX_NEW_TOKENS = 96;
+
+export type { InterpretResult };
 
 export interface LlmCapability {
   /** Measured, never assumed: WebGPU decides whether this is usable at all. */
@@ -61,15 +67,14 @@ export async function probeCapability(baseUrl = LLM_BASE): Promise<LlmCapability
 
 export interface LoadedModel {
   generate(question: string, columns: ColumnInfo[]): Promise<InterpretResult>;
+  /**
+   * V30 — whether the answer is being decoded inside the query grammar. False
+   * means the tokenizer did not expose its vocabulary, and the UI says so:
+   * the model still answers, its answers are still validated, but the guard
+   * that makes a malformed one impossible is not running.
+   */
+  constrained: boolean;
   dispose(): Promise<void>;
-}
-
-export interface InterpretResult {
-  /** Null when the model's answer failed the grammar check — a refusal. */
-  intent: Intent | null;
-  /** What the model actually produced, kept for the honest "why" panel. */
-  raw: string;
-  ms: number;
 }
 
 export async function loadModel(
@@ -78,10 +83,13 @@ export async function loadModel(
     baseUrl?: string;
     onProgress?: (progress: DownloadProgress) => void;
     signal?: AbortSignal;
+    /** V30 — off only to reproduce the pre-V30 behaviour on the bench. */
+    constrained?: boolean;
   } = {},
 ): Promise<LoadedModel> {
   const baseUrl = options.baseUrl ?? LLM_BASE;
-  const { env, pipeline } = await import('@huggingface/transformers');
+  const library = await import('@huggingface/transformers');
+  const { env, pipeline } = library;
   // Everything self-hosted: the strict CSP forbids the library's CDN default.
   env.allowRemoteModels = false;
   env.allowLocalModels = true;
@@ -101,38 +109,15 @@ export async function loadModel(
     device: 'webgpu',
   });
 
+  const constrain: Constrainer | null =
+    options.constrained === false
+      ? null
+      : createConstrainer(library as unknown as LogitsModule, generator.tokenizer);
+
   return {
-    async generate(question, columns) {
-      const started = performance.now();
-      // Qwen3 is a reasoning model: left to itself it opens a <think> block and
-      // spends the whole token budget arguing with itself before answering.
-      // The chat template turns that off when `enable_thinking` is explicitly
-      // false — so we apply the template ourselves instead of handing the
-      // pipeline a message list and hoping. Without this the model NEVER emits
-      // the JSON and every question silently falls back to the parser.
-      const prompt = generator.tokenizer.apply_chat_template(
-        [
-          { role: 'system', content: buildSystemPrompt(columns) },
-          { role: 'user', content: buildUserPrompt(question) },
-        ],
-        // `enable_thinking` is not in the library's option type, but every
-        // unknown key is spread into the Jinja template — which is exactly
-        // where Qwen3 reads it.
-        {
-          tokenize: false,
-          add_generation_prompt: true,
-          enable_thinking: false,
-        } as unknown as { tokenize: false; add_generation_prompt: boolean },
-      ) as string;
-      const output = (await generator(prompt, {
-        // Greedy: the same question must give the same query, every time.
-        max_new_tokens: MAX_NEW_TOKENS,
-        do_sample: false,
-        return_full_text: false,
-      })) as { generated_text: string }[];
-      const raw = output[0]?.generated_text ?? '';
-      return { intent: intentFromCompletion(raw, columns), raw, ms: performance.now() - started };
-    },
+    constrained: constrain !== null,
+    generate: (question, columns) =>
+      generateIntent(generator as unknown as RawGenerator, question, columns, { constrain }),
     async dispose() {
       await generator.dispose?.();
     },

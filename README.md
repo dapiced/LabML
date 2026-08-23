@@ -98,16 +98,21 @@ The project follows three non-negotiable principles:
   reason: from 1.29 its binaries exceed Cloudflare's 25 MiB per-file limit.
 - **Data assistant** (`/ai/chat`): plain French or English questions about a loaded
   dataset (averages, counts, top-N, correlations…) answered by a deterministic local
-  interpreter — when it does not understand, it says so. A **real local language model**
-  (Qwen3-0.6B, 355 MB, Apache-2.0, self-hosted and split into 24 MiB parts to clear
-  Cloudflare's limit) can be downloaded on explicit consent to read free-form phrasings:
-  it only _translates_ the question into a query — the deterministic engine still
-  computes every number, the translation is validated against a closed grammar, and a
-  badge under each answer names which engine produced it. The deterministic parser reads
-  **first** and is never overridden: it can only name a column that exists and a value
-  that occurs in it, so the model is asked only about the questions it gives up on.
-  WebGPU required; without it the refusal is named and the deterministic interpreter
-  stays fully available.
+  interpreter — when it does not understand, it says so. It only claims to understand
+  once it has read the **whole** question: a word it cannot account for is a refusal, not
+  an answer to a shorter question. A **real local language model** (Qwen3-0.6B, 355 MB,
+  Apache-2.0, self-hosted and split into 24 MiB parts to clear Cloudflare's limit) can be
+  downloaded on explicit consent to read free-form phrasings: it only _translates_ the
+  question into a query — the deterministic engine still computes every number, and a
+  badge under each answer names which engine produced it. The translation is decoded
+  **inside** the query grammar: a hand-written logits processor masks, at every token,
+  everything that would leave the grammar, so an invented column, an operator that does
+  not exist or a category the column does not hold cannot be written in the first place.
+  One shape stays reachable on purpose — `{"kind":"none"}`, the model's way of saying it
+  cannot express the question — because forcing a valid answer turns a refusal into a
+  wrong number. The reading of all 55 reference questions is measured, not asserted: see
+  **Measuring the assistant** below. WebGPU required; without it the refusal is named and
+  the deterministic interpreter stays fully available.
 
 ## Engineering notes
 
@@ -169,6 +174,23 @@ llm:prepare` downloads it into `public/llm/` and splits it into parts under Clou
 25 MiB per-file limit; CI runs it before the production build. Skip it and everything
 else works — the assistant simply falls back to its deterministic interpreter, which is
 the default in any case.
+
+### Measuring the assistant
+
+`src/features/ai/llm/corpus.ts` holds **55 reference questions**, French and English,
+across every shape of the query grammar plus three that no query can answer — where
+refusing is the only correct outcome. Two harnesses run the same corpus:
+
+| Command                                                       | Needs                             | Measures                                                        |
+| ------------------------------------------------------------- | --------------------------------- | --------------------------------------------------------------- |
+| `npm run test` (`corpus.test.ts`)                             | nothing                           | the deterministic parser, the grammar automaton, the token mask |
+| `npm run llm:fetch && npm run llm:bench:node`                 | 355 MB on disk, a few CPU minutes | the real model, end to end                                      |
+| `V27_BENCH=1 npm run build && node scripts/run-llm-bench.mjs` | a GPU with `shader-f16`           | the same, on the shipped WebGPU runtime                         |
+
+The CI half runs on every commit and asserts the number that matters most: the
+deterministic parser produces **zero wrong answers** on the corpus. The model half is a
+separate on-demand workflow (`.github/workflows/llm-bench.yml`) — it downloads 355 MB and
+takes minutes, which is not a cost worth adding to every pull request.
 
 ## Deployment
 
