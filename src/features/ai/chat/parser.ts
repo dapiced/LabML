@@ -10,6 +10,16 @@ export interface ColumnInfo {
   isNumeric: boolean;
   /** Known category values for equality filters (non-numeric columns, capped). */
   values: string[];
+  /**
+   * V30 — how many distinct values the column holds, counted up to a cap and
+   * then abandoned. It exists for one reason: `survived` and `fare` are both
+   * « numeric », and only one of them is a quantity worth averaging. The
+   * prompt's worked examples pick a measure with this, rather than taking
+   * whichever numeric column happens to come first — which on Titanic wrote
+   * « average survived » and taught the model to reach for that column.
+   * Absent when it was not counted; never a reason to refuse anything.
+   */
+  distinct?: number;
 }
 
 /** Lowercase, strip accents, unify separators — the space all matching happens in. */
@@ -50,7 +60,7 @@ const EN: Lexicon = {
   by: ['by', 'per'],
   correlation: ['correlation', 'correlated', 'relationship between', 'link between'],
   distribution: ['distribution', 'breakdown', 'histogram'],
-  shape: ['shape', 'dimensions', 'how big', 'size of'],
+  shape: ['shape', 'dimensions', 'how big', 'size of', 'rows and columns', 'columns and rows'],
   missing: ['missing', 'empty cells'],
   comparators: [
     ['>=', ['greater than or equal to', 'at least', '>=']],
@@ -76,7 +86,19 @@ const FR: Lexicon = {
   by: ['par', 'selon'],
   correlation: ['correlation', 'correle', 'lien entre', 'relation entre'],
   distribution: ['distribution', 'repartition', 'histogramme', 'ventilation'],
-  shape: ['taille du jeu', 'dimensions', 'quelle taille'],
+  shape: [
+    'taille du jeu',
+    'dimensions',
+    'quelle taille',
+    'taille du tableau',
+    'taille de la table',
+    'taille du fichier',
+    'taille des donnees',
+    'lignes et de colonnes',
+    'lignes et colonnes',
+    'colonnes et de lignes',
+    'colonnes et lignes',
+  ],
   missing: ['manquante', 'manquantes', 'manquants', 'manquant', 'vides'],
   comparators: [
     ['>=', ['superieur ou egal a', 'superieure ou egale a', 'au moins', '>=']],
@@ -265,6 +287,344 @@ function droppedCondition(
   return /\d/.test(rest);
 }
 
+/**
+ * V30 — the words the parser did NOT read.
+ *
+ * The measured defect this exists for: on « combien de femmes ? » the grammar
+ * knows `combien` and knows nothing about `femmes`, so it answered the total
+ * row count — 891 instead of 314 — badged « déterministe », the badge that is
+ * supposed to mean exact. `droppedCondition` did not catch it, because it only
+ * looks for an ordering word or a stray digit, and « femmes » is neither.
+ *
+ * Measured on the V30 corpus: seven of fifty-five questions were answered with
+ * a condition silently removed, and four of those seven the local model reads
+ * correctly — but never gets asked, because the deterministic parser goes
+ * first and never admits defeat.
+ *
+ * So the parser now checks its own coverage. Every word of the question must
+ * be accounted for by something: a phrase from the lexicon, a column the
+ * answer uses, a category value the answer filters on, or one of the three
+ * closed lists below. A leftover word means the question said something the
+ * grammar did not read, and the honest answer is to refuse and let the model
+ * (or the user) have a turn.
+ *
+ * The trade is deliberate and one-directional: an unknown word can now cost a
+ * refusal where an answer was possible, and never a wrong answer where a
+ * refusal was right. A refusal is announced and falls through to the model; a
+ * wrong answer is delivered with full confidence.
+ */
+
+/** The table's own furniture — never a condition on the rows. */
+const STRUCTURE_WORDS = new Set([
+  'ligne',
+  'lignes',
+  'rangee',
+  'rangees',
+  'enregistrement',
+  'enregistrements',
+  'entree',
+  'entrees',
+  'observation',
+  'observations',
+  'colonne',
+  'colonnes',
+  'champ',
+  'champs',
+  'valeur',
+  'valeurs',
+  'cellule',
+  'cellules',
+  'donnee',
+  'donnees',
+  'jeu',
+  'tableau',
+  'table',
+  'fichier',
+  'taille',
+  'total',
+  'row',
+  'rows',
+  'record',
+  'records',
+  'entry',
+  'entries',
+  'column',
+  'columns',
+  'field',
+  'fields',
+  'value',
+  'values',
+  'cell',
+  'cells',
+  'data',
+  'dataset',
+  'file',
+  'size',
+  'shape',
+]);
+
+/**
+ * Generic nouns for « the thing one row is ». Deliberately a short, closed
+ * list: an entity noun it does not know makes the parser refuse rather than
+ * guess, which is the safe direction.
+ */
+const ENTITY_WORDS = new Set([
+  'personne',
+  'personnes',
+  'gens',
+  'individu',
+  'individus',
+  'passager',
+  'passagers',
+  'client',
+  'clients',
+  'utilisateur',
+  'utilisateurs',
+  'eleve',
+  'eleves',
+  'element',
+  'elements',
+  'produit',
+  'produits',
+  'people',
+  'person',
+  'persons',
+  'individual',
+  'individuals',
+  'passenger',
+  'passengers',
+  'customer',
+  'customers',
+  'user',
+  'users',
+  'student',
+  'students',
+  'item',
+  'items',
+  'product',
+  'products',
+]);
+
+/**
+ * Grammatical filler. Comparison words (plus, moins, more, than, over…) are
+ * deliberately ABSENT: they are the signal `droppedCondition` reads, and
+ * treating them as filler would hide exactly what it is looking for.
+ */
+const FILLER_WORDS = new Set([
+  'le',
+  'la',
+  'les',
+  'l',
+  'un',
+  'une',
+  'des',
+  'du',
+  'de',
+  'd',
+  'au',
+  'aux',
+  'et',
+  'ou',
+  'a',
+  'en',
+  'dans',
+  'sur',
+  'pour',
+  'avec',
+  'sans',
+  'est',
+  'sont',
+  'etait',
+  'etaient',
+  'ce',
+  'c',
+  'cette',
+  'ces',
+  'qui',
+  'que',
+  'quoi',
+  'quel',
+  'quelle',
+  'quels',
+  'quelles',
+  'y',
+  'il',
+  'elle',
+  'on',
+  'se',
+  'ne',
+  'me',
+  'son',
+  'sa',
+  'ses',
+  'leur',
+  'leurs',
+  'notre',
+  'nos',
+  'votre',
+  'vos',
+  'moi',
+  'the',
+  'an',
+  'of',
+  'in',
+  'on',
+  'at',
+  'by',
+  'for',
+  'with',
+  'without',
+  'is',
+  'are',
+  'was',
+  'were',
+  'be',
+  'been',
+  'what',
+  'which',
+  'who',
+  'whom',
+  'whose',
+  'that',
+  'this',
+  'these',
+  'those',
+  'and',
+  'or',
+  'do',
+  'does',
+  'did',
+  'there',
+  'here',
+  'it',
+  'its',
+  'their',
+  'his',
+  'her',
+  'my',
+  'your',
+  'our',
+  'to',
+  'from',
+  'as',
+  'me',
+  'each',
+  'per',
+  'show',
+  'give',
+  'tell',
+  'list',
+  'where',
+  'when',
+  'between',
+  'among',
+  'have',
+  'has',
+  'had',
+  'being',
+  'all',
+  'any',
+  'some',
+  'only',
+  'also',
+  'just',
+  'please',
+  'can',
+  'could',
+  'would',
+  'should',
+  'will',
+  'much',
+  'many',
+  'avait',
+  'avaient',
+  'ont',
+  'tous',
+  'toutes',
+  'tout',
+  'toute',
+  'entre',
+  'parmi',
+  'seulement',
+  'aussi',
+  'peut',
+  'donne',
+  'montre',
+  'liste',
+  'affiche',
+]);
+
+/** Splits folded text into comparable words, without their trailing marks. */
+function words(text: string): string[] {
+  return text
+    .split(' ')
+    .map((word) => word.replace(/^[.,-]+/, '').replace(/[.,-]+$/, ''))
+    .filter((word) => word.length > 0);
+}
+
+function markPhrase(tokens: string[], used: boolean[], phrase: string): void {
+  const parts = words(phrase);
+  if (parts.length === 0) return;
+  for (let i = 0; i + parts.length <= tokens.length; i++) {
+    if (!parts.every((part, k) => tokens[i + k] === part)) continue;
+    for (let k = 0; k < parts.length; k++) used[i + k] = true;
+  }
+}
+
+/** Every column the answer actually refers to. */
+function intentColumns(intent: Intent): string[] {
+  const names: string[] = [];
+  if ('column' in intent && intent.column) names.push(intent.column);
+  if ('groupBy' in intent && intent.groupBy) names.push(intent.groupBy);
+  if ('a' in intent) names.push(intent.a, intent.b);
+  if ('filter' in intent && intent.filter) names.push(intent.filter.column);
+  return names;
+}
+
+/**
+ * The words of `question` that nothing in the answer accounts for. An empty
+ * result means the parser read the whole question; anything else means it did
+ * not, and `parseQuestion` refuses instead of answering a shorter question.
+ */
+export function unreadWords(question: string, intent: Intent, lang: string): string[] {
+  const lexicon = lang.startsWith('fr') ? FR : EN;
+  const text = fold(question);
+  const tokens = words(text);
+  const used = new Array<boolean>(tokens.length).fill(false);
+
+  for (const [, phrases] of lexicon.ops)
+    for (const phrase of phrases) markPhrase(tokens, used, phrase);
+  for (const [, phrases] of lexicon.comparators)
+    for (const phrase of phrases) markPhrase(tokens, used, phrase);
+  for (const list of [
+    lexicon.count,
+    lexicon.top,
+    lexicon.by,
+    lexicon.correlation,
+    lexicon.distribution,
+    lexicon.shape,
+    lexicon.missing,
+  ]) {
+    for (const phrase of list) markPhrase(tokens, used, phrase);
+  }
+  for (const name of intentColumns(intent)) markPhrase(tokens, used, fold(name));
+  if ('filter' in intent && intent.filter)
+    markPhrase(tokens, used, fold(String(intent.filter.value)));
+  if ('k' in intent) markPhrase(tokens, used, String(intent.k));
+
+  const leftover: string[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    if (used[i]) continue;
+    const token = tokens[i];
+    // A one- or two-letter leftover is noise, not a condition; a bare number
+    // is already `droppedCondition`'s business.
+    if (token.length < 3 || /^\d+(?:[.,]\d+)?$/.test(token)) continue;
+    if (STRUCTURE_WORDS.has(token) || ENTITY_WORDS.has(token) || FILLER_WORDS.has(token)) continue;
+    leftover.push(token);
+  }
+  return leftover;
+}
+
 export function parseQuestion(
   question: string,
   columns: ColumnInfo[],
@@ -274,18 +634,26 @@ export function parseQuestion(
   const text = fold(question);
   if (!text) return null;
   const mentions = columnMentions(text, columns);
+  // Every reading below goes through here: an answer that leaves part of the
+  // question unread is not an answer, it is a different question.
+  const readOrRefuse = (intent: Intent | null): Intent | null =>
+    intent && unreadWords(question, intent, lang).length === 0 ? intent : null;
 
-  if (findAny(text, lexicon.missing)) return { kind: 'missing' };
+  if (findAny(text, lexicon.missing)) return readOrRefuse({ kind: 'missing' });
 
   if (findAny(text, lexicon.correlation) && mentions.length >= 2) {
-    return { kind: 'correlation', a: mentions[0].column.name, b: mentions[1].column.name };
+    return readOrRefuse({
+      kind: 'correlation',
+      a: mentions[0].column.name,
+      b: mentions[1].column.name,
+    });
   }
 
   if (findAny(text, lexicon.distribution) && mentions.length >= 1) {
-    return { kind: 'distribution', column: mentions[0].column.name };
+    return readOrRefuse({ kind: 'distribution', column: mentions[0].column.name });
   }
 
-  if (findAny(text, lexicon.shape)) return { kind: 'shape' };
+  if (findAny(text, lexicon.shape)) return readOrRefuse({ kind: 'shape' });
 
   const top = findAny(text, lexicon.top);
   if (top) {
@@ -301,22 +669,22 @@ export function parseQuestion(
         .find((entry) => entry.mention !== null);
       const metricMention = mentions.find((m) => m.column.isNumeric && m.column.name !== groupBy);
       if (opHit && metricMention) {
-        return {
+        return readOrRefuse({
           kind: 'topk',
           groupBy,
           k,
           op: opHit.op,
           column: metricMention.column.name,
           filter: parseFilter(text, mentions, columns, lexicon, new Set([groupBy])),
-        };
+        });
       }
-      return {
+      return readOrRefuse({
         kind: 'topk',
         groupBy,
         k,
         op: 'count',
         filter: parseFilter(text, mentions, columns, lexicon, new Set([groupBy])),
-      };
+      });
     }
   }
 
@@ -333,24 +701,24 @@ export function parseQuestion(
       if (groupBy) exclude.add(groupBy);
       const filter = parseFilter(text, mentions, columns, lexicon, exclude);
       if (droppedCondition(text, mentions, filter, lexicon)) return null;
-      return { kind: 'aggregate', op: opHit.op, column, groupBy, filter };
+      return readOrRefuse({ kind: 'aggregate', op: opHit.op, column, groupBy, filter });
     }
   }
 
   if (findAny(text, lexicon.count)) {
     const groupBy = groupByColumn(text, mentions, lexicon, new Set());
     if (groupBy) {
-      return {
+      return readOrRefuse({
         kind: 'topk',
         groupBy,
         k: 12,
         op: 'count',
         filter: parseFilter(text, mentions, columns, lexicon, new Set([groupBy])),
-      };
+      });
     }
     const filter = parseFilter(text, mentions, columns, lexicon, new Set());
     if (droppedCondition(text, mentions, filter, lexicon)) return null;
-    return { kind: 'count', filter };
+    return readOrRefuse({ kind: 'count', filter });
   }
 
   return null;

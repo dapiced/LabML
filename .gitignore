@@ -11,3 +11,6 @@ test-results
 
 # V27: the local language model is fetched at deploy time, never committed.
 public/llm/
+
+# V30: the Node bench keeps a flat copy of the same pinned weights here.
+.llm-cache/
