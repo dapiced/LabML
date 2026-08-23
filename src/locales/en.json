@@ -32,7 +32,8 @@
     "footer": {
       "privacy": "Privacy",
       "copyright": "© 2026 Dominic D'Apice",
-      "about": "How it works"
+      "about": "How it works",
+      "docs": "Documentation"
     }
   },
   "about": {
@@ -1051,5 +1052,31 @@
     "title": "Page not found",
     "lede": "This address does not exist. The lab, however, does.",
     "backHome": "Back to home"
+  },
+  "docs": {
+    "eyebrow": "DOCUMENTATION",
+    "title": "Learn LabML",
+    "lede": "Pages written to be followed, not skimmed. Every figure quoted here is checked on every build: a page that drifts breaks the build.",
+    "searchLabel": "Search the documentation",
+    "searchPlaceholder": "Search…",
+    "searchNote": "Local search over an index built at compile time — no request leaves.",
+    "noHit": "Nothing matches “{{query}}”.",
+    "onThisPage": "On this page",
+    "otherPages": "Other pages",
+    "backToIndex": "Back to the documentation",
+    "toLab": "Go to the ML Lab",
+    "notFound": "The page “{{slug}}” does not exist.",
+    "kinds": {
+      "tutorial": "Tutorial",
+      "how-to": "How-to",
+      "reference": "Reference",
+      "explanation": "Explanation"
+    },
+    "kindNotes": {
+      "tutorial": "Follow it from start to finish. It offers no choices and guarantees the result: this is learning, not a guided tour.",
+      "how-to": "One precise task, assuming you already know where you are going.",
+      "reference": "To consult, not to read. What each thing does, without detours.",
+      "explanation": "The why. The trade-offs, what was measured, and what was dropped."
+    }
   }
 }
