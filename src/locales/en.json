@@ -702,6 +702,20 @@
         "good": "Good",
         "fair": "Needs attention",
         "poor": "Poor"
+      },
+      "breakdownTitle": "How this score was computed",
+      "breakdownHint": "Each part carries its own weight and the points it actually cost. The weights sum to 105, not 100: validity brought its own 5 points in V40 rather than taking them from an existing part, so a file with no impossible values scores exactly what it scored before.",
+      "part": "Part",
+      "found": "Found",
+      "weight": "Max",
+      "cost": "Cost",
+      "parts": {
+        "missing": "Missing cells",
+        "duplicates": "Duplicate rows",
+        "messy": "Messy spellings",
+        "outliers": "Outlier values",
+        "structural": "Useless columns",
+        "validity": "Impossible values"
       }
     },
     "issues": {
@@ -734,6 +748,27 @@
         "constant": "constant",
         "nearEmpty": "near-empty",
         "id": "identifier"
+      },
+      "validity": {
+        "title_one": "{{count}} impossible value",
+        "title_other": "{{count}} impossible values",
+        "body": "Present, correctly typed, and still impossible. Flagged, never repaired — the recipe is where data changes.",
+        "rules": {
+          "ageRange": "age outside 0–120",
+          "futureDate": "date in the future",
+          "percentRange": "percentage outside 0–100",
+          "negativeAmount": "negative amount",
+          "postcodeShape": "malformed postcode"
+        }
+      },
+      "consistency": {
+        "title_one": "{{count}} contradictory row",
+        "title_other": "{{count}} contradictory rows",
+        "body": "Every cell is fine; the row is not. Two columns disagree with each other.",
+        "rules": {
+          "dateOrder": "{{columns}}: the end comes before the start",
+          "productMismatch": "{{columns}}: the total is not quantity × price"
+        }
       }
     },
     "recipe": {
