@@ -1,6 +1,7 @@
 import { METRIC_ROWS, metricDelta } from '@/features/ml/train/score-view';
 import type { RunRecord } from '@/features/ml/projects/types';
 import type { ClusterTrait } from '@/features/ml/unsupervised/explore';
+import { championGap, sortResults } from '@/features/ml/train/ranking';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
@@ -369,10 +370,9 @@ function artifactSections(record: RunRecord, t: Translate, lang: string): string
  */
 export function buildReportHtml(record: RunRecord, t: Translate, lang: string): string {
   const isClassification = record.taskType !== 'regression';
-  const ok = record.results.filter((r) => r.ok);
-  const sorted = [...ok].sort((a, b) =>
-    isClassification ? b.primary - a.primary : a.primary - b.primary,
-  );
+  // V35: ranked through the shared rule — validation when the run has it.
+  const sorted = sortResults(record.results, record.taskType);
+  const champion = championGap(record.results, record.taskType);
   const metricKeys = isClassification
     ? (['accuracy', 'f1', 'auc', 'logLoss'] as const)
     : (['rmse', 'mae', 'r2'] as const);
@@ -396,10 +396,41 @@ export function buildReportHtml(record: RunRecord, t: Translate, lang: string): 
     summary.sampledFrom !== undefined
       ? `<p class="meta">${esc(
           t('ml.lab.leaderboard.sampledFrom', {
-            cap: (summary.trainRows + summary.testRows).toLocaleString(lang),
+            cap: (
+              summary.trainRows +
+              (summary.validationRows ?? 0) +
+              summary.testRows
+            ).toLocaleString(lang),
             from: summary.sampledFrom.toLocaleString(lang),
           }),
         )}</p>`
+      : '';
+
+  // V35: the report carries the same two honesty lines the lab shows —
+  // the champion's selection-vs-test gap, and any suspected target leak.
+  const championNote = champion
+    ? `<p class="meta">${esc(
+        t('ml.lab.leaderboard.championLine', {
+          model: t(`ml.lab.models.${champion.model.key}`),
+          val: fmt(champion.val),
+          test: fmt(champion.test),
+          gap: `${champion.gap > 0 ? '+' : ''}${champion.gap.toFixed(3)}`,
+        }),
+      )} ${esc(t('ml.lab.leaderboard.championWhy'))}</p>`
+    : '';
+
+  const leakNote =
+    summary.leakWarnings && summary.leakWarnings.length > 0
+      ? `<p class="warn">${summary.leakWarnings
+          .map((w) =>
+            esc(
+              t('ml.lab.leaderboard.leakWarning', {
+                column: w.column,
+                score: (w.score * 100).toFixed(1),
+              }),
+            ),
+          )
+          .join(' ')} ${esc(t('ml.lab.leaderboard.leakAdvice'))}</p>`
       : '';
 
   const confusion =
@@ -450,6 +481,7 @@ export function buildReportHtml(record: RunRecord, t: Translate, lang: string): 
   body { font-family: system-ui, sans-serif; color: #17221f; margin: 2rem auto; max-width: 52rem; padding: 0 1rem; }
   h1 { font-size: 1.6rem; } h2 { font-size: 1.1rem; margin-top: 2rem; }
   .meta { color: #5a6a65; font-size: .9rem; font-family: ui-monospace, monospace; }
+  .warn { background: #f3e6da; color: #8f4c1f; padding: .6rem .8rem; border-radius: 8px; font-size: .9rem; }
   .read { background: #ebf1ef; border-radius: 12px; padding: 1rem 1.25rem; margin-top: 1.5rem; }
   table { border-collapse: collapse; margin-top: .75rem; font-size: .9rem; }
   th, td { border: 1px solid #d6e0dc; padding: .4rem .7rem; text-align: left; font-variant-numeric: tabular-nums; }
@@ -473,6 +505,8 @@ ${read ? `<div class="read">${esc(read)}</div>` : ''}
     .join('')}<th>${esc(t('ml.lab.leaderboard.trainTime'))}</th></tr>
 ${leaderboardRows}
 </table>
+${leakNote}
+${championNote}
 ${sampledNote}
 ${confusion}
 ${importance}

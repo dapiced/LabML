@@ -26,10 +26,17 @@ test('reviews: the text column trains, and the words explain the model', async (
   await expect(page.getByTestId('insights')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId('importance')).toContainText('review');
 
-  // The words card: signed effects, one word per row, with the honest note.
+  // V35: on this file the crowned model is Gaussian Naive Bayes, whose
+  // probabilities saturate to 0/1 — occlusion then measures exactly zero.
+  // The card must SAY that rather than vanish, and point at a way forward.
   const words = page.getByTestId('word-effects');
   await expect(words).toBeVisible();
-  await expect(words).toContainText('Words that move the answer');
+  await expect(words).toContainText('its probabilities are saturated');
+  await expect(words).toContainText('Pick another model in the leaderboard');
+
+  // And on a model that gives graded probabilities, the words do speak.
+  await page.getByTestId('leaderboard').getByText('Gradient boosting').click();
+  await expect(words).toContainText('Words that move the answer', { timeout: 30_000 });
   // Effects are signed — at least one word pushes each way on this dataset.
   await expect(words).toContainText('+');
   await expect(words).toContainText('−');
@@ -47,5 +54,8 @@ test('reviews in French: the words card speaks French too', async ({ page }) => 
 
   const words = page.getByTestId('word-effects');
   await expect(words).toBeVisible({ timeout: 30_000 });
-  await expect(words).toContainText('Les mots qui font bouger la réponse');
+  // Le refus est traduit lui aussi — une carte qui se tait n'apprend rien.
+  await expect(words).toContainText('ses probabilités sont saturées');
+  await page.getByTestId('leaderboard').getByText('Gradient boosting').click();
+  await expect(words).toContainText('Les mots qui font bouger la réponse', { timeout: 30_000 });
 });
