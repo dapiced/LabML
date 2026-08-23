@@ -470,17 +470,31 @@ The baseline scores 0.594, so the headroom above it collapses from 0.406 to 0.22
 weights and the same CPU runtime. « app » is what a visitor actually gets: the
 deterministic parser first, the model only on what it refuses.
 
-| configuration                                      | model alone     | app             |
-| -------------------------------------------------- | --------------- | --------------- |
-| V27.3 as shipped — free decoding, frozen examples  | 29 / 12 / 14    | **33 / 15 / 7** |
-| V30 parser alone, no model at all                  | —               | 19 / **0** / 36 |
-| + constrained decoding, frozen examples            | 34 / **19** / 2 | 45 / 9 / 1 ◊    |
-| + generated examples, first version                | 32 / 12 / 11    | 34 / 11 / 10    |
-| + the aggregate-with-filter shape                  | 34 / 10 / 11    | 37 / 9 / 9      |
-| + examples on a quantity, not a flag — **shipped** | **41 / 7 / 7**  | **42 / 7 / 6**  |
+| configuration                                          | model alone     | app             |
+| ------------------------------------------------------ | --------------- | --------------- |
+| V27.3 as shipped — free decoding, frozen examples      | 29 / 12 / 14    | **33 / 15 / 7** |
+| V30 parser alone, no model at all                      | —               | 19 / **0** / 36 |
+| + constrained decoding, frozen examples                | 34 / **19** / 2 | 45 / 9 / 1 ◊    |
+| + generated examples, first version                    | 32 / 12 / 11    | 34 / 11 / 10    |
+| + the aggregate-with-filter shape                      | 34 / 10 / 11    | 37 / 9 / 9      |
+| + examples on a quantity, not a flag — **shipped**     | **41 / 7 / 7**  | **42 / 7 / 6**  |
+| the shipped prompt, decoded FREE (CI, another machine) | 34 / 8 / 13     | 37 / 7 / 11     |
 
 Read as right / wrong / refused. ◊ That line is **not comparable**: its prompt
 contains seven of the 55 questions verbatim, so on those it measures recitation.
+
+The last line was not planned — it is what the first CI run of the bench
+produced, because the constraint was **opt-in and the workflow did not opt in**.
+A bench that measures a configuration nobody ships is worse than no bench: a
+wrong number with a green tick beside it. The flag now points the other way
+(`LABML_LLM_FREE=1` to turn the constraint off) and both the browser and the
+bench read one shared constant, with a test that fails if they drift. And the
+accident paid for itself: it isolates what constrained decoding is worth **once
+the examples are right** — the same prompt, free vs constrained, is +5 right,
+−5 refused and **no more wrong answers at all**. Against V27's frozen examples
+the same change had cost +7 wrong. Constraining the output only turns refusals
+into confident errors for shapes the model has never been shown; the fix for
+that is the example, not the constraint.
 It is listed because it is the number the wave would have reported if nobody had
 checked, and because it is the only configuration with fewer refusals and more
 wrong answers than the one that shipped — which is the trade constrained

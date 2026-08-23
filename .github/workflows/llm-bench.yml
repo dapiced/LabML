@@ -48,7 +48,11 @@ jobs:
           key: llm-cache-qwen3-0.6b-dq-q4f16-v1
       - if: steps.weights.outputs.cache-hit != 'true'
         run: npm run llm:fetch
-      - name: Bench, decoding inside the grammar
+      # Constrained decoding is the default, shared with the browser through
+      # DECODE_CONSTRAINED_BY_DEFAULT — the first run of this workflow measured
+      # FREE decoding because the constraint used to be opt-in and this step
+      # did not opt in. The mode is printed in the report's label; check it.
+      - name: Bench, on the path production actually takes
         env:
           LABML_LLM_OUT: bench-report.json
         run: npm run llm:bench:node
