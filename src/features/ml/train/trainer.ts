@@ -3,7 +3,9 @@ import { detectTask } from '@/features/ml/data/suggest';
 import { accuracy, logLoss, macroPrf, mae, r2, rmse, rocAuc } from '@/features/ml/train/metrics';
 import { MODEL_TRAIN_CAPS, modelZoo, type TrainedModel } from '@/features/ml/train/models';
 import { fitPipeline, splitIndices, usableRows } from '@/features/ml/train/pipeline';
-import { nestedSampleOrder } from '@/features/ml/train/random';
+import { mulberry32, nestedSampleOrder, shuffleInPlace } from '@/features/ml/train/random';
+import { leakScan } from '@/features/ml/train/leakage';
+import { parseDate } from '@/features/ml/timeseries/series';
 import type { Cell, ColumnProfile } from '@/features/ml/data/types';
 import type {
   MetricMap,
@@ -44,6 +46,20 @@ const LATENCY_SAMPLE = 200;
  * (sampledFrom), on the leaderboard and in the report. Never silent.
  */
 export const GLOBAL_SAMPLE_CAP = 100_000;
+/**
+ * V35: fraction of the TRAIN split held out for model selection. The test
+ * split is carved first, exactly as before V35 — every panel that reads the
+ * test set (segments, thresholds, uncertainty, batch compare) sees the same
+ * rows it always did. Selection then happens on validation, so the crowned
+ * number is no longer the maximum of nine draws on the reporting set.
+ */
+export const VALIDATION_RATIO = 0.2;
+/**
+ * V35: below this many usable rows a third split starves training and the
+ * validation scores would be noise — so the lab refuses the third split by
+ * name and ranks on test, as before V35.
+ */
+export const MIN_ROWS_FOR_VALIDATION = 60;
 // 'text' joined the list in V24: free-text columns now enter the pipeline as
 // TF-IDF blocks instead of being skipped. Dates and ids stay out.
 const TRAINABLE_TYPES = new Set(['numeric', 'categorical', 'boolean', 'text']);
@@ -61,11 +77,19 @@ export interface PreparedData {
   featureColumns: string[];
   skippedColumns: string[];
   train: number[];
+  /**
+   * V35: rows held out for model selection — carved from the train side, so
+   * `test` is identical to what the same config produced before V35. Empty
+   * when the dataset is too small for a third split (refused by name).
+   */
+  validation: number[];
   test: number[];
   /** Stratification labels aligned with `train` (null for regression). */
   trainLabels: (string | null)[] | null;
   /** Usable rows before the announced global sample, when it engaged (V25). */
   sampledFrom?: number;
+  /** V35: the announced non-random split that was applied, if any. */
+  splitInfo?: { mode: 'chronological' | 'group'; column: string; dropped?: number };
   encode(i: number): number;
 }
 
@@ -126,7 +150,34 @@ export function prepareData(
     }
   }
 
-  const { train, test } = splitIndices(rows, stratifyLabels, config.testRatio, config.seed);
+  // V35: assign rows to splits. Random (stratified) is the default; a
+  // chronological or group split is applied only when the config names one —
+  // and the summary announces it, like every other decision here.
+  let train: number[];
+  let test: number[];
+  let validation: number[] = [];
+  let splitInfo: PreparedData['splitInfo'];
+  const wantValidation = rows.length >= MIN_ROWS_FOR_VALIDATION;
+
+  if (config.split) {
+    const assigned = splitNonRandom(rows, columns, config, wantValidation);
+    train = assigned.train;
+    validation = assigned.validation;
+    test = assigned.test;
+    splitInfo = assigned.info;
+  } else {
+    ({ train, test } = splitIndices(rows, stratifyLabels, config.testRatio, config.seed));
+    if (wantValidation) {
+      // Carved from the TRAIN side with a derived seed: the test indices stay
+      // byte-identical to what this config produced before V35.
+      const labels = stratifyLabels
+        ? train.map((i) => (isMissing(targetValues[i]) ? null : (targetValues[i] as string).trim()))
+        : null;
+      const second = splitIndices(train, labels, VALIDATION_RATIO, config.seed + 1);
+      train = second.train;
+      validation = second.test;
+    }
+  }
 
   const trainLabels = isClassification
     ? train.map((i) => (isMissing(targetValues[i]) ? null : (targetValues[i] as string).trim()))
@@ -139,12 +190,109 @@ export function prepareData(
     featureColumns,
     skippedColumns,
     train,
+    validation,
     test,
     trainLabels,
     ...(sampledFrom !== undefined && { sampledFrom }),
+    ...(splitInfo !== undefined && { splitInfo }),
     encode: (i: number): number =>
       isClassification ? labelOf(i) : (parseNumber((targetValues[i] as string).trim()) as number),
   };
+}
+
+/**
+ * V35: the two announced non-random splits.
+ *
+ * Chronological — rows ordered by the named date column; the oldest block
+ * trains, the middle one validates, the newest one tests. A random split on
+ * dated data puts the future in training: the model looks excellent and
+ * collapses in production. Rows without a parseable date cannot be placed in
+ * time and are dropped, counted, and announced.
+ *
+ * Group — every row sharing the named column's value lands on one side only:
+ * the same customer in both train and test is the same leak. Groups are
+ * shuffled with the run's seed and dealt to test, then validation, until each
+ * reaches its share. Rows with a missing group value are their own group.
+ */
+function splitNonRandom(
+  rows: number[],
+  columns: Map<string, Cell[]>,
+  config: TrainConfig,
+  wantValidation: boolean,
+): {
+  train: number[];
+  validation: number[];
+  test: number[];
+  info: NonNullable<PreparedData['splitInfo']>;
+} {
+  const split = config.split!;
+  const values = columns.get(split.column);
+  if (!values) throw new Error('split-column-not-found');
+
+  if (split.mode === 'chronological') {
+    const dated: { row: number; at: number }[] = [];
+    let dropped = 0;
+    for (const row of rows) {
+      const raw = values[row];
+      const at = isMissing(raw) ? null : parseDate((raw as string).trim());
+      if (at === null) dropped += 1;
+      else dated.push({ row, at });
+    }
+    if (dated.length < 10) throw new Error('split-column-not-dated');
+    // Stable order: ties fall back to row index so the split is deterministic.
+    dated.sort((a, b) => a.at - b.at || a.row - b.row);
+    const ordered = dated.map((d) => d.row);
+    const testCount = Math.max(1, Math.round(ordered.length * config.testRatio));
+    const rest = ordered.length - testCount;
+    const valCount = wantValidation ? Math.max(1, Math.round(rest * VALIDATION_RATIO)) : 0;
+    const train = ordered.slice(0, rest - valCount);
+    const validation = ordered.slice(rest - valCount, rest);
+    const test = ordered.slice(rest);
+    return {
+      train: [...train].sort((a, b) => a - b),
+      validation: [...validation].sort((a, b) => a - b),
+      test: [...test].sort((a, b) => a - b),
+      info: { mode: 'chronological', column: split.column, ...(dropped > 0 && { dropped }) },
+    };
+  }
+
+  // Group mode. Missing values become singleton groups — a row that belongs
+  // to nobody cannot leak across the boundary.
+  const groups = new Map<string, number[]>();
+  let singleton = 0;
+  for (const row of rows) {
+    const raw = values[row];
+    const key = isMissing(raw) ? `\u2205#${singleton++}` : (raw as string).trim();
+    const bucket = groups.get(key);
+    if (bucket) bucket.push(row);
+    else groups.set(key, [row]);
+  }
+  if (groups.size < 3) throw new Error('split-column-not-groupable');
+  const keys = [...groups.keys()].sort();
+  shuffleInPlace(keys, mulberry32(config.seed));
+
+  const testTarget = Math.max(1, Math.round(rows.length * config.testRatio));
+  const valTarget = wantValidation
+    ? Math.max(1, Math.round((rows.length - testTarget) * VALIDATION_RATIO))
+    : 0;
+  const train: number[] = [];
+  const validation: number[] = [];
+  const test: number[] = [];
+  for (const key of keys) {
+    const bucket = groups.get(key)!;
+    if (test.length < testTarget) {
+      for (const row of bucket) test.push(row);
+    } else if (validation.length < valTarget) {
+      for (const row of bucket) validation.push(row);
+    } else {
+      for (const row of bucket) train.push(row);
+    }
+  }
+  if (train.length === 0 || test.length === 0) throw new Error('split-column-not-groupable');
+  train.sort((a, b) => a - b);
+  validation.sort((a, b) => a - b);
+  test.sort((a, b) => a - b);
+  return { train, validation, test, info: { mode: 'group', column: split.column } };
 }
 
 /** The run's metric block for one model on one evaluation set. */
@@ -211,14 +359,38 @@ export async function runTraining(
 ): Promise<TrainOutcome | null> {
   const startedAt = performance.now();
   const prepared = prepareData(columns, profiles, config);
-  const { task, isClassification, classes, featureColumns, skippedColumns, train, test, encode } =
-    prepared;
+  const {
+    task,
+    isClassification,
+    classes,
+    featureColumns,
+    skippedColumns,
+    train,
+    validation,
+    test,
+    encode,
+  } = prepared;
 
   const pipeline = fitPipeline(columns, profiles, featureColumns, train);
   const trainX = pipeline.transform(train);
   const testX = pipeline.transform(test);
   const trainY = train.map(encode);
   const testY = test.map(encode);
+  const valX = validation.length > 0 ? pipeline.transform(validation) : null;
+  const valY = validation.length > 0 ? validation.map(encode) : null;
+
+  // V35: the predictive leak scan — a lone column reading the target at 99%
+  // is a warning, not a victory. Fitted on train, scored on validation, so
+  // the detector cannot leak either; refused (empty) when validation is.
+  const leakWarnings = leakScan(
+    columns,
+    profiles,
+    featureColumns,
+    train,
+    validation,
+    encode,
+    isClassification,
+  );
 
   const zoo = modelZoo(isClassification ? 'classification' : 'regression');
   const models = new Map<ModelKey, TrainedModel>();
@@ -266,6 +438,13 @@ export async function runTraining(
         classes.length,
       );
 
+      // V35: the same metric block on the selection split — the leaderboard
+      // ranks on these so the crowned number is not the max of nine test draws.
+      let validationScore: { metrics: MetricMap; primary: number } | null = null;
+      if (valX !== null && valY !== null) {
+        validationScore = scoreModel(model, valX, valY, isClassification, classes.length);
+      }
+
       const latency = measureLatency(model, testX);
       callbacks.onModelResult({
         key: def.key,
@@ -276,6 +455,10 @@ export async function runTraining(
         inferP50Ms: latency.p50,
         inferP95Ms: latency.p95,
         trainedRows: fitX.length,
+        ...(validationScore !== null && {
+          valMetrics: validationScore.metrics,
+          valPrimary: validationScore.primary,
+        }),
       });
     } catch (error) {
       callbacks.onModelResult({
@@ -304,6 +487,9 @@ export async function runTraining(
       skippedColumns,
       totalMs: performance.now() - startedAt,
       ...(prepared.sampledFrom !== undefined && { sampledFrom: prepared.sampledFrom }),
+      ...(validation.length > 0 && { validationRows: validation.length }),
+      ...(prepared.splitInfo !== undefined && { split: prepared.splitInfo }),
+      ...(leakWarnings.length > 0 && { leakWarnings }),
     },
     artifacts: {
       models,

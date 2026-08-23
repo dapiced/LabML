@@ -54,11 +54,12 @@ export function InsightsSection() {
         {insights.scatter && <ScatterPlot points={insights.scatter} />}
         {insights.residuals && <ResidualsChart residuals={insights.residuals} />}
         <ImportanceBars importance={insights.importance} isClassification={isClassification} />
-        {insights.words && insights.words.length > 0 && (
+        {((insights.words && insights.words.length > 0) || insights.wordsRefused) && (
           <WordEffects
-            words={insights.words}
+            words={insights.words ?? []}
             isClassification={isClassification}
             positiveClass={insights.classes?.[1]}
+            refusal={insights.wordsRefused}
           />
         )}
         {insights.pdp?.map(({ column, points }) => (

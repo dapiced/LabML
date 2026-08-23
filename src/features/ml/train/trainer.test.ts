@@ -49,7 +49,8 @@ describe('runTraining — classification', () => {
     expect(best).toBeGreaterThan(0.9); // the target is separable on f1
 
     expect(summary.taskType).toBe('binary');
-    expect(summary.trainRows + summary.testRows).toBe(N);
+    // V35: three splits now share the usable rows (train / validation / test).
+    expect(summary.trainRows + (summary.validationRows ?? 0) + summary.testRows).toBe(N);
     // V24: free text is a feature now — it joins the pipeline as a TF-IDF block.
     expect(summary.featureColumns).toEqual(['f1', 'f2', 'note']);
     expect(summary.skippedColumns).toEqual([]);

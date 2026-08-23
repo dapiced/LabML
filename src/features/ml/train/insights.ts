@@ -67,6 +67,11 @@ export function encodedBlocks(
 
 /** Words scored per text column: enough to read, few enough to stay fast. */
 const WORD_CANDIDATES = 40;
+export interface WordEffectsResult {
+  words: { column: string; term: string; effect: number; rows: number }[];
+  /** Set when the method cannot measure anything — never silently empty. */
+  refusal?: 'saturated';
+}
 /** A word seen in fewer test rows than this cannot be measured honestly. */
 const MIN_WORD_TEST_ROWS = 3;
 
@@ -85,6 +90,13 @@ const MIN_WORD_TEST_ROWS = 3;
  * p(positive class)) and regression (shift of the prediction) have a single
  * axis to project onto — multiclass is skipped rather than faked. Candidates
  * are the most present words in the test split, capped at WORD_CANDIDATES.
+ *
+ * V35 named a third limit, found when the smaller training split made it
+ * bite: a model whose probabilities are SATURATED — Gaussian Naive Bayes on
+ * ~150 TF-IDF features returns exactly 1 or exactly 0 — has no axis to move
+ * along, so every occlusion measures exactly zero. That is not "no words
+ * matter"; it is "this model cannot answer the question". It is refused by
+ * name and said out loud, instead of the card vanishing without explanation.
  */
 export function wordEffects(
   model: TrainedModel,
@@ -93,16 +105,16 @@ export function wordEffects(
   isClassification: boolean,
   classCount: number,
   top = 12,
-): { column: string; term: string; effect: number; rows: number }[] {
+): WordEffectsResult {
   const canProject = isClassification
     ? classCount === 2 && typeof model.predictProba === 'function'
     : true;
-  if (!canProject) return [];
+  if (!canProject) return { words: [] };
 
   const textBlocks = encodedBlocks(pipeline).filter(
     (block) => pipeline.specs.find((spec) => spec.name === block.column)?.kind === 'text',
   );
-  if (textBlocks.length === 0) return [];
+  if (textBlocks.length === 0) return { words: [] };
 
   /** The model's answer on one axis: p(positive class), or the prediction. */
   const project = (rows: number[][]): number[] =>
@@ -144,10 +156,14 @@ export function wordEffects(
     }
   }
 
-  return scored
+  const words = scored
     .filter((entry) => entry.effect !== 0)
     .sort((a, b) => Math.abs(b.effect) - Math.abs(a.effect) || a.term.localeCompare(b.term))
     .slice(0, top);
+  // Measured, not guessed: candidates existed and not one of them moved the
+  // answer at all. That is a saturated model, not a text without signal.
+  if (words.length === 0 && scored.length > 0) return { words: [], refusal: 'saturated' };
+  return { words };
 }
 
 /**
@@ -274,7 +290,8 @@ export function computeInsights(artifacts: TrainArtifacts, modelKey: ModelKey): 
     isClassification,
     seed,
   ).slice(0, 10);
-  const words = wordEffects(model, pipeline, testX, isClassification, classes.length);
+  const wordOutcome = wordEffects(model, pipeline, testX, isClassification, classes.length);
+  const words = wordOutcome.words;
 
   if (isClassification) {
     const payload: InsightsPayload = {
@@ -283,6 +300,7 @@ export function computeInsights(artifacts: TrainArtifacts, modelKey: ModelKey): 
       confusion: confusionMatrix(testY, predictions, classes.length),
       importance,
       ...(words.length > 0 ? { words } : {}),
+      ...(wordOutcome.refusal !== undefined ? { wordsRefused: wordOutcome.refusal } : {}),
     };
     if (classes.length === 2 && model.predictProba) {
       const roc = rocCurve(
@@ -302,6 +320,7 @@ export function computeInsights(artifacts: TrainArtifacts, modelKey: ModelKey): 
     residuals: residualsHistogram(testY, predictions),
     importance,
     ...(words.length > 0 ? { words } : {}),
+    ...(wordOutcome.refusal !== undefined ? { wordsRefused: wordOutcome.refusal } : {}),
   };
   const pdp = partialDependence(model, pipeline, testX, false, importance);
   if (pdp.length > 0) payload.pdp = pdp;
