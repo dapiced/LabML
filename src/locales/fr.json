@@ -702,6 +702,20 @@
         "good": "Bon",
         "fair": "À surveiller",
         "poor": "Faible"
+      },
+      "breakdownTitle": "Comment ce score a été calculé",
+      "breakdownHint": "Chaque partie porte son poids et les points qu'elle a réellement coûtés. Les poids totalisent 105 et non 100 : la validité a apporté ses 5 points en V40 au lieu de les prendre à une partie existante, donc un fichier sans valeur impossible obtient exactement le score qu'il obtenait avant.",
+      "part": "Partie",
+      "found": "Constaté",
+      "weight": "Max",
+      "cost": "Coût",
+      "parts": {
+        "missing": "Cellules manquantes",
+        "duplicates": "Lignes en double",
+        "messy": "Orthographes désordonnées",
+        "outliers": "Valeurs aberrantes",
+        "structural": "Colonnes inutiles",
+        "validity": "Valeurs impossibles"
       }
     },
     "issues": {
@@ -734,6 +748,27 @@
         "constant": "constante",
         "nearEmpty": "quasi vide",
         "id": "identifiant"
+      },
+      "validity": {
+        "title_one": "{{count}} valeur impossible",
+        "title_other": "{{count}} valeurs impossibles",
+        "body": "Présente, bien typée, et pourtant impossible. Signalée, jamais réparée — c'est la recette qui modifie les données.",
+        "rules": {
+          "ageRange": "âge hors 0–120",
+          "futureDate": "date dans le futur",
+          "percentRange": "pourcentage hors 0–100",
+          "negativeAmount": "montant négatif",
+          "postcodeShape": "code postal malformé"
+        }
+      },
+      "consistency": {
+        "title_one": "{{count}} ligne contradictoire",
+        "title_other": "{{count}} lignes contradictoires",
+        "body": "Chaque cellule est correcte ; la ligne ne l'est pas. Deux colonnes se contredisent.",
+        "rules": {
+          "dateOrder": "{{columns}} : la fin précède le début",
+          "productMismatch": "{{columns}} : le total n'est pas quantité × prix"
+        }
       }
     },
     "recipe": {

@@ -1,3 +1,6 @@
+import type { ValidityFinding } from '@/features/data/quality/validity';
+import type { ConsistencyFinding } from '@/features/data/quality/consistency';
+import type { ScoreBreakdown } from '@/features/data/quality/checks';
 /** Issue report and cleaning recipe types for the Data Studio. */
 
 export interface MissingColumn {
@@ -51,8 +54,19 @@ export interface QualityReport {
   outlierColumns: OutlierColumn[];
   outlierCells: number;
   structural: StructuralIssue[];
+  /**
+   * V40: values that are present, correctly typed and still impossible —
+   * an age of 200, a date in the future. Reported, never repaired.
+   */
+  validity: ValidityFinding[];
+  invalidCells: number;
+  /** V40: rows where two columns contradict each other. */
+  consistency: ConsistencyFinding[];
+  inconsistentRows: number;
   /** 0–100; deterministic function of the ratios above. */
   score: number;
+  /** V40: the score, explained by its parts instead of asserted. */
+  breakdown: ScoreBreakdown[];
 }
 
 /** Forceable column types — they steer the cleaning, not the "before" report. */

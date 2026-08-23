@@ -68,6 +68,16 @@ The project follows three non-negotiable principles:
   column can add a `<column>_absent` **missing indicator**, written before anything is
   filled; columns filled _without_ one are named out loud, because a blank field is
   rarely blank at random and filling it silently erases that.
+- **Validity rules**: a value can be present, correctly typed and still impossible — an
+  age of 200, a date in the future, a percentage at 130, a malformed postcode. Plus
+  **cross-column consistency**: an end date before its start, a total that is not
+  quantity × price. Every rule fires on evidence rather than on a column's name, and
+  reports without ever repairing — the recipe is where data changes.
+- **The quality score, broken into its parts**: each with its weight, what it found and
+  what it cost, instead of a number asserted without explanation.
+- **An auditable before/after diff** of what the recipe did — which rows, which columns,
+  which values — and a **replayable reference profile** (bin edges and shares, never
+  rows) so a new file can be checked for drift against a snapshot you no longer hold.
 - **Left-join a second file** on a shared key: match rate, duplicates and orphans are
   named, never silent; the joined result becomes the working dataset.
 - **Drift check**: compare a new batch against the reference — schema diff, PSI per
@@ -124,7 +134,7 @@ The project follows three non-negotiable principles:
 - **Performance.** Every section serves a prerendered static shell (hero paints before
   JavaScript); Lighthouse mobile ≈ 0.99 on `/ml` under real throttling. Heavy
   dependencies (Dexie, SheetJS, ONNX Runtime) load lazily.
-- **Quality bar.** 461 unit tests, 75 Playwright end-to-end tests (including offline PWA,
+- **Quality bar.** 502 unit tests, 78 Playwright end-to-end tests (including offline PWA,
   fake-webcam and axe-core WCAG A/AA accessibility checks), strict TypeScript, ESLint,
   Prettier, and Lighthouse budgets — all enforced in CI.
 
