@@ -15,6 +15,8 @@ import type { ThresholdAnalysis } from '@/features/ml/train/threshold-analysis';
 import type { UncertaintyAnalysis } from '@/features/ml/train/uncertainty';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
 import type { LearningCurveOutcome } from '@/features/ml/train/learning-curve';
+import type { RobustRankResult } from '@/features/ml/train/robust';
+import type { SplitChoice } from '@/features/ml/train/types';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
 import type { ForecastPayload } from '@/features/ml/timeseries/run';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
@@ -26,6 +28,7 @@ import type {
   WhatIfResult,
 } from '@/features/ml/train/types';
 import type { WorkerRequest, WorkerResponse } from '@/features/ml/worker-protocol';
+import { bestResult } from '@/features/ml/train/ranking';
 
 export type LabStatus = 'idle' | 'parsing' | 'ready' | 'error';
 export type TrainStatus = 'idle' | 'training' | 'done';
@@ -49,6 +52,8 @@ interface LabState {
   leaks: ColumnSuggestion[];
   /** Manual include/exclude decisions that override the suggestions. */
   overrides: Record<string, 'include' | 'exclude'>;
+  /** V35: announced non-random split, chosen in the UI. Null = seeded random. */
+  splitChoice: SplitChoice | null;
   trainStatus: TrainStatus;
   modelProgress: { key: ModelKey; index: number; total: number } | null;
   results: ModelResult[];
@@ -63,6 +68,9 @@ interface LabState {
   tuneOutcome: TuneOutcome | null;
   curveStatus: 'idle' | 'running' | 'done';
   curveProgress: { done: number; total: number } | null;
+  robustStatus: 'idle' | 'running' | 'done';
+  robustProgress: { done: number; total: number } | null;
+  robustOutcome: RobustRankResult | null;
   /** null after a run = the worker refused (named): no curve theater. */
   curveOutcome: LearningCurveOutcome | null;
   exploreStatus: 'idle' | 'running' | 'done';
@@ -112,6 +120,9 @@ interface LabState {
   tune: (model: TunableKey) => void;
   cancelTune: () => void;
   learningCurve: (model: ModelKey) => void;
+  robustRank: () => void;
+  cancelRobust: () => void;
+  setSplitChoice: (choice: SplitChoice | null) => void;
   cancelCurve: () => void;
   explore: () => void;
   forecast: (dateColumn: string, valueColumn: string) => void;
@@ -147,6 +158,9 @@ const initialTraining = {
   curveStatus: 'idle' as const,
   curveProgress: null,
   curveOutcome: null as LearningCurveOutcome | null,
+  robustStatus: 'idle' as const,
+  robustProgress: null,
+  robustOutcome: null as RobustRankResult | null,
   exploreStatus: 'idle' as const,
   exploration: null,
   forecastStatus: 'idle' as const,
@@ -164,6 +178,7 @@ const initialTraining = {
 
 const initialData = {
   status: 'idle' as LabStatus,
+  splitChoice: null as SplitChoice | null,
   error: null,
   rowsParsed: 0,
   meta: null,
@@ -306,12 +321,10 @@ export const useLabStore = create<LabState>((set, get) => {
         } else if (message.kind === 'train-complete') {
           set({ trainStatus: 'done', modelProgress: null, summary: message.summary });
           // Fetch insights for the winning model right away.
-          const ok = get().results.filter((r) => r.ok);
-          if (ok.length > 0) {
-            const isClassification = message.summary.taskType !== 'regression';
-            const best = [...ok].sort((a, b) =>
-              isClassification ? b.primary - a.primary : a.primary - b.primary,
-            )[0];
+          // V35: the SAME ranking rule as the leaderboard — otherwise the
+          // table crowns one model and the insights panel opens another.
+          const best = bestResult(get().results, message.summary.taskType);
+          if (best !== null) {
             send({ kind: 'model-insights', model: best.key });
             // Leaderboard-wide intervals ride along with every completed run.
             send({ kind: 'uncertainty-analysis' });
@@ -387,6 +400,13 @@ export const useLabStore = create<LabState>((set, get) => {
           if (message.payload) attachArtifact({ learningCurve: message.payload });
         } else if (message.kind === 'curve-cancelled') {
           set({ curveStatus: 'idle', curveProgress: null });
+        } else if (message.kind === 'robust-progress') {
+          set({ robustProgress: { done: message.done, total: message.total } });
+        } else if (message.kind === 'robust-complete') {
+          set({ robustStatus: 'done', robustProgress: null, robustOutcome: message.payload });
+          attachArtifact({ robustRank: message.payload });
+        } else if (message.kind === 'robust-cancelled') {
+          set({ robustStatus: 'idle', robustProgress: null });
         } else if (message.kind === 'explore-result') {
           set({ exploreStatus: 'done', exploration: message.payload });
           attachArtifact({ exploration: message.payload });
@@ -568,7 +588,13 @@ export const useLabStore = create<LabState>((set, get) => {
       set({ ...initialTraining, trainStatus: 'training' });
       send({
         kind: 'train',
-        config: { target: state.target, features, seed: TRAIN_SEED, testRatio: TEST_RATIO },
+        config: {
+          target: state.target,
+          features,
+          seed: TRAIN_SEED,
+          testRatio: TEST_RATIO,
+          ...(state.splitChoice !== null && { split: state.splitChoice }),
+        },
       });
     },
 
@@ -618,7 +644,13 @@ export const useLabStore = create<LabState>((set, get) => {
       send({
         kind: 'tune',
         model,
-        config: { target: state.target, features, seed: TRAIN_SEED, testRatio: TEST_RATIO },
+        config: {
+          target: state.target,
+          features,
+          seed: TRAIN_SEED,
+          testRatio: TEST_RATIO,
+          ...(state.splitChoice !== null && { split: state.splitChoice }),
+        },
       });
     },
 
@@ -637,13 +669,48 @@ export const useLabStore = create<LabState>((set, get) => {
       send({
         kind: 'learning-curve',
         model,
-        config: { target: state.target, features, seed: TRAIN_SEED, testRatio: TEST_RATIO },
+        config: {
+          target: state.target,
+          features,
+          seed: TRAIN_SEED,
+          testRatio: TEST_RATIO,
+          ...(state.splitChoice !== null && { split: state.splitChoice }),
+        },
       });
     },
 
     cancelCurve() {
       if (get().curveStatus !== 'running') return;
       send({ kind: 'cancel-curve' });
+    },
+
+    robustRank() {
+      const state = get();
+      if (!state.target || state.trainStatus !== 'done' || state.robustStatus === 'running') return;
+      const features = state.profiles
+        .map((p) => p.name)
+        .filter((name) => name !== state.target && effectiveExclusion(state, name) === null);
+      set({ robustStatus: 'running', robustProgress: null, robustOutcome: null });
+      send({
+        kind: 'robust-rank',
+        config: {
+          target: state.target,
+          features,
+          seed: TRAIN_SEED,
+          testRatio: TEST_RATIO,
+          ...(state.splitChoice !== null && { split: state.splitChoice }),
+        },
+      });
+    },
+
+    cancelRobust() {
+      if (get().robustStatus !== 'running') return;
+      send({ kind: 'cancel-robust' });
+    },
+
+    setSplitChoice(choice) {
+      if (get().trainStatus === 'training') return;
+      set({ splitChoice: choice });
     },
 
     explore() {

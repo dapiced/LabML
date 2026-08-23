@@ -5,6 +5,7 @@ import { profileColumn } from '@/features/ml/data/profile';
 import { analyzeTarget, baselineSuggestions } from '@/features/ml/data/suggest';
 import { computeInsights, computeWhatIf } from '@/features/ml/train/insights';
 import { runLearningCurve } from '@/features/ml/train/learning-curve';
+import { robustRank } from '@/features/ml/train/robust';
 import { runSearch } from '@/features/ml/train/search';
 import { runExploration } from '@/features/ml/unsupervised/explore';
 import { runForecast } from '@/features/ml/timeseries/run';
@@ -34,6 +35,7 @@ let overflowed = false;
 let cancelTraining = false;
 let cancelTuning = false;
 let cancelCurve = false;
+let cancelRobust = false;
 let artifacts: TrainArtifacts | null = null;
 /** Target column of the last training — batch metrics need it by name. */
 let lastTarget: string | null = null;
@@ -309,6 +311,22 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       );
       if (cancelCurve) post({ kind: 'curve-cancelled' });
       else post({ kind: 'curve-complete', payload: outcome });
+    } else if (request.kind === 'cancel-robust') {
+      cancelRobust = true;
+    } else if (request.kind === 'robust-rank') {
+      cancelRobust = false;
+      if (!artifacts) throw new Error('no-run');
+      const profiles: ColumnProfile[] = header.map((column, i) =>
+        profileColumn(column, columns[i]),
+      );
+      // V35: ten fits per family on train+validation halves. The test rows
+      // never enter the folds — this reranks, it does not re-test.
+      const payload = await robustRank(columnsAsMap(), profiles, request.config, {
+        onProgress: (done, total) => post({ kind: 'robust-progress', done, total }),
+        isCancelled: () => cancelRobust,
+      });
+      if (payload === null) post({ kind: 'robust-cancelled' });
+      else post({ kind: 'robust-complete', payload });
     } else if (request.kind === 'cancel-tune') {
       cancelTuning = true;
     } else if (request.kind === 'tune') {

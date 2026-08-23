@@ -146,22 +146,41 @@ describe('wordEffects', () => {
     const termIndex = spec.terms.indexOf('qualite');
     expect(termIndex).toBeGreaterThanOrEqual(0);
 
-    const effects = wordEffects(probeModel(termIndex) as never, pipeline, testX, true, 2);
-    const driver = effects.find((entry) => entry.term === 'qualite');
+    const { words, refusal } = wordEffects(
+      probeModel(termIndex) as never,
+      pipeline,
+      testX,
+      true,
+      2,
+    );
+    expect(refusal).toBeUndefined();
+    const driver = words.find((entry) => entry.term === 'qualite');
     expect(driver).toBeDefined();
     // Erasing the word flips the answer down: keeping it pushes up.
     expect(driver!.effect).toBeCloseTo(0.8, 6);
-    expect(effects[0].term).toBe('qualite'); // biggest magnitude first
+    expect(words[0].term).toBe('qualite'); // biggest magnitude first
+  });
+
+  it('refuses a saturated model by name instead of reporting "no word matters" (V35)', () => {
+    // A model that answers only 0 or 1 cannot be moved by erasing a word:
+    // every occlusion measures exactly zero. Silence would be a lie.
+    const saturated = {
+      predict: () => testX.map(() => 1),
+      predictProba: () => testX.map(() => [0, 1] as number[]),
+    };
+    const { words, refusal } = wordEffects(saturated as never, pipeline, testX, true, 2);
+    expect(refusal).toBe('saturated');
+    expect(words).toEqual([]);
   });
 
   it('refuses multiclass rather than faking a direction', () => {
-    const effects = wordEffects(probeModel(0) as never, pipeline, testX, true, 3);
-    expect(effects).toEqual([]);
+    const { words } = wordEffects(probeModel(0) as never, pipeline, testX, true, 3);
+    expect(words).toEqual([]);
   });
 
   it('returns nothing when the run has no text column', () => {
     const numericOnly = fitPipeline(columns, profiles, ['amount'], [0, 1, 2, 3]);
     const rows = [0, 1, 2, 3].map((i) => numericOnly.transformRow({ amount: String(10 + i) }));
-    expect(wordEffects(probeModel(0) as never, numericOnly, rows, true, 2)).toEqual([]);
+    expect(wordEffects(probeModel(0) as never, numericOnly, rows, true, 2)).toEqual({ words: [] });
   });
 });
