@@ -221,6 +221,8 @@
       "errorBody": "The file looks empty or not tabular. Try a CSV with a header row.",
       "errorTooLargeTitle": "File too large for browser memory",
       "errorTooLarge": "This file exceeds the {{max}}-cell budget (rows × columns) the lab holds in memory — reading stopped, on purpose, at {{rows}} rows × {{cols}} columns. Split the file or drop columns, then try again.",
+      "errorDatasetMissingTitle": "This dataset is no longer in this browser",
+      "errorDatasetMissing": "It had been kept here, but local storage no longer holds it — it was forgotten, or the browser cleared its site data. Nothing was misread: drop the file again to carry on.",
       "retry": "Try another file",
       "rows": "rows",
       "columns": "columns",
