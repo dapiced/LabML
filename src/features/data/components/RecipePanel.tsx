@@ -4,9 +4,21 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { useDataStore } from '@/features/data/data-store';
-import type { ForcedType, RecipeOptions } from '@/features/data/quality/types';
+import type { ForcedType, MissingStrategy, RecipeOptions } from '@/features/data/quality/types';
+import { indicatorName, strategyFor } from '@/features/data/quality/clean';
 
-type ToggleKey = Exclude<keyof RecipeOptions, 'missing' | 'types'>;
+type ToggleKey = Exclude<keyof RecipeOptions, 'missing' | 'types' | 'columns'>;
+
+/** V39: the per-column strategies, in the order they appear in the picker. */
+const STRATEGIES: MissingStrategy[] = [
+  'keep',
+  'dropRows',
+  'median',
+  'mean',
+  'mode',
+  'constant',
+  'category',
+];
 
 const TOGGLES: ToggleKey[] = [
   'trimWhitespace',
@@ -192,6 +204,96 @@ export function RecipePanel() {
             ))}
           </div>
         </details>
+
+        <details className="text-sm" data-testid="recipe-columns">
+          <summary className="cursor-pointer font-medium select-none">
+            {t('data.recipe.columnsTitle')}
+          </summary>
+          <p className="mt-1 max-w-3xl text-xs text-muted">{t('data.recipe.columnsHint')}</p>
+          <div className="mt-2 flex flex-col gap-2">
+            {Object.entries(columnTypes).map(([name, inferred]) => {
+              const step = options.columns[name] ?? {};
+              const patch = (change: Partial<typeof step>) => {
+                const next = { ...options.columns };
+                const merged = { ...step, ...change };
+                // An override that overrides nothing is not a decision: drop it
+                // so the recipe stays a list of things someone actually chose.
+                for (const key of Object.keys(merged) as (keyof typeof merged)[]) {
+                  if (merged[key] === undefined) delete merged[key];
+                }
+                if (Object.keys(merged).length === 0) delete next[name];
+                else next[name] = merged;
+                setOptions({ columns: next });
+              };
+              return (
+                <div
+                  key={name}
+                  className="flex flex-wrap items-center gap-2 rounded-lg border border-line px-2.5 py-2"
+                  data-testid={`recipe-column-${name}`}
+                >
+                  <span className="min-w-32 truncate font-mono text-xs">{name}</span>
+                  <select
+                    aria-label={t('data.recipe.strategyFor', { column: name })}
+                    value={step.missing ?? 'auto'}
+                    onChange={(e) =>
+                      patch({
+                        missing:
+                          e.target.value === 'auto'
+                            ? undefined
+                            : (e.target.value as MissingStrategy),
+                      })
+                    }
+                    className="rounded-lg border border-line bg-surface px-1.5 py-1 text-xs"
+                  >
+                    <option value="auto">
+                      {t('data.recipe.strategyAuto', {
+                        strategy: t(
+                          `data.recipe.strategy.${strategyFor(undefined, options.missing, inferred)}`,
+                        ),
+                      })}
+                    </option>
+                    {STRATEGIES.map((strategy) => (
+                      <option key={strategy} value={strategy}>
+                        {t(`data.recipe.strategy.${strategy}`)}
+                      </option>
+                    ))}
+                  </select>
+                  {step.missing === 'constant' && (
+                    <input
+                      type="text"
+                      aria-label={t('data.recipe.constantFor', { column: name })}
+                      value={step.constant ?? ''}
+                      onChange={(e) => patch({ constant: e.target.value })}
+                      placeholder={t('data.recipe.constantPlaceholder')}
+                      className="w-28 rounded-lg border border-line bg-surface px-1.5 py-1 text-xs"
+                    />
+                  )}
+                  <label className="flex cursor-pointer items-center gap-1.5 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={step.indicator === true}
+                      onChange={(e) => patch({ indicator: e.target.checked || undefined })}
+                      className="accent-(--accent)"
+                    />
+                    {t('data.recipe.indicator', { column: indicatorName(name) })}
+                  </label>
+                </div>
+              );
+            })}
+          </div>
+        </details>
+
+        {stats && stats.imputedWithoutIndicator.length > 0 && (
+          <p
+            className="rounded-lg border border-copper bg-copper-soft px-3 py-2 text-xs text-copper"
+            data-testid="recipe-unmarked"
+          >
+            {t('data.recipe.unmarked', {
+              count: stats.imputedWithoutIndicator.length,
+              columns: stats.imputedWithoutIndicator.join(', '),
+            })}
+          </p>
+        )}
 
         {stats && (
           <p className="border-t border-line pt-3 text-sm text-muted" data-testid="recipe-result">
