@@ -310,7 +310,9 @@
         "weighting": "class weighting: balanced ({{loss}} weight the loss, {{resample}} use a seeded balanced resample)",
         "imbalanceHint": "The largest class holds {{share}}% of the training rows. Accuracy rewards always answering it — rank on F1 or recall, and try class weighting.",
         "weightToggle": "Balance the classes",
-        "weightToggleHint": "Weights the training loss (logistic regression, gradient boosting) or resamples the rows (tree, forest) so the rare class counts as much as the common one."
+        "weightToggleHint": "Weights the training loss (logistic regression, gradient boosting) or resamples the rows (tree, forest) so the rare class counts as much as the common one.",
+        "parallel_one": "{{count}} helper core: {{families}} trained in parallel",
+        "parallel_other": "{{count}} helper cores: {{families}} trained in parallel"
       },
       "models": {
         "baseline": "Naive baseline",
@@ -485,7 +487,16 @@
         "intervalsTitle": "Winner intervals (95%, from each run)",
         "intervalsDisjoint": "The intervals do not overlap — the gap between the two runs exceeds both uncertainties. Probably real.",
         "intervalsOverlap": "The intervals overlap — on these test sets, the gap between the two runs could be noise.",
-        "intervalsNote": "Each interval comes from its own run's test draw (v20). Two runs are never paired — read this as an indication, not a test."
+        "intervalsNote": "Each interval comes from its own run's test draw (v20). Two runs are never paired — read this as an indication, not a test.",
+        "openMany": "Compare these {{count}} runs",
+        "manyTitle": "Session comparison",
+        "manyHint": "Every run is read against {{reference}}, the oldest of the selection — so the deltas say what your changes did, not what the newest run happens to be.",
+        "manyIncomparable": "These runs do not predict the same thing — the numbers are shown, but they are not deltas. Read each column on its own.",
+        "reference": "reference",
+        "champion": "Best model",
+        "manyShared_one": "{{count}} feature present in every run: {{columns}}",
+        "manyShared_other": "{{count}} features present in every run: {{columns}}",
+        "manyMissing": "Not enough runs to compare — select between 2 and 6 saved runs from the lab history."
       },
       "imported": {
         "title": "Reuse an exported model",
