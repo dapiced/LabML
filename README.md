@@ -192,6 +192,19 @@ deterministic parser produces **zero wrong answers** on the corpus. The model ha
 separate on-demand workflow (`.github/workflows/llm-bench.yml`) — it downloads 355 MB and
 takes minutes, which is not a cost worth adding to every pull request.
 
+The bench takes the model as a parameter, which is how « would a bigger model read
+better? » stops being an opinion:
+
+```
+LABML_LLM_REPO=onnx-community/Qwen3-1.7B-ONNX npm run llm:bench:node
+```
+
+Measured on the same 55 questions: **Qwen3-1.7B (1.43 GB, four times the download)
+scores worse** — 40 right / 12 wrong against 42 / 7 for the 355 MB model that ships. It
+reads the grouped comparisons a small model refuses, and misreads simple counts. The
+prompt was tuned against the small model, so that number is a property of the pair, not
+of the model; see PLAN.md § N for the full result and its limits.
+
 ## Deployment
 
 CI builds, tests and deploys on every push: pull requests get a Cloudflare Pages preview,
