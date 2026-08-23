@@ -16,6 +16,7 @@ export function EnginePicker() {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'en';
   const llmStatus = useChatStore((s) => s.llmStatus);
+  const llmConstrained = useChatStore((s) => s.llmConstrained);
   const llmBytes = useChatStore((s) => s.llmBytes);
   const llmProgress = useChatStore((s) => s.llmProgress);
   const llmError = useChatStore((s) => s.llmError);
@@ -121,12 +122,19 @@ export function EnginePicker() {
       )}
 
       {llmStatus === 'ready' && (
-        <p className="text-xs text-muted">
-          <Badge variant="outline" className="mr-2 text-[0.62rem]">
-            {t('ai.chat.engine.readyTag')}
-          </Badge>
-          {t('ai.chat.engine.readyNote')}
-        </p>
+        <div className="space-y-2">
+          <p className="text-xs text-muted" data-testid="llm-constrained">
+            <Badge variant="outline" className="mr-2 text-[0.62rem]">
+              {t(llmConstrained ? 'ai.chat.engine.constrainedTag' : 'ai.chat.engine.readyTag')}
+            </Badge>
+            {t(
+              llmConstrained
+                ? 'ai.chat.engine.constrainedNote'
+                : 'ai.chat.engine.unconstrainedNote',
+            )}
+          </p>
+          <p className="text-xs text-muted">{t('ai.chat.engine.readyNote')}</p>
+        </div>
       )}
 
       {llmStatus === 'failed' && (

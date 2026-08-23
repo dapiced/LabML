@@ -176,17 +176,16 @@ describe('a condition it cannot read is REFUSED, never dropped', () => {
     expect(parseQuestion('average age for kids born before 1900', columns, 'en')).toBeNull();
   });
 
-  // The guard targets DROPPED conditions, not guessed columns. Here the
-  // condition IS applied — to `fare`, the only numeric column named — which
-  // also happens to be the legitimate reading of "average fare below 12".
-  // Refusing this would cost a real question to catch a fuzzy one.
-  it('keeps a condition it can attach, even when the wording is loose', () => {
-    expect(parseQuestion('average fare for kids below 12', columns, 'en')).toMatchObject({
-      kind: 'aggregate',
-      op: 'mean',
-      column: 'fare',
-      filter: { column: 'fare', op: '<', value: 12 },
-    });
+  // V30 reverses this case, deliberately. It used to assert that the parser
+  // ANSWERS here, on the grounds that `fare < 12` is « also a legitimate
+  // reading » — but the question says *kids*, and the only reading that word
+  // supports is `age < 12`. Attaching the threshold to the nearest numeric
+  // column is a guess, and the guess is delivered under the deterministic
+  // badge, which is supposed to mean exact. Refusing hands the question to the
+  // model, which reads it; answering hands the user a number for a question
+  // nobody asked.
+  it('refuses when the condition is attached to a column the wording never named', () => {
+    expect(parseQuestion('average fare for kids below 12', columns, 'en')).toBeNull();
   });
 
   it('still answers the same question when the condition names a real column', () => {

@@ -38,7 +38,25 @@ describe('buildSystemPrompt', () => {
   it('ties a filter value to the column whose values list contains it', () => {
     const prompt = buildSystemPrompt(COLUMNS);
     expect(prompt).toContain('must be one of the values listed for THAT column');
-    expect(prompt).toContain('DIFFERENT table');
+  });
+
+  // V30 — the rule this replaces read « the examples below describe a
+  // DIFFERENT table, never reuse a column name from them ». The examples are
+  // built from the caller's own columns now, so there is no foreign name left
+  // to warn about: every column named anywhere in the prompt exists.
+  it("n'écrit jamais dans les exemples une colonne qui n'existe pas", () => {
+    const prompt = buildSystemPrompt(COLUMNS);
+    const known = new Set(COLUMNS.map((c) => c.name));
+    for (const [, name] of prompt.matchAll(/"(?:column|groupBy|a|b)":"([^"]+)"/g)) {
+      expect(known.has(name), name).toBe(true);
+    }
+    expect(prompt).not.toContain('DIFFERENT table');
+  });
+
+  it('montre au modèle comment refuser', () => {
+    const prompt = buildSystemPrompt(COLUMNS);
+    expect(prompt).toContain('{"kind":"none"}');
+    expect(prompt).toContain('better than a query that answers a different question');
   });
 
   // V27.2 — measured on real hardware: « est-ce que les femmes payaient plus
