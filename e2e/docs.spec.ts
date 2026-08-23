@@ -13,13 +13,32 @@
  * doc page may quote a metric and may never quote a duration — the last test
  * here is what stops a well-meaning edit from putting one back.
  */
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 
 test.use({ locale: 'en-US' });
 
 const DOC_DIR = 'src/content/docs';
 const SHAPE = '891 rows · 15 columns';
+
+interface DocFile {
+  path: string;
+  kind: string;
+  markdown: string;
+}
+
+/** Every doc page with its Diátaxis quadrant, read from the front matter. */
+function docPages(): DocFile[] {
+  const pages: DocFile[] = [];
+  for (const lang of readdirSync(DOC_DIR)) {
+    for (const file of readdirSync(`${DOC_DIR}/${lang}`)) {
+      const path = `${DOC_DIR}/${lang}/${file}`;
+      const markdown = readFileSync(path, 'utf8');
+      pages.push({ path, kind: /^kind:\s*(\S+)/m.exec(markdown)?.[1] ?? '', markdown });
+    }
+  }
+  return pages;
+}
 
 /**
  * Every figure a doc page QUOTES from the app — that is, every number inside a
@@ -98,16 +117,19 @@ test('every figure the tutorial quotes is one the app really produces', async ({
     ].join('\n');
   });
 
-  for (const lang of readdirSync(DOC_DIR)) {
-    for (const file of readdirSync(`${DOC_DIR}/${lang}`)) {
-      const markdown = readFileSync(`${DOC_DIR}/${lang}/${file}`, 'utf8');
-      const figures = quotedFigures(markdown);
-      expect(figures.length, `${lang}/${file} quotes no figure at all`).toBeGreaterThan(8);
-      for (const figure of figures) {
-        expect(shown, `${lang}/${file} quotes ${figure}, which the app never shows`).toContain(
-          figure,
-        );
-      }
+  // Only pages that REPRODUCE a run are checked against a run. A reference page
+  // quotes facts about the software — a 0.35 threshold, a 13.6 MB model — which
+  // no titanic leaderboard contains; demanding the app produce those would
+  // check nothing and pass by coincidence on small integers. Measured: with
+  // every page in scope this guard went green while genuinely not checking the
+  // reference pages at all. Their figures are guarded separately, below.
+  const tutorials = docPages().filter((page) => page.kind === 'tutorial');
+  expect(tutorials.length, 'no tutorial page to check').toBeGreaterThan(0);
+  for (const page of tutorials) {
+    const figures = quotedFigures(page.markdown);
+    expect(figures.length, `${page.path} quotes no figure at all`).toBeGreaterThan(8);
+    for (const figure of figures) {
+      expect(shown, `${page.path} quotes ${figure}, which the app never shows`).toContain(figure);
     }
   }
 
@@ -122,7 +144,11 @@ test('every figure the tutorial quotes is one the app really produces', async ({
 test('the docs index lists the tutorial and the local search finds it', async ({ page }) => {
   await page.goto('/docs');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Learn LabML');
-  await expect(page.getByTestId('docs-link')).toContainText('Your first model in 10 minutes');
+  await expect(page.getByTestId('docs-link').first()).toContainText(
+    'Your first model in 10 minutes',
+  );
+  // V33: the index now carries the tutorial plus the reference pages.
+  expect(await page.getByTestId('docs-link').count()).toBeGreaterThan(4);
 
   // Search is a local index — no request may leave for it.
   const outbound: string[] = [];
@@ -181,4 +207,71 @@ test('no documentation page quotes a wall-clock duration', () => {
       expect(hit?.[0], `${lang}/${file} quotes a timing: ${hit?.[0]}`).toBeUndefined();
     }
   }
+});
+
+/**
+ * V33 — the reference pages' own guard.
+ *
+ * A reference page quotes constants of the software rather than the output of a
+ * run, so it cannot be checked against a leaderboard. It is checked against the
+ * source of truth for each constant instead: the file that defines it, or the
+ * file on disk whose size is being quoted.
+ *
+ * The bound is stated rather than implied: this checks the constants listed
+ * here, not every number on the page. A figure nobody listed is a figure nobody
+ * guards — which is why the list names the ones a reader would actually act on
+ * (thresholds, model weights, pinned versions, the split).
+ */
+const REFERENCE_FACTS: { quoted: string; source: string; must: RegExp }[] = [
+  {
+    quoted: '0.35',
+    source: 'src/features/ai/vision/detect.ts',
+    must: /OBJECT_THRESHOLD = 0\.35/,
+  },
+  { quoted: '0.90', source: 'src/features/ai/vision/detect.ts', must: /FACE_THRESHOLD = 0\.9/ },
+  { quoted: '50%', source: 'src/features/ai/vision/verdict.ts', must: /CONFIDENCE_FLOOR = 0\.5/ },
+  { quoted: '1.28.0', source: 'NOTICE', must: /pinned to 1\.28\.0/i },
+  { quoted: '20', source: 'src/locales/en.json', must: /at most 20/ },
+];
+
+test('the reference pages quote the constants the code actually defines', () => {
+  for (const fact of REFERENCE_FACTS) {
+    const source = readFileSync(fact.source, 'utf8');
+    expect(source, `${fact.source} no longer matches ${fact.must}`).toMatch(fact.must);
+  }
+
+  // And each of those constants is actually written down somewhere in the docs:
+  // a guard over a fact no page states protects nothing.
+  const reference = docPages()
+    .filter((page) => page.kind === 'reference')
+    .map((page) => page.markdown)
+    .join('\n');
+  for (const fact of REFERENCE_FACTS) {
+    expect(reference, `no reference page quotes ${fact.quoted}`).toContain(fact.quoted);
+  }
+});
+
+test('the three vision model sizes on the reference page match the files on disk', () => {
+  const files = {
+    '13.6': 'public/models/efficientnet-lite4-11-int8.onnx',
+    '3.7': 'public/models/yolox-nano.onnx',
+    '1.3': 'public/models/ultraface-RFB-320.onnx',
+  } as const;
+  const reference = docPages()
+    .filter((page) => page.kind === 'reference')
+    .map((page) => page.markdown)
+    .join('\n');
+  let total = 0;
+  for (const [quoted, path] of Object.entries(files)) {
+    const mb = statSync(path).size / 1e6;
+    // A model swapped for another size must not leave the page claiming the old
+    // one — that is exactly the silent drift this wave exists to prevent.
+    expect(Number(quoted), `${path} is ${mb.toFixed(1)} MB, the page says ${quoted}`).toBeCloseTo(
+      mb,
+      1,
+    );
+    expect(reference, `no reference page quotes ${quoted} MB`).toContain(quoted);
+    total += mb;
+  }
+  expect(reference, `the total should be ${total.toFixed(1)} MB`).toContain(total.toFixed(1));
 });
