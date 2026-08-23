@@ -5,18 +5,37 @@ import { Eyebrow } from '@/components/ui/eyebrow';
  * Signed word effects (V24): a diverging bar per word, drawn from a centre
  * line so the direction is the first thing you read — words pushing the
  * answer up go right in teal, words pushing it down go left in copper.
+ *
+ * V35: when the method cannot measure — a model whose probabilities are
+ * saturated shifts by exactly zero for every word — the card still appears
+ * and says why. Vanishing would read as "no word matters", which is false.
  */
 export function WordEffects({
   words,
   isClassification,
   positiveClass,
+  refusal,
 }: {
   words: { column: string; term: string; effect: number; rows: number }[];
   isClassification: boolean;
   positiveClass?: string;
+  refusal?: 'saturated';
 }) {
   const { t } = useTranslation();
   const peak = Math.max(...words.map((word) => Math.abs(word.effect)), 1e-9);
+
+  if (refusal !== undefined) {
+    return (
+      <div
+        data-testid="word-effects"
+        className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4"
+      >
+        <Eyebrow>{t('ml.lab.insights.wordsTitle')}</Eyebrow>
+        <p className="text-sm">{t('ml.lab.insights.wordsSaturated')}</p>
+        <p className="text-xs text-muted">{t('ml.lab.insights.wordsSaturatedAdvice')}</p>
+      </div>
+    );
+  }
 
   return (
     <div

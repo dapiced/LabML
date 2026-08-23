@@ -8,6 +8,7 @@
 import type { RunRecord } from '@/features/ml/projects/types';
 import type { ModelInterval } from '@/features/ml/train/uncertainty';
 import type { ModelKey } from '@/features/ml/train/types';
+import { bestResult } from '@/features/ml/train/ranking';
 
 export interface ModelDelta {
   key: ModelKey;
@@ -40,13 +41,11 @@ export interface RunComparison {
 }
 
 function bestOf(record: RunRecord): { key: ModelKey; primary: number } | null {
-  const ok = record.results.filter((r) => r.ok);
-  if (ok.length === 0) return null;
-  const isClassification = record.taskType !== 'regression';
-  const sorted = [...ok].sort((x, y) =>
-    isClassification ? y.primary - x.primary : x.primary - y.primary,
-  );
-  return { key: sorted[0].key, primary: sorted[0].primary };
+  // V35: ranking lives in one place — a run with validation scores is ranked
+  // on those, so the comparison crowns the same model the leaderboard did.
+  // The reported figure stays the TEST metric: that is what runs compare on.
+  const best = bestResult(record.results, record.taskType);
+  return best === null ? null : { key: best.key, primary: best.primary };
 }
 
 export function compareRuns(a: RunRecord, b: RunRecord): RunComparison {

@@ -6,6 +6,7 @@ import type { BatchScore } from '@/features/ml/train/score';
 import type { SegmentAnalysis } from '@/features/ml/train/segments';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
 import type { LearningCurveOutcome } from '@/features/ml/train/learning-curve';
+import type { RobustRankResult } from '@/features/ml/train/robust';
 import type { ThresholdAnalysis } from '@/features/ml/train/threshold-analysis';
 import type { UncertaintyAnalysis } from '@/features/ml/train/uncertainty';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
@@ -36,6 +37,9 @@ export type WorkerRequest =
   // v26: learning curve — retrain on growing seeded prefixes of the train split.
   | { kind: 'learning-curve'; model: ModelKey; config: TrainConfig }
   | { kind: 'cancel-curve' }
+  // v35: robust ranking — 5×2 CV on train+validation; the test set stays out.
+  | { kind: 'robust-rank'; config: TrainConfig }
+  | { kind: 'cancel-robust' }
   | { kind: 'explore'; features: string[]; seed: number }
   | { kind: 'forecast'; dateColumn: string; valueColumn: string }
   | { kind: 'export-model'; model: ModelKey }
@@ -69,6 +73,9 @@ export type WorkerResponse =
   // null = refused by name (baseline, or a ladder with a single rung).
   | { kind: 'curve-complete'; payload: LearningCurveOutcome | null }
   | { kind: 'curve-cancelled' }
+  | { kind: 'robust-progress'; done: number; total: number }
+  | { kind: 'robust-complete'; payload: RobustRankResult }
+  | { kind: 'robust-cancelled' }
   | { kind: 'explore-result'; payload: ExplorationPayload }
   | { kind: 'forecast-result'; payload: ForecastPayload }
   | { kind: 'model-json'; model: ModelKey; json: string | null }

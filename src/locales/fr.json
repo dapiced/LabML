@@ -289,7 +289,19 @@
         "skipped": "écartées (dates et identifiants ne sont pas des variables) : {{columns}}",
         "trainedOn": "échantillon : {{rows}} lignes",
         "trainedOnTitle": "Entraîné sur un échantillon seedé annoncé de {{rows}} des {{total}} lignes d'entraînement — jamais en silence. Le score vient du même jeu de test complet que les autres modèles.",
-        "sampledFrom": "échantillon annoncé : {{cap}} lignes sur {{from}} utilisables (seedé, stratifié)"
+        "sampledFrom": "échantillon annoncé : {{cap}} lignes sur {{from}} utilisables (seedé, stratifié)",
+        "accuracyVal": "Accuracy (valid.)",
+        "rmseVal": "RMSE (valid.)",
+        "test": "Test",
+        "testTitle": "Le score sur le jeu de rapport — tenu à l'écart de la sélection. C'est le chiffre à citer.",
+        "championLine": "{{model}} a été choisi sur la validation à {{val}} et obtient {{test}} sur le jeu de test intact ({{gap}}).",
+        "championWhy": "Choisir le meilleur de plusieurs modèles sur un jeu rend ce jeu optimiste — rapporter sur un troisième jeu, jamais utilisé pour choisir, est ce qui garde le chiffre honnête.",
+        "runInfoVal": "seed {{seed}} · {{train}} lignes d'entraînement · {{val}} lignes de validation · {{test}} lignes de test · {{features}} variables après encodage",
+        "splitChronological": "découpe chronologique sur {{column}} (les plus anciennes entraînent, les plus récentes testent)",
+        "splitGroup": "découpe par groupe sur {{column}} (aucun groupe des deux côtés)",
+        "splitDropped": "— {{count}} lignes écartées, date inexploitable",
+        "leakWarning": "« {{column}} » prédit à elle seule la cible à {{score}} % sur le jeu de validation.",
+        "leakAdvice": "Une colonne seule qui lit aussi bien la cible est presque toujours une fuite — une information qui n'existerait pas au moment de prédire. Excluez-la et réentraînez, ou confirmez qu'elle est légitimement disponible."
       },
       "models": {
         "baseline": "Baseline naïve",
@@ -542,7 +554,9 @@
         "wordsHintClassification": "Décalage moyen de la probabilité prédite de « {{class}} » quand le mot est effacé des avis qui le contiennent — à droite il pousse vers le haut, à gauche vers le bas.",
         "wordsHintRegression": "Décalage moyen de la prédiction quand le mot est effacé des textes qui le contiennent — à droite il pousse vers le haut, à gauche vers le bas.",
         "wordsNote": "Un mot à la fois, sur les lignes de test mises de côté. Un avis dit la même chose de plusieurs façons : effacer un seul mot renverse rarement une prédiction à lui seul.",
-        "wordsRowTitle": "« {{term}} » dans {{column}} · {{rows}} lignes de test · {{effect}}"
+        "wordsRowTitle": "« {{term}} » dans {{column}} · {{rows}} lignes de test · {{effect}}",
+        "wordsSaturated": "Ce modèle ne peut pas répondre à la question des mots : ses probabilités sont saturées — il ne renvoie presque que 0 ou 1 — donc effacer un mot déplace la réponse d'exactement zéro.",
+        "wordsSaturatedAdvice": "C'est une propriété du modèle, pas des mots. Choisissez un autre modèle dans le leaderboard (la régression logistique et le gradient boosting donnent des probabilités nuancées) pour lire les effets par mot."
       },
       "export": {
         "model": "Modèle (JSON)",
@@ -581,7 +595,25 @@
         "note": "Ce lien ne transporte que les métriques et graphiques — jamais les données d'origine. Il vit dans le fragment d'URL, que les navigateurs n'envoient à aucun serveur.",
         "invalid": "Lien de partage invalide ou incomplet."
       },
-      "reportFooter": "Généré localement par LabML — aucune donnée n'a quitté le navigateur."
+      "reportFooter": "Généré localement par LabML — aucune donnée n'a quitté le navigateur.",
+      "splitMode": {
+        "label": "Découpe",
+        "random": "Aléatoire (seedée, stratifiée)",
+        "chronological": "Chronologique — {{column}}",
+        "group": "Par groupe — {{column}}"
+      },
+      "robust": {
+        "title": "Ce classement est-il réel ?",
+        "hint": "Une découpe unique classe sur un seul tirage de quelques centaines de lignes, et deux modèles séparés d'un point peuvent échanger leur place au tirage suivant. Ceci réentraîne chaque famille sur 5 répétitions × 2 moitiés des lignes d'entraînement et de validation — dix ajustements chacune — et rapporte une moyenne, une dispersion, et combien de fois le premier a réellement battu le second. Le jeu de test reste hors des plis : on reclasse, on ne re-teste pas.",
+        "run": "Classer en validation croisée 5×2",
+        "preparing": "Préparation des plis…",
+        "progress": "Ajustement {{done}} / {{total}}…",
+        "mean": "Moyenne",
+        "sd": "Dispersion",
+        "verdictStable": "{{leader}} a battu {{runnerUp}} sur {{wins}} plis sur {{folds}} — l'ordre entre eux est stable.",
+        "verdictNoise": "{{leader}} n'a battu {{runnerUp}} que sur {{wins}} plis sur {{folds}} — l'ordre entre eux est dans le bruit : traitez-les comme à égalité.",
+        "note": "{{folds}} plis ({{reps}} répétitions × 2 moitiés) sur {{rows}} lignes d'entraînement et de validation. Le pipeline est réajusté dans chaque pli ; le jeu de test n'est jamais touché."
+      }
     }
   },
   "data": {

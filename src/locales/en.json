@@ -289,7 +289,19 @@
         "skipped": "skipped (dates and identifiers are not features): {{columns}}",
         "trainedOn": "sample: {{rows}} rows",
         "trainedOnTitle": "Trained on an announced seeded sample of {{rows}} of the {{total}} training rows — never silently. The score comes from the same full test set as every other model.",
-        "sampledFrom": "announced sample: {{cap}} of {{from}} usable rows (seeded, stratified)"
+        "sampledFrom": "announced sample: {{cap}} of {{from}} usable rows (seeded, stratified)",
+        "accuracyVal": "Accuracy (val)",
+        "rmseVal": "RMSE (val)",
+        "test": "Test",
+        "testTitle": "The score on the reporting split — held out from selection. It is the number to quote.",
+        "championLine": "{{model}} was selected on validation at {{val}} and scores {{test}} on the untouched test set ({{gap}}).",
+        "championWhy": "Selecting the best of several models on a split makes that split optimistic — reporting on a third, never-selected split is what keeps the headline number honest.",
+        "runInfoVal": "seed {{seed}} · {{train}} train rows · {{val}} validation rows · {{test}} test rows · {{features}} features after encoding",
+        "splitChronological": "chronological split on {{column}} (oldest rows train, newest test)",
+        "splitGroup": "grouped split on {{column}} (no group on both sides)",
+        "splitDropped": "— {{count}} rows dropped, no usable date",
+        "leakWarning": "« {{column}} » alone predicts the target at {{score}}% on the validation split.",
+        "leakAdvice": "A single column reading the target that well is almost always leakage — information that would not exist at prediction time. Exclude it and retrain, or confirm it is legitimately available."
       },
       "models": {
         "baseline": "Naive baseline",
@@ -542,7 +554,9 @@
         "wordsHintClassification": "Average shift of the predicted probability of “{{class}}” when the word is erased from the reviews containing it — right pushes up, left pushes down.",
         "wordsHintRegression": "Average shift of the prediction when the word is erased from the texts containing it — right pushes up, left pushes down.",
         "wordsNote": "One word at a time, on the held-out test rows. A review says the same thing several ways, so erasing one word rarely flips a prediction on its own.",
-        "wordsRowTitle": "“{{term}}” in {{column}} · {{rows}} test rows · {{effect}}"
+        "wordsRowTitle": "“{{term}}” in {{column}} · {{rows}} test rows · {{effect}}",
+        "wordsSaturated": "This model cannot answer the word question: its probabilities are saturated — it returns almost only 0 or 1 — so erasing a word shifts the answer by exactly zero.",
+        "wordsSaturatedAdvice": "That is a property of the model, not of the words. Pick another model in the leaderboard (logistic regression and gradient boosting give graded probabilities) to read the word effects."
       },
       "export": {
         "model": "Model (JSON)",
@@ -581,7 +595,25 @@
         "note": "This link carries only metrics and charts — never the original data. It lives in the URL fragment, which browsers do not send to any server.",
         "invalid": "Invalid or incomplete share link."
       },
-      "reportFooter": "Generated locally by LabML — no data ever left the browser."
+      "reportFooter": "Generated locally by LabML — no data ever left the browser.",
+      "splitMode": {
+        "label": "Split",
+        "random": "Random (seeded, stratified)",
+        "chronological": "Chronological — {{column}}",
+        "group": "By group — {{column}}"
+      },
+      "robust": {
+        "title": "Is this ranking real?",
+        "hint": "A single split ranks on one draw of a few hundred rows, and two models a point apart can swap places on the next draw. This retrains every family on 5 repetitions × 2 halves of the training and validation rows — ten fits each — and reports a mean, a spread, and how often the leader actually beat the runner-up. The test set stays out of the folds: this re-ranks, it does not re-test.",
+        "run": "Rank on 5×2 cross-validation",
+        "preparing": "Preparing the folds…",
+        "progress": "Fit {{done}} / {{total}}…",
+        "mean": "Mean",
+        "sd": "Spread",
+        "verdictStable": "{{leader}} beat {{runnerUp}} in {{wins}} of {{folds}} folds — the order between them is stable.",
+        "verdictNoise": "{{leader}} beat {{runnerUp}} in only {{wins}} of {{folds}} folds — the order between them is inside the noise, so treat them as tied.",
+        "note": "{{folds}} folds ({{reps}} repetitions × 2 halves) over {{rows}} training and validation rows. The pipeline is refitted inside every fold; the test set is never touched."
+      }
     }
   },
   "data": {

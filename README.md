@@ -26,8 +26,11 @@ The project follows three non-negotiable principles:
   pinned to the served header by a unit test, so the page cannot claim a protection the
   site stopped shipping.
 - **Honest evaluation.** Every run is scored against a naive baseline on a held-out test
-  set. Metrics ship with 95% bootstrap intervals, per-segment breakdowns, calibration
-  curves, and explicit refusals when a number would be noise (tiny slices, tiny test sets).
+  set. Models are **selected on a validation split and reported on a third, never-selected
+  test split**, with the gap between the two shown — crowning the best of nine on the
+  reporting set is what makes a headline figure optimistic. Metrics ship with 95% bootstrap
+  intervals, per-segment breakdowns, calibration curves, and explicit refusals when a number
+  would be noise (tiny slices, tiny test sets, a model whose probabilities are saturated).
 - **Hand-written, deterministic ML.** The model zoo, search, explanations, and statistics
   are implemented from scratch in TypeScript, seeded end to end — the same seed always
   reproduces the same run.
@@ -99,7 +102,10 @@ The project follows three non-negotiable principles:
   post-processing (YOLOX grid decode, IoU, non-maximum suppression).
 - **Leakage discipline.** Preprocessing (imputation, one-hot/ordinal encoding,
   standardization) is fitted on the training split only; cross-validation refits the
-  pipeline inside each fold; forecast backtests never peek at the future.
+  pipeline inside each fold; forecast backtests never peek at the future. Dated files can
+  be split **chronologically** and grouped files **by group**, both announced — a random
+  split puts the future in training. A one-column stump flags any lone column that predicts
+  the target at 99%: that is a leak warning, never a victory.
 - **Determinism.** A single seed drives splits, model initialization, search, sampling
   and resampling — runs are exactly reproducible, and the test suite depends on it.
 - **Scale, honestly.** 100k–1M-row files train comfortably: past 100 000 usable rows an
@@ -110,7 +116,7 @@ The project follows three non-negotiable principles:
 - **Performance.** Every section serves a prerendered static shell (hero paints before
   JavaScript); Lighthouse mobile ≈ 0.99 on `/ml` under real throttling. Heavy
   dependencies (Dexie, SheetJS, ONNX Runtime) load lazily.
-- **Quality bar.** 352 unit tests, 61 Playwright end-to-end tests (including offline PWA,
+- **Quality bar.** 369 unit tests, 65 Playwright end-to-end tests (including offline PWA,
   fake-webcam and axe-core WCAG A/AA accessibility checks), strict TypeScript, ESLint,
   Prettier, and Lighthouse budgets — all enforced in CI.
 
