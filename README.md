@@ -94,6 +94,12 @@ The project follows three non-negotiable principles:
   identical runs agree on every metric and disagree on every timing. « Try it » links
   are deep links (`/ml?demo=titanic&target=survived`) rather than screenshots, so they
   cannot go stale unnoticed.
+- **The table of refusals** (`/docs/refus`): every named refusal the app can raise —
+  what triggers it, what it means, what to do — **extracted from the source, not
+  written from memory**. A test re-extracts it on every run in both directions: a code
+  thrown but undocumented fails the build, and so does a documented code the app no
+  longer throws. Refusing well is this project's distinguishing feature; a refusal
+  nobody can decode reads as a bug instead of the decision it is.
 
 ### AI Playground — `/ai`
 
