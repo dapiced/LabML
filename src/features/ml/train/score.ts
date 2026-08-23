@@ -121,8 +121,12 @@ export function scoreRows(
     X.push(scorer.transformRow(record));
   }
 
-  const predictions = model.predict(X);
-  const probabilities = isClassification && model.predictProba ? model.predictProba(X) : null;
+  // V37: one pass where the family offers one (k-NN) — same numbers, half the
+  // neighbour searches. See `predictWithProba` on TrainedModel.
+  const both = model.predictWithProba?.(X) ?? null;
+  const predictions = both?.labels ?? model.predict(X);
+  const probabilities =
+    isClassification && model.predictProba ? (both?.proba ?? model.predictProba(X)) : null;
   const label = (value: number): string =>
     isClassification ? (classes[value] ?? String(value)) : String(value);
 
