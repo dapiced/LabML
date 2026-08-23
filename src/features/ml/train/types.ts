@@ -1,7 +1,25 @@
 import type { TaskInfo, TaskType } from '@/features/ml/data/types';
 
 export type ModelKey =
-  'baseline' | 'linear' | 'logistic' | 'knn' | 'naiveBayes' | 'tree' | 'forest' | 'gbdt' | 'mlp';
+  | 'baseline'
+  | 'linear'
+  | 'logistic'
+  | 'knn'
+  | 'naiveBayes'
+  | 'tree'
+  | 'forest'
+  | 'gbdt'
+  | 'mlp'
+  // V36: the average of the top families, built from models already trained.
+  | 'ensemble';
+
+/**
+ * V36: which metric the leaderboard ranks on. Accuracy and RMSE were imposed
+ * before; on an imbalanced problem F1 or recall is the right criterion and
+ * the ranking genuinely changes with it.
+ */
+export type RankingMetric =
+  'accuracy' | 'f1' | 'recall' | 'precision' | 'auc' | 'rmse' | 'mae' | 'r2';
 
 export interface TrainConfig {
   target: string;
@@ -9,6 +27,11 @@ export interface TrainConfig {
   features: string[];
   seed: number;
   testRatio: number;
+  /**
+   * V36: turn class weighting on. Off by default — on a balanced target it
+   * changes nothing, and a knob that does nothing is worse than no knob.
+   */
+  classWeighting?: 'balanced';
   /**
    * V35: how rows are assigned to the splits. Absent = seeded random
    * (stratified on classification). 'chronological' orders rows by the named
@@ -146,4 +169,15 @@ export interface TrainSummary {
    * warning, never as a victory.
    */
   leakWarnings?: { column: string; score: number }[];
+  /**
+   * V36: the largest class's share of the training split, and whether that
+   * crosses the threshold where class weighting is worth offering. Absent on
+   * regression and on runs stored before V36.
+   */
+  majorityShare?: number;
+  imbalanced?: boolean;
+  /** V36: class weighting was ON for this run — announced, never inferred. */
+  classWeighting?: 'balanced';
+  /** V36: the ensemble's members and the method used to combine them. */
+  ensemble?: { members: ModelKey[]; method: 'probability' | 'vote' | 'mean' };
 }

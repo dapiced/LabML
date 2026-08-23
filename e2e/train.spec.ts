@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test.use({ locale: 'en-US' });
 
-test('iris: training fills the leaderboard with 6 ranked models', async ({ page }) => {
+test('iris: training fills the leaderboard with every ranked model', async ({ page }) => {
   await page.goto('/ml');
   await page.getByRole('button', { name: /iris\.csv/ }).click();
   await expect(page.getByText('150 rows · 5 columns')).toBeVisible();
@@ -13,7 +13,8 @@ test('iris: training fills the leaderboard with 6 ranked models', async ({ page 
   await expect(page.getByTestId('train-again')).toBeVisible({ timeout: 60000 });
 
   const rows = page.getByTestId('leaderboard').locator('tbody tr');
-  await expect(rows).toHaveCount(8);
+  // V36: eight zoo families + the ensemble built from the top three.
+  await expect(rows).toHaveCount(9);
   await expect(page.getByText('best', { exact: true })).toBeVisible();
   await expect(page.getByText('baseline', { exact: true })).toBeVisible();
   await expect(page.getByText(/seed 42 · split/)).toBeVisible();
@@ -30,7 +31,8 @@ test('mpg: regression leaderboard ranks by RMSE', async ({ page }) => {
   await expect(page.getByTestId('train-again')).toBeVisible({ timeout: 60000 });
 
   const rows = page.getByTestId('leaderboard').locator('tbody tr');
-  await expect(rows).toHaveCount(7);
+  // V36: seven regression families + the mean-of-top-three ensemble.
+  await expect(rows).toHaveCount(8);
   await expect(
     page.getByTestId('leaderboard').getByRole('columnheader', { name: 'RMSE' }),
   ).toBeVisible();
