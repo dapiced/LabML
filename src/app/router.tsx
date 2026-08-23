@@ -28,6 +28,12 @@ export const router = createBrowserRouter([
         }),
       },
       {
+        path: 'ml/compare-many/:ids',
+        lazy: async () => ({
+          Component: (await import('@/features/ml/pages/MlCompareManyPage')).default,
+        }),
+      },
+      {
         path: 'ml/share',
         lazy: async () => ({
           Component: (await import('@/features/ml/pages/SharedRunPage')).default,

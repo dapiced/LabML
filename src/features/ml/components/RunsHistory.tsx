@@ -13,6 +13,7 @@ import { useLabStore } from '@/features/ml/lab-store';
 import { cn } from '@/lib/utils';
 import type { RunRecord } from '@/features/ml/projects/types';
 import { bestResult } from '@/features/ml/train/ranking';
+import { MAX_RUNS } from '@/features/ml/projects/compare-many';
 
 /** Datasets kept in the browser (v19) — reopen or forget, all local. */
 function SavedDatasets() {
@@ -113,9 +114,13 @@ export function RunsHistory() {
     .map((id) => runs.find((r) => r.id === id))
     .filter((r): r is RunRecord => Boolean(r));
 
+  // V37: up to MAX_RUNS selections, not two. Three or four runs answer a
+  // different question — « which of the things I tried actually worked? »
   function toggleCompare(id: number) {
     setCompare((current) =>
-      current.includes(id) ? current.filter((v) => v !== id) : [...current.slice(-1), id],
+      current.includes(id)
+        ? current.filter((v) => v !== id)
+        : [...current.slice(-(MAX_RUNS - 1)), id],
     );
   }
 
@@ -249,6 +254,18 @@ export function RunsHistory() {
             >
               <GitCompareArrows className="h-4 w-4" aria-hidden="true" />
               {t('ml.lab.compare.open', { a: compared[0].name, b: compared[1].name })}
+            </Link>
+          </div>
+        )}
+        {compared.length > 2 && (
+          <div className="mt-4">
+            <Link
+              to={`/ml/compare-many/${compared.map((r) => r.id).join('-')}`}
+              data-testid="compare-many-open"
+              className={cn(buttonVariants({ size: 'sm' }))}
+            >
+              <GitCompareArrows className="h-4 w-4" aria-hidden="true" />
+              {t('ml.lab.compare.openMany', { count: compared.length })}
             </Link>
           </div>
         )}

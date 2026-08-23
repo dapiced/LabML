@@ -361,6 +361,18 @@ export function LeaderboardTable({
               )
             </>
           )}
+          {summary.parallel !== undefined && summary.parallel.families.length > 0 && (
+            <>
+              {' '}
+              ·{' '}
+              {t('ml.lab.leaderboard.parallel', {
+                count: summary.parallel.helpers,
+                families: summary.parallel.families
+                  .map((key) => t(`ml.lab.models.${key}`))
+                  .join(', '),
+              })}
+            </>
+          )}
           {summary.skippedColumns.length > 0 && (
             <>
               {' '}
