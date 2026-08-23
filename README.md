@@ -91,6 +91,14 @@ The project follows three non-negotiable principles:
   classes, 77.6% top-1), **YOLOX-Nano** object detection (80 COCO classes) and
   **UltraFace** face detection — boxes drawn on the image, hand-written and unit-tested
   box decoding (grids, IoU, NMS), webcam supported; the photo never leaves the browser.
+  It also **says when it cannot answer**: ImageNet-1k has 1,000 labels, 118 of them dog
+  breeds and none for a human being, so a photo of someone comes back as « football
+  helmet » at 86.6% — confidently, because a softmax cannot abstain. When the two
+  detectors agree a person is in frame, or when the top class falls below 50%, the page
+  says so and keeps the label visible rather than presenting it as the answer. Measured
+  on a 14-image bench replayed in the real browser (`e2e/vision-bench.spec.ts`): all four
+  images ImageNet cannot name are refused, the one wrong label is announced as wrong, and
+  no correct answer is lost.
 - **Analytical SQL** (`/data`): a real OLAP engine — DuckDB-Wasm, MIT, self-hosted and
   single-threaded — queries the loaded file in the browser, plus any CSV, **Parquet** or
   JSON attached in the session. Results export to CSV or move to the ML Lab in one click;
