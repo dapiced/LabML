@@ -84,6 +84,17 @@ The project follows three non-negotiable principles:
   column, new/vanished categories, severity verdict on conventional thresholds.
 - One-click hand-off to the ML Lab.
 
+### Documentation — `/docs`
+
+- Markdown committed to the repository (`src/content/docs/<lang>/*.md`) and compiled at
+  build time on the **Diátaxis** split, with a local search index — no parser and no
+  third-party documentation host ever reaches the browser. **Every figure a page quotes
+  is asserted against the running app** (`e2e/docs.spec.ts`): a page that drifts breaks
+  the build. Quoting a wall-clock duration is forbidden by its own test, because two
+  identical runs agree on every metric and disagree on every timing. « Try it » links
+  are deep links (`/ml?demo=titanic&target=survived`) rather than screenshots, so they
+  cannot go stale unnoticed.
+
 ### AI Playground — `/ai`
 
 - **Vision** (`/ai/vision`): on-device image analysis on ONNX Runtime Web (WebAssembly)

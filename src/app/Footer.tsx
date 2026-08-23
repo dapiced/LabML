@@ -24,6 +24,10 @@ export function Footer() {
             {t('common.footer.about')}
           </Link>
           <span aria-hidden="true">·</span>
+          <Link to="/docs" className="underline decoration-line underline-offset-4 hover:text-ink">
+            {t('common.footer.docs')}
+          </Link>
+          <span aria-hidden="true">·</span>
           <span>{t('common.footer.copyright')}</span>
         </p>
       </div>

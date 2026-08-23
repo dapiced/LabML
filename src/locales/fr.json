@@ -32,7 +32,8 @@
     "footer": {
       "privacy": "Confidentialité",
       "copyright": "© 2026 Dominic D'Apice",
-      "about": "Comment ça marche"
+      "about": "Comment ça marche",
+      "docs": "Documentation"
     }
   },
   "about": {
@@ -1051,5 +1052,31 @@
     "title": "Page introuvable",
     "lede": "Cette adresse n'existe pas. Le labo, lui, existe bel et bien.",
     "backHome": "Retour à l'accueil"
+  },
+  "docs": {
+    "eyebrow": "DOCUMENTATION",
+    "title": "Apprendre LabML",
+    "lede": "Des pages écrites pour être suivies, pas parcourues. Chaque chiffre cité ici est vérifié à chaque construction : une page qui dérive casse le build.",
+    "searchLabel": "Rechercher dans la documentation",
+    "searchPlaceholder": "Rechercher…",
+    "searchNote": "Recherche locale, sur un index construit à la compilation — aucune requête ne part.",
+    "noHit": "Rien ne correspond à « {{query}} ».",
+    "onThisPage": "Sur cette page",
+    "otherPages": "Autres pages",
+    "backToIndex": "Retour à la documentation",
+    "toLab": "Aller au ML Lab",
+    "notFound": "La page « {{slug}} » n’existe pas.",
+    "kinds": {
+      "tutorial": "Tutoriel",
+      "how-to": "Guide pratique",
+      "reference": "Référence",
+      "explanation": "Explication"
+    },
+    "kindNotes": {
+      "tutorial": "À suivre du début à la fin. Aucun choix n’est proposé et le résultat est garanti : c’est un apprentissage, pas une visite guidée.",
+      "how-to": "Une tâche précise, supposant que vous savez déjà où vous allez.",
+      "reference": "À consulter, pas à lire. Ce que fait chaque chose, sans détour.",
+      "explanation": "Le pourquoi. Les arbitrages, ce qui a été mesuré, et ce qui a été écarté."
+    }
   }
 }

@@ -7,6 +7,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
+import { docsPlugin } from './vite-docs.ts';
 
 /**
  * A prerendered route: its static shell (index.html + the page hero injected
@@ -31,6 +32,7 @@ const SHELL_ROUTES: ShellRoute[] = [
   { dir: 'ai/chat', prefix: 'ai.chat', facade: 'features/ai/chat/ChatPage' },
   { dir: 'about', prefix: 'about', facade: 'features/about/AboutPage' },
   { dir: 'privacy', prefix: 'privacy', facade: 'features/privacy/PrivacyPage' },
+  { dir: 'docs', prefix: 'docs', facade: 'features/docs/DocsPage' },
 ];
 
 /**
@@ -147,6 +149,7 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    docsPlugin(),
     prerenderShells(['features/home/HomePage', 'features/ml/pages/MlHomePage']),
     // ONNX Runtime's WASM binaries are self-hosted under /ort/ (strict CSP:
     // nothing may load from a CDN).

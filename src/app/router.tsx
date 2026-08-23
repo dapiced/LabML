@@ -64,6 +64,14 @@ export const router = createBrowserRouter([
         lazy: async () => ({ Component: (await import('@/features/about/AboutPage')).default }),
       },
       {
+        path: 'docs',
+        lazy: async () => ({ Component: (await import('@/features/docs/DocsPage')).default }),
+      },
+      {
+        path: 'docs/:slug',
+        lazy: async () => ({ Component: (await import('@/features/docs/DocsPage')).default }),
+      },
+      {
         path: 'privacy',
         lazy: async () => ({
           Component: (await import('@/features/privacy/PrivacyPage')).default,

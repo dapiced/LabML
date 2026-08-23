@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { LabSection } from '@/features/ml/components/LabSection';
+import { useDeepLink } from '@/features/ml/use-deep-link';
 
 const STEP_KEYS = ['upload', 'target', 'train', 'read'] as const;
 // History (and Dexie with it) loads after first paint — it sits below the fold.
@@ -10,6 +11,8 @@ const RunsHistory = lazy(() => import('@/features/ml/components/RunsHistory'));
 
 export function MlHomePage() {
   const { t } = useTranslation();
+  // V32: `/ml?demo=titanic&target=survived` — what the docs' « try it » links use.
+  useDeepLink();
 
   return (
     <div className="mx-auto max-w-6xl px-4">
