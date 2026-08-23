@@ -8,6 +8,7 @@
  * `bench.node.test.ts`.
  */
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
   allowedTokens,
   buildVocabIndex,
@@ -18,6 +19,7 @@ import {
   type LogitsTensor,
 } from '@/features/ai/llm/constrain';
 import { buildGrammar } from '@/features/ai/llm/grammar';
+import { DECODE_CONSTRAINED_BY_DEFAULT } from '@/features/ai/llm/generate';
 import { BENCH_COLUMNS } from '@/features/ai/llm/corpus';
 
 /**
@@ -199,5 +201,23 @@ describe('lecture du vocabulaire du tokenizer', () => {
     // skipped: an unconstrained answer badged as constrained would be a lie.
     expect(readVocab({})).toBeNull();
     expect(readVocab({ _tokenizerJSON: { model: { vocab: {} } } })).toBeNull();
+  });
+});
+
+describe('le décodage contraint est le défaut, partout', () => {
+  it('est activé par défaut', () => {
+    // The bench and the browser both read this constant. V30's first CI run
+    // published a free-decoding number because the constraint was opt-in and
+    // the workflow did not opt in: a measurement of a configuration nobody
+    // ships, with a green tick beside it. Turning it OFF now takes a flag.
+    expect(DECODE_CONSTRAINED_BY_DEFAULT).toBe(true);
+  });
+
+  it("n'est jamais désactivé en silence par le banc", () => {
+    // The bench derives its mode from the same constant rather than from its
+    // own default, so the two cannot drift apart again.
+    const bench = readFileSync('src/features/ai/llm/bench.node.test.ts', 'utf-8');
+    expect(bench).toContain('DECODE_CONSTRAINED_BY_DEFAULT');
+    expect(bench).not.toContain("LABML_LLM_CONSTRAIN === '1'");
   });
 });
