@@ -1,3 +1,5 @@
+import { checkValidity, invalidCellCount } from '@/features/data/quality/validity';
+import { checkConsistency, inconsistentRowCount } from '@/features/data/quality/consistency';
 import { inferColumnType, isMissing, parseNumber } from '@/features/ml/data/infer';
 import type { Cell, ColumnType } from '@/features/ml/data/types';
 import type {
@@ -114,19 +116,83 @@ function missingCountOf(values: Cell[]): number {
 }
 
 /**
- * Deterministic 0–100 score. Each ratio saturates at 12.5% (×8) so a modest
- * amount of dirt is already visible; weights sum to 100.
+ * V40: the score, decomposed.
+ *
+ * The number was asserted before: 62 out of 100, with nothing saying why. Each
+ * part now carries its own weight, the ratio that drove it, and the points it
+ * actually cost — so the score is explained by its parts instead of being
+ * announced. The arithmetic is unchanged apart from the new validity part; a
+ * file with no validity findings scores exactly what it scored before V40.
  */
-export function qualityScore(report: Omit<QualityReport, 'score'>): number {
+export type ScorePart = 'missing' | 'duplicates' | 'messy' | 'outliers' | 'structural' | 'validity';
+
+export interface ScoreBreakdown {
+  part: ScorePart;
+  /** The most this part can ever cost. */
+  weight: number;
+  /** What it cost here, rounded to one decimal. */
+  penalty: number;
+  /** The ratio that drove it — absent for the structural count. */
+  ratio?: number;
+  /** The raw count behind the ratio, for the plain-language line. */
+  count: number;
+}
+
+/** Each ratio saturates at 12.5% (×8) so a modest amount of dirt is visible. */
+const SATURATION = 8;
+/** Sum of every weight below. Above 100 on purpose — see the validity part. */
+export const TOTAL_WEIGHT = 105;
+
+export function scoreBreakdown(
+  report: Omit<QualityReport, 'score' | 'breakdown'>,
+  invalidCells = 0,
+): ScoreBreakdown[] {
   const cells = Math.max(1, report.cellCount);
   const rows = Math.max(1, report.rowCount);
-  const saturate = (ratio: number) => Math.min(1, ratio * 8);
-  const penalty =
-    35 * saturate(report.missingCells / cells) +
-    20 * saturate(report.duplicateRows / rows) +
-    20 * saturate(report.messyCells / cells) +
-    15 * saturate(report.outlierCells / cells) +
-    Math.min(10, 2.5 * report.structural.length);
+  const saturate = (ratio: number) => Math.min(1, ratio * SATURATION);
+  const round = (value: number) => Math.round(value * 10) / 10;
+  const ratioPart = (
+    part: ScorePart,
+    weight: number,
+    count: number,
+    total: number,
+  ): ScoreBreakdown => {
+    const ratio = count / total;
+    return { part, weight, penalty: round(weight * saturate(ratio)), ratio, count };
+  };
+  return [
+    ratioPart('missing', 35, report.missingCells, cells),
+    ratioPart('duplicates', 20, report.duplicateRows, rows),
+    ratioPart('messy', 20, report.messyCells, cells),
+    ratioPart('outliers', 15, report.outlierCells, cells),
+    {
+      part: 'structural',
+      weight: 10,
+      penalty: round(Math.min(10, 2.5 * report.structural.length)),
+      count: report.structural.length,
+    },
+    // V40: validity is a NEW dimension, so it brings its own 5 points rather
+    // than taking them from an existing part. The weights therefore sum to 105,
+    // not 100, and that is deliberate: redistributing would have quietly
+    // changed what every previously published score meant. A file with no
+    // validity findings scores exactly what it scored before V40 — the total
+    // still floors at 0, which the previous formula could already reach.
+    ratioPart('validity', 5, invalidCells, cells),
+  ];
+}
+
+/**
+ * Deterministic 0–100 score, now the sum of its published parts rather than a
+ * separate formula that could drift away from them.
+ */
+export function qualityScore(
+  report: Omit<QualityReport, 'score' | 'breakdown'>,
+  invalidCells = 0,
+): number {
+  const penalty = scoreBreakdown(report, invalidCells).reduce(
+    (total, part) => total + part.penalty,
+    0,
+  );
   return Math.max(0, Math.round(100 - penalty));
 }
 
@@ -198,7 +264,14 @@ export function buildQualityReport(header: string[], columns: Cell[][]): Quality
   messyColumns.sort((a, b) => b.cellCount - a.cellCount || a.column.localeCompare(b.column));
   outlierColumns.sort((a, b) => b.count - a.count || a.column.localeCompare(b.column));
 
-  const partial: Omit<QualityReport, 'score'> = {
+  // V40: the two families of impossible data — one column at a time, then
+  // rows where two columns contradict each other.
+  const validity = checkValidity(header, columns);
+  const invalidCells = invalidCellCount(validity);
+  const consistency = checkConsistency(header, columns);
+  const inconsistentRows = inconsistentRowCount(consistency);
+
+  const partial: Omit<QualityReport, 'score' | 'breakdown'> = {
     rowCount,
     columnCount,
     cellCount,
@@ -210,6 +283,14 @@ export function buildQualityReport(header: string[], columns: Cell[][]): Quality
     outlierColumns,
     outlierCells,
     structural,
+    validity,
+    invalidCells,
+    consistency,
+    inconsistentRows,
   };
-  return { ...partial, score: qualityScore(partial) };
+  return {
+    ...partial,
+    score: qualityScore(partial, invalidCells),
+    breakdown: scoreBreakdown(partial, invalidCells),
+  };
 }

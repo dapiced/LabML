@@ -26,6 +26,13 @@ export interface SqlEngine {
   /** Makes a file readable by SQL under `name`; the bytes stay in the tab. */
   register(name: string, bytes: Uint8Array): Promise<void>;
   run(sql: string, cap: number): Promise<SqlTable>;
+  /**
+   * V40: runs a query and returns the result as Parquet bytes. Nearly free
+   * here — DuckDB is already loaded and the file already registered, so this
+   * is one `COPY … TO` and a read of the buffer it wrote. The bytes never
+   * leave the tab: the caller turns them into a download.
+   */
+  toParquet(sql: string): Promise<Uint8Array>;
   close(): Promise<void>;
 }
 
@@ -65,6 +72,16 @@ export async function openEngine(): Promise<SqlEngine> {
       const columns = result.schema.fields.map((field) => String(field.name));
       const records = result.toArray().map((row) => row.toJSON());
       return toSqlTable(columns, records, cap);
+    },
+    async toParquet(sql) {
+      // A per-call name so two exports can never collide on the virtual FS.
+      const name = `export-${Date.now()}.parquet`;
+      await connection.query(`COPY (${sql}) TO '${name}' (FORMAT PARQUET, COMPRESSION ZSTD)`);
+      const bytes = await db.copyFileToBuffer(name);
+      // Registered files live in the Wasm heap: dropping it keeps a session of
+      // repeated exports from growing without bound.
+      await db.dropFile(name);
+      return bytes;
     },
     async close() {
       await connection.close();

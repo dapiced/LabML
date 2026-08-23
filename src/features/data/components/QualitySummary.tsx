@@ -1,4 +1,4 @@
-import { CopyX, EyeOff, Ruler, SearchX, SpellCheck2, Sparkles } from 'lucide-react';
+import { Ban, CopyX, EyeOff, Ruler, SearchX, SpellCheck2, Sparkles, Unlink } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -52,7 +52,9 @@ export function QualitySummary() {
     report.duplicateRows === 0 &&
     report.messyCells === 0 &&
     report.outlierCells === 0 &&
-    report.structural.length === 0;
+    report.structural.length === 0 &&
+    report.validity.length === 0 &&
+    report.consistency.length === 0;
 
   return (
     <section className="flex flex-col gap-4 pb-12">
@@ -166,8 +168,76 @@ export function QualitySummary() {
               </ul>
             </Card>
           )}
+
+          {report.validity.length > 0 && (
+            <Card className="flex flex-col gap-2" data-testid="issue-validity">
+              <Ban className="h-5 w-5 text-copper" aria-hidden="true" />
+              <h3 className="font-display text-lg font-semibold">
+                {t('data.issues.validity.title', { count: report.invalidCells })}
+              </h3>
+              <p className="text-sm text-muted">{t('data.issues.validity.body')}</p>
+              <ul className="flex flex-col gap-1 font-mono text-xs">
+                {report.validity.slice(0, 4).map((finding) => (
+                  <li key={`${finding.rule}-${finding.column}`}>
+                    {finding.column} · {t(`data.issues.validity.rules.${finding.rule}`)} ·{' '}
+                    {NUMBER.format(finding.count)} · {finding.examples.slice(0, 3).join(', ')}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {report.consistency.length > 0 && (
+            <Card className="flex flex-col gap-2" data-testid="issue-consistency">
+              <Unlink className="h-5 w-5 text-copper" aria-hidden="true" />
+              <h3 className="font-display text-lg font-semibold">
+                {t('data.issues.consistency.title', { count: report.inconsistentRows })}
+              </h3>
+              <p className="text-sm text-muted">{t('data.issues.consistency.body')}</p>
+              <ul className="flex flex-col gap-1 font-mono text-xs">
+                {report.consistency.map((finding) => (
+                  <li key={finding.rule}>
+                    {t(`data.issues.consistency.rules.${finding.rule}`, {
+                      columns: finding.columns.join(', '),
+                    })}{' '}
+                    · {NUMBER.format(finding.count)} · {finding.examples.slice(0, 2).join(' ; ')}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
         </div>
       )}
+
+      <details className="text-sm" data-testid="score-breakdown">
+        <summary className="cursor-pointer font-medium select-none">
+          {t('data.score.breakdownTitle')}
+        </summary>
+        <p className="mt-1 max-w-3xl text-xs text-muted">{t('data.score.breakdownHint')}</p>
+        <table className="mt-2 w-full text-left text-xs">
+          <thead className="text-muted">
+            <tr>
+              <th className="py-1 pr-3 font-medium">{t('data.score.part')}</th>
+              <th className="py-1 pr-3 font-medium">{t('data.score.found')}</th>
+              <th className="py-1 pr-3 font-medium">{t('data.score.weight')}</th>
+              <th className="py-1 font-medium">{t('data.score.cost')}</th>
+            </tr>
+          </thead>
+          <tbody className="tabular-nums">
+            {report.breakdown.map((part) => (
+              <tr key={part.part} className="border-t border-line">
+                <td className="py-1 pr-3">{t(`data.score.parts.${part.part}`)}</td>
+                <td className="py-1 pr-3 font-mono">
+                  {NUMBER.format(part.count)}
+                  {part.ratio !== undefined && ` (${percent(part.ratio)} %)`}
+                </td>
+                <td className="py-1 pr-3 font-mono text-muted">{part.weight}</td>
+                <td className="py-1 font-mono">−{part.penalty}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </details>
     </section>
   );
 }
