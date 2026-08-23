@@ -20,7 +20,11 @@ export interface TimeSeries {
 }
 
 const ISO = /^\d{4}-\d{2}(-\d{2})?([ T]\d{2}:\d{2}(:\d{2})?)?$/;
-const SLASH = /^(\d{1,2})[/.](\d{1,2})[/.](\d{2,4})$/;
+// V38: the dash form too. `31-12-2025` is what a French export writes just as
+// readily as `31/12/2025`, and it used to return null — the column then fell
+// through to text and every date feature was lost. The ISO pattern above is
+// tried first, so `2025-12-31` is never mistaken for a day-first date.
+const SLASH = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$/;
 
 /** Parses a date cell to a UTC timestamp, or null. */
 export function parseDate(raw: string): number | null {

@@ -20,6 +20,14 @@ import { analyzeUncertainty, type ModelLosses } from '@/features/ml/train/uncert
 import { detectTaskType, runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
 import type { Cell, ColumnProfile, ParseResultPayload } from '@/features/ml/data/types';
 import type { ModelKey } from '@/features/ml/train/types';
+import {
+  applyDecimalFormats,
+  buildReadFormat,
+  papaConfig,
+  sniffFile,
+  sniffText,
+} from '@/features/ml/data/read';
+import { decodeBytes, type ReadFormat } from '@/features/ml/data/locale';
 import type { WorkerRequest, WorkerResponse } from '@/features/ml/worker-protocol';
 
 const PREVIEW_ROWS = 50;
@@ -46,6 +54,8 @@ let lastFeatureColumns: string[] = [];
 let datasetName = '';
 /** v22: a model rebuilt from an export — fully independent of any run. */
 let imported: ImportedModel | null = null;
+/** V38: how the current file was actually read — announced, never assumed. */
+let readFormat: ReadFormat | null = null;
 
 function post(message: WorkerResponse) {
   self.postMessage(message);
@@ -90,6 +100,7 @@ function buildResult(name: string, bytes: number): ParseResultPayload {
     profiles,
     preview,
     suggestions: baselineSuggestions(profiles),
+    ...(readFormat !== null && { readFormat }),
   };
 }
 
@@ -103,28 +114,33 @@ function resetState() {
   rowCount = 0;
   overflowed = false;
   artifacts = null;
+  readFormat = null;
 }
 
 function parseText(text: string, name: string, bytes: number) {
   resetState();
+  const sniffed = sniffText(text);
   Papa.parse<string[]>(text, {
-    skipEmptyLines: true,
+    ...papaConfig(sniffed.delimiter),
     complete: (results) => {
       ingestRows(results.data);
-      finishParse(name, bytes);
+      finishParse(name, bytes, sniffed);
     },
   });
 }
 
-function parseFile(file: File) {
+async function parseFile(file: File) {
   resetState();
+  // V38: only the head of the file is read as bytes, so V25's streaming abort
+  // below survives intact — a 2 GB file still stops at the cell budget.
+  const sniffed = await sniffFile(file);
   Papa.parse<string[]>(file, {
-    skipEmptyLines: true,
+    ...papaConfig(sniffed.delimiter, sniffed.encoding.encoding),
     chunk: (results, parser) => {
       // Stop reading the file the moment the budget is blown (streaming abort).
       if (!ingestRows(results.data)) parser.abort();
     },
-    complete: () => finishParse(file.name, file.size),
+    complete: () => finishParse(file.name, file.size, sniffed),
     error: (error) => post({ kind: 'error', message: error.message }),
   });
 }
@@ -141,7 +157,7 @@ async function parseExcel(file: File) {
   parseText(XLSX.utils.sheet_to_csv(firstSheet), file.name, file.size);
 }
 
-function finishParse(name: string, bytes: number) {
+function finishParse(name: string, bytes: number, sniffed: Awaited<ReturnType<typeof sniffFile>>) {
   if (overflowed) {
     // Named numeric refusal: the UI spells out the budget and where we stopped.
     post({ kind: 'error', message: `too-large:${rowCount}:${header.length}` });
@@ -153,6 +169,9 @@ function finishParse(name: string, bytes: number) {
     return;
   }
   datasetName = name;
+  // V38: whole columns, after ingestion — the evidence for a column only
+  // exists once all of its values are in hand.
+  readFormat = buildReadFormat(sniffed, applyDecimalFormats(header, columns));
   post({ kind: 'parsed', payload: buildResult(name, bytes) });
 }
 
@@ -171,9 +190,13 @@ async function parseBatch(source: File | string): Promise<{ header: string[]; co
     if (!firstSheet) throw new Error('empty');
     text = XLSX.utils.sheet_to_csv(firstSheet);
   } else {
-    text = await source.text();
+    const bytes = new Uint8Array(await source.arrayBuffer());
+    text = decodeBytes(bytes).text;
   }
-  const parsed = Papa.parse<string[]>(text, { skipEmptyLines: true });
+  // V38: a batch is read exactly like the training file was — a French batch
+  // scored against a model trained on normalised numbers would otherwise be
+  // compared against garbage.
+  const parsed = Papa.parse<string[]>(text, papaConfig(sniffText(text).delimiter));
   const rows = parsed.data;
   if (rows.length < 2) throw new Error('empty');
   const batchHeader = rows[0].map((cell, i) =>
@@ -185,6 +208,7 @@ async function parseBatch(source: File | string): Promise<{ header: string[]; co
     if (row.length === 1 && row[0].trim() === '') continue;
     for (let c = 0; c < batchHeader.length; c++) cols[c].push(row[c] ?? null);
   }
+  applyDecimalFormats(batchHeader, cols);
   return { header: batchHeader, cols };
 }
 
@@ -233,7 +257,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   try {
     if (request.kind === 'parse-file') {
       if (/\.(xlsx|xls)$/i.test(request.file.name)) await parseExcel(request.file);
-      else parseFile(request.file);
+      else await parseFile(request.file);
     } else if (request.kind === 'parse-url') {
       const response = await fetch(request.url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);

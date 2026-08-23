@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { ColumnCard } from '@/features/ml/components/ColumnCard';
 import { KeepDatasetControl } from '@/features/ml/components/KeepDatasetControl';
+import { ReadFormatNotice } from '@/features/ml/components/ReadFormatNotice';
 import { TargetPicker } from '@/features/ml/components/TargetPicker';
 import { ExplorePanel } from '@/features/ml/components/ExplorePanel';
 import { ForecastPanel } from '@/features/ml/components/ForecastPanel';
@@ -48,6 +49,8 @@ export function DatasetView() {
           {t('ml.lab.newDataset')}
         </Button>
       </div>
+
+      <ReadFormatNotice />
 
       <TargetPicker />
 
