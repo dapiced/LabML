@@ -301,7 +301,16 @@
         "splitGroup": "grouped split on {{column}} (no group on both sides)",
         "splitDropped": "— {{count}} rows dropped, no usable date",
         "leakWarning": "« {{column}} » alone predicts the target at {{score}}% on the validation split.",
-        "leakAdvice": "A single column reading the target that well is almost always leakage — information that would not exist at prediction time. Exclude it and retrain, or confirm it is legitimately available."
+        "leakAdvice": "A single column reading the target that well is almost always leakage — information that would not exist at prediction time. Exclude it and retrain, or confirm it is legitimately available.",
+        "rankBy": "Rank by",
+        "ensembleNote": "Ensemble: the average of {{members}} — already trained, so it costs nothing more. The baseline is never a member.",
+        "ensembleVote": "majority vote",
+        "ensembleProbability": "averaged probabilities",
+        "ensembleMean": "averaged predictions",
+        "weighting": "class weighting: balanced ({{loss}} weight the loss, {{resample}} use a seeded balanced resample)",
+        "imbalanceHint": "The largest class holds {{share}}% of the training rows. Accuracy rewards always answering it — rank on F1 or recall, and try class weighting.",
+        "weightToggle": "Balance the classes",
+        "weightToggleHint": "Weights the training loss (logistic regression, gradient boosting) or resamples the rows (tree, forest) so the rare class counts as much as the common one."
       },
       "models": {
         "baseline": "Naive baseline",
@@ -312,7 +321,8 @@
         "tree": "Decision tree",
         "forest": "Random forest",
         "gbdt": "Gradient boosting",
-        "mlp": "Neural network (MLP)"
+        "mlp": "Neural network (MLP)",
+        "ensemble": "Ensemble (top 3)"
       },
       "forecast": {
         "title": "Time series",
@@ -428,7 +438,9 @@
         "f1": "F1",
         "accuracy": "accuracy",
         "cost": "total cost",
-        "note": "A probability is not a decision. Above the threshold the row is flagged “positive” — moving it trades false alarms against missed cases, and the right trade depends on what each mistake costs YOU. The dot on the curve is your current choice; it is saved with the run."
+        "note": "A probability is not a decision. Above the threshold the row is flagged “positive” — moving it trades false alarms against missed cases, and the right trade depends on what each mistake costs YOU. The dot on the curve is your current choice; it is saved with the run.",
+        "focusClass": "Class read against all others",
+        "oneVsRestNote": "One-vs-rest: this reads how well the model separates « {{class}} » from every other class. It is not a complete multiclass decision rule — two classes can both clear their thresholds, and nothing here says which would win."
       },
       "segments": {
         "title": "Where the model fails",
@@ -613,6 +625,16 @@
         "verdictStable": "{{leader}} beat {{runnerUp}} in {{wins}} of {{folds}} folds — the order between them is stable.",
         "verdictNoise": "{{leader}} beat {{runnerUp}} in only {{wins}} of {{folds}} folds — the order between them is inside the noise, so treat them as tied.",
         "note": "{{folds}} folds ({{reps}} repetitions × 2 halves) over {{rows}} training and validation rows. The pipeline is refitted inside every fold; the test set is never touched."
+      },
+      "metricNames": {
+        "accuracy": "Accuracy",
+        "f1": "F1",
+        "recall": "Recall",
+        "precision": "Precision",
+        "auc": "ROC-AUC",
+        "rmse": "RMSE",
+        "mae": "MAE",
+        "r2": "R²"
       }
     }
   },

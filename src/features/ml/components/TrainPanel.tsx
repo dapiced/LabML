@@ -25,6 +25,9 @@ export function TrainPanel() {
   const target = useLabStore((s) => s.target);
   const splitChoice = useLabStore((s) => s.splitChoice);
   const setSplitChoice = useLabStore((s) => s.setSplitChoice);
+  const classWeighting = useLabStore((s) => s.classWeighting);
+  const setClassWeighting = useLabStore((s) => s.setClassWeighting);
+  const summary = useLabStore((s) => s.summary);
   if (!task) return null;
 
   // V35: the split is now three-way — validation is carved from the train
@@ -82,6 +85,22 @@ export function TrainPanel() {
         <span className="font-mono text-[0.68rem] text-muted">
           {t('ml.lab.trainConfig', { seed: TRAIN_SEED, split: splitLabel })}
         </span>
+        {task.type !== 'regression' && trainStatus !== 'training' && (
+          <label
+            className="flex items-center gap-2 text-xs text-muted"
+            title={t('ml.lab.leaderboard.weightToggleHint')}
+          >
+            <input
+              type="checkbox"
+              data-testid="class-weighting"
+              checked={classWeighting}
+              onChange={(event) => setClassWeighting(event.target.checked)}
+              className="h-3.5 w-3.5 accent-[var(--accent)]"
+            />
+            {t('ml.lab.leaderboard.weightToggle')}
+            {summary?.imbalanced && <span className="text-copper">•</span>}
+          </label>
+        )}
         {splitOptions.length > 0 && trainStatus !== 'training' && (
           <label className="flex items-center gap-2 text-xs text-muted">
             {t('ml.lab.splitMode.label')}

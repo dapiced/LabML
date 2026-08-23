@@ -3,6 +3,7 @@ import { RandomForestClassifier, RandomForestRegression } from 'ml-random-forest
 import { trainGbdtClassifier, trainGbdtRegressor } from '@/features/ml/train/gbdt';
 import { trainMlp } from '@/features/ml/train/mlp';
 import type { ModelKey } from '@/features/ml/train/types';
+import { balancedResample } from '@/features/ml/train/class-weight';
 
 export interface TrainedModel {
   predict(X: number[][]): number[];
@@ -16,6 +17,14 @@ export interface ModelContext {
   task: 'classification' | 'regression';
   classCount: number;
   seed: number;
+  /**
+   * V36: per-class weights, present only when the user turned class weighting
+   * on (classification, imbalanced target). Families weight their own loss
+   * where they can (logistic, gbdt) and fall back to seeded balanced
+   * resampling where the implementation takes no weights (tree, forest).
+   * See class-weight.ts — the mechanism is named per family in the UI.
+   */
+  classWeights?: number[];
 }
 
 export interface ModelDef {
@@ -24,6 +33,21 @@ export interface ModelDef {
 }
 
 const KNN_K = 5;
+
+/**
+ * V36: the ml-cart families cannot take sample weights, so class weighting
+ * becomes a seeded balanced resample of the training rows. Returns the rows
+ * unchanged when weighting is off or the task is regression.
+ */
+function weightedFit(
+  X: number[][],
+  y: number[],
+  ctx: ModelContext,
+): { X: number[][]; y: number[] } {
+  if (ctx.classWeights === undefined || ctx.task !== 'classification') return { X, y };
+  const order = balancedResample(y, ctx.classCount, ctx.seed);
+  return { X: order.map((i) => X[i]), y: order.map((i) => y[i]) };
+}
 
 /**
  * V25: measured per-family training caps (rows). Slow families train on an
@@ -143,13 +167,21 @@ const logistic: ModelDef = {
     // Deterministic zero init — reproducible without touching the RNG.
     const weights: number[][] = Array.from({ length: k }, () => new Array<number>(d).fill(0));
 
+    // V36: each row's gradient contribution is scaled by its class weight,
+    // and the step is normalised by the TOTAL weight rather than by n — so
+    // turning weighting on changes the balance, not the learning rate.
+    const rowWeight = ctx.classWeights ?? null;
+    const totalWeight =
+      rowWeight === null ? n : y.reduce((a, label) => a + (rowWeight[label] ?? 1), 0);
+
     for (let epoch = 0; epoch < epochs; epoch++) {
       const gradient: number[][] = Array.from({ length: k }, () => new Array<number>(d).fill(0));
       for (let i = 0; i < n; i++) {
         const logits = weights.map((w) => w.reduce((acc, v, j) => acc + v * rows[i][j], 0));
         const probs = softmax(logits);
+        const wi = rowWeight === null ? 1 : (rowWeight[y[i]] ?? 1);
         for (let c = 0; c < k; c++) {
-          const delta = probs[c] - (y[i] === c ? 1 : 0);
+          const delta = (probs[c] - (y[i] === c ? 1 : 0)) * wi;
           const g = gradient[c];
           const row = rows[i];
           for (let j = 0; j < d; j++) g[j] += delta * row[j];
@@ -159,7 +191,7 @@ const logistic: ModelDef = {
         const w = weights[c];
         const g = gradient[c];
         for (let j = 0; j < d; j++) {
-          w[j] -= learningRate * (g[j] / n + l2 * w[j]);
+          w[j] -= learningRate * (g[j] / (totalWeight || 1) + l2 * w[j]);
         }
       }
     }
@@ -294,7 +326,10 @@ const tree: ModelDef = {
       maxDepth: 10,
       minNumSamples: 3,
     });
-    model.train(X, y);
+    // V36: ml-cart takes no sample weights, so balancing happens by seeded
+    // repetition of the rarer classes — named 'resample' in the UI.
+    const fit = weightedFit(X, y, ctx);
+    model.train(fit.X, fit.y);
     return {
       predict: (rows) => model.predict(rows),
       toJSON: () => ({ kind: 'tree', model: model.toJSON() }),
@@ -324,7 +359,8 @@ export function trainForest(
     };
   }
   const model = new RandomForestClassifier(options);
-  model.train(X, y);
+  const fit = weightedFit(X, y, ctx);
+  model.train(fit.X, fit.y);
   return {
     predict: (rows) => model.predict(rows),
     toJSON: () => ({ kind: 'forest', model: model.toJSON() }),
@@ -357,7 +393,7 @@ const gbdt: ModelDef = {
         }),
       };
     }
-    const model = trainGbdtClassifier(X, y, ctx.classCount);
+    const model = trainGbdtClassifier(X, y, ctx.classCount, undefined, ctx.classWeights);
     return {
       predict: (rows) => model.proba(rows).map((p) => p.indexOf(Math.max(...p))),
       predictProba: (rows) => model.proba(rows),
