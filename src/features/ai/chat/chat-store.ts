@@ -42,6 +42,12 @@ interface ChatState {
   llmBytes: number;
   llmProgress: { loaded: number; total: number } | null;
   llmError: string | null;
+  /**
+   * V30 — true when the model's answer is decoded INSIDE the query grammar.
+   * Shown rather than assumed: if the tokenizer does not expose its vocabulary
+   * the guard cannot run, and the badge must not claim it did.
+   */
+  llmConstrained: boolean;
   /** The user's choice of interpreter; deterministic stays the default. */
   engine: ChatEngine;
   loadFile: (file: File) => void;
@@ -71,6 +77,7 @@ const initialState = {
   llmBytes: 0,
   llmProgress: null,
   llmError: null,
+  llmConstrained: false,
   engine: 'deterministic' as ChatEngine,
 };
 
@@ -107,7 +114,12 @@ export const useChatStore = create<ChatState>((set, get) => {
         } else if (message.kind === 'llm-progress') {
           set({ llmProgress: { loaded: message.loaded, total: message.total } });
         } else if (message.kind === 'llm-ready') {
-          set({ llmStatus: 'ready', llmProgress: null, engine: 'llm' });
+          set({
+            llmStatus: 'ready',
+            llmProgress: null,
+            engine: 'llm',
+            llmConstrained: message.constrained,
+          });
         } else if (message.kind === 'llm-failed') {
           set({ llmStatus: 'failed', llmProgress: null, llmError: message.reason });
         } else if (message.kind === 'error') {

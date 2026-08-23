@@ -1,191 +1,26 @@
 /**
- * V27 — the interpretation bench, run against the REAL production path:
- * the sharded model under /llm/, glued by the same custom cache the app uses,
- * on the same WebGPU runtime. It measures the only thing that justifies a
- * 355 MB download — how often the local model turns a question into a query
- * the deterministic parser could not.
+ * V30 — the browser half of the bench: the same corpus, run against the REAL
+ * production path. The sharded model under /llm/, glued by the same custom
+ * cache the app uses, on the same WebGPU runtime.
  *
- * It ships as a repo tool rather than a CI test because it needs a GPU with
- * `shader-f16`, which CI runners do not have. See docs in PLAN.md § N (V27).
+ * Its companion `bench.node.test.ts` runs the identical corpus on the CPU and
+ * needs no GPU at all. Neither replaces the other: the Node bench is the one
+ * that can run anywhere and therefore the one that keeps the numbers honest
+ * between releases; this one is the only one that measures what a visitor's
+ * browser actually does, latency included.
  *
  *   npm run llm:prepare -- public/llm
  *   V27_BENCH=1 npm run build && npm run preview
  *   node scripts/run-llm-bench.mjs
  */
-import { parseQuestion, type ColumnInfo } from '@/features/ai/chat/parser';
+import { BENCH_CASES, BENCH_COLUMNS, score } from '@/features/ai/llm/corpus';
+import { formatReport, type BenchReport, type BenchRow } from '@/features/ai/llm/report';
 import { loadModel, probeCapability } from '@/features/ai/llm/interpret';
-import type { Intent } from '@/features/ai/chat/engine';
+import { parseQuestion } from '@/features/ai/chat/parser';
+import { resolveIntent } from '@/features/ai/chat/route';
 
-/** Titanic's columns, as the chat worker would summarize them. */
-export const BENCH_COLUMNS: ColumnInfo[] = [
-  { name: 'survived', isNumeric: true, values: [] },
-  { name: 'pclass', isNumeric: true, values: [] },
-  { name: 'sex', isNumeric: false, values: ['male', 'female'] },
-  { name: 'age', isNumeric: true, values: [] },
-  { name: 'fare', isNumeric: true, values: [] },
-  { name: 'embarked', isNumeric: false, values: ['S', 'C', 'Q'] },
-  { name: 'class', isNumeric: false, values: ['Third', 'First', 'Second'] },
-  { name: 'who', isNumeric: false, values: ['man', 'woman', 'child'] },
-  { name: 'deck', isNumeric: false, values: ['A', 'B', 'C', 'D', 'E', 'F', 'G'] },
-  { name: 'embark_town', isNumeric: false, values: ['Southampton', 'Cherbourg', 'Queenstown'] },
-  { name: 'alive', isNumeric: false, values: ['no', 'yes'] },
-  { name: 'alone', isNumeric: false, values: ['True', 'False'] },
-];
-
-export interface BenchCase {
-  q: string;
-  lang: string;
-  want: Intent;
-  /** True for phrasings the keyword grammar was never going to catch. */
-  beyondKeywords: boolean;
-}
-
-export const BENCH_CASES: BenchCase[] = [
-  { q: 'how many rows and columns?', lang: 'en', want: { kind: 'shape' }, beyondKeywords: false },
-  {
-    q: 'combien de lignes et de colonnes ?',
-    lang: 'fr',
-    want: { kind: 'shape' },
-    beyondKeywords: false,
-  },
-  {
-    q: 'average age',
-    lang: 'en',
-    want: { kind: 'aggregate', op: 'mean', column: 'age' },
-    beyondKeywords: false,
-  },
-  {
-    q: 'moyenne de fare par class',
-    lang: 'fr',
-    want: { kind: 'aggregate', op: 'mean', column: 'fare', groupBy: 'class' },
-    beyondKeywords: false,
-  },
-  {
-    q: 'distribution of class',
-    lang: 'en',
-    want: { kind: 'distribution', column: 'class' },
-    beyondKeywords: false,
-  },
-  {
-    q: 'correlation between age and fare',
-    lang: 'en',
-    want: { kind: 'correlation', a: 'age', b: 'fare' },
-    beyondKeywords: false,
-  },
-  { q: 'valeurs manquantes', lang: 'fr', want: { kind: 'missing' }, beyondKeywords: false },
-  {
-    q: 'how many female?',
-    lang: 'en',
-    want: { kind: 'count', filter: { column: 'sex', op: '=', value: 'female' } },
-    beyondKeywords: false,
-  },
-  // --- The gap the model has to justify --------------------------------
-  {
-    q: 'what was the typical age of the people on board?',
-    lang: 'en',
-    want: { kind: 'aggregate', op: 'mean', column: 'age' },
-    beyondKeywords: true,
-  },
-  {
-    q: 'a quel age moyen voyageaient les passagers ?',
-    lang: 'fr',
-    want: { kind: 'aggregate', op: 'mean', column: 'age' },
-    beyondKeywords: true,
-  },
-  {
-    q: 'did women pay more than men?',
-    lang: 'en',
-    want: { kind: 'aggregate', op: 'mean', column: 'fare', groupBy: 'sex' },
-    beyondKeywords: true,
-  },
-  {
-    q: 'est-ce que le prix du billet dependait de la classe ?',
-    lang: 'fr',
-    want: { kind: 'aggregate', op: 'mean', column: 'fare', groupBy: 'class' },
-    beyondKeywords: true,
-  },
-  {
-    q: 'show me how the ticket prices spread out',
-    lang: 'en',
-    want: { kind: 'distribution', column: 'fare' },
-    beyondKeywords: true,
-  },
-  {
-    q: 'combien de personnes sont montees a Cherbourg ?',
-    lang: 'fr',
-    want: { kind: 'count', filter: { column: 'embark_town', op: '=', value: 'Cherbourg' } },
-    beyondKeywords: true,
-  },
-  {
-    q: 'count the passengers older than 60',
-    lang: 'en',
-    want: { kind: 'count', filter: { column: 'age', op: '>', value: 60 } },
-    beyondKeywords: true,
-  },
-  {
-    q: 'y a-t-il un lien entre le prix paye et la survie ?',
-    lang: 'fr',
-    want: { kind: 'correlation', a: 'fare', b: 'survived' },
-    beyondKeywords: true,
-  },
-  // V27.1: the two shapes the measured failures exposed — an implicit numeric
-  // threshold ("enfants" is not a column, `age < 10` is), and a top-k, which
-  // the model had never seen an example of.
-  {
-    q: "combien d'enfants de moins de 10 ans ?",
-    lang: 'fr',
-    want: { kind: 'count', filter: { column: 'age', op: '<', value: 10 } },
-    beyondKeywords: true,
-  },
-  {
-    q: 'les 3 ponts avec le plus de passagers',
-    lang: 'fr',
-    want: { kind: 'topk', groupBy: 'deck', k: 3, op: 'count' },
-    beyondKeywords: true,
-  },
-  // V27.2: the one question still wrong after V27.1 — read as a correlation
-  // between fare and age. Kept in the exact phrasing it failed on, and
-  // deliberately NOT added to the prompt's examples: the prompt gained a rule
-  // and a different phrasing, so this stays a held-out case.
-  {
-    q: 'est-ce que les femmes payaient plus cher que les hommes ?',
-    lang: 'fr',
-    want: { kind: 'aggregate', op: 'mean', column: 'fare', groupBy: 'sex' },
-    beyondKeywords: true,
-  },
-];
-
-/** Key-order-independent equality — the grammar has no meaningful ordering. */
-export function sameIntent(a: Intent | null, b: Intent): boolean {
-  if (!a) return false;
-  const norm = (i: Intent) => JSON.stringify(i, Object.keys(i).sort());
-  return norm(a) === norm(b);
-}
-
-export type Outcome = 'ok' | 'wrong' | 'none';
-
-export interface BenchRow {
-  q: string;
-  lang: string;
-  beyondKeywords: boolean;
-  deterministic: Outcome;
-  llm: Outcome;
-  /**
-   * V27.1 — what the app actually answers, in the shipped order: the keyword
-   * grammar's reading when it has one, the model's only otherwise. This is the
-   * number that describes the product; the two columns above describe the
-   * parts.
-   */
-  pipeline: Outcome;
-  raw: string;
-  ms: number;
-}
-
-export interface BenchReport {
-  total: number;
-  loadMs: number;
-  rows: BenchRow[];
-}
+export type { BenchReport, BenchRow };
+export { BENCH_CASES, BENCH_COLUMNS, formatReport };
 
 export async function runBench(log: (line: string) => void): Promise<BenchReport> {
   const capability = await probeCapability();
@@ -202,18 +37,21 @@ export async function runBench(log: (line: string) => void): Promise<BenchReport
 
   const rows: BenchRow[] = [];
   for (const testCase of BENCH_CASES) {
-    const det = parseQuestion(testCase.q, BENCH_COLUMNS, testCase.lang);
+    const deterministic = parseQuestion(testCase.q, BENCH_COLUMNS, testCase.lang);
     const result = await model.generate(testCase.q, BENCH_COLUMNS);
-    const outcome = (intent: Intent | null): Outcome =>
-      !intent ? 'none' : sameIntent(intent, testCase.want) ? 'ok' : 'wrong';
+    // The shipped order, decided by the function the chat worker itself calls.
+    const shipped = await resolveIntent(
+      () => parseQuestion(testCase.q, BENCH_COLUMNS, testCase.lang),
+      async () => result.intent,
+    );
     rows.push({
       q: testCase.q,
       lang: testCase.lang,
-      beyondKeywords: testCase.beyondKeywords,
-      deterministic: outcome(det),
-      llm: outcome(result.intent),
-      pipeline: det ? outcome(det) : outcome(result.intent),
-      raw: result.raw.slice(0, 200),
+      family: testCase.family,
+      deterministic: score(testCase, deterministic),
+      llm: score(testCase, result.intent),
+      pipeline: score(testCase, shipped.intent),
+      raw: result.raw.slice(0, 240),
       ms: Math.round(result.ms),
     });
     const last = rows[rows.length - 1];
@@ -222,5 +60,5 @@ export async function runBench(log: (line: string) => void): Promise<BenchReport
     );
   }
   await model.dispose();
-  return { total: BENCH_CASES.length, loadMs, rows };
+  return { label: 'banc V30 (navigateur, WebGPU)', total: BENCH_CASES.length, loadMs, rows };
 }
