@@ -38,6 +38,11 @@ function ErrorPanel() {
   const error = useLabStore((s) => s.error);
   // V25: the memory guard refuses by name, with the numbers ('too-large:rows:cols').
   const tooLarge = error?.startsWith('too-large:') ? error.split(':') : null;
+  // V33: found by the refusal inventory. A kept dataset that IndexedDB no
+  // longer holds used to fall through to « the file looks empty or not
+  // tabular » — sending the reader to hunt a format problem that does not
+  // exist. Nothing was read: the browser dropped it, or it was forgotten.
+  const datasetMissing = error === 'dataset-missing';
   const lang = i18n.resolvedLanguage ?? 'en';
   return (
     <div
@@ -45,7 +50,11 @@ function ErrorPanel() {
       className="flex flex-col items-center gap-3 rounded-2xl border border-line bg-surface p-10 text-center"
     >
       <p className="font-display text-lg font-semibold">
-        {tooLarge ? t('ml.lab.errorTooLargeTitle') : t('ml.lab.errorTitle')}
+        {tooLarge
+          ? t('ml.lab.errorTooLargeTitle')
+          : datasetMissing
+            ? t('ml.lab.errorDatasetMissingTitle')
+            : t('ml.lab.errorTitle')}
       </p>
       <p className="max-w-md text-sm text-muted">
         {tooLarge
@@ -54,7 +63,9 @@ function ErrorPanel() {
               rows: Number(tooLarge[1]).toLocaleString(lang),
               cols: tooLarge[2],
             })
-          : t('ml.lab.errorBody')}
+          : datasetMissing
+            ? t('ml.lab.errorDatasetMissing')
+            : t('ml.lab.errorBody')}
       </p>
       <Button variant="outline" size="sm" onClick={reset}>
         {t('ml.lab.retry')}
