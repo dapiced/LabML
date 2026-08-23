@@ -100,3 +100,109 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* V32 — documentation prose. The pages are compiled Markdown, so they carry no
+   utility classes of their own: the shape lives here, once, and every page
+   inherits it. Colours are the same tokens the app uses, so the docs follow
+   the theme rather than announcing themselves as a different site. */
+.doc-prose {
+  line-height: 1.7;
+}
+.doc-prose > * + * {
+  margin-top: 1rem;
+}
+.doc-prose h2 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-top: 2.5rem;
+  scroll-margin-top: 6rem; /* the sticky header must not swallow the anchor */
+}
+.doc-prose h3 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-top: 1.75rem;
+  scroll-margin-top: 6rem;
+}
+.doc-prose a {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.doc-prose code {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.875em;
+  background: var(--surface-2);
+  border-radius: 0.25rem;
+  padding: 0.1em 0.35em;
+}
+.doc-prose pre {
+  background: var(--surface-2);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  overflow-x: auto;
+}
+.doc-prose pre code {
+  background: none;
+  padding: 0;
+}
+.doc-prose blockquote {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  border-radius: 0 0.5rem 0.5rem 0;
+  padding: 0.75rem 1rem;
+  color: var(--ink);
+}
+.doc-prose blockquote > * + * {
+  margin-top: 0.5rem;
+}
+.doc-prose ul,
+.doc-prose ol {
+  padding-left: 1.5rem;
+}
+.doc-prose ul {
+  list-style: disc;
+}
+.doc-prose ol {
+  list-style: decimal;
+}
+.doc-prose li + li {
+  margin-top: 0.35rem;
+}
+/* A table wider than the column scrolls inside itself; the page never does. */
+.doc-prose table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+.doc-prose th,
+.doc-prose td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  white-space: nowrap;
+}
+.doc-prose th {
+  font-weight: 600;
+  color: var(--muted);
+}
+/* « try it »: a link that does the thing, styled as the action it is. */
+.doc-prose .doc-try a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--accent);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+.doc-prose .doc-try a::after {
+  content: '→';
+}
