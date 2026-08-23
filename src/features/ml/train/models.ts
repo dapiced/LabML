@@ -9,6 +9,14 @@ export interface TrainedModel {
   predict(X: number[][]): number[];
   /** Class probabilities (n × k) — only for models that can produce them. */
   predictProba?(X: number[][]): number[][];
+  /**
+   * V37: labels and probabilities from a SINGLE pass, for families where the
+   * two answers come out of the same expensive computation. Scorers use it when
+   * present; everything else keeps calling `predict` and `predictProba`, which
+   * must stay exactly as authoritative. Only k-NN implements it today — there,
+   * calling both meant searching every neighbour twice.
+   */
+  predictWithProba?(X: number[][]): { labels: number[]; proba: number[][] };
   /** Serializable parameters for export — absent when not exportable (k-NN). */
   toJSON?(): unknown;
 }
@@ -221,18 +229,59 @@ export function trainKnn(
 ): TrainedModel {
   // V25: no silent subsample here any more — callers (trainer, search) cap the
   // training set through the announced mechanism before this function runs.
-  const trainX = X;
-  const trainY = y;
-  const k = Math.min(kWanted, trainX.length);
+  const rowCount = X.length;
+  const width = X[0]?.length ?? 0;
+  const k = Math.min(kWanted, rowCount);
 
-  function neighbors(row: number[]): number[] {
-    const distances = trainX.map((trainRow, i) => {
+  // V37: the training rows flattened once. Measured on a 60 000-row run, k-NN
+  // inference was 59.6 s of a 68.8 s wall time — 87% of the whole run, and by
+  // far the largest single cost in the app. The maths below is unchanged; what
+  // changed is that it no longer allocates 5 000 objects and sorts them for
+  // every single prediction.
+  const flat = new Float64Array(rowCount * width);
+  for (let i = 0; i < rowCount; i++) {
+    const row = X[i];
+    for (let j = 0; j < width; j++) flat[i * width + j] = row[j];
+  }
+  const trainY = y;
+
+  // Scratch buffers for the k best neighbours, reused across predictions.
+  const bestDistance = new Float64Array(k);
+  const bestLabel = new Float64Array(k);
+
+  /**
+   * The k nearest labels, kept sorted by distance ascending.
+   *
+   * A bounded insertion instead of a full sort: k is 5, the training set is up
+   * to 5 000 rows, so almost every candidate fails the single `>= worst` test
+   * and costs nothing beyond its distance. Ties keep the row seen FIRST — the
+   * strict `<` below — which is exactly what the stable sort it replaces did,
+   * so the chosen neighbours are identical row for row.
+   */
+  function neighbors(row: number[]): Float64Array {
+    let filled = 0;
+    let worst = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < rowCount; i++) {
+      const base = i * width;
       let sum = 0;
-      for (let j = 0; j < row.length; j++) sum += (row[j] - trainRow[j]) ** 2;
-      return { i, d: sum };
-    });
-    distances.sort((a, b) => a.d - b.d);
-    return distances.slice(0, k).map(({ i }) => trainY[i]);
+      for (let j = 0; j < width; j++) {
+        const diff = row[j] - flat[base + j];
+        sum += diff * diff;
+      }
+      if (filled === k && sum >= worst) continue;
+      // Slide the larger entries right, drop the last one when already full.
+      let position = filled < k ? filled : k - 1;
+      while (position > 0 && bestDistance[position - 1] > sum) {
+        bestDistance[position] = bestDistance[position - 1];
+        bestLabel[position] = bestLabel[position - 1];
+        position--;
+      }
+      bestDistance[position] = sum;
+      bestLabel[position] = trainY[i];
+      if (filled < k) filled++;
+      worst = bestDistance[filled - 1];
+    }
+    return bestLabel;
   }
 
   if (ctx.task === 'regression') {
@@ -240,19 +289,32 @@ export function trainKnn(
       predict: (rows) =>
         rows.map((row) => {
           const near = neighbors(row);
-          return near.reduce((a, v) => a + v, 0) / near.length;
+          let sum = 0;
+          for (let i = 0; i < k; i++) sum += near[i];
+          return sum / k;
         }),
     };
   }
+
   const proba = (rows: number[][]) =>
     rows.map((row) => {
+      const near = neighbors(row);
       const votes = new Array<number>(ctx.classCount).fill(0);
-      for (const label of neighbors(row)) votes[label] += 1;
+      for (let i = 0; i < k; i++) votes[near[i] | 0] += 1;
       return votes.map((v) => v / k);
     });
+  const labelsOf = (probabilities: number[][]) =>
+    probabilities.map((p) => p.indexOf(Math.max(...p)));
+
   return {
-    predict: (rows) => proba(rows).map((p) => p.indexOf(Math.max(...p))),
+    predict: (rows) => labelsOf(proba(rows)),
     predictProba: proba,
+    // V37: a scorer wants both, and for k-NN both come out of the same
+    // neighbour search — asking twice searched 5 000 rows twice per prediction.
+    predictWithProba: (rows) => {
+      const probabilities = proba(rows);
+      return { labels: labelsOf(probabilities), proba: probabilities };
+    },
   };
 }
 

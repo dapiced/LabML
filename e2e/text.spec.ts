@@ -35,7 +35,12 @@ test('reviews: the text column trains, and the words explain the model', async (
   await expect(words).toContainText('Pick another model in the leaderboard');
 
   // And on a model that gives graded probabilities, the words do speak.
-  await page.getByTestId('leaderboard').getByText('Gradient boosting').click();
+  // The row, not any mention of the name: V37's footer announces which
+  // families trained on helper cores, so the name also appears there.
+  await page
+    .getByTestId('leaderboard')
+    .getByRole('row', { name: /Gradient boosting/ })
+    .click();
   await expect(words).toContainText('Words that move the answer', { timeout: 30_000 });
   // Effects are signed — at least one word pushes each way on this dataset.
   await expect(words).toContainText('+');
@@ -56,6 +61,11 @@ test('reviews in French: the words card speaks French too', async ({ page }) => 
   await expect(words).toBeVisible({ timeout: 30_000 });
   // Le refus est traduit lui aussi — une carte qui se tait n'apprend rien.
   await expect(words).toContainText('ses probabilités sont saturées');
-  await page.getByTestId('leaderboard').getByText('Gradient boosting').click();
+  // The row, not any mention of the name: V37's footer announces which
+  // families trained on helper cores, so the name also appears there.
+  await page
+    .getByTestId('leaderboard')
+    .getByRole('row', { name: /Gradient boosting/ })
+    .click();
   await expect(words).toContainText('Les mots qui font bouger la réponse', { timeout: 30_000 });
 });

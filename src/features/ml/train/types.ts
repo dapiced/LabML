@@ -180,4 +180,10 @@ export interface TrainSummary {
   classWeighting?: 'balanced';
   /** V36: the ensemble's members and the method used to combine them. */
   ensemble?: { members: ModelKey[]; method: 'probability' | 'vote' | 'mean' };
+  /**
+   * V37: families that were fitted on other cores, and how many helpers ran.
+   * Absent when the run was fully sequential — parallelism is announced like
+   * every other decision, never assumed.
+   */
+  parallel?: { helpers: number; families: ModelKey[] };
 }

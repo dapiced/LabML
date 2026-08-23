@@ -310,7 +310,9 @@
         "weighting": "pondération de classes : équilibrée ({{loss}} pondèrent la perte, {{resample}} utilisent un rééchantillonnage équilibré seedé)",
         "imbalanceHint": "La classe majoritaire occupe {{share}} % des lignes d'entraînement. L'accuracy récompense le fait de toujours la répondre — classez sur F1 ou rappel, et essayez la pondération de classes.",
         "weightToggle": "Équilibrer les classes",
-        "weightToggleHint": "Pondère la perte à l'entraînement (régression logistique, gradient boosting) ou rééchantillonne les lignes (arbre, forêt) pour que la classe rare compte autant que la commune."
+        "weightToggleHint": "Pondère la perte à l'entraînement (régression logistique, gradient boosting) ou rééchantillonne les lignes (arbre, forêt) pour que la classe rare compte autant que la commune.",
+        "parallel_one": "{{count}} cœur d'appoint : {{families}} entraînés en parallèle",
+        "parallel_other": "{{count}} cœurs d'appoint : {{families}} entraînés en parallèle"
       },
       "models": {
         "baseline": "Baseline naïve",
@@ -485,7 +487,16 @@
         "intervalsTitle": "Intervalles des gagnants (95 %, propres à chaque run)",
         "intervalsDisjoint": "Les intervalles ne se recouvrent pas — l'écart entre les deux runs dépasse leurs deux incertitudes. Probablement réel.",
         "intervalsOverlap": "Les intervalles se recouvrent — sur ces jeux de test, l'écart entre les deux runs peut être du bruit.",
-        "intervalsNote": "Chaque intervalle vient du tirage de test de son propre run (v20). Deux runs ne sont jamais appariés — à lire comme une indication, pas un test."
+        "intervalsNote": "Chaque intervalle vient du tirage de test de son propre run (v20). Deux runs ne sont jamais appariés — à lire comme une indication, pas un test.",
+        "openMany": "Comparer ces {{count}} runs",
+        "manyTitle": "Comparaison de session",
+        "manyHint": "Chaque run est lu par rapport à {{reference}}, le plus ancien de la sélection — les écarts disent donc ce qu'ont donné vos changements, pas ce que vaut le dernier run.",
+        "manyIncomparable": "Ces runs ne prédisent pas la même chose — les chiffres sont affichés, mais ce ne sont pas des écarts. Lisez chaque colonne pour elle-même.",
+        "reference": "référence",
+        "champion": "Meilleur modèle",
+        "manyShared_one": "{{count}} variable présente dans tous les runs : {{columns}}",
+        "manyShared_other": "{{count}} variables présentes dans tous les runs : {{columns}}",
+        "manyMissing": "Pas assez de runs à comparer — sélectionnez entre 2 et 6 runs enregistrés dans l'historique du lab."
       },
       "imported": {
         "title": "Réutiliser un modèle exporté",
