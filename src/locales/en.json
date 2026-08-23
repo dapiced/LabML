@@ -1024,6 +1024,13 @@
         "note": "EfficientNet-Lite4 (77.6 % ImageNet top-1) still always answers with its closest of 1,000 classes — even on an image it does not understand — and its class names stay in English.",
         "preview": "Analyzed image",
         "subject": "Main subject — ImageNet top 5",
+        "verdict": {
+          "people_one": "A person is in this picture — ImageNet-1k has no class for one.",
+          "people_other": "{{count}} people are in this picture — ImageNet-1k has no class for a person.",
+          "peopleWhy": "Of its 1,000 labels, 118 name dog breeds and none names a human being. The classifier cannot abstain: it renormalizes over the thousand and returns the nearest, here « {{label}} » at {{p}} %. That is not what the photo shows. The detectors below, which do know about people, are what says so.",
+          "unsure": "Too unsure to name: « {{label}} » at {{p}} %.",
+          "unsureWhy": "Below {{floor}} % the top classes are near-ties and naming the winner claims a confidence the network does not have. The five candidates stay listed — read them as a shortlist, not an answer. This bar comes from the fourteen-image bench: no correct answer measured below 70.5 %, no wrong one above 41.2 %. Fourteen images is a narrow base, and the bar is stated so it can be re-measured."
+        },
         "annotated": "Analyzed image with detection boxes",
         "objectsNone": "No objects detected — nothing above the 35 % confidence bar.",
         "objectCount_one": "{{count}} object detected",

@@ -25,6 +25,8 @@ interface Row {
   top5: string[];
   /** 'ok' | 'wrong' | 'unnameable' — the third is not the model's fault. */
   verdict: 'ok' | 'wrong' | 'unnameable';
+  /** What the page CLAIMED about the subject (V31 C — verdict.ts). */
+  claim: 'named' | 'no-class-for-people' | 'unsure';
   top5hit: boolean;
   objects: Record<string, number>;
   objectsOk: boolean | null;
@@ -36,6 +38,8 @@ interface Snapshot {
   predictions: string[];
   chips: string[];
   faces: string;
+  /** `data-verdict` off the subject block: 'named' until a result renders. */
+  claim: string;
   /** Preview blob URL + inference time — both change for every new image. */
   stamp: string;
 }
@@ -76,6 +80,7 @@ function snap(page: import('@playwright/test').Page): Promise<Snapshot> {
         (node) => (node as HTMLElement).innerText,
       );
     const preview = document.querySelector<HTMLImageElement>('img[alt="Analyzed image"]');
+    const subject = document.querySelector<HTMLElement>('[data-testid="vision-subject"]');
     const timing = [...document.querySelectorAll('p, span, div')]
       .map((node) => (node as HTMLElement).innerText ?? '')
       .find((value) => /inference \d+ ms/.test(value));
@@ -83,6 +88,7 @@ function snap(page: import('@playwright/test').Page): Promise<Snapshot> {
       predictions: text('vision-prediction'),
       chips: text('vision-object-chip'),
       faces: text('vision-faces')[0] ?? '',
+      claim: subject?.dataset.verdict ?? '',
       stamp: `${preview?.src ?? ''}|${timing ?? ''}`,
     };
   });
@@ -128,6 +134,7 @@ test('V31 — what the playground gets right, as a number', async ({ page }) => 
       top1p: top1.p,
       top5: parsed.map((x) => x.label),
       verdict,
+      claim: snapshot.claim as Row['claim'],
       top5hit: entry.accept.some((label) => parsed.some((x) => x.label === label)),
       objects,
       objectsOk:
@@ -146,22 +153,41 @@ test('V31 — what the playground gets right, as a number', async ({ page }) => 
   const objectRows = rows.filter((row) => row.objectsOk !== null);
   const faceRows = rows.filter((row) => row.facesOk !== null);
 
+  // --- V31 (C): what the page CLAIMED, scored against what it should have.
+  // A refusal is right on an image ImageNet cannot name and on one it names
+  // wrongly; it is a *cost* on an image it named correctly. Both sides are
+  // counted, because a refusal that never costs anything is a refusal that
+  // never fires.
+  const refused = (row: Row) => row.claim !== 'named';
+  const honest = unnameable.filter(refused).length;
+  const wrongRows = nameable.filter((row) => row.verdict === 'wrong');
+  const caught = wrongRows.filter(refused).length;
+  const okRows = nameable.filter((row) => row.verdict === 'ok');
+  const lost = okRows.filter(refused).length;
+
   const report = [
     `\nbanc vision V31 — ${rows.length} images`,
     `classification (là où une étiquette existe, ${nameable.length}) : ` +
       `top-1 ${ok}/${nameable.length}, top-5 ${top5}/${nameable.length}`,
-    `sans étiquette possible (${unnameable.length}) : le modèle répond quand même —`,
+    `sans étiquette possible (${unnameable.length}) :`,
     ...unnameable.map(
-      (row) => `    ${row.file.padEnd(20)} « ${row.top1} » à ${(row.top1p * 100).toFixed(1)} %`,
+      (row) =>
+        `    ${row.file.padEnd(20)} « ${row.top1} » à ${(row.top1p * 100).toFixed(1)} %` +
+        ` → ${refused(row) ? `REFUS (${row.claim})` : 'répond quand même'}`,
     ),
     `objets : ${objectRows.filter((r) => r.objectsOk).length}/${objectRows.length} images ` +
       `où tout ce qui devait être trouvé l'a été`,
     `visages : ${faceRows.filter((r) => r.facesOk).length}/${faceRows.length} comptes exacts`,
     '',
+    'verdict honnête (V31 C) :',
+    `  refus mérités   : ${honest}/${unnameable.length} images sans étiquette possible`,
+    `  erreurs saisies : ${caught}/${wrongRows.length} mauvaises réponses annoncées comme telles`,
+    `  coût            : ${lost}/${okRows.length} bonnes réponses perdues à un refus`,
+    '',
     'détail :',
     ...rows.map(
       (row) =>
-        `  ${row.verdict.padEnd(10)} ${row.file.padEnd(20)} ` +
+        `  ${row.verdict.padEnd(10)} ${row.claim.padEnd(20)} ${row.file.padEnd(20)} ` +
         `« ${row.top1} » ${(row.top1p * 100).toFixed(1)} % · ` +
         `objets ${JSON.stringify(row.objects)} · visages ${row.faces}`,
     ),
@@ -173,4 +199,9 @@ test('V31 — what the playground gets right, as a number', async ({ page }) => 
 
   expect(rows).toHaveLength(VISION_CASES.length);
   expect(unnameable.length).toBe(unnameableCount());
+  // The two guarantees V31 (C) is allowed to claim, frozen so a later change to
+  // the rules or the thresholds cannot quietly give them up:
+  // every image ImageNet cannot name is refused, and no correct answer is lost.
+  expect(honest).toBe(unnameable.length);
+  expect(lost).toBe(0);
 });
