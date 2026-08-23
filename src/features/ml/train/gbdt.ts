@@ -254,20 +254,36 @@ export function trainGbdtRegressor(
   });
 }
 
-/** Log-loss binary booster: g = p − y, h = p(1 − p). Returns raw log-odds. */
+/**
+ * Log-loss binary booster: g = p − y, h = p(1 − p). Returns raw log-odds.
+ *
+ * V36: `weights` scales each row's gradient AND hessian, which is the correct
+ * weighting for a second-order booster — scaling only the gradient would
+ * inflate the leaf values instead of rebalancing the classes.
+ */
 export function trainGbdtBinary(
   X: number[][],
   y01: number[],
   params: GbdtParams = GBDT_DEFAULTS,
+  weights?: number[],
 ): GbdtModel {
-  const positives = y01.reduce((a, v) => a + v, 0);
-  const prior = Math.min(1 - 1e-6, Math.max(1e-6, positives / (y01.length || 1)));
+  // The base score is the weighted prior, so a weighted run starts from the
+  // balance it is aiming at rather than from the raw class ratio.
+  let positiveMass = 0;
+  let totalMass = 0;
+  for (let i = 0; i < y01.length; i++) {
+    const w = weights?.[i] ?? 1;
+    positiveMass += w * y01[i];
+    totalMass += w;
+  }
+  const prior = Math.min(1 - 1e-6, Math.max(1e-6, positiveMass / (totalMass || 1)));
   const base = Math.log(prior / (1 - prior));
   return boost(X, params, base, (pred, g, h) => {
     for (let i = 0; i < y01.length; i++) {
       const p = sigmoid(pred[i]);
-      g[i] = p - y01[i];
-      h[i] = Math.max(p * (1 - p), 1e-12);
+      const w = weights?.[i] ?? 1;
+      g[i] = w * (p - y01[i]);
+      h[i] = w * Math.max(p * (1 - p), 1e-12);
     }
   });
 }
@@ -278,15 +294,20 @@ export function trainGbdtClassifier(
   y: number[],
   classCount: number,
   params?: GbdtParams,
+  /** V36: per-CLASS weights; expanded to per-row inside each booster. */
+  classWeights?: number[],
 ) {
+  const rowWeights =
+    classWeights === undefined ? undefined : y.map((label) => classWeights[label] ?? 1);
   const boosters =
     classCount === 2
-      ? [trainGbdtBinary(X, y, params)]
+      ? [trainGbdtBinary(X, y, params, rowWeights)]
       : Array.from({ length: classCount }, (_, c) =>
           trainGbdtBinary(
             X,
             y.map((label) => (label === c ? 1 : 0)),
             params,
+            rowWeights,
           ),
         );
 

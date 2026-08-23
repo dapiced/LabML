@@ -31,6 +31,8 @@ The project follows three non-negotiable principles:
   reporting set is what makes a headline figure optimistic. Metrics ship with 95% bootstrap
   intervals, per-segment breakdowns, calibration curves, and explicit refusals when a number
   would be noise (tiny slices, tiny test sets, a model whose probabilities are saturated).
+  **The ranking metric is yours to pick** — accuracy rewards always answering the majority
+  class, so on an imbalanced target you rank on F1 or recall instead, and the order changes.
 - **Hand-written, deterministic ML.** The model zoo, search, explanations, and statistics
   are implemented from scratch in TypeScript, seeded end to end — the same seed always
   reproduces the same run.
@@ -116,7 +118,7 @@ The project follows three non-negotiable principles:
 - **Performance.** Every section serves a prerendered static shell (hero paints before
   JavaScript); Lighthouse mobile ≈ 0.99 on `/ml` under real throttling. Heavy
   dependencies (Dexie, SheetJS, ONNX Runtime) load lazily.
-- **Quality bar.** 369 unit tests, 65 Playwright end-to-end tests (including offline PWA,
+- **Quality bar.** 387 unit tests, 69 Playwright end-to-end tests (including offline PWA,
   fake-webcam and axe-core WCAG A/AA accessibility checks), strict TypeScript, ESLint,
   Prettier, and Lighthouse budgets — all enforced in CI.
 

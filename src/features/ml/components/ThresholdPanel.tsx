@@ -13,6 +13,7 @@ import { bestThresholdByCost, thresholdMetrics } from '@/features/ml/train/thres
 export function ThresholdPanel() {
   const { t, i18n } = useTranslation();
   const analysis = useLabStore((s) => s.thresholdAnalysis);
+  const setThresholdClass = useLabStore((s) => s.setThresholdClass);
   const choice = useLabStore((s) => s.thresholdChoice);
   const chooseThreshold = useLabStore((s) => s.chooseThreshold);
   if (!analysis) return null;
@@ -55,6 +56,28 @@ export function ThresholdPanel() {
             rate: pct(analysis.pr.positiveRate),
           })}
         </p>
+        {analysis.oneVsRest && (
+          <div className="mt-2 flex flex-col gap-1.5">
+            <label className="flex items-center gap-2 text-xs">
+              {t('ml.lab.threshold.focusClass')}
+              <select
+                data-testid="threshold-class"
+                className="rounded-lg border border-line bg-surface px-2 py-1 text-xs"
+                value={analysis.oneVsRest.classIndex}
+                onChange={(event) => setThresholdClass(Number(event.target.value))}
+              >
+                {analysis.oneVsRest.classes.map((label, index) => (
+                  <option key={label} value={index}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className="max-w-3xl text-xs text-muted">
+              {t('ml.lab.threshold.oneVsRestNote', { class: analysis.positiveClass })}
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-6">
