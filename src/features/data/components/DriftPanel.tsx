@@ -6,6 +6,7 @@ import { Eyebrow } from '@/components/ui/eyebrow';
 import { useDataStore } from '@/features/data/data-store';
 import type { ColumnDrift, DriftSeverity } from '@/features/data/quality/drift';
 import { cn } from '@/lib/utils';
+import { ScrollRegion } from '@/components/ui/scroll-region';
 
 function SeverityBadge({ severity }: { severity: DriftSeverity }) {
   const { t } = useTranslation();
@@ -156,7 +157,7 @@ export function DriftPanel() {
             </div>
           )}
 
-          <div className="overflow-x-auto">
+          <ScrollRegion>
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-line text-muted">
@@ -181,7 +182,7 @@ export function DriftPanel() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollRegion>
 
           <p className="text-xs text-muted">{t('data.drift.note')}</p>
         </div>

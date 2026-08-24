@@ -6,7 +6,8 @@
       "home": "Accueil",
       "mlLab": "ML Lab",
       "data": "Data",
-      "ai": "IA"
+      "ai": "IA",
+      "docs": "Docs"
     },
     "soon": "Bientôt",
     "skipToContent": "Aller au contenu",
@@ -34,7 +35,24 @@
       "copyright": "© 2026 Dominic D'Apice",
       "about": "Comment ça marche",
       "docs": "Documentation"
-    }
+    },
+    "pageTitles": {
+      "about": "Comment ça marche",
+      "ai": "Playground IA",
+      "aiChat": "Assistant de données",
+      "aiVision": "Vision",
+      "compare": "Comparaison de runs",
+      "data": "Data Studio",
+      "docs": "Documentation",
+      "home": "LabML — le machine learning dans votre navigateur",
+      "ml": "ML Lab",
+      "notFound": "Page introuvable",
+      "privacy": "Confidentialité",
+      "run": "Résultats du run",
+      "share": "Run partagé",
+      "suffix": "LabML"
+    },
+    "scrollRegion": "Tableau défilant horizontalement"
   },
   "about": {
     "eyebrow": "LABML",

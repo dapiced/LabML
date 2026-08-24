@@ -1,5 +1,5 @@
 import { ArrowLeft, BookOpen, Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router';
 import { DOCS } from 'virtual:labml-docs';
@@ -37,6 +37,15 @@ export function DocsPage() {
   const pages = useMemo(() => pagesFor(i18n.language), [i18n.language]);
   const hits = useMemo(() => searchDocs(pages, query), [pages, query]);
   const current = slug ? pages.find((page) => page.slug === slug) : undefined;
+
+  // V35 — a doc page names its own tab. `titleKeyFor` returns null for
+  // `/docs/:slug` precisely so this wins: twenty-four pages, twenty-four
+  // titles, taken from the front matter rather than from a generic label.
+  useEffect(() => {
+    if (!slug) return;
+    const name = current ? current.title : t('common.pageTitles.notFound');
+    document.title = `${name} · ${t('common.pageTitles.suffix')}`;
+  }, [slug, current, t]);
 
   // An unknown slug is a wrong link, not an empty page: say so and offer the index.
   if (slug && !current) {

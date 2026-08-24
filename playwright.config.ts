@@ -19,7 +19,28 @@ export default defineConfig({
       ...(process.env.PW_CHROMIUM_PATH ? { executablePath: process.env.PW_CHROMIUM_PATH } : {}),
     },
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  // V35 — until this wave there was ONE project: Desktop Chrome, light mode.
+  // Every e2e test in the repository ran at 1280 px, which is exactly why six
+  // doc pages shipped scrolling sideways on a phone and nobody saw it. The two
+  // projects below close that blind spot without paying for it: the full suite
+  // still runs once, and only the specs that can actually catch a viewport or
+  // a theme regression are replayed.
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'mobile',
+      testMatch: /(layout|a11y)\.spec\.ts/,
+      use: { ...devices['Pixel 5'] },
+    },
+    {
+      name: 'dark',
+      // Contrast and focus styling are the theme-dependent failures worth
+      // guarding; the rest of the suite is theme-agnostic and replaying it
+      // would only buy CI minutes.
+      testMatch: /a11y\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], colorScheme: 'dark' },
+    },
+  ],
   webServer: {
     command: 'npm run preview',
     url: 'http://127.0.0.1:4173',

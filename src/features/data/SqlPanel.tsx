@@ -8,6 +8,7 @@ import { Eyebrow } from '@/components/ui/eyebrow';
 import { useDataStore } from '@/features/data/data-store';
 import { BUNDLE_BYTES, type SqlEngine } from '@/features/data/sql/engine';
 import { readerFor, tableNameFor, tableToCsv, type SqlTable } from '@/features/data/sql/table';
+import { ScrollRegion } from '@/components/ui/scroll-region';
 
 /** Rows painted at once. The count above the table always tells the truth. */
 const DISPLAY_CAP = 200;
@@ -212,7 +213,7 @@ export function SqlPanel() {
                     })
                   : t('data.sql.rows', { total: result.totalRows.toLocaleString(lang) })}
               </p>
-              <div className="max-h-96 overflow-auto rounded-xl border border-line">
+              <ScrollRegion className="max-h-96 overflow-y-auto rounded-xl border border-line">
                 <table className="w-full border-collapse text-left font-mono text-xs">
                   <thead className="sticky top-0 bg-surface-2">
                     <tr>
@@ -235,7 +236,7 @@ export function SqlPanel() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </ScrollRegion>
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={download}>
                   {t('data.sql.exportCsv')}
