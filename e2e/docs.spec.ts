@@ -156,8 +156,14 @@ test('the docs index lists the tutorial and the local search finds it', async ({
     const host = new URL(request.url()).host;
     if (host !== new URL(page.url()).host) outbound.push(request.url());
   });
+  // V34: « leakage » now matches the tutorial AND the refusals page — the
+  // corpus grew, the search did not break. Assert the tutorial is among the
+  // hits rather than that it is the only one.
   await page.getByTestId('docs-search').fill('leakage');
-  await expect(page.getByTestId('docs-hit')).toContainText('Your first model');
+  await expect(page.getByTestId('docs-hit').filter({ hasText: 'Your first model' })).toHaveCount(1);
+  // A word in a title outranks the same word in a body (searchDocs sorts on it).
+  await page.getByTestId('docs-search').fill('refusal');
+  await expect(page.getByTestId('docs-hit').first()).toContainText('Every refusal');
   await page.getByTestId('docs-search').fill('zzzznothing');
   await expect(page.getByTestId('docs-no-hit')).toBeVisible();
   expect(outbound, 'searching must not call anyone').toEqual([]);

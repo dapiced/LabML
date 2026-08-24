@@ -110,3 +110,8 @@ refus à l'import sont nommées — voir la [page des refus](/docs/refus).
 Deux runs côte à côte (`/ml/compare/:a/:b`) ou jusqu'à six
 (`/ml/compare-many/:ids`) : configuration, variables ajoutées ou retirées,
 classement par modèle, incertitude croisée.
+
+## Et ensuite ?
+
+- [Scorer un nouveau lot](/docs/scorer-un-lot), [comparer deux runs](/docs/comparer-deux-runs), [lire une courbe](/docs/lire-une-courbe) — les gestes, un par page.
+- [Les choix de méthode](/docs/methode) — pourquoi la baseline, les intervalles et la graine 42.

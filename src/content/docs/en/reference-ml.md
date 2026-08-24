@@ -103,3 +103,8 @@ refusals are on the [refusals page](/docs/refus).
 Two runs side by side (`/ml/compare/:a/:b`) or up to six
 (`/ml/compare-many/:ids`): configuration, features added or removed, per-model
 leaderboard, cross-run uncertainty.
+
+## Where to go next
+
+- [Score a new batch](/docs/scorer-un-lot), [compare two runs](/docs/comparer-deux-runs), [read a curve](/docs/lire-une-courbe) — the gestures, one per page.
+- [The method choices](/docs/methode) — why the baseline, the intervals and seed 42.
