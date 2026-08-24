@@ -1,3 +1,10 @@
+# V35 — measured against production, 24 Aug 2026: every header below is served
+# exactly as written EXCEPT Strict-Transport-Security. Cloudflare applies its
+# own HSTS setting and overrides this line — the site answers with
+# `max-age=2592000` (30 days) and no `includeSubDomains`. This file is not
+# wrong, it is outranked; the fix is in the Cloudflare dashboard, under
+# SSL/TLS → Edge Certificates → HSTS. Re-measure with:
+#   curl -sI https://app.dominicdapice.com/ | grep -i strict-transport
 /*
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   X-Content-Type-Options: nosniff

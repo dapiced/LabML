@@ -43,6 +43,13 @@ export function Header() {
           <NavLink to="/ai" className={navLinkClass}>
             {t('common.nav.ai')}
           </NavLink>
+          {/* V35 — twenty-four documentation pages sat behind a footer link
+              alone. The tutorial is the entry point for a first-time visitor;
+              a link they have to scroll past the whole page to find is not
+              one. Short label on purpose: the nav scrolls on a phone. */}
+          <NavLink to="/docs" className={navLinkClass}>
+            {t('common.nav.docs')}
+          </NavLink>
         </nav>
 
         <div className="ml-auto flex items-center gap-2 sm:ml-0">

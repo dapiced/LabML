@@ -1,7 +1,7 @@
 {
   "name": "labml",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -56,7 +56,7 @@
     "react-i18next": "^17.0.12",
     "react-router": "^8.3.0",
     "tailwind-merge": "^3.6.0",
-    "xlsx": "^0.18.5",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zustand": "^5.0.15"
   },
   "devDependencies": {

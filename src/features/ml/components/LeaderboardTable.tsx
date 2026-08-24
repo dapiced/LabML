@@ -12,6 +12,7 @@ import {
 import type { TaskType } from '@/features/ml/data/types';
 import type { ModelResult, RankingMetric, TrainSummary } from '@/features/ml/train/types';
 import { cn } from '@/lib/utils';
+import { ScrollRegion } from '@/components/ui/scroll-region';
 
 function formatMetric(value: number | undefined, digits = 3): string {
   return value === undefined || Number.isNaN(value) ? '—' : value.toFixed(digits);
@@ -101,10 +102,7 @@ export function LeaderboardTable({
   const primaryHeader = hasValidation ? `${metricLabel} (val)` : metricLabel;
 
   return (
-    <div
-      data-testid="leaderboard"
-      className="overflow-x-auto rounded-2xl border border-line bg-surface"
-    >
+    <div data-testid="leaderboard" className="rounded-2xl border border-line bg-surface">
       {onRankMetric && (
         <div className="flex flex-wrap items-center gap-2 border-b border-line px-3 py-2 text-xs">
           <label className="flex items-center gap-2">
@@ -153,129 +151,131 @@ export function LeaderboardTable({
           </div>
         </div>
       )}
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="bg-surface-2 font-mono text-[0.68rem] tracking-wider uppercase">
-            <th className="px-3 py-2 font-medium">#</th>
-            <th className="px-3 py-2 font-medium">{t('ml.lab.leaderboard.model')}</th>
-            <th className="px-3 py-2 font-medium">{primaryHeader}</th>
-            {hasValidation && (
-              <th className="px-3 py-2 font-medium" title={t('ml.lab.leaderboard.testTitle')}>
-                {t('ml.lab.leaderboard.test')}
-              </th>
-            )}
-            <th className="px-3 py-2 font-medium">{t('ml.lab.leaderboard.delta')}</th>
-            {metricColumns.map(({ key, label }) => (
-              <th key={key} className="px-3 py-2 font-medium">
-                {label}
-              </th>
-            ))}
-            <th className="px-3 py-2 font-medium">{t('ml.lab.leaderboard.trainTime')}</th>
-            <th className="px-3 py-2 font-medium">{t('ml.lab.leaderboard.inference')}</th>
-          </tr>
-        </thead>
-        <tbody className="tabular-nums">
-          {sorted.map((result, rank) => (
-            <tr
-              key={result.key}
-              onClick={onSelectModel ? () => onSelectModel(result.key) : undefined}
-              title={onSelectModel ? t('ml.lab.insights.inspectRow') : undefined}
-              className={cn(
-                'border-t border-line transition-colors',
-                onSelectModel && 'cursor-pointer hover:bg-surface-2',
-                result.key === bestKey && 'bg-accent-soft/50',
-                result.key === 'baseline' && 'text-muted',
-              )}
-            >
-              <td className="px-3 py-2 font-mono text-xs">{rank + 1}</td>
-              <td className="px-3 py-2">
-                <span className="flex items-center gap-2 whitespace-nowrap">
-                  {t(`ml.lab.models.${result.key}`)}
-                  {result.key === bestKey && <Badge>{t('ml.lab.leaderboard.best')}</Badge>}
-                  {result.key === 'baseline' && (
-                    <Badge variant="outline">{t('ml.lab.leaderboard.baselineTag')}</Badge>
-                  )}
-                  {inspectedModel === result.key && (
-                    <Eye className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
-                  )}
-                </span>
-              </td>
-              <td className="px-3 py-2">
-                <span className="flex items-center gap-2">
-                  {isClassification && (
-                    <span className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-surface-2">
-                      <span
-                        className="block h-full rounded-full bg-accent/75"
-                        style={{ width: `${(rankingValue(result) / maxPrimary) * 100}%` }}
-                      />
-                    </span>
-                  )}
-                  <span className="font-medium">{formatMetric(rankingValue(result))}</span>
-                </span>
-              </td>
+      <ScrollRegion>
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="bg-surface-2 font-mono text-[0.68rem] tracking-wider uppercase">
+              <th className="px-3 py-2 font-medium">#</th>
+              <th className="px-3 py-2 font-medium">{t('ml.lab.leaderboard.model')}</th>
+              <th className="px-3 py-2 font-medium">{primaryHeader}</th>
               {hasValidation && (
-                <td className="px-3 py-2 text-muted">{formatMetric(result.primary)}</td>
+                <th className="px-3 py-2 font-medium" title={t('ml.lab.leaderboard.testTitle')}>
+                  {t('ml.lab.leaderboard.test')}
+                </th>
               )}
-              <td
+              <th className="px-3 py-2 font-medium">{t('ml.lab.leaderboard.delta')}</th>
+              {metricColumns.map(({ key, label }) => (
+                <th key={key} className="px-3 py-2 font-medium">
+                  {label}
+                </th>
+              ))}
+              <th className="px-3 py-2 font-medium">{t('ml.lab.leaderboard.trainTime')}</th>
+              <th className="px-3 py-2 font-medium">{t('ml.lab.leaderboard.inference')}</th>
+            </tr>
+          </thead>
+          <tbody className="tabular-nums">
+            {sorted.map((result, rank) => (
+              <tr
+                key={result.key}
+                onClick={onSelectModel ? () => onSelectModel(result.key) : undefined}
+                title={onSelectModel ? t('ml.lab.insights.inspectRow') : undefined}
                 className={cn(
-                  'px-3 py-2',
-                  delta(result).startsWith('+') && 'font-medium text-accent-strong',
+                  'border-t border-line transition-colors',
+                  onSelectModel && 'cursor-pointer hover:bg-surface-2',
+                  result.key === bestKey && 'bg-accent-soft/50',
+                  result.key === 'baseline' && 'text-muted',
                 )}
               >
-                {delta(result)}
-              </td>
-              {metricColumns.map(({ key }) => (
-                <td key={key} className="px-3 py-2">
-                  {formatMetric(metricsOf(result)[key])}
+                <td className="px-3 py-2 font-mono text-xs">{rank + 1}</td>
+                <td className="px-3 py-2">
+                  <span className="flex items-center gap-2 whitespace-nowrap">
+                    {t(`ml.lab.models.${result.key}`)}
+                    {result.key === bestKey && <Badge>{t('ml.lab.leaderboard.best')}</Badge>}
+                    {result.key === 'baseline' && (
+                      <Badge variant="outline">{t('ml.lab.leaderboard.baselineTag')}</Badge>
+                    )}
+                    {inspectedModel === result.key && (
+                      <Eye className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
+                    )}
+                  </span>
                 </td>
-              ))}
-              <td className="px-3 py-2 font-mono text-xs whitespace-nowrap">
-                {formatMs(result.trainMs)} ms
-                {summary !== null &&
-                  result.trainedRows !== undefined &&
-                  result.trainedRows < summary.trainRows && (
-                    <span
-                      className="block text-[0.62rem] text-muted"
-                      title={t('ml.lab.leaderboard.trainedOnTitle', {
-                        rows: result.trainedRows.toLocaleString(lang),
-                        total: summary.trainRows.toLocaleString(lang),
-                      })}
-                    >
-                      {t('ml.lab.leaderboard.trainedOn', {
-                        rows: result.trainedRows.toLocaleString(lang),
-                      })}
-                    </span>
+                <td className="px-3 py-2">
+                  <span className="flex items-center gap-2">
+                    {isClassification && (
+                      <span className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-surface-2">
+                        <span
+                          className="block h-full rounded-full bg-accent/75"
+                          style={{ width: `${(rankingValue(result) / maxPrimary) * 100}%` }}
+                        />
+                      </span>
+                    )}
+                    <span className="font-medium">{formatMetric(rankingValue(result))}</span>
+                  </span>
+                </td>
+                {hasValidation && (
+                  <td className="px-3 py-2 text-muted">{formatMetric(result.primary)}</td>
+                )}
+                <td
+                  className={cn(
+                    'px-3 py-2',
+                    delta(result).startsWith('+') && 'font-medium text-accent-strong',
                   )}
-              </td>
-              <td
-                className="px-3 py-2 font-mono text-xs whitespace-nowrap"
-                title={t('ml.lab.leaderboard.inferenceTitle', {
-                  value: formatMs(result.inferP95Ms),
-                })}
-              >
-                {formatMs(result.inferP50Ms)} ms
-              </td>
-            </tr>
-          ))}
-          {failed.map((result) => (
-            <tr key={result.key} className="border-t border-line text-muted">
-              <td className="px-3 py-2 font-mono text-xs">—</td>
-              <td className="px-3 py-2">
-                <span className="flex items-center gap-2 whitespace-nowrap">
-                  {t(`ml.lab.models.${result.key}`)}
-                  <Badge variant="copper">{t('ml.lab.leaderboard.failed')}</Badge>
-                </span>
-              </td>
-              <td
-                className="px-3 py-2"
-                colSpan={4 + metricColumns.length + (hasValidation ? 1 : 0)}
-              >
-                <span className="font-mono text-xs">{result.error}</span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                >
+                  {delta(result)}
+                </td>
+                {metricColumns.map(({ key }) => (
+                  <td key={key} className="px-3 py-2">
+                    {formatMetric(metricsOf(result)[key])}
+                  </td>
+                ))}
+                <td className="px-3 py-2 font-mono text-xs whitespace-nowrap">
+                  {formatMs(result.trainMs)} ms
+                  {summary !== null &&
+                    result.trainedRows !== undefined &&
+                    result.trainedRows < summary.trainRows && (
+                      <span
+                        className="block text-[0.62rem] text-muted"
+                        title={t('ml.lab.leaderboard.trainedOnTitle', {
+                          rows: result.trainedRows.toLocaleString(lang),
+                          total: summary.trainRows.toLocaleString(lang),
+                        })}
+                      >
+                        {t('ml.lab.leaderboard.trainedOn', {
+                          rows: result.trainedRows.toLocaleString(lang),
+                        })}
+                      </span>
+                    )}
+                </td>
+                <td
+                  className="px-3 py-2 font-mono text-xs whitespace-nowrap"
+                  title={t('ml.lab.leaderboard.inferenceTitle', {
+                    value: formatMs(result.inferP95Ms),
+                  })}
+                >
+                  {formatMs(result.inferP50Ms)} ms
+                </td>
+              </tr>
+            ))}
+            {failed.map((result) => (
+              <tr key={result.key} className="border-t border-line text-muted">
+                <td className="px-3 py-2 font-mono text-xs">—</td>
+                <td className="px-3 py-2">
+                  <span className="flex items-center gap-2 whitespace-nowrap">
+                    {t(`ml.lab.models.${result.key}`)}
+                    <Badge variant="copper">{t('ml.lab.leaderboard.failed')}</Badge>
+                  </span>
+                </td>
+                <td
+                  className="px-3 py-2"
+                  colSpan={4 + metricColumns.length + (hasValidation ? 1 : 0)}
+                >
+                  <span className="font-mono text-xs">{result.error}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </ScrollRegion>
       {champion && (
         <p data-testid="champion-gap" className="border-t border-line px-3 py-2 text-xs">
           {t('ml.lab.leaderboard.championLine', {

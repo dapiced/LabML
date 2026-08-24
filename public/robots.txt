@@ -1,2 +1,6 @@
 User-agent: *
 Allow: /
+
+# V35 — the sitemap is generated at build time from the route table and the
+# documentation front matter, so it cannot list a page that does not exist.
+Sitemap: https://app.dominicdapice.com/sitemap.xml

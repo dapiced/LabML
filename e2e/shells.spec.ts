@@ -34,3 +34,83 @@ test('the app takes over a shell and client-side navigation still works', async 
   await expect(page).toHaveURL(/\/ml$/);
   await expect(page.getByRole('heading', { level: 1 })).toContainText('From a CSV');
 });
+
+/**
+ * V35 — the metadata each shell carries.
+ *
+ * The audit measured nine prerendered shells sharing one `<title>LabML</title>`
+ * and one description, with no canonical, no Open Graph and no Twitter card:
+ * a LabML link pasted into LinkedIn or Slack showed no preview at all, three
+ * open tabs were indistinguishable, and a crawler saw nine identical titles.
+ * Lighthouse scored SEO 100 throughout — its category audits none of this,
+ * which is exactly why the gap survived so long and why the guard belongs here.
+ */
+test('every shell carries its own title, description and social card', async ({ request }) => {
+  const seen = new Map<string, string>();
+  for (const [path] of [['/'], ...SHELLS] as [string][]) {
+    const html = await (await request.get(path)).text();
+    const meta = (pattern: RegExp) => pattern.exec(html)?.[1]?.trim() ?? '';
+
+    const title = meta(/<title>([^<]*)<\/title>/);
+    expect(title, `${path} has no title`).toBeTruthy();
+    expect(title, `${path} is titled with the product name alone`).not.toBe('LabML');
+    // The defect itself: two pages must never answer with the same title.
+    expect(seen.has(title), `${path} repeats the title of ${seen.get(title)}`).toBe(false);
+    seen.set(title, path);
+
+    const description = meta(/<meta name="description" content="([^"]*)"/);
+    expect(description.length, `${path} has no description`).toBeGreaterThan(40);
+
+    expect(meta(/<link rel="canonical" href="([^"]*)"/), `${path} canonical`).toBe(
+      `https://app.dominicdapice.com${path}`,
+    );
+    expect(meta(/<meta property="og:url" content="([^"]*)"/), `${path} og:url`).toBe(
+      `https://app.dominicdapice.com${path}`,
+    );
+    expect(meta(/<meta property="og:title" content="([^"]*)"/), `${path} og:title`).toBe(title);
+    expect(meta(/<meta name="twitter:card" content="([^"]*)"/), `${path} twitter:card`).toBe(
+      'summary_large_image',
+    );
+    // A card that points at a missing image is a card that renders blank.
+    const image = meta(/<meta property="og:image" content="([^"]*)"/);
+    expect(image, `${path} og:image`).toBe('https://app.dominicdapice.com/og.png');
+  }
+
+  const og = await request.get('/og.png');
+  expect(og.status(), 'the social image is not served').toBe(200);
+  expect(og.headers()['content-type']).toContain('image/png');
+});
+
+test('the sitemap lists every page that exists, and nothing that does not', async ({ request }) => {
+  const xml = await (await request.get('/sitemap.xml')).text();
+  const listed = [...xml.matchAll(/<loc>https:\/\/app\.dominicdapice\.com([^<]*)<\/loc>/g)].map(
+    (match) => match[1],
+  );
+
+  for (const [path] of [['/'], ...SHELLS] as [string][]) {
+    expect(listed, `${path} is missing from the sitemap`).toContain(path);
+  }
+  // Documentation pages are the ones a hand-written sitemap would forget:
+  // twelve slugs, each added by dropping a Markdown file into the repository.
+  const docs = listed.filter((path) => path.startsWith('/docs/'));
+  expect(docs.length, 'the sitemap advertises no documentation page').toBeGreaterThanOrEqual(12);
+
+  // Every advertised URL must actually answer — a sitemap of 404s is worse
+  // than no sitemap, and this is the direction that catches a removed page.
+  for (const path of listed) {
+    expect((await request.get(path)).status(), `${path} is advertised but does not answer`).toBe(
+      200,
+    );
+  }
+
+  // Nothing that describes one visitor's local data belongs in a crawler's map.
+  for (const path of listed) {
+    expect(path, 'a dynamic route leaked into the sitemap').not.toMatch(
+      /\/ml\/(run|share|compare)/,
+    );
+  }
+
+  expect(await (await request.get('/robots.txt')).text()).toContain(
+    'Sitemap: https://app.dominicdapice.com/sitemap.xml',
+  );
+});
