@@ -124,3 +124,9 @@ Deux signaux ressemblent à des refus et n'en sont pas : `not-parallelisable` et
 dans un worker auxiliaire, elle l'est simplement en séquentiel dans le worker
 principal. Le résultat est identique, seulement plus lent — c'est pourquoi rien
 n'est affiché.
+
+## Et ensuite ?
+
+- [Ce que LabML ne fait pas](/docs/limites) — les limites de conception, distinctes des refus au cas par cas.
+- [Les choix de méthode](/docs/methode) — pourquoi refuser plutôt qu'approximer.
+- Le [tutoriel](/docs/premier-modele) si vous cherchiez plutôt à démarrer.
