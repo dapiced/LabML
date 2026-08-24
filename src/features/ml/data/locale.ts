@@ -26,6 +26,7 @@
  *    applies to a column only when nearly all of its values are numbers in the
  *    detected format AND the column would otherwise not be numeric at all.
  */
+import type { HeaderIssue } from '@/features/ml/data/header';
 
 /** Share of a column's values that must match before it is reformatted. */
 export const DECIMAL_CONFIDENCE = 0.9;
@@ -220,6 +221,18 @@ export interface ReadFormat {
   delimiter: Delimiter;
   /** Columns rewritten from the French form, with the evidence for each. */
   decimalColumns: ColumnFormat[];
+  /**
+   * V35 wave 4 — columns whose name LabML had to change to keep names unique.
+   * Optional so a `ReadFormat` persisted by an earlier version still loads.
+   */
+  headerIssues?: HeaderIssue[];
+  /**
+   * V35 wave 4 — rows the file did not deliver as declared: a quote it never
+   * closed, or a line with the wrong number of cells. Counted rather than
+   * guessed at, and stated, because the alternative is dropping data in
+   * silence. See `countRaggedRows` and `countParseErrors`.
+   */
+  malformedRows?: number;
 }
 
 /** True when the file was NOT plain UTF-8 with dot decimals and commas. */
@@ -227,6 +240,8 @@ export function isNonDefault(format: ReadFormat): boolean {
   return (
     format.encoding.encoding !== 'utf-8' ||
     format.delimiter !== ',' ||
-    format.decimalColumns.length > 0
+    format.decimalColumns.length > 0 ||
+    (format.headerIssues?.length ?? 0) > 0 ||
+    (format.malformedRows ?? 0) > 0
   );
 }

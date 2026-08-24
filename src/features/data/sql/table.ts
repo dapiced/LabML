@@ -9,6 +9,8 @@
  * Pure functions, so the formatting is unit-tested rather than eyeballed in a
  * browser.
  */
+import { toCsv } from '@/lib/csv';
+
 export interface SqlTable {
   columns: string[];
   /** At most `cap` rows — what the UI paints. */
@@ -60,9 +62,7 @@ export function toSqlTable(
 
 /** RFC-4180-ish escaping, matching what the Data Studio exports elsewhere. */
 export function tableToCsv(table: SqlTable): string {
-  const escape = (cell: string): string =>
-    /[",\n]/.test(cell) ? `"${cell.replace(/"/g, '""')}"` : cell;
-  return [table.columns, ...table.rows].map((row) => row.map(escape).join(',')).join('\n');
+  return toCsv(table.columns, table.rows);
 }
 
 /**

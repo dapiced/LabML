@@ -38,6 +38,11 @@ const ROUTES = [
   '/about',
   '/privacy',
   '/route-qui-nexiste-pas',
+  // V35 wave 4 — the refusal paths are routes too, and this one was the only
+  // page on the site with no `<h1>` at all. Both are reachable by anyone: a
+  // mistyped URL, and a share link a chat client cut in half.
+  '/ml/share#un-fragment-tronque',
+  '/docs/slug-qui-nexiste-pas',
   ...SLUGS.map((slug) => `/docs/${slug}`),
 ];
 

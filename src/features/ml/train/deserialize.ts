@@ -226,9 +226,37 @@ export function deserializeModel(text: string): ImportedModel {
   }
 
   const isClassification = data.task === 'classification';
-  const specs = specsFromJson(pipeline.specs);
-  const { transformRow } = buildRowEncoder(specs);
-  const model = rebuildModel(parameters.kind, parameters, isClassification);
+  // V35 wave 4 — the four checks above cover the manifest's outer shape, not
+  // what is inside `pipeline.specs` or `parameters`. A hand-edited export with
+  // a `null` spec, or a tree whose root has no children, got past them and
+  // threw a raw `Cannot read properties of null (reading 'kind')`, which the
+  // panel could only show as its « generic » fallback. Every refusal in this
+  // module is named, so this one is too: anything unexpected during the
+  // reconstruction IS an incomplete manifest, and says so.
+  let specs, transformRow, model;
+  try {
+    // A spec that is not an object survives `specsFromJson` untouched and
+    // yields a model whose required column is literally `null` — measured on
+    // `specs: ['numeric']`, which produced `featureColumns: [null]`. That is
+    // an incomplete manifest, not a model, so say so now rather than at the
+    // first scoring attempt.
+    const wellFormed = pipeline.specs.every(
+      (spec) =>
+        typeof spec === 'object' &&
+        spec !== null &&
+        typeof (spec as { kind?: unknown }).kind === 'string' &&
+        typeof (spec as { name?: unknown }).name === 'string',
+    );
+    if (!wellFormed) throw new Error('bad-manifest');
+    specs = specsFromJson(pipeline.specs);
+    ({ transformRow } = buildRowEncoder(specs));
+    model = rebuildModel(parameters.kind, parameters, isClassification);
+  } catch (error) {
+    // `rebuildModel` raises its own named refusal — that one is the truth.
+    const message = error instanceof Error ? error.message : '';
+    if (message.startsWith('unsupported-kind:')) throw error;
+    throw new Error('bad-manifest', { cause: error });
+  }
 
   return {
     manifest: {

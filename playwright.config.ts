@@ -33,6 +33,24 @@ export default defineConfig({
       use: { ...devices['Pixel 5'] },
     },
     {
+      // V35 wave 4 — the axis nobody had added: language.
+      //
+      // The config declared a viewport and a colour scheme and no locale, so
+      // every e2e test in this repository has always run against the ENGLISH
+      // UI. Measured: the footer link row overflowed the page by 33 px at
+      // 375 px and 15 px at 393 px, on every route — in French only, because
+      // French is the longer language. The `mobile` project ran the exact
+      // assertion that would have caught it and read 0, because it read it in
+      // English. LabML is a bilingual product written by a francophone; the
+      // language it is authored in is the one its layouts give way in.
+      //
+      // Only the layout spec is replayed. Behaviour is language-agnostic and
+      // rerunning the whole suite would buy CI minutes, not defects.
+      name: 'mobile-fr',
+      testMatch: /layout\.spec\.ts/,
+      use: { ...devices['Pixel 5'], locale: 'fr-FR' },
+    },
+    {
       name: 'dark',
       // Contrast and focus styling are the theme-dependent failures worth
       // guarding; the rest of the suite is theme-agnostic and replaying it
