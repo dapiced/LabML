@@ -114,3 +114,26 @@ test('the sitemap lists every page that exists, and nothing that does not', asyn
     'Sitemap: https://app.dominicdapice.com/sitemap.xml',
   );
 });
+
+/**
+ * The Bing Webmaster Tools verification file.
+ *
+ * Bing fetches `/BingSiteAuth.xml` and reads the token inside to confirm the
+ * site is ours. If the file ever stops being served — a `public/` reshuffle, a
+ * build change — verification lapses and the site quietly drops out of Bing's
+ * index. There is no error and no visible symptom, which is exactly why this
+ * belongs in a test rather than in someone's memory.
+ *
+ * The check is on the CONTENT, never the status code: `_redirects` sends every
+ * unknown path to `index.html` with HTTP 200, so a missing file still answers
+ * 200 — with HTML. That trap cost a false positive during the V35 audit.
+ */
+test('the Bing site verification file is served from the root', async ({ request }) => {
+  const response = await request.get('/BingSiteAuth.xml');
+  expect(response.status()).toBe(200);
+  const body = await response.text();
+  expect(body, 'the SPA fallback answered instead of the file').not.toContain('<!doctype html>');
+  expect(body).toContain('<users>');
+  // The token itself: a different one verifies a different property.
+  expect(body).toContain('B32D3D73A3D7BB4EA0AD1FDC8EF23279');
+});
