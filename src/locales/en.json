@@ -200,7 +200,7 @@
     "eyebrow": "ML LAB",
     "titlePre": "From a CSV to a leaderboard,",
     "titleHighlight": "without your data leaving the tab.",
-    "lede": "The lab reads your file locally, works out the task, trains a set of models and holds back part of the data to test them honestly.",
+    "lede": "The lab reads your file locally, works out the task, trains a set of models and holds back part of the data to test them honestly. PS: The ideal dataset size should be between 1MB and 30MB for a reasonable response time.",
     "steps": {
       "upload": {
         "title": "Drop a dataset",
