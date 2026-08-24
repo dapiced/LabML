@@ -6,7 +6,8 @@
       "home": "Home",
       "mlLab": "ML Lab",
       "data": "Data",
-      "ai": "AI"
+      "ai": "AI",
+      "docs": "Docs"
     },
     "soon": "Soon",
     "skipToContent": "Skip to content",
@@ -34,7 +35,24 @@
       "copyright": "© 2026 Dominic D'Apice",
       "about": "How it works",
       "docs": "Documentation"
-    }
+    },
+    "pageTitles": {
+      "about": "How it works",
+      "ai": "AI Playground",
+      "aiChat": "Data assistant",
+      "aiVision": "Vision",
+      "compare": "Run comparison",
+      "data": "Data Studio",
+      "docs": "Documentation",
+      "home": "LabML — machine learning in your browser",
+      "ml": "ML Lab",
+      "notFound": "Page not found",
+      "privacy": "Privacy",
+      "run": "Run results",
+      "share": "Shared run",
+      "suffix": "LabML"
+    },
+    "scrollRegion": "Horizontally scrolling table"
   },
   "about": {
     "eyebrow": "LABML",

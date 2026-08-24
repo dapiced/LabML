@@ -11,6 +11,7 @@ import { ExplorePanel } from '@/features/ml/components/ExplorePanel';
 import { ForecastPanel } from '@/features/ml/components/ForecastPanel';
 import { TrainPanel } from '@/features/ml/components/TrainPanel';
 import { effectiveExclusion, useLabStore } from '@/features/ml/lab-store';
+import { ScrollRegion } from '@/components/ui/scroll-region';
 
 // Split out of LabSection so the whole post-load lab (training, insights,
 // exploration, forecasting) stays off /ml's first-paint critical path.
@@ -78,7 +79,7 @@ export function DatasetView() {
         <summary className="cursor-pointer px-4 py-3 text-sm font-medium select-none">
           {t('ml.lab.previewToggle', { count: preview.length })}
         </summary>
-        <div className="overflow-x-auto border-t border-line">
+        <ScrollRegion className="border-t border-line">
           <table className="w-full text-left font-mono text-xs">
             <thead>
               <tr>
@@ -101,7 +102,7 @@ export function DatasetView() {
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollRegion>
       </details>
     </div>
   );

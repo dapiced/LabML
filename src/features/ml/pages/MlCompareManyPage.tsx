@@ -8,6 +8,7 @@ import { Eyebrow } from '@/components/ui/eyebrow';
 import { db } from '@/features/ml/projects/db';
 import { compareMany } from '@/features/ml/projects/compare-many';
 import { cn } from '@/lib/utils';
+import { ScrollRegion } from '@/components/ui/scroll-region';
 
 /**
  * V37: three or more runs, side by side, all read against the OLDEST — which
@@ -67,7 +68,7 @@ export default function MlCompareManyPage() {
             </Card>
           )}
 
-          <Card className="overflow-x-auto p-0">
+          <ScrollRegion className="rounded-2xl border border-line bg-surface">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="bg-surface-2 font-mono text-[0.68rem] tracking-wider uppercase">
@@ -132,7 +133,7 @@ export default function MlCompareManyPage() {
                 ))}
               </tbody>
             </table>
-          </Card>
+          </ScrollRegion>
 
           <Card className="flex flex-col gap-2 p-4 text-sm">
             <Eyebrow>{t('ml.lab.compare.featuresTitle')}</Eyebrow>

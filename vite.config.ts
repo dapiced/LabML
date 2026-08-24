@@ -1,5 +1,5 @@
 /// <reference types="vitest/config" />
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
@@ -22,18 +22,49 @@ interface ShellRoute {
   /** Pages titled titlePre + highlighted span; the rest use a plain `title`. */
   highlight?: boolean;
   facade: string;
+  /** Key under `common.pageTitles` — the same one the running app uses. */
+  titleKey: string;
 }
 
 const SHELL_ROUTES: ShellRoute[] = [
-  { dir: 'ml', prefix: 'ml', highlight: true, facade: 'features/ml/pages/MlHomePage' },
-  { dir: 'data', prefix: 'data', facade: 'features/data/DataPage' },
-  { dir: 'ai', prefix: 'ai', facade: 'features/ai/AiPage' },
-  { dir: 'ai/vision', prefix: 'ai.vision', facade: 'features/ai/vision/VisionPage' },
-  { dir: 'ai/chat', prefix: 'ai.chat', facade: 'features/ai/chat/ChatPage' },
-  { dir: 'about', prefix: 'about', facade: 'features/about/AboutPage' },
-  { dir: 'privacy', prefix: 'privacy', facade: 'features/privacy/PrivacyPage' },
-  { dir: 'docs', prefix: 'docs', facade: 'features/docs/DocsPage' },
+  {
+    dir: 'ml',
+    prefix: 'ml',
+    highlight: true,
+    facade: 'features/ml/pages/MlHomePage',
+    titleKey: 'ml',
+  },
+  { dir: 'data', prefix: 'data', facade: 'features/data/DataPage', titleKey: 'data' },
+  { dir: 'ai', prefix: 'ai', facade: 'features/ai/AiPage', titleKey: 'ai' },
+  {
+    dir: 'ai/vision',
+    prefix: 'ai.vision',
+    facade: 'features/ai/vision/VisionPage',
+    titleKey: 'aiVision',
+  },
+  { dir: 'ai/chat', prefix: 'ai.chat', facade: 'features/ai/chat/ChatPage', titleKey: 'aiChat' },
+  { dir: 'about', prefix: 'about', facade: 'features/about/AboutPage', titleKey: 'about' },
+  {
+    dir: 'privacy',
+    prefix: 'privacy',
+    facade: 'features/privacy/PrivacyPage',
+    titleKey: 'privacy',
+  },
+  { dir: 'docs', prefix: 'docs', facade: 'features/docs/DocsPage', titleKey: 'docs' },
 ];
+
+/**
+ * V35 — the canonical origin. The audit measured nine prerendered shells all
+ * carrying `<title>LabML</title>` and one shared description, with no Open
+ * Graph, no Twitter card, no canonical and no sitemap: a link shared on
+ * LinkedIn or Slack showed no preview at all, and a crawler saw nine
+ * identically-titled pages. Everything below is derived from the same
+ * `en.json` keys the hero already uses, so the metadata cannot drift from the
+ * page it describes.
+ */
+const SITE = 'https://app.dominicdapice.com';
+/** 1200×630, self-hosted like every other asset — no third-party image host. */
+const OG_IMAGE = '/og.png';
 
 /**
  * Lazy routes normally load in a second network phase after the entry has
@@ -106,11 +137,6 @@ function prerenderShells(rootTargets: string[]): Plugin {
         base = base.replace(cssTag[0], () => `<style>${css}</style>`);
       }
 
-      writeFileSync(
-        htmlPath,
-        base.replace('</head>', () => `${rootTargets.map(preload).join('')}  </head>`),
-      );
-
       const en = JSON.parse(readFileSync('src/locales/en.json', 'utf8')) as Record<string, unknown>;
       const key = (path: string): string => {
         const value = path
@@ -121,6 +147,73 @@ function prerenderShells(rootTargets: string[]): Plugin {
       };
       const esc = (s: string) =>
         s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/'/g, '&#39;');
+      const attr = (s: string) => esc(s).replace(/"/g, '&quot;');
+
+      /**
+       * A description search engines and link previews will actually show:
+       * roughly 155 characters, cut at a word rather than mid-syllable. The
+       * text is the page's own lede, so it can never describe a different page
+       * than the one the reader lands on.
+       */
+      const describe = (lede: string) => {
+        const flat = lede.replace(/\s+/g, ' ').trim();
+        if (flat.length <= 155) return flat;
+        const cut = flat.slice(0, 155);
+        return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), 120)).replace(/[,;:.\s]+$/, '')}…`;
+      };
+
+      /**
+       * Replace the shared head metadata with this page's own, and add what
+       * the shells never had: a canonical URL, Open Graph and a Twitter card.
+       * Without them a LabML link pasted anywhere shows no preview at all.
+       */
+      const withMeta = (html: string, path: string, title: string, description: string) => {
+        const url = `${SITE}${path}`;
+        const tags = [
+          `<link rel="canonical" href="${attr(url)}">`,
+          `<meta property="og:type" content="website">`,
+          `<meta property="og:site_name" content="LabML">`,
+          `<meta property="og:url" content="${attr(url)}">`,
+          `<meta property="og:title" content="${attr(title)}">`,
+          `<meta property="og:description" content="${attr(description)}">`,
+          `<meta property="og:image" content="${attr(SITE + OG_IMAGE)}">`,
+          `<meta property="og:image:width" content="1200">`,
+          `<meta property="og:image:height" content="630">`,
+          `<meta name="twitter:card" content="summary_large_image">`,
+          `<meta name="twitter:title" content="${attr(title)}">`,
+          `<meta name="twitter:description" content="${attr(description)}">`,
+          `<meta name="twitter:image" content="${attr(SITE + OG_IMAGE)}">`,
+        ].join('\n    ');
+        return html
+          .replace(/<title>[^<]*<\/title>/, () => `<title>${esc(title)}</title>`)
+          .replace(
+            /<meta\s+name="description"[\s\S]*?\/>/,
+            () => `<meta name="description" content="${attr(description)}" />`,
+          )
+          .replace('</head>', () => `    ${tags}\n  </head>`);
+      };
+
+      const suffix = key('common.pageTitles.suffix');
+      /** `Page · LabML`, matching `formatTitle` in src/lib/page-title.ts. */
+      const pageTitle = (titleKey: string) => {
+        const name = key(`common.pageTitles.${titleKey}`);
+        return name.includes(suffix) ? name : `${name} · ${suffix}`;
+      };
+
+      // The root file is also the SPA fallback, so it answers for every route
+      // without a shell of its own — the home page's metadata is the honest
+      // default there. Written after the helpers above exist, and from a
+      // `base` that still carries none, so the shells below inherit preloads
+      // and stylesheet but never the home page's title or Open Graph tags.
+      writeFileSync(
+        htmlPath,
+        withMeta(
+          base.replace('</head>', () => `${rootTargets.map(preload).join('')}  </head>`),
+          '/',
+          pageTitle('home'),
+          describe(`${key('home.titleHighlight')} ${key('home.lede')}`),
+        ),
+      );
 
       // Cloudflare Pages serves exact files before the SPA fallback, so only
       // direct visits get this head start — measured LCP driver on /ml was
@@ -135,12 +228,46 @@ function prerenderShells(rootTargets: string[]): Plugin {
           `<p class="font-mono text-xs font-semibold tracking-[0.18em] text-copper uppercase">${esc(key(`${route.prefix}.eyebrow`))}</p>` +
           `<h1 class="mt-3 max-w-3xl font-display text-3xl font-bold text-balance sm:text-5xl">${title}</h1>` +
           `<p class="mt-5 max-w-2xl text-lg text-muted">${esc(key(`${route.prefix}.lede`))}</p></section></div>`;
-        const shell = base
-          .replace('</head>', () => `${preload(route.facade)}  </head>`)
-          .replace('<div id="root"></div>', () => `<div id="root">${hero}</div>`);
+        const shell = withMeta(
+          base
+            .replace('</head>', () => `${preload(route.facade)}  </head>`)
+            .replace('<div id="root"></div>', () => `<div id="root">${hero}</div>`),
+          `/${route.dir}/`,
+          pageTitle(route.titleKey),
+          describe(key(`${route.prefix}.lede`)),
+        );
         mkdirSync(join(outDir, route.dir), { recursive: true });
         writeFileSync(join(outDir, route.dir, 'index.html'), shell);
       }
+
+      // A sitemap built from the routes that exist, plus the documentation
+      // slugs read from the Markdown itself: a page added to `src/content/docs`
+      // appears here without anyone remembering to list it, and a page removed
+      // stops being advertised. Dynamic routes (a run, a comparison, a share
+      // link) are deliberately absent — they describe one visitor's local data
+      // and there is nothing there for a crawler to index.
+      const slugs = [
+        ...new Set(
+          readdirSync('src/content/docs').flatMap((lang) =>
+            readdirSync(join('src/content/docs', lang)).flatMap((file) => {
+              const front = readFileSync(join('src/content/docs', lang, file), 'utf8');
+              return /^slug:\s*(\S+)/m.exec(front)?.[1] ?? [];
+            }),
+          ),
+        ),
+      ].sort();
+      const paths = [
+        '/',
+        ...SHELL_ROUTES.map((route) => `/${route.dir}/`),
+        ...slugs.map((slug) => `/docs/${slug}`),
+      ];
+      writeFileSync(
+        join(outDir, 'sitemap.xml'),
+        `<?xml version="1.0" encoding="UTF-8"?>\n` +
+          `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+          paths.map((path) => `  <url><loc>${SITE}${path}</loc></url>\n`).join('') +
+          `</urlset>\n`,
+      );
     },
   };
 }

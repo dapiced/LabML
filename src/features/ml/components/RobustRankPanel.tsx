@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { useLabStore } from '@/features/ml/lab-store';
 import type { RobustRankResult } from '@/features/ml/train/robust';
+import { ScrollRegion } from '@/components/ui/scroll-region';
 
 /**
  * V35: the robust leaderboard — 5×2 repeated cross-validation, on demand.
@@ -89,7 +90,7 @@ function RobustOutcome({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="overflow-x-auto">
+      <ScrollRegion>
         <table className="w-full max-w-2xl text-left text-sm">
           <thead>
             <tr className="font-mono text-[0.68rem] tracking-wider uppercase text-muted">
@@ -110,7 +111,7 @@ function RobustOutcome({
             ))}
           </tbody>
         </table>
-      </div>
+      </ScrollRegion>
       {pair && (
         <p className="max-w-3xl text-sm" data-testid="robust-verdict">
           {t(stable ? 'ml.lab.robust.verdictStable' : 'ml.lab.robust.verdictNoise', {
