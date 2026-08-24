@@ -79,3 +79,8 @@ le salaire de personne — c'est ce qui le rend sûr à committer à côté du c
 | Budget mémoire   | lignes × colonnes plafonné | la lecture s'arrête et le dit (`too-large`), plutôt que de faire tomber l'onglet     |
 | Fichier servi    | 25 Mio                     | limite dure de Cloudflare Pages ; le modèle de langage est découpé pour la respecter |
 | Classes de cible | 20 au plus                 | au-delà, la tâche n'est plus une classification exploitable                          |
+
+## Et ensuite ?
+
+- [Scorer un nouveau lot](/docs/scorer-un-lot) — le format d'entrée le plus souvent en question.
+- La [table des refus](/docs/refus) si un fichier a été refusé par son nom.

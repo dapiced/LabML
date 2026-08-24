@@ -84,3 +84,8 @@ la limite Cloudflare de 25 Mio par fichier.
 Interroge le dataset actif plus tout CSV, Parquet ou JSON attaché à la session.
 Résultats exportables en CSV ou transférables au ML Lab en un clic. Export
 **Parquet** par `COPY … TO`.
+
+## Et ensuite ?
+
+- [Passer un résultat SQL au ML Lab](/docs/sql-vers-le-lab) — le geste le plus utile de cette section.
+- La [référence du ML Lab](/docs/reference-ml) pour ce qui se passe ensuite.

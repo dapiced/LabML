@@ -81,3 +81,8 @@ DuckDB-Wasm, MIT, self-hosted, single-threaded (no COOP/COEP headers). Pinned to
 Queries the active dataset plus any CSV, Parquet or JSON attached to the
 session. Results export to CSV or move to the ML Lab in one click. **Parquet**
 export through `COPY … TO`.
+
+## Where to go next
+
+- [Hand a SQL result to the ML Lab](/docs/sql-vers-le-lab) — this section's most useful gesture.
+- The [ML Lab reference](/docs/reference-ml) for what happens next.
