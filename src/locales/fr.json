@@ -200,7 +200,7 @@
     "eyebrow": "ML LAB",
     "titlePre": "D'un CSV à un leaderboard,",
     "titleHighlight": "sans que vos données quittent l'onglet.",
-    "lede": "Le labo lit votre fichier localement, détecte la tâche, entraîne plusieurs modèles et met de côté une partie des données pour les tester honnêtement.",
+    "lede": "Le labo lit votre fichier localement, détecte la tâche, entraîne plusieurs modèles et met de côté une partie des données pour les tester honnêtement. PS: La taille idéale du jeu de données doit se situe entre 1Mo et 30Mo pour un temps de réponse raisonnable.",
     "steps": {
       "upload": {
         "title": "Déposez un jeu de données",
