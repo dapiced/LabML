@@ -7,6 +7,24 @@ dataset never leaves your machine.
 **Live at [app.dominicdapice.com](https://app.dominicdapice.com)** · MIT licensed · Built by
 [Dominic D'Apice](https://dominicdapice.com)
 
+**More about this project → [LabML — ML in Your Browser: a Complete Machine Learning Lab With
+No Backend](https://dominicdapice.com/portfolio/labml-ml-in-your-browser/)** — an 11-minute
+write-up of the bet behind the project and how each section works. Available in English and
+French.
+
+---
+
+## The ML Lab in one run
+
+Drop `titanic.csv`, pick a column to predict, press train. Eight model families train **in your
+own browser** — the naive baseline among them — and an ensemble of the top three joins the
+ranking for free, since its members are already fitted. Every model is **selected on a
+validation split and reported on a third split it never touched**, with the gap between the two
+spelled out: here the winner is picked at 0.818 and scores 0.792, and the page says so.
+
+![The ML Lab leaderboard: nine models ranked with validation and test scores, delta vs the naive
+baseline, F1, ROC-AUC, log-loss, training time and inference latency](docs/screenshots/leaderboard.png)
+
 ---
 
 ## Overview
@@ -55,6 +73,20 @@ The project follows three non-negotiable principles:
 | MLOps loop     | Score a **new batch** with honest test-vs-batch metrics; **compare two runs** side by side with cross-run uncertainty verdicts, or **up to six at once** read against the oldest of the selection; **export a model as JSON and re-import it later** — the exact predictor is rebuilt (byte-identical predictions) and scores any CSV without retraining                                                                                                                                                  |
 | Speed          | Heavy families train on **helper cores** (announced on the leaderboard, split by measured cost, never silent), and a model crosses back as JSON so it is rebuilt through the same path an imported model uses. Measured on a 60 000-row run: **74 s → 9.5 s**, with every leaderboard number identical                                                                                                                                                                                                    |
 | Persistence    | Local run history with attached artifacts, opted-in dataset storage (compressed, explicit 50 MB budget), self-contained HTML reports, data-free share links                                                                                                                                                                                                                                                                                                                                               |
+
+**What the run gives you, past the ranking:**
+
+|                                                                                                                                                                   |                                                                                                               |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| [![Where the model fails](docs/screenshots/segments.png)](docs/screenshots/segments.png)                                                                          | [![Starting a run](docs/screenshots/ml-lab.png)](docs/screenshots/ml-lab.png)                                 |
+| **Where it fails** — the test set sliced by every categorical column, worst gaps first, including columns kept **out** of the features, where proxy effects hide. | **Starting point** — drop a file or take a sample dataset. The file is read in a worker; nothing is uploaded. |
+
+![Insights for the winning model: a plain-language read, confusion matrix, ROC curve with AUC,
+permutation importance, partial dependence, and a live what-if with exact Shapley
+contributions](docs/screenshots/insights.png)
+
+_Every figure above was produced by the app itself, on the `titanic.csv` sample, seed 42 —
+reproducible by pressing train._
 
 ### Data Studio — `/data`
 
