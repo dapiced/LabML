@@ -92,3 +92,8 @@ les refus en erreurs confiantes — mesuré : +7 réponses fausses.
 passée de **33 justes / 15 fausses** à **42 justes / 7 fausses**, pour 0 Mo. Un
 modèle quatre fois plus gros (1,43 Go) a mesuré **pire** : 40 justes / 12
 fausses.
+
+## Et ensuite ?
+
+- [Ce que LabML ne fait pas](/docs/limites) — pourquoi CLIP et un meilleur détecteur ont été écartés, chiffres à l'appui.
+- La [table des refus](/docs/refus) pour décoder un message précis.

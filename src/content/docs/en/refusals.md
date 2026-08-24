@@ -122,3 +122,9 @@ Two signals look like refusals and are not: `not-parallelisable` and
 `not-serialisable`. When a model family cannot be trained in a helper worker,
 it is simply trained sequentially in the main one. The result is identical,
 only slower — which is why nothing is displayed.
+
+## Where to go next
+
+- [What LabML does not do](/docs/limites) — design limits, distinct from case-by-case refusals.
+- [The method choices](/docs/methode) — why refusing beats approximating.
+- The [tutorial](/docs/premier-modele) if you were really looking to get started.

@@ -100,6 +100,12 @@ The project follows three non-negotiable principles:
   thrown but undocumented fails the build, and so does a documented code the app no
   longer throws. Refusing well is this project's distinguishing feature; a refusal
   nobody can decode reads as a bug instead of the decision it is.
+- **What LabML does not do** (`/docs/limites`): the features set aside, the ones dropped
+  after measurement, and **the predictions measurement refuted** — extracted from the
+  engineering log rather than recalled, because memory flatters. A guard traces each
+  figure back to the entry that recorded it. Twelve pages per language span all four
+  Diátaxis quadrants, and a test asserts every one of them ends with a working next
+  step: documentation without one is a dead end.
 
 ### AI Playground — `/ai`
 
