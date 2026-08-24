@@ -52,6 +52,13 @@ export function DocsPage() {
     return (
       <div className="mx-auto max-w-6xl px-4 py-16">
         <Card className="flex flex-col items-start gap-3 border-copper">
+          {/*
+            V35 wave 4 — a refusal is still a page, and a page needs a heading.
+            Looking at every route at three widths found two with no `<h1>` at
+            all: this one and the invalid share link. Both are ordinary things
+            a visitor hits — a stale bookmark, a renamed slug.
+          */}
+          <h1 className="font-display text-lg font-semibold">{t('common.pageTitles.notFound')}</h1>
           <p className="text-sm">{t('docs.notFound', { slug })}</p>
           <Link to="/docs" className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}>
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />

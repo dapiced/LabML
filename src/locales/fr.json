@@ -637,7 +637,9 @@
       },
       "share": {
         "note": "Ce lien ne transporte que les métriques et graphiques — jamais les données d'origine. Il vit dans le fragment d'URL, que les navigateurs n'envoient à aucun serveur.",
-        "invalid": "Lien de partage invalide ou incomplet."
+        "invalid": "Lien de partage invalide ou incomplet.",
+        "invalidTitle": "Ce lien ne peut pas être ouvert",
+        "invalidHelp": "Un lien de partage porte tout le run dans le fragment d'URL, après le « # ». S'il a été coupé — par une messagerie, un retour à la ligne, un copier-coller partiel — il ne reste pas assez pour reconstruire le run. Redemandez le lien complet à la personne qui vous l'a envoyé."
       },
       "reportFooter": "Généré localement par LabML — aucune donnée n'a quitté le navigateur.",
       "splitMode": {

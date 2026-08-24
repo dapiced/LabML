@@ -12,7 +12,21 @@ export function Footer() {
           <ShieldCheck className="h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
           {t('common.privacyStrip')}
         </p>
-        <p className="flex items-center gap-3">
+        {/*
+          V35 wave 4 — `flex-wrap` here, not just on the row above.
+
+          The outer row wraps; this inner one did not, so its four links and
+          three separators stayed on a single 392 px line. Measured at 375 px:
+          the WHOLE PAGE scrolled sideways by 33 px, on every route of the site.
+
+          It only happened in French. The same row in English fits, which is why
+          it shipped: the e2e suite declares a viewport and a colour scheme but
+          no locale, so every test in the repository has always run against the
+          English UI. French is the longer language and the one the author
+          writes in — the exact place a layout gives way. See the `mobile-fr`
+          project in `playwright.config.ts`, added with this fix.
+        */}
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <Link
             to="/privacy"
             className="underline decoration-line underline-offset-4 hover:text-ink"
