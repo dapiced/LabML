@@ -86,3 +86,8 @@ confident errors — measured: +7 wrong answers.
 55 reference questions, French and English, replayed against the real weights.
 The app went from **33 right / 15 wrong** to **42 right / 7 wrong**, for 0 MB. A
 model four times larger (1.43 GB) measured **worse**: 40 right / 12 wrong.
+
+## Where to go next
+
+- [What LabML does not do](/docs/limites) — why CLIP and a better detector were set aside, with the figures.
+- The [refusals table](/docs/refus) to decode a specific message.
