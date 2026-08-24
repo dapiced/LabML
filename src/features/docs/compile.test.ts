@@ -115,3 +115,57 @@ describe('compileDoc', () => {
     expect(() => compileDoc(page(front, 'x'), 'fr', 'g.md')).toThrow(/order.*whole number/);
   });
 });
+
+describe('tables', () => {
+  const TABLE = ['| Code | Sens |', '| --- | --- |', '| `tiny-test` | Trop peu de lignes |'].join(
+    '\n',
+  );
+  const withTable = (front = VALID, body = `## Lire un refus\n\n${TABLE}\n`) =>
+    compileDoc(page(front, body), 'fr', 'refus.md').html;
+
+  /**
+   * V35 — measured in a real browser before this guard existed: on a 375 px
+   * viewport six of the twelve doc pages scrolled the WHOLE PAGE sideways
+   * (+409 px), and axe raised `scrollable-region-focusable` on the six tables
+   * of /docs/refus. Both came from one decision — `overflow-x` sitting on the
+   * `<table>` itself. These tests describe the shape that fixes it, so the
+   * next person to touch the renderer learns why it is shaped that way.
+   */
+  it('wraps every table in a scroll region the keyboard can reach', () => {
+    const html = withTable();
+    expect(html).toContain('<div class="doc-table"');
+    expect(html).toMatch(/<div class="doc-table"[^>]*\stabindex="0"/);
+    expect(html).toMatch(/<div class="doc-table"[^>]*\srole="region"/);
+  });
+
+  it('leaves the table a real table — `display: block` would drop its semantics', () => {
+    expect(withTable()).toContain('<table>');
+  });
+
+  it('names the region after the heading it sits under, in the page language', () => {
+    expect(withTable()).toMatch(/aria-label="Tableau : Lire un refus"/);
+    const en = compileDoc(page(VALID, `## Reading a refusal\n\n${TABLE}\n`), 'en', 'r.md').html;
+    // English takes no space before its colon; French does.
+    expect(en).toMatch(/aria-label="Table: Reading a refusal"/);
+  });
+
+  it('still names a table that appears before any heading', () => {
+    expect(withTable(VALID, `${TABLE}\n`)).toMatch(/aria-label="Tableau"/);
+  });
+
+  it('leaves no table unwrapped, however many the page holds', () => {
+    const body = `## Un\n\n${TABLE}\n\n## Deux\n\n${TABLE}\n\n### Trois\n\n${TABLE}\n`;
+    const html = withTable(VALID, body);
+    expect(html.match(/<table>/g)).toHaveLength(3);
+    expect(html.match(/<div class="doc-table"/g)).toHaveLength(3);
+    // The real guard: strike out every wrapper that is followed *immediately*
+    // by its table, and no `<table>` may survive. A table that slipped through
+    // the renderer — or a wrapper separated from its table — fails here.
+    expect(html.replace(/<div class="doc-table"[^>]*><table>/g, '')).not.toContain('<table>');
+  });
+
+  it('escapes a quote in the heading rather than breaking out of the attribute', () => {
+    const html = withTable(VALID, `## Le "gagnant"\n\n${TABLE}\n`);
+    expect(html).toContain('aria-label="Tableau : Le &quot;gagnant&quot;"');
+  });
+});

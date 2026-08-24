@@ -171,10 +171,21 @@ body {
 .doc-prose li + li {
   margin-top: 0.35rem;
 }
-/* A table wider than the column scrolls inside itself; the page never does. */
-.doc-prose table {
-  display: block;
+/* A table wider than the column scrolls inside its own region; the page never
+   does. The scroll lives on the wrapper, not on the `<table>`: `display: block`
+   on a table drops its row/column semantics for assistive technology, and a
+   scroll container the keyboard cannot enter hides its right-hand columns from
+   anyone without a mouse. `compileDoc` emits the wrapper with `tabindex="0"`
+   and a name; the table below it stays a table. */
+.doc-prose .doc-table {
   overflow-x: auto;
+  max-width: 100%;
+}
+.doc-prose .doc-table:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.doc-prose table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
