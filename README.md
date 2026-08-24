@@ -12,6 +12,8 @@ No Backend](https://dominicdapice.com/portfolio/labml-ml-in-your-browser/)** —
 write-up of the bet behind the project and how each section works. Available in English and
 French.
 
+**LIMITATION: The ideal dataset size is between 1MB and 30MB; beyond 30 MB, the browser response time may take longer to return the results.**
+
 ---
 
 ## The ML Lab in one run
