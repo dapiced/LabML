@@ -27,6 +27,8 @@ export function ReadFormatNotice() {
   const delimiterLabel =
     readFormat.delimiter === '\t' ? t('ml.lab.read.tab') : `« ${readFormat.delimiter} »`;
   const rewritten = readFormat.decimalColumns;
+  const renamed = readFormat.headerIssues ?? [];
+  const malformed = readFormat.malformedRows ?? 0;
   const previewColumns = Object.keys(preview[0] ?? {});
 
   return (
@@ -52,6 +54,25 @@ export function ReadFormatNotice() {
                 .join(', '),
             })}
             {rewritten.some((column) => column.grouped) && ` ${t('ml.lab.read.grouped')}`}
+          </li>
+        )}
+        {renamed.length > 0 && (
+          <li data-testid="read-format-renamed">
+            {t('ml.lab.read.renamed', {
+              count: renamed.length,
+              columns: renamed
+                .map((issue) =>
+                  issue.kind === 'unnamed'
+                    ? `${issue.name} (${t('ml.lab.read.renamedUnnamed')})`
+                    : `${issue.original} → ${issue.name}`,
+                )
+                .join(', '),
+            })}
+          </li>
+        )}
+        {malformed > 0 && (
+          <li data-testid="read-format-malformed">
+            {t('ml.lab.read.malformed', { count: malformed })}
           </li>
         )}
       </ul>

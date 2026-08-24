@@ -12,6 +12,7 @@ import type { LoadedModel } from '@/features/ai/llm/interpret';
 import { inferColumnType } from '@/features/ml/data/infer';
 import { isMissing } from '@/features/ml/data/infer';
 import type { Cell, DatasetMeta } from '@/features/ml/data/types';
+import { readHeader } from '@/features/ml/data/header';
 
 export type { AnsweredBy, ChatEngine };
 
@@ -53,7 +54,9 @@ function post(message: ChatWorkerResponse) {
 function ingestRows(rows: string[][]) {
   for (const row of rows) {
     if (header.length === 0) {
-      header = row.map((cell, i) => (cell.trim() === '' ? `column_${i + 1}` : cell.trim()));
+      // V35 wave 4: unique names, so a question about « age » cannot resolve
+      // to a different column than the profile the user is reading.
+      header = readHeader(row).names;
       columns = header.map(() => []);
       continue;
     }

@@ -26,6 +26,7 @@ import {
   type Encoding,
   type ReadFormat,
 } from '@/features/ml/data/locale';
+import type { HeaderIssue } from '@/features/ml/data/header';
 import type { Cell } from '@/features/ml/data/types';
 
 /**
@@ -112,14 +113,58 @@ export function papaConfig(delimiter: Delimiter, encoding?: Encoding): Papa.Pars
   };
 }
 
+/**
+ * V35 wave 4 — how many rows the file did not deliver as it declared them.
+ *
+ * Two different failures, neither of which the workers used to notice.
+ *
+ * **A quote the file never closes.** Papa reports it (`MissingQuotes`,
+ * `InvalidQuotes`) and both workers threw `results.errors` on the floor.
+ * Measured on `a,b\n"oops,2\n3,4\n5,6`: three data rows collapsed into a
+ * single cell holding `oops,2\n3,4\n5,6`, and LabML announced « 1 row » with
+ * no warning at all. Two thirds of the file, gone in silence.
+ *
+ * **A row with the wrong number of cells.** Papa reports nothing here — the
+ * rows are well-formed, they are just the wrong width — so this one has to be
+ * counted during ingestion. Extra cells are dropped and missing ones become
+ * `null`, which is the right thing to do; doing it without saying so is not.
+ */
+
+/** Papa error codes that mean a row could not be read as the file declared it. */
+const ROW_ERROR_CODES = new Set(['MissingQuotes', 'InvalidQuotes', 'TooManyFields']);
+
+/**
+ * Rows Papa could not read, counted once each — a single unterminated quote
+ * raises two codes on the same row and is one broken row, not two.
+ */
+export function countParseErrors(errors: readonly { code: string; row?: number }[]): number {
+  const rows = new Set<number>();
+  for (const error of errors) {
+    if (ROW_ERROR_CODES.has(error.code)) rows.add(error.row ?? -1);
+  }
+  return rows.size;
+}
+
+/** True when a data row does not carry exactly one cell per header column. */
+export function isRaggedRow(row: readonly string[], columnCount: number): boolean {
+  // A lone empty cell is a blank line, which ingestion skips rather than counts.
+  if (row.length === 1 && row[0].trim() === '') return false;
+  return row.length !== columnCount;
+}
+
 /** Everything the UI needs to state how the file was read. */
 export function buildReadFormat(
   sniffed: { encoding: ReturnType<typeof decodeBytes>['choice']; delimiter: Delimiter },
   decimalColumns: ColumnFormat[],
+  extra?: { headerIssues?: HeaderIssue[]; malformedRows?: number },
 ): ReadFormat {
   return {
     encoding: sniffed.encoding,
     delimiter: sniffed.delimiter,
     decimalColumns,
+    ...(extra?.headerIssues !== undefined &&
+      extra.headerIssues.length > 0 && { headerIssues: extra.headerIssues }),
+    ...(extra?.malformedRows !== undefined &&
+      extra.malformedRows > 0 && { malformedRows: extra.malformedRows }),
   };
 }

@@ -15,12 +15,15 @@ import type { Cell } from '@/features/ml/data/types';
 import {
   applyDecimalFormats,
   buildReadFormat,
+  countParseErrors,
+  isRaggedRow,
   papaConfig,
   sniffFile,
   sniffText,
 } from '@/features/ml/data/read';
 import type { ReadFormat } from '@/features/ml/data/locale';
 import type { DataWorkerRequest, DataWorkerResponse } from '@/features/data/data-protocol';
+import { readHeader, type HeaderIssue } from '@/features/ml/data/header';
 
 const PREVIEW_ROWS = 8;
 const PROGRESS_EVERY = 5000;
@@ -51,9 +54,11 @@ function ingestRows(rows: string[][]) {
   for (const row of rows) {
     const head = intoCompare ? compareHeader : header;
     if (head.length === 0) {
-      const parsedHead = row.map((cell, i) =>
-        cell.trim() === '' ? `column_${i + 1}` : cell.trim(),
-      );
+      // V35 wave 4: unique by construction. Two columns called « age » used
+      // to collapse into one key in the preview and in every recipe entry.
+      const read = readHeader(row);
+      const parsedHead = read.names;
+      if (!intoCompare) headerIssues = read.issues;
       const cols = parsedHead.map<Cell[]>(() => []);
       if (intoCompare) {
         compareHeader = parsedHead;
@@ -65,6 +70,9 @@ function ingestRows(rows: string[][]) {
       continue;
     }
     if (row.length === 1 && row[0].trim() === '') continue;
+    // V35 wave 4: a row of the wrong width still loads — extra cells dropped,
+    // missing ones null — but it is counted so the UI can say it happened.
+    if (!intoCompare && isRaggedRow(row, head.length)) malformedRows += 1;
     const cols = intoCompare ? compareColumns : columns;
     for (let i = 0; i < head.length; i++) {
       cols[i].push(row[i] ?? null);
@@ -95,6 +103,8 @@ function resetState() {
   header = [];
   columns = [];
   rowCount = 0;
+  headerIssues = [];
+  malformedRows = 0;
   cleanedHeader = [];
   cleanedColumns = [];
   resetCompare();
@@ -112,6 +122,10 @@ function resetCompare() {
 
 /** V38: how the current file was actually read — announced, never assumed. */
 let readFormat: ReadFormat | null = null;
+/** V35 wave 4: columns whose name LabML had to change to keep names unique. */
+let headerIssues: HeaderIssue[] = [];
+/** V35 wave 4: rows the file did not deliver as declared — counted, not guessed. */
+let malformedRows = 0;
 
 function mainPayload() {
   return {
@@ -159,7 +173,10 @@ function finishParse(name: string, bytes: number, sniffed?: Sniffed) {
   // V38: whole columns, after ingestion — the same reader the ML Lab uses, so
   // a file read one way in the Studio is read the same way in the Lab.
   if (sniffed !== undefined) {
-    readFormat = buildReadFormat(sniffed, applyDecimalFormats(header, columns));
+    readFormat = buildReadFormat(sniffed, applyDecimalFormats(header, columns), {
+      headerIssues,
+      malformedRows,
+    });
   }
   cleanedHeader = header;
   cleanedColumns = columns;
@@ -174,6 +191,9 @@ function parseText(text: string, name: string, bytes: number) {
   Papa.parse<string[]>(text, {
     ...papaConfig(sniffed.delimiter),
     complete: (results) => {
+      // V35 wave 4: these errors used to be dropped, so an unterminated quote
+      // silently swallowed the rest of the file.
+      if (target !== 'compare') malformedRows += countParseErrors(results.errors);
       ingestRows(results.data);
       finishParse(name, bytes, sniffed);
     },
@@ -185,7 +205,10 @@ async function parseFile(file: File) {
   const sniffed = await sniffFile(file);
   Papa.parse<string[]>(file, {
     ...papaConfig(sniffed.delimiter, sniffed.encoding.encoding),
-    chunk: (results) => ingestRows(results.data),
+    chunk: (results) => {
+      if (target !== 'compare') malformedRows += countParseErrors(results.errors);
+      ingestRows(results.data);
+    },
     complete: () => finishParse(file.name, file.size, sniffed),
     error: (error) => post({ kind: 'error', message: error.message }),
   });
