@@ -116,6 +116,16 @@ reproducible by pressing train._
   column, new/vanished categories, severity verdict on conventional thresholds.
 - One-click hand-off to the ML Lab.
 
+![The Data Studio auditing cafe-sales.csv: 48/100 before, 92/100 after cleaning, then one card per
+family of anomaly it found — 124 missing cells, 6 duplicate rows, 7 inconsistent spellings, 20
+outlier values, 2 columns to review and 1 impossible value, each naming the columns it
+concerns](docs/screenshots/data-quality.png)
+
+|                                                                                                                                                                                      |                                                                                                                                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [![The cleaning recipe](docs/screenshots/data-recipe.png)](docs/screenshots/data-recipe.png)                                                                                         | [![A SQL query over the loaded file](docs/screenshots/data-sql.png)](docs/screenshots/data-sql.png)                                                                                                                |
+| **The recipe** — every step counts what it changed, and the panel names the four columns it filled **without** a missing indicator, because a blank field is rarely blank at random. | **DuckDB, in the tab** — a real `GROUP BY` over the file exactly as it was dropped, _before_ the recipe: both spellings of `Latte` and the average the outliers inflate are still there, which is the whole point. |
+
 ### Documentation — `/docs`
 
 - Markdown committed to the repository (`src/content/docs/<lang>/*.md`) and compiled at
@@ -138,6 +148,15 @@ reproducible by pressing train._
   figure back to the entry that recorded it. Twelve pages per language span all four
   Diátaxis quadrants, and a test asserts every one of them ends with a working next
   step: documentation without one is a dead end.
+
+![The documentation index: a local search box beside the pages grouped by Diátaxis quadrant —
+tutorial, how-to, reference — each group stating the promise it makes above its
+cards](docs/screenshots/docs-index.png)
+
+![The same page after typing « leakage »: two results, the tutorial and the learning-curve how-to,
+each quoting the sentence that matched](docs/screenshots/docs-search.png)
+
+_The index is built at compile time and queried in the tab — typing here sends nothing._
 
 ### AI Playground — `/ai`
 
@@ -176,6 +195,18 @@ reproducible by pressing train._
   wrong number. The reading of all 55 reference questions is measured, not asserted: see
   **Measuring the assistant** below. WebGPU required; without it the refusal is named and
   the deterministic interpreter stays fully available.
+
+![The vision playground: a school bus photo dropped on the left, and on the right the same image
+with the detector boxes drawn on it — bus 95%, car 81% — no faces, and EfficientNet-Lite4's top
+five led by « school bus » at 100%](docs/screenshots/ai-vision.jpg)
+
+|                                                                                                                                                                                                        |                                                                                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [![Vision refusing to name a person](docs/screenshots/ai-vision-refusal.jpg)](docs/screenshots/ai-vision-refusal.jpg)                                                                                  | [![The data assistant answering and refusing](docs/screenshots/ai-chat.png)](docs/screenshots/ai-chat.png)                                                                              |
+| **Saying « I cannot »** — the detectors find a person; ImageNet-1k has no class for one, so the top label (« football helmet », 86.6%) stays on screen and is announced as _not_ what the photo shows. | **The assistant, both ways** — two questions answered with the engine that produced each named underneath, and a third refused rather than invented. Nothing but the browser was asked. |
+
+_Both photos ship with the repository's vision bench: the school bus is CC BY 2.0 (Fahim Fadz.,
+Wikimedia Commons), the portrait is NASA, public domain._
 
 ## Engineering notes
 
