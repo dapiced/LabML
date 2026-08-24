@@ -88,7 +88,7 @@ contributions](docs/screenshots/insights.png)
 _Every figure above was produced by the app itself, on the `titanic.csv` sample, seed 42 —
 reproducible by pressing train._
 
-LIMITATION: The ideal dataset size is between 1MB and 30MB; beyond 30 MB, the browser response time may take longer to return the results.
+**LIMITATION: The ideal dataset size is between 1MB and 30MB; beyond 30 MB, the browser response time may take longer to return the results.**
 
 ### Data Studio — `/data`
 
