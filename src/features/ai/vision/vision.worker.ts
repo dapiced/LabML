@@ -41,6 +41,17 @@ export type VisionResponse =
 
 ort.env.wasm.wasmPaths = '/ort/';
 ort.env.wasm.numThreads = 1; // no COOP/COEP headers → single-threaded WASM
+// V35 — measured: loading the three models printed 366 lines to console.error,
+// every one of them an ONNX Runtime *warning* that the WASM build routes to
+// error. They all say the same thing about UltraFace — its export lists the
+// initializers among the graph inputs, an old-opset convention, not a fault in
+// our code or our weights. Nothing was broken; 366 red lines simply meant a
+// real error would have been invisible.
+//
+// The silencing goes on the session, not here: `ort.env.logLevel` governs the
+// JavaScript-side logger, and setting it to 'error' left all 366 lines in
+// place — they come from the runtime's own C++ logger, which reads the
+// session's `logSeverityLevel`. See `loadSessions` below.
 
 const MODEL_URLS = {
   classifier: '/models/efficientnet-lite4-11-int8.onnx',
@@ -56,7 +67,11 @@ function post(message: VisionResponse) {
 
 async function loadSessions() {
   const create = (url: string) =>
-    ort.InferenceSession.create(url, { executionProviders: ['wasm'] });
+    // `logSeverityLevel: 3` is ERROR on the runtime's own scale (0 verbose,
+    // 1 info, 2 warning — the default — 3 error, 4 fatal). Warnings stay
+    // suppressed; a genuine failure still reaches the console, and every error
+    // path here also posts a named `{ kind: 'error' }` back to the page.
+    ort.InferenceSession.create(url, { executionProviders: ['wasm'], logSeverityLevel: 3 });
   const [classifier, objects, faces] = await Promise.all([
     create(MODEL_URLS.classifier),
     create(MODEL_URLS.objects),

@@ -161,7 +161,11 @@ function DocView({ page, pages }: { page: DocPage; pages: DocPage[] }) {
     <section className="grid gap-8 pb-20 lg:grid-cols-[1fr_16rem]">
       <article
         data-testid="doc-body"
-        className="doc-prose max-w-3xl"
+        // `min-w-0`: a grid item defaults to `min-width: auto`, so the widest
+        // thing inside — a table's min-content width — sets the column's floor
+        // and the whole page scrolls sideways on a phone. Without this the
+        // wrapper below can scroll all it likes and the page still overflows.
+        className="doc-prose min-w-0 max-w-3xl"
         // The HTML was compiled at build time from Markdown committed to this
         // repository — no visitor input reaches it, and the CSP forbids inline
         // script regardless. Parsing in the browser instead would ship a
