@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card } from '@/components/ui/card';
 import { useDataStore } from '@/features/data/data-store';
 import { cn } from '@/lib/utils';
+import { ScrollRegion } from '@/components/ui/scroll-region';
 
 /** Small before/after table preview of the dataset. */
 export function DataPreview() {
@@ -38,7 +38,10 @@ export function DataPreview() {
           ))}
         </div>
       </div>
-      <Card className="overflow-x-auto p-0">
+      <ScrollRegion
+        label={t('data.preview.title')}
+        className="rounded-2xl border border-line bg-surface"
+      >
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line text-left">
@@ -61,7 +64,7 @@ export function DataPreview() {
             ))}
           </tbody>
         </table>
-      </Card>
+      </ScrollRegion>
       <p className="text-xs text-muted">{t('data.preview.note', { count: rows.length })}</p>
     </section>
   );

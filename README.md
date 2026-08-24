@@ -170,9 +170,17 @@ The project follows three non-negotiable principles:
 - **Performance.** Every section serves a prerendered static shell (hero paints before
   JavaScript); Lighthouse mobile ≈ 0.99 on `/ml` under real throttling. Heavy
   dependencies (Dexie, SheetJS, ONNX Runtime) load lazily.
-- **Quality bar.** 502 unit tests, 78 Playwright end-to-end tests (including offline PWA,
-  fake-webcam and axe-core WCAG A/AA accessibility checks), strict TypeScript, ESLint,
-  Prettier, and Lighthouse budgets — all enforced in CI.
+- **Quality bar.** 711 unit tests and 111 Playwright end-to-end tests across three browser
+  projects — desktop, a phone viewport, and dark mode — covering offline PWA, a fake
+  webcam, a horizontal-overflow guard on every route, and axe-core WCAG A/AA checks on
+  every page including the twenty-four documentation pages. Plus strict TypeScript,
+  ESLint, Prettier, and Lighthouse budgets — all enforced in CI.
+- **One dependency does not come from npm.** SheetJS left the registry, and the copy
+  still published there (`xlsx@0.18.5`) carries two unfixable high advisories. The
+  dependency points at the project's official tarball instead, which fixes both;
+  `package-lock.json` pins its integrity hash, so a tampered download fails `npm ci`
+  rather than shipping. It is still fetched at install time and bundled — the browser
+  calls nobody.
 
 ## Tech stack
 

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { PREVIEW_ROWS, isNonDefault } from '@/features/ml/data/locale';
 import { useLabStore } from '@/features/ml/lab-store';
+import { ScrollRegion } from '@/components/ui/scroll-region';
 
 /**
  * V38: how the file was read, stated in plain language.
@@ -56,7 +57,7 @@ export function ReadFormatNotice() {
       </ul>
 
       {preview.length > 0 && (
-        <div className="overflow-x-auto">
+        <ScrollRegion>
           <table className="w-full text-left font-mono text-[0.68rem]">
             <thead>
               <tr className="text-muted">
@@ -79,7 +80,7 @@ export function ReadFormatNotice() {
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollRegion>
       )}
 
       <p className="text-xs text-muted">{t('ml.lab.read.hint')}</p>

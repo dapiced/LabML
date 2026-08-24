@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { useLabStore } from '@/features/ml/lab-store';
 import { METRIC_ROWS, metricDelta } from '@/features/ml/train/score-view';
+import { ScrollRegion } from '@/components/ui/scroll-region';
 
 function downloadCsv(name: string, content: string) {
   const url = URL.createObjectURL(new Blob([content], { type: 'text/csv' }));
@@ -111,7 +112,7 @@ export function BatchScorePanel() {
           </p>
 
           {result.metrics ? (
-            <div className="overflow-x-auto">
+            <ScrollRegion>
               <table className="w-full max-w-xl text-left text-xs">
                 <thead>
                   <tr className="border-b border-line text-muted">
@@ -154,7 +155,7 @@ export function BatchScorePanel() {
                   {t('ml.lab.batch.unknownLabels', { count: result.unknownLabels })}
                 </p>
               )}
-            </div>
+            </ScrollRegion>
           ) : (
             <p className="text-xs text-muted">{t('ml.lab.batch.noTarget')}</p>
           )}

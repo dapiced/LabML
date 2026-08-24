@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Eyebrow } from '@/components/ui/eyebrow';
+import { ScrollRegion } from '@/components/ui/scroll-region';
 
 /**
  * Human-phrased confusion matrix: rows = actual, columns = predicted.
@@ -11,7 +12,7 @@ export function ConfusionMatrix({ classes, matrix }: { classes: string[]; matrix
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
       <Eyebrow>{t('ml.lab.insights.confusionTitle')}</Eyebrow>
-      <div className="overflow-x-auto">
+      <ScrollRegion>
         <table data-testid="confusion-matrix" className="text-sm tabular-nums">
           <thead>
             <tr>
@@ -55,7 +56,7 @@ export function ConfusionMatrix({ classes, matrix }: { classes: string[]; matrix
             })}
           </tbody>
         </table>
-      </div>
+      </ScrollRegion>
     </div>
   );
 }
