@@ -66,7 +66,31 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      # V35 — this job died on `npm ci` with ETIMEDOUT reaching a Microsoft CDN.
+      # The same `npm ci`, same commit, same lockfile, succeeded in the two
+      # other jobs of that run, so it was the network rather than the tree —
+      # and neither the lockfile's integrity hashes nor npm's retries cover the
+      # network call an install script makes on its own.
+      #
+      # What that call fetches, measured: `onnxruntime-node` ships its base
+      # binaries inside the tarball, and its postinstall downloads three more —
+      # `libonnxruntime_providers_cuda.so` (301 MB), `_tensorrt.so` and
+      # `_shared.so`. They are GPU execution providers. LabML runs its models in
+      # the browser and never loads the Node binding at all, so this job was
+      # spending 302 MB, and a point of failure, on CUDA libraries nothing here
+      # can use. Skipping scripts takes the package from 514 MB to 212 MB.
+      #
+      # Nothing else is lost. Eight packages have install scripts — the two
+      # above plus esbuild, workerd, protobufjs and fsevents ×3 — and none is
+      # reachable from `@lhci/cli`. Chrome is not among them either: the chain
+      # runs through `puppeteer-core`, which never downloads a browser, so
+      # Lighthouse already used the runner's own Chrome. Verified locally: a
+      # `--ignore-scripts` install (33 s) runs `lhci autorun` to completion,
+      # « Chrome installation found », all assertions passing.
+      #
+      # `quality`, `e2e` and `deploy` keep their scripts: they need esbuild to
+      # build and workerd to deploy.
+      - run: npm ci --ignore-scripts
       - uses: actions/download-artifact@v4
         with:
           name: dist
