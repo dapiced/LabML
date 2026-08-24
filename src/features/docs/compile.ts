@@ -155,6 +155,28 @@ export function compileDoc(raw: string, lang: string, file: string): DocPage {
     return `<h${depth}>${marked.parseInline(text, { async: false }) as string}</h${depth}>\n`;
   };
 
+  // V35 — a wide table scrolls inside its own region, and that region is
+  // reachable by keyboard. Putting `overflow-x` on the `<table>` itself (what
+  // V32 did) failed twice at once: the box was a scroll container nobody could
+  // tab into, which axe names `scrollable-region-focusable` and WCAG 2.1.1
+  // calls a failure — the columns past the fold were unreachable without a
+  // mouse; and the table's min-content width still propagated to the prose
+  // column, so on a phone the *page* scrolled sideways instead of the table.
+  // Wrapping is what fixes both, and it belongs here rather than in each of
+  // the twelve pages: a rule the compiler enforces cannot be forgotten by the
+  // next page someone writes.
+  const renderTable = marked.Renderer.prototype.table;
+  renderer.table = function (token) {
+    // Name the region after the heading it sits under, so a screen reader
+    // announces « Table: Reading a refusal » rather than an anonymous box.
+    const under = headings[headings.length - 1]?.text;
+    const fr = lang.startsWith('fr');
+    const noun = fr ? 'Tableau' : 'Table';
+    // French puts a space before the colon; English does not.
+    const label = under ? `${noun}${fr ? ' : ' : ': '}${under}` : noun;
+    return `<div class="doc-table" role="region" tabindex="0" aria-label="${escapeAttr(label)}">${renderTable.call(this, token)}</div>\n`;
+  };
+
   const html = marked.parse(renderTryBlocks(body), {
     async: false,
     gfm: true,
