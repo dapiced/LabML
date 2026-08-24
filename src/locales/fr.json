@@ -677,6 +677,11 @@
         "decimal_one": "Virgule décimale détectée et convertie dans {{count}} colonne : {{columns}}. Le chiffre entre parenthèses est le nombre de valeurs qui l'ont prouvé.",
         "decimal_other": "Virgule décimale détectée et convertie dans {{count}} colonnes : {{columns}}. Le chiffre entre parenthèses est le nombre de valeurs qui l'ont prouvé.",
         "grouped": "Les séparateurs de milliers ont également été retirés.",
+        "renamed_one": "{{count}} colonne a été renommée pour que chaque nom désigne une seule colonne : {{columns}}. Un nom en double se résolvait autrement vers une colonne différente selon l'endroit du code qui le cherchait.",
+        "renamed_other": "{{count}} colonnes ont été renommées pour que chaque nom désigne une seule colonne : {{columns}}. Un nom en double se résolvait autrement vers une colonne différente selon l'endroit du code qui le cherchait.",
+        "renamedUnnamed": "sans nom dans le fichier",
+        "malformed_one": "{{count}} ligne n'était pas conforme à ce que le fichier annonce : guillemet non fermé, ou nombre de cellules différent du nombre de colonnes. Elle a été lue au mieux — cellules en trop ignorées, cellules manquantes laissées vides — et elle est signalée ici plutôt que perdue en silence.",
+        "malformed_other": "{{count}} lignes n'étaient pas conformes à ce que le fichier annonce : guillemet non fermé, ou nombre de cellules différent du nombre de colonnes. Elles ont été lues au mieux — cellules en trop ignorées, cellules manquantes laissées vides — et elles sont signalées ici plutôt que perdues en silence.",
         "hint": "Une colonne n'est réécrite que si presque toutes ses valeurs sont des nombres dans ce format ET qu'elle ne serait sinon pas numérique du tout. Tout le reste est laissé exactement tel qu'écrit. Si cette lecture est fausse, rechargez le fichier — la détection se fait colonne par colonne, pas fichier par fichier."
       }
     }

@@ -23,10 +23,13 @@ import type { ModelKey } from '@/features/ml/train/types';
 import {
   applyDecimalFormats,
   buildReadFormat,
+  countParseErrors,
+  isRaggedRow,
   papaConfig,
   sniffFile,
   sniffText,
 } from '@/features/ml/data/read';
+import { readHeader, type HeaderIssue } from '@/features/ml/data/header';
 import { decodeBytes, type ReadFormat } from '@/features/ml/data/locale';
 import type { WorkerRequest, WorkerResponse } from '@/features/ml/worker-protocol';
 
@@ -56,6 +59,10 @@ let datasetName = '';
 let imported: ImportedModel | null = null;
 /** V38: how the current file was actually read — announced, never assumed. */
 let readFormat: ReadFormat | null = null;
+/** V35 wave 4: columns whose name LabML had to change to keep names unique. */
+let headerIssues: HeaderIssue[] = [];
+/** V35 wave 4: rows the file did not deliver as declared — counted, not guessed. */
+let malformedRows = 0;
 
 function post(message: WorkerResponse) {
   self.postMessage(message);
@@ -65,12 +72,20 @@ function post(message: WorkerResponse) {
 function ingestRows(rows: string[][]): boolean {
   for (const row of rows) {
     if (header.length === 0) {
-      header = row.map((cell, i) => (cell.trim() === '' ? `column_${i + 1}` : cell.trim()));
+      // V35 wave 4: unique by construction, and every rename reported — two
+      // columns called « age » used to resolve to different data depending on
+      // whether the caller used `indexOf` or `columnsAsMap()`.
+      const read = readHeader(row);
+      header = read.names;
+      headerIssues = read.issues;
       columns = header.map(() => []);
       continue;
     }
     // Skip fully empty trailing lines.
     if (row.length === 1 && row[0].trim() === '') continue;
+    // V35 wave 4: a row of the wrong width still loads — extra cells dropped,
+    // missing ones null — but it is counted so the UI can say it happened.
+    if (isRaggedRow(row, header.length)) malformedRows += 1;
     // V25: named memory guard — refuse past MAX_CELLS instead of dying silently.
     if ((rowCount + 1) * header.length > MAX_CELLS) {
       overflowed = true;
@@ -115,6 +130,8 @@ function resetState() {
   overflowed = false;
   artifacts = null;
   readFormat = null;
+  headerIssues = [];
+  malformedRows = 0;
 }
 
 function parseText(text: string, name: string, bytes: number) {
@@ -123,6 +140,9 @@ function parseText(text: string, name: string, bytes: number) {
   Papa.parse<string[]>(text, {
     ...papaConfig(sniffed.delimiter),
     complete: (results) => {
+      // V35 wave 4: Papa's row errors used to be dropped here, so an
+      // unterminated quote silently swallowed the rest of the file.
+      malformedRows += countParseErrors(results.errors);
       ingestRows(results.data);
       finishParse(name, bytes, sniffed);
     },
@@ -137,6 +157,7 @@ async function parseFile(file: File) {
   Papa.parse<string[]>(file, {
     ...papaConfig(sniffed.delimiter, sniffed.encoding.encoding),
     chunk: (results, parser) => {
+      malformedRows += countParseErrors(results.errors);
       // Stop reading the file the moment the budget is blown (streaming abort).
       if (!ingestRows(results.data)) parser.abort();
     },
@@ -171,7 +192,10 @@ function finishParse(name: string, bytes: number, sniffed: Awaited<ReturnType<ty
   datasetName = name;
   // V38: whole columns, after ingestion — the evidence for a column only
   // exists once all of its values are in hand.
-  readFormat = buildReadFormat(sniffed, applyDecimalFormats(header, columns));
+  readFormat = buildReadFormat(sniffed, applyDecimalFormats(header, columns), {
+    headerIssues,
+    malformedRows,
+  });
   post({ kind: 'parsed', payload: buildResult(name, bytes) });
 }
 
@@ -199,9 +223,10 @@ async function parseBatch(source: File | string): Promise<{ header: string[]; co
   const parsed = Papa.parse<string[]>(text, papaConfig(sniffText(text).delimiter));
   const rows = parsed.data;
   if (rows.length < 2) throw new Error('empty');
-  const batchHeader = rows[0].map((cell, i) =>
-    cell.trim() === '' ? `column_${i + 1}` : cell.trim(),
-  );
+  // V35 wave 4: the batch gets the same unique names as the training file, so
+  // the schema check either matches or names a missing column, instead of
+  // silently resolving a repeated name to whichever copy came last.
+  const batchHeader = readHeader(rows[0]).names;
   const cols: Cell[][] = batchHeader.map(() => []);
   for (let r = 1; r < rows.length; r++) {
     const row = rows[r];

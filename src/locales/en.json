@@ -677,6 +677,11 @@
         "decimal_one": "Decimal comma detected and converted in {{count}} column: {{columns}}. The figure in brackets is how many values proved it.",
         "decimal_other": "Decimal comma detected and converted in {{count}} columns: {{columns}}. The figure in brackets is how many values proved it.",
         "grouped": "Thousands separators were removed as well.",
+        "renamed_one": "{{count}} column was renamed so that every name means exactly one column: {{columns}}. A repeated name otherwise resolved to a different column depending on which part of the code looked it up.",
+        "renamed_other": "{{count}} columns were renamed so that every name means exactly one column: {{columns}}. A repeated name otherwise resolved to a different column depending on which part of the code looked it up.",
+        "renamedUnnamed": "unnamed in the file",
+        "malformed_one": "{{count}} row did not match what the file declares: an unclosed quote, or a cell count that differs from the column count. It was read as best it could be — extra cells dropped, missing cells left empty — and it is reported here rather than lost in silence.",
+        "malformed_other": "{{count}} rows did not match what the file declares: an unclosed quote, or a cell count that differs from the column count. They were read as best they could be — extra cells dropped, missing cells left empty — and they are reported here rather than lost in silence.",
         "hint": "A column is only rewritten when nearly all of its values are numbers in that format and it would otherwise not be numeric at all. Anything else is left exactly as written. If this reading is wrong, reload the file — the detection is per column, not per file."
       }
     }
