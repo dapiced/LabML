@@ -11,6 +11,7 @@ import type { TrainedModel } from '@/features/ml/train/models';
 import type { FittedPipeline } from '@/features/ml/train/pipeline';
 import type { Cell } from '@/features/ml/data/types';
 import type { MetricMap, ModelKey } from '@/features/ml/train/types';
+import { csvCell } from '@/lib/csv';
 
 const PREVIEW_ROWS = 8;
 
@@ -30,10 +31,6 @@ export interface BatchScore {
   preview: { predicted: string; actual?: string; proba?: number }[];
   /** Full predictions: every original column + predicted (+ probabilities). */
   csv: string;
-}
-
-function csvEscape(value: string): string {
-  return /[",\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value;
 }
 
 /**
@@ -181,10 +178,10 @@ export function scoreRows(
     'predicted',
     ...(probabilities ? classes.map((name) => `p_${name}`) : []),
   ];
-  const lines = [csvHeader.map(csvEscape).join(',')];
+  const lines = [csvHeader.map(csvCell).join(',')];
   for (let r = 0; r < rowCount; r++) {
-    const cells = header.map((_, c) => csvEscape(columns[c][r] ?? ''));
-    cells.push(csvEscape(label(predictions[r])));
+    const cells = header.map((_, c) => csvCell(columns[c][r] ?? ''));
+    cells.push(csvCell(label(predictions[r])));
     if (probabilities) cells.push(...probabilities[r].map((p) => p.toFixed(4)));
     lines.push(cells.join(','));
   }
