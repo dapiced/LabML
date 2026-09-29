@@ -7,3 +7,5 @@ package-lock.json
 docs/img
 .wrangler
 index.html
+# V41 — generated from PLAN.md by `npm run changelog`; a test compares it byte for byte
+CHANGELOG.md
