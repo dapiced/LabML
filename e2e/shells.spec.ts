@@ -81,6 +81,58 @@ test('every shell carries its own title, description and social card', async ({ 
   expect(og.headers()['content-type']).toContain('image/png');
 });
 
+/**
+ * V41 — every URL the sitemap advertises must describe itself.
+ *
+ * Measured on production (29 Sep 2026): the twelve `/docs/<slug>` pages the
+ * sitemap listed were all served by the root fallback — the home page's title,
+ * description, Open Graph tags and canonical, and an empty `<div id="root">`.
+ * To a crawler that is twelve duplicates of the home page; to a reader pasting
+ * a tutorial link into a chat, a preview of the wrong page. The V35 guard
+ * above checked the section shells and the sitemap's status codes, and missed
+ * it because a fallback answers 200 too. This one reads every advertised URL.
+ */
+test('every page the sitemap advertises describes itself without JavaScript', async ({
+  request,
+}) => {
+  const xml = await (await request.get('/sitemap.xml')).text();
+  const listed = [...xml.matchAll(/<loc>https:\/\/app\.dominicdapice\.com([^<]*)<\/loc>/g)].map(
+    (match) => match[1],
+  );
+  expect(listed.length).toBeGreaterThanOrEqual(21);
+
+  const titles = new Map<string, string>();
+  for (const path of listed) {
+    const html = await (await request.get(path)).text();
+    const meta = (pattern: RegExp) => pattern.exec(html)?.[1]?.trim() ?? '';
+
+    expect(meta(/<link rel="canonical" href="([^"]*)"/), `${path} canonical`).toBe(
+      `https://app.dominicdapice.com${path}`,
+    );
+    expect(meta(/<meta property="og:url" content="([^"]*)"/), `${path} og:url`).toBe(
+      `https://app.dominicdapice.com${path}`,
+    );
+    const title = meta(/<title>([^<]*)<\/title>/);
+    expect(titles.has(title), `${path} repeats the title of ${titles.get(title)}`).toBe(false);
+    titles.set(title, path);
+    expect(
+      meta(/<meta name="description" content="([^"]*)"/).length,
+      `${path} description`,
+    ).toBeGreaterThan(40);
+    // A heading in the HTML itself: the page exists before any script runs.
+    expect(html, `${path} paints nothing before JavaScript`).toMatch(/<h1[\s>]/);
+  }
+});
+
+test('the home page description starts where its sentence starts', async ({ request }) => {
+  const html = await (await request.get('/')).text();
+  const description = /<meta name="description" content="([^"]*)"/.exec(html)?.[1] ?? '';
+  // Measured on production: « entirely in your browser. Drop a dataset… » — the
+  // description opened mid-sentence because the half of the title before the
+  // highlight was left out of it.
+  expect(description).toMatch(/^A machine learning lab, entirely in your browser\. Drop a dataset/);
+});
+
 test('the sitemap lists every page that exists, and nothing that does not', async ({ request }) => {
   const xml = await (await request.get('/sitemap.xml')).text();
   const listed = [...xml.matchAll(/<loc>https:\/\/app\.dominicdapice\.com([^<]*)<\/loc>/g)].map(

@@ -7,7 +7,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
-import { docsPlugin } from './vite-docs.ts';
+import { docsPlugin, readDocs } from './vite-docs.ts';
 
 /**
  * A prerendered route: its static shell (index.html + the page hero injected
@@ -200,18 +200,59 @@ function prerenderShells(rootTargets: string[]): Plugin {
         return name.includes(suffix) ? name : `${name} · ${suffix}`;
       };
 
+      /**
+       * The hero a shell paints before JavaScript: header footprint, eyebrow,
+       * title, lede. The classes are the page component's own, so React's
+       * mount replaces the shell with identical geometry and shifts nothing.
+       */
+      const hero = (parts: {
+        eyebrow: string;
+        title: string;
+        lede: string;
+        section: string;
+        h1: string;
+        ledeClass: string;
+        body?: string;
+      }) =>
+        `<div id="shell-header" class="border-b border-line"></div>` +
+        `<div class="mx-auto max-w-6xl px-4"><section class="${parts.section}">` +
+        `<p class="font-mono text-xs font-semibold tracking-[0.18em] text-copper uppercase">${esc(parts.eyebrow)}</p>` +
+        `<h1 class="${parts.h1}">${parts.title}</h1>` +
+        `<p class="${parts.ledeClass}">${esc(parts.lede)}</p></section>${parts.body ?? ''}</div>`;
+      const highlighted = (pre: string, highlight: string) =>
+        `${esc(pre)} <span class="bg-accent-soft box-decoration-clone px-1 text-accent-strong">${esc(highlight)}</span>`;
+
       // The root file is also the SPA fallback, so it answers for every route
       // without a shell of its own — the home page's metadata is the honest
       // default there. Written after the helpers above exist, and from a
       // `base` that still carries none, so the shells below inherit preloads
       // and stylesheet but never the home page's title or Open Graph tags.
+      //
+      // V41 — it now carries the home hero too. Measured on production: `/`
+      // was the one section that painted nothing before JavaScript, and the
+      // one most visitors land on. Its description also opened mid-sentence
+      // (« entirely in your browser. Drop a dataset… ») because only the
+      // highlighted half of the title was prepended to the lede.
       writeFileSync(
         htmlPath,
         withMeta(
-          base.replace('</head>', () => `${rootTargets.map(preload).join('')}  </head>`),
+          base
+            .replace('</head>', () => `${rootTargets.map(preload).join('')}  </head>`)
+            .replace(
+              '<div id="root"></div>',
+              () =>
+                `<div id="root">${hero({
+                  eyebrow: key('home.eyebrow'),
+                  title: highlighted(key('home.titlePre'), key('home.titleHighlight')),
+                  lede: key('home.lede'),
+                  section: 'py-16 sm:py-24',
+                  h1: 'mt-3 max-w-3xl font-display text-4xl font-bold text-balance sm:text-6xl',
+                  ledeClass: 'mt-6 max-w-2xl text-lg text-muted',
+                })}</div>`,
+            ),
           '/',
           pageTitle('home'),
-          describe(`${key('home.titleHighlight')} ${key('home.lede')}`),
+          describe(`${key('home.titlePre')} ${key('home.titleHighlight')} ${key('home.lede')}`),
         ),
       );
 
@@ -220,24 +261,84 @@ function prerenderShells(rootTargets: string[]): Plugin {
       // 87% render delay without it.
       for (const route of SHELL_ROUTES) {
         const title = route.highlight
-          ? `${esc(key(`${route.prefix}.titlePre`))} <span class="bg-accent-soft box-decoration-clone px-1 text-accent-strong">${esc(key(`${route.prefix}.titleHighlight`))}</span>`
+          ? highlighted(key(`${route.prefix}.titlePre`), key(`${route.prefix}.titleHighlight`))
           : esc(key(`${route.prefix}.title`));
-        const hero =
-          `<div id="shell-header" class="border-b border-line"></div>` +
-          `<div class="mx-auto max-w-6xl px-4"><section class="py-12 sm:py-16">` +
-          `<p class="font-mono text-xs font-semibold tracking-[0.18em] text-copper uppercase">${esc(key(`${route.prefix}.eyebrow`))}</p>` +
-          `<h1 class="mt-3 max-w-3xl font-display text-3xl font-bold text-balance sm:text-5xl">${title}</h1>` +
-          `<p class="mt-5 max-w-2xl text-lg text-muted">${esc(key(`${route.prefix}.lede`))}</p></section></div>`;
         const shell = withMeta(
           base
             .replace('</head>', () => `${preload(route.facade)}  </head>`)
-            .replace('<div id="root"></div>', () => `<div id="root">${hero}</div>`),
+            .replace(
+              '<div id="root"></div>',
+              () =>
+                `<div id="root">${hero({
+                  eyebrow: key(`${route.prefix}.eyebrow`),
+                  title,
+                  lede: key(`${route.prefix}.lede`),
+                  section: 'py-12 sm:py-16',
+                  h1: 'mt-3 max-w-3xl font-display text-3xl font-bold text-balance sm:text-5xl',
+                  ledeClass: 'mt-5 max-w-2xl text-lg text-muted',
+                })}</div>`,
+            ),
           `/${route.dir}/`,
           pageTitle(route.titleKey),
           describe(key(`${route.prefix}.lede`)),
         );
         mkdirSync(join(outDir, route.dir), { recursive: true });
         writeFileSync(join(outDir, route.dir, 'index.html'), shell);
+      }
+
+      // V41 — one shell per documentation page. Measured on production
+      // (29 Sep 2026): the twelve `/docs/<slug>` URLs the sitemap advertised
+      // were served by the root fallback — home title, home Open Graph, a
+      // canonical pointing at `/`, and an empty root. A crawler saw twelve
+      // duplicates of the home page; a tutorial link pasted into a chat
+      // previewed the home page. The Markdown is already compiled at build
+      // time (`vite-docs.ts`), so the shell carries the finished article: the
+      // page reads without JavaScript, and its own title, summary and
+      // canonical. Written as `docs/<slug>.html` because Pages serves that at
+      // the clean URL `/docs/<slug>` — the form the sitemap and the app's
+      // links already use — where a directory would add a redirect to `/`.
+      // English, like every other shell; the app switches on mount.
+      const docPages = readDocs();
+      const docSlugs = [...new Set(docPages.map((page) => page.slug))].sort();
+      const docsFacade = SHELL_ROUTES.find((route) => route.dir === 'docs')!.facade;
+      for (const slug of docSlugs) {
+        const page =
+          docPages.find((candidate) => candidate.slug === slug && candidate.lang === 'en') ??
+          docPages.find((candidate) => candidate.slug === slug)!;
+        const toc = page.headings
+          .map(
+            (heading) =>
+              `<li${heading.level === 3 ? ' class="pl-4"' : ''}><a href="#${attr(heading.id)}" class="text-muted underline decoration-line underline-offset-4 hover:text-accent-strong">${esc(heading.text)}</a></li>`,
+          )
+          .join('');
+        const body =
+          `<section class="grid gap-8 pb-20 lg:grid-cols-[1fr_16rem]">` +
+          `<article class="doc-prose min-w-0 max-w-3xl">${page.html}</article>` +
+          `<aside class="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start"><div class="flex flex-col gap-2">` +
+          `<p class="font-mono text-xs font-semibold tracking-[0.18em] text-copper uppercase">${esc(key('docs.onThisPage'))}</p>` +
+          `<nav aria-label="${attr(key('docs.onThisPage'))}"><ol class="flex flex-col gap-1.5 text-sm">${toc}</ol></nav>` +
+          `</div></aside></section>`;
+        const shell = withMeta(
+          base
+            .replace('</head>', () => `${preload(docsFacade)}  </head>`)
+            .replace(
+              '<div id="root"></div>',
+              () =>
+                `<div id="root">${hero({
+                  eyebrow: key('docs.eyebrow'),
+                  title: esc(page.title),
+                  lede: page.summary,
+                  section: 'py-12 sm:py-16',
+                  h1: 'mt-3 max-w-3xl font-display text-3xl font-bold text-balance sm:text-5xl',
+                  ledeClass: 'mt-5 max-w-2xl text-lg text-muted',
+                  body,
+                })}</div>`,
+            ),
+          `/docs/${slug}`,
+          `${page.title} · ${suffix}`,
+          describe(page.summary),
+        );
+        writeFileSync(join(outDir, 'docs', `${slug}.html`), shell);
       }
 
       // A sitemap built from the routes that exist, plus the documentation
@@ -353,7 +454,21 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,csv}'],
         // The vision model and ONNX runtime are cached on first use instead of
         // being precached — they would bloat the install for non-vision users.
-        globIgnores: ['models/**', 'ort/**', 'ort-llm/**', 'llm/**', 'duckdb/**'],
+        // V41 — the twelve documentation shells are left out too: each one
+        // embeds the inlined stylesheet and fonts (~130 KB), and the app
+        // already renders every doc page offline from its bundled `DOCS`
+        // module through the navigation fallback. Precaching them would add
+        // ~1.5 MB to every install for pages that already work offline. The
+        // section index (`docs/index.html`) stays precached like every other
+        // section shell — the extglob spares it.
+        globIgnores: [
+          'models/**',
+          'ort/**',
+          'ort-llm/**',
+          'llm/**',
+          'duckdb/**',
+          'docs/!(index).html',
+        ],
         navigateFallback: '/index.html',
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         runtimeCaching: [
