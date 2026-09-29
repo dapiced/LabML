@@ -79,10 +79,10 @@ const APP_VERSION = (JSON.parse(readFileSync('package.json', 'utf8')) as { versi
  * Lazy routes normally load in a second network phase after the entry has
  * executed. Injecting modulepreload hints for the main routes' chunk graphs
  * lets the browser fetch them in parallel with the entry — the waterfall
- * collapses without giving up code splitting. The root index.html (also the
- * SPA fallback) keeps the home + /ml facades; every prerendered shell carries
- * its own facade instead. Dynamic routes (/ml/run/:id, /ml/share) stay on the
- * fallback — a shell would show the wrong content there.
+ * collapses without giving up code splitting. The root index.html keeps the
+ * home + /ml facades; every prerendered shell carries its own facade instead.
+ * Dynamic routes (/ml/run/:id, /ml/share) are rewritten by `_redirects` to a
+ * bare `shell.html` (V41) — a hero would show the wrong content there.
  */
 function prerenderShells(rootTargets: string[]): Plugin {
   let outDir = 'dist';
@@ -225,8 +225,10 @@ function prerenderShells(rootTargets: string[]): Plugin {
 
       /**
        * The hero a shell paints before JavaScript: header footprint, eyebrow,
-       * title, lede. The classes are the page component's own, so React's
-       * mount replaces the shell with identical geometry and shifts nothing.
+       * title, lede. The classes are the page component's own — the eyebrow's
+       * are `<Eyebrow>`'s (the V9 shells had a copper, semibold label that the
+       * app then repainted teal on mount; V41 aligned it) — so React's mount
+       * replaces the shell with identical markup and shifts nothing.
        */
       const hero = (parts: {
         eyebrow: string;
@@ -239,7 +241,7 @@ function prerenderShells(rootTargets: string[]): Plugin {
       }) =>
         `<div id="shell-header" class="border-b border-line"></div>` +
         `<div class="mx-auto max-w-6xl px-4"><section class="${parts.section}">` +
-        `<p class="font-mono text-xs font-semibold tracking-[0.18em] text-copper uppercase">${esc(parts.eyebrow)}</p>` +
+        `<p class="font-mono text-xs font-medium tracking-[0.14em] text-accent-strong uppercase">${esc(parts.eyebrow)}</p>` +
         `<h1 class="${parts.h1}">${parts.title}</h1>` +
         `<p class="${parts.ledeClass}">${esc(parts.lede)}</p></section>${parts.body ?? ''}</div>`;
       const highlighted = (pre: string, highlight: string) =>
@@ -313,9 +315,9 @@ function prerenderShells(rootTargets: string[]): Plugin {
         ),
       );
 
-      // Cloudflare Pages serves exact files before the SPA fallback, so only
-      // direct visits get this head start — measured LCP driver on /ml was
-      // 87% render delay without it.
+      // Pages serves an exact file when one exists (after the rules below have
+      // had their say — see public/_redirects), so only direct visits get this
+      // head start — measured LCP driver on /ml was 87% render delay without it.
       for (const route of SHELL_ROUTES) {
         const title = route.highlight
           ? highlighted(key(`${route.prefix}.titlePre`), key(`${route.prefix}.titleHighlight`))
@@ -372,7 +374,7 @@ function prerenderShells(rootTargets: string[]): Plugin {
           `<section class="grid gap-8 pb-20 lg:grid-cols-[1fr_16rem]">` +
           `<article class="doc-prose min-w-0 max-w-3xl">${page.html}</article>` +
           `<aside class="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start"><div class="flex flex-col gap-2">` +
-          `<p class="font-mono text-xs font-semibold tracking-[0.18em] text-copper uppercase">${esc(key('docs.onThisPage'))}</p>` +
+          `<p class="font-mono text-xs font-medium tracking-[0.14em] text-accent-strong uppercase">${esc(key('docs.onThisPage'))}</p>` +
           `<nav aria-label="${attr(key('docs.onThisPage'))}"><ol class="flex flex-col gap-1.5 text-sm">${toc}</ol></nav>` +
           `</div></aside></section>`;
         const shell = withMeta(

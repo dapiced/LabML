@@ -1,16 +1,20 @@
-# V41 — Cloudflare Pages serves exact files first (the prerendered shells, the
-# documentation pages, every asset), then applies these rules, then 404.html.
-# Only the routes that have no file of their own are listed: a run, a
-# comparison, a share link — pages that describe one visitor's local data and
-# that the app paints. They are handed the bare shell at its clean URL, with a
-# 200 so the address in the bar stays what the visitor typed.
+# V41 — Cloudflare Pages applies these rules BEFORE it looks for a file
+# (« redirects are always followed, regardless of whether or not an asset
+# matches »), then serves the exact file if one exists (the prerendered shells,
+# the documentation pages, every asset), then 404.html. So a rule must never
+# overlap a real file: `/ml/* /shell 200` would hide /ml/index.html in
+# production. Only the routes that have no file of their own are listed: a
+# run, a comparison, a share link — pages that describe one visitor's local
+# data and that the app paints. They are handed the bare shell at its clean
+# URL, with a 200 so the address in the bar stays what the visitor typed.
 #
 # Before V41 the single rule was `/* /index.html 200`. `wrangler pages dev`
 # reports it as INVALID and ignores it — Pages strips `/index.html` from URLs,
 # so the rewrite would loop — and the 200 on every unknown address came from
 # the default single-page fallback instead: a misspelled URL was a soft 404.
 # With a 404.html in the build that fallback is off, so this list must be
-# exact; `src/app/redirects.test.ts` keeps it aligned with the router.
+# exact; `src/app/redirects.test.ts` keeps it aligned with the router, and
+# `e2e/routing.spec.ts` replays it against Pages' own routing.
 #
 # Exact sources first, splats after — the order the Pages parser asks for.
 /ml/share           /shell 200

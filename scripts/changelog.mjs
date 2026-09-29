@@ -21,7 +21,15 @@ import { pathToFileURL } from 'node:url';
 
 const ROW = /^\|(.*)\|\s*$/;
 /** `V7`, `V27.1 — delivered`, `V12 — pending` — after the bold markers are gone. */
-const WAVE = /^V(\d+(?:\.\d+)?)(?:\s*—\s*(\w+))?$/;
+const WAVE = /^V(\d+(?:\.\d+)?)(?:\s*—\s*(delivered|pending))?$/;
+/**
+ * A cell that opens like a wave row and is not one the parser reads: a bare
+ * version, or a version followed by some dash — an en dash or a hyphen where
+ * the plan writes an em dash, a status other than the two the plan uses. The
+ * benchmark tables' rows (« V27.3 as shipped — … ») put a word after the
+ * version and are left alone.
+ */
+const WAVE_LIKE = /^V\d+(?:\.\d+)?(?:\s*[—–-]|$)/;
 /**
  * A sentence ends at a period followed by whitespace, optionally closing a
  * bold run first (`itself.** Two`) so the bold stays balanced. A period inside
@@ -40,10 +48,29 @@ export function extractWaves(plan) {
   for (const line of plan.split(/\r?\n/)) {
     const row = ROW.exec(line);
     if (!row) continue;
-    const cells = row[1].split(/(?<!\\)\|/).map((cell) => cell.trim());
+    // Split on pipes that are not escaped, then drop the escape: `\|` is how
+    // Markdown writes a pipe inside a cell.
+    const cells = row[1].split(/(?<!\\)\|/).map((cell) => cell.trim().replace(/\\\|/g, '|'));
     if (cells.length < 2) continue;
-    const head = WAVE.exec(cells[0].replace(/\*/g, '').trim());
-    if (!head || head[2] === 'pending') continue;
+    const label = cells[0].replace(/\*/g, '').trim();
+    const head = WAVE.exec(label);
+    if (!head) {
+      // A row that names a wave and cannot be read is refused rather than
+      // skipped: skipped, it leaves the version a wave behind with every test
+      // green. Statuses other than the two the plan uses are a question for a
+      // person, not a guess for a script.
+      if (WAVE_LIKE.test(label)) throw new Error(`PLAN.md: cannot read wave row « ${label} »`);
+      continue;
+    }
+    if (head[2] === 'pending') continue;
+    // An unescaped pipe inside a cell splits the row and turns the tail of the
+    // content into the « why » — measured on the V32 row, whose inline code
+    // held one. The byte-for-byte test cannot see it, so the generator refuses.
+    if (cells.length > 3) {
+      throw new Error(
+        `PLAN.md: wave V${head[1]} has ${cells.length} cells — an unescaped | inside a cell? Write it as \\|`,
+      );
+    }
     const content = cells[1];
     const title = titleOf(content);
     // Three rows of the plan (V25–V27) never got a « why » cell; an empty

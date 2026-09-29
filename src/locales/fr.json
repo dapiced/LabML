@@ -226,7 +226,7 @@
       "noRequests": "exécution locale · aucune requête",
       "dropTitle": "Déposez un fichier CSV ou Excel",
       "dropHint": "ou cliquez pour parcourir — le fichier est lu ici même, dans votre navigateur ; rien n'est téléversé",
-      "sizeNote": "Taille idéale : 1 à 30 Mo. Au-delà, le fichier s'entraîne quand même, mais le navigateur met plus de temps à répondre.",
+      "sizeNote": "Taille idéale : 1 à 30 Mo. Au-delà, l'entraînement fonctionne quand même, mais le navigateur met plus de temps à répondre.",
       "demoLabel": "Ou essayez un jeu de démonstration",
       "demoTask": {
         "binary": "binaire",

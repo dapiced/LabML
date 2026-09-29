@@ -232,16 +232,18 @@ Wikimedia Commons), the portrait is NASA, public domain._
   so), slow model families train on measured, announced caps scored against the same
   full test set, and parsing refuses past a named 20M-cell memory budget instead of
   letting the tab die.
-- **Performance.** Every page — the sections, the home page and the twenty-four
-  documentation pages — serves a prerendered static shell (hero paints before
-  JavaScript; a doc page carries its whole article); Lighthouse mobile ≈ 0.99 on `/ml`
-  under real throttling. Heavy dependencies (Dexie, SheetJS, ONNX Runtime) load lazily.
-- **Quality bar.** 813 unit tests and 122 Playwright end-to-end tests across four
-  projects — desktop, a phone viewport, dark mode, and Cloudflare Pages' own routing
-  emulated by `wrangler pages dev` (a real 404, the security headers as served) — covering
-  offline PWA, a fake webcam, a horizontal-overflow guard on every route, and axe-core WCAG
-  A/AA checks on every page including the twenty-four documentation pages. Plus strict
-  TypeScript, ESLint, Prettier, and Lighthouse budgets — all enforced in CI.
+- **Performance.** Every page — the sections, the home page and each of the twelve
+  documentation URLs — serves a prerendered static shell (hero paints before JavaScript;
+  a doc page carries its whole article, in English until the app mounts); Lighthouse
+  mobile ≈ 0.99 on `/ml` under real throttling. Heavy dependencies (Dexie, SheetJS, ONNX
+  Runtime) load lazily.
+- **Quality bar.** 817 unit tests and 122 Playwright end-to-end tests across five
+  projects — desktop, a phone viewport in English and in French, dark mode, and
+  Cloudflare Pages' own routing emulated by `wrangler pages dev` (a real 404, the security
+  headers as served) — covering offline PWA, a fake webcam, a horizontal-overflow guard on
+  every route, and axe-core WCAG A/AA checks on every page including the twenty-four
+  documentation pages. Plus strict TypeScript, ESLint, Prettier, and Lighthouse budgets —
+  all enforced in CI.
 - **One dependency does not come from npm.** SheetJS left the registry, and the copy
   still published there (`xlsx@0.18.5`) carries two unfixable high advisories. The
   dependency points at the project's official tarball instead, which fixes both;

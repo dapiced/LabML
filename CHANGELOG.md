@@ -64,7 +64,7 @@ _Why:_ A feature nobody can look up is a feature that does not exist for the rea
 
 A `/docs` route, linked from the footer, built on the **Diátaxis** split, with the Markdown living in `src/content/docs/<lang>/*.md` and compiled **at build time**: the reader downloads finished pages, an outline and a search index — never a parser, and never a request to a documentation host.
 
-_Why:_ label`compiles to a deep link, and`/ml`now reads`?demo=`and`?target=`. A screenshot is a claim about the past that rots silently; a deep link either works or the e2e catches it. The parameter becomes a fetched path, so it is resolved against the shipped demo list and nothing else — an e2e test asserts that `?demo=../../../etc/passwd`fetches nothing. **What this wave deliberately does not do**: write the reference pages before the template is settled (rewriting all of them is the predictable cost), hand-take a screenshot, or claim the figure guard is total.`marked` is a build-time devDependency and never reaches the browser. 601 unit tests, 86 e2e.
+_Why:_ Owner request (22/08/2026): document every shipped feature across /ml, /data and /ai, linked from the footer. One finished tutorial first, on purpose — writing the full reference before the template is settled means rewriting all of it.
 
 ## V31 — Vision that says « I do not know » — and a bench that refuted three of this row's own predictions
 

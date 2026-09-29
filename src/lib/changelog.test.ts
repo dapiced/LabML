@@ -88,6 +88,43 @@ describe('extractWaves', () => {
       'Opens up an entire class of problems',
     );
   });
+
+  it('unescapes a pipe written as \\| inside a cell', () => {
+    const [wave] = extractWaves(
+      '| **V9** | **Deep links**: `:::try /ml?demo=titanic \\| label` compiles. Next. | Why |',
+    );
+    expect(wave.summary).toBe('**Deep links**: `:::try /ml?demo=titanic | label` compiles.');
+    expect(wave.why).toBe('Why');
+  });
+
+  it('refuses a wave row split into more than three cells by an unescaped pipe', () => {
+    // Measured on the V32 row: an unescaped `|` inside inline code split the
+    // row in four, and the published « why » became the tail of the content
+    // with a stray backtick. The byte-for-byte test cannot see it, because
+    // the generator agrees with itself — so the generator has to refuse.
+    expect(() => extractWaves('| **V9** | **Deep links**: `a | b` compiles. | Why |')).toThrow(
+      /V9.*4 cells/,
+    );
+  });
+
+  it('refuses a wave row whose status it does not know, rather than skipping it', () => {
+    // A row skipped in silence leaves the version a wave behind with every
+    // test green. « delivered » and « pending » are the two statuses the plan
+    // uses; anything else is a question for a person.
+    expect(() => extractWaves('| **V42 — partially delivered** | **Thing**. | Why |')).toThrow(
+      /V42.*partially delivered/,
+    );
+    expect(() => extractWaves('| **V42 – delivered** | **Thing**. | Why |')).toThrow(/V42/);
+  });
+
+  it('ignores the measurement tables whose rows merely mention a wave', () => {
+    // PLAN.md also holds benchmark tables: « V27.3 as shipped — free decoding »,
+    // « V23 as shipped — always answers ». They name a wave and are not one.
+    expect(
+      extractWaves('| V27.3 as shipped — free decoding, frozen examples | 29 / 12 / 14 | 33 |'),
+    ).toEqual([]);
+    expect(extractWaves('| V23 as shipped — always answers | 9 / 10 | 0 |')).toEqual([]);
+  });
 });
 
 describe('renderChangelog', () => {
@@ -168,7 +205,12 @@ describe('the committed CHANGELOG', () => {
   });
 
   it('is exactly what PLAN.md produces — a drift in either direction fails here', () => {
-    expect(readFileSync('CHANGELOG.md', 'utf8')).toBe(renderChangelog(waves));
+    // Compared after normalising line endings: the script writes LF, and a
+    // Windows checkout with `core.autocrlf` hands the committed file back as
+    // CRLF — a diff where every line differs by `\r` says nothing about
+    // content.
+    const lf = (text: string) => text.replace(/\r\n/g, '\n');
+    expect(lf(readFileSync('CHANGELOG.md', 'utf8'))).toBe(lf(renderChangelog(waves)));
   });
 
   it('reaches the last delivered wave and names every wave', () => {
