@@ -193,14 +193,16 @@
         "description": "Modules de deep learning et d'IA générative — vision, chat sur vos données."
       }
     },
-    "statusTitle": "État du chantier",
-    "statusBody": "Les trois modules sont en ligne : le ML Lab (entraînement, explications, export, PWA hors-ligne), la vision IA (classification d'images sur l'appareil) et le Data Studio (rapport de qualité, nettoyage, passerelle vers le labo)."
+    "statusTitle": "Quoi de neuf",
+    "statusBody": "En ligne aujourd'hui : le ML Lab (entraînement, évaluation honnête, explications, export et réimport d'un modèle), le Data Studio (rapport de qualité, recette rejouable, SQL dans le navigateur, dérive), le terrain de jeu IA (vision sur l'appareil, assistant de données local), la documentation, et une page de confidentialité que vous pouvez vérifier vous-même.",
+    "latestWave": "Dernière vague livrée :",
+    "changelog": "Journal complet (CHANGELOG)"
   },
   "ml": {
     "eyebrow": "ML LAB",
     "titlePre": "D'un CSV à un leaderboard,",
     "titleHighlight": "sans que vos données quittent l'onglet.",
-    "lede": "Le labo lit votre fichier localement, détecte la tâche, entraîne plusieurs modèles et met de côté une partie des données pour les tester honnêtement. PS: La taille idéale du jeu de données doit se situe entre 1Mo et 30Mo pour un temps de réponse raisonnable.",
+    "lede": "Le labo lit votre fichier localement, détecte la tâche, entraîne plusieurs modèles et met de côté une partie des données pour les tester honnêtement.",
     "steps": {
       "upload": {
         "title": "Déposez un jeu de données",
@@ -224,6 +226,7 @@
       "noRequests": "exécution locale · aucune requête",
       "dropTitle": "Déposez un fichier CSV ou Excel",
       "dropHint": "ou cliquez pour parcourir — le fichier est lu ici même, dans votre navigateur ; rien n'est téléversé",
+      "sizeNote": "Taille idéale : 1 à 30 Mo. Au-delà, le fichier s'entraîne quand même, mais le navigateur met plus de temps à répondre.",
       "demoLabel": "Ou essayez un jeu de démonstration",
       "demoTask": {
         "binary": "binaire",

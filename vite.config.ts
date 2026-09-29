@@ -67,6 +67,15 @@ const SITE = 'https://app.dominicdapice.com';
 const OG_IMAGE = '/og.png';
 
 /**
+ * V41 — `1.<wave>.0`, aligned on the latest delivered wave by `npm run
+ * changelog` and pinned to PLAN.md by `src/lib/changelog.test.ts`. Exposed to
+ * the app as `__APP_VERSION__` so the home page can name the wave without
+ * bundling `package.json`.
+ */
+const APP_VERSION = (JSON.parse(readFileSync('package.json', 'utf8')) as { version: string })
+  .version;
+
+/**
  * Lazy routes normally load in a second network phase after the entry has
  * executed. Injecting modulepreload hints for the main routes' chunk graphs
  * lets the browser fetch them in parallel with the entry — the waterfall
@@ -422,6 +431,7 @@ function prerenderShells(rootTargets: string[]): Plugin {
 }
 
 export default defineConfig({
+  define: { __APP_VERSION__: JSON.stringify(APP_VERSION) },
   plugins: [
     react(),
     tailwindcss(),

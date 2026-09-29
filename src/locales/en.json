@@ -193,14 +193,16 @@
         "description": "Deep learning and generative modules — vision, chat over your data."
       }
     },
-    "statusTitle": "Build status",
-    "statusBody": "The three modules are live: the ML Lab (training, insights, export, offline PWA), AI vision (on-device image classification) and the Data Studio (quality report, cleaning, hand-off to the lab)."
+    "statusTitle": "What's new",
+    "statusBody": "Live today: the ML Lab (training, honest evaluation, insights, export and re-import of a model), the Data Studio (quality report, replayable recipe, SQL in the browser, drift), the AI playground (on-device vision, a local data assistant), the documentation, and a privacy page you can verify yourself.",
+    "latestWave": "Latest delivered wave:",
+    "changelog": "Full log (CHANGELOG)"
   },
   "ml": {
     "eyebrow": "ML LAB",
     "titlePre": "From a CSV to a leaderboard,",
     "titleHighlight": "without your data leaving the tab.",
-    "lede": "The lab reads your file locally, works out the task, trains a set of models and holds back part of the data to test them honestly. PS: The ideal dataset size should be between 1MB and 30MB for a reasonable response time.",
+    "lede": "The lab reads your file locally, works out the task, trains a set of models and holds back part of the data to test them honestly.",
     "steps": {
       "upload": {
         "title": "Drop a dataset",
@@ -224,6 +226,7 @@
       "noRequests": "runs locally · no requests",
       "dropTitle": "Drop a CSV or Excel file",
       "dropHint": "or click to browse — the file is read right here in your browser, nothing is uploaded",
+      "sizeNote": "Ideal size: 1–30 MB. Larger files still train, but the browser takes longer to answer.",
       "demoLabel": "Or try a sample dataset",
       "demoTask": {
         "binary": "binary",
