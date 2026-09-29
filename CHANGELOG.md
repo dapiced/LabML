@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V41 — The site says what it is
+
+Six corrections to what the site declared about itself — to crawlers, to link previews, to visitors — none of them touching the lab, all measured on production first (29/09/2026, `curl`).
+
+_Why:_ Owner request (29/09/2026): an analysis of the repository and of the production site, then a first wave. All six items are defects in what the site said about itself rather than missing features — a lab that publishes its refusals and its limits cannot have its documentation indexed as twelve copies of its home page, nor answer 200 to an address that does not exist.
+
 ## V40 — Data Studio: validity, drift, and an auditable diff
 
 Quality was measured as completeness and consistency of type; what was missing is **validity** — a value can be present, correctly typed and still impossible.
