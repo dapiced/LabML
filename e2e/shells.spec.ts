@@ -176,9 +176,11 @@ test('the sitemap lists every page that exists, and nothing that does not', asyn
  * index. There is no error and no visible symptom, which is exactly why this
  * belongs in a test rather than in someone's memory.
  *
- * The check is on the CONTENT, never the status code: `_redirects` sends every
- * unknown path to `index.html` with HTTP 200, so a missing file still answers
- * 200 — with HTML. That trap cost a false positive during the V35 audit.
+ * The check is on the CONTENT, never the status code: `vite preview`, which
+ * serves this suite, answers every unknown path with `index.html` and a 200,
+ * so a missing file would still answer 200 — with HTML. That trap cost a false
+ * positive during the V35 audit. (Production answers a real 404 since V41;
+ * `routing.spec.ts` checks that side against Pages' own routing.)
  */
 test('the Bing site verification file is served from the root', async ({ request }) => {
   const response = await request.get('/BingSiteAuth.xml');

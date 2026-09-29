@@ -166,11 +166,25 @@ function prerenderShells(rootTargets: string[]): Plugin {
        * Replace the shared head metadata with this page's own, and add what
        * the shells never had: a canonical URL, Open Graph and a Twitter card.
        * Without them a LabML link pasted anywhere shows no preview at all.
+       *
+       * `index: false` (V41) is for pages a crawler must not keep: the bare
+       * shell behind a run or a share link, and the 404 page. They get the
+       * social card — a share link pasted in a chat still previews — but a
+       * `noindex` instead of a canonical, since there is nothing there to be
+       * the canonical of.
        */
-      const withMeta = (html: string, path: string, title: string, description: string) => {
+      const withMeta = (
+        html: string,
+        path: string,
+        title: string,
+        description: string,
+        { index = true } = {},
+      ) => {
         const url = `${SITE}${path}`;
         const tags = [
-          `<link rel="canonical" href="${attr(url)}">`,
+          index
+            ? `<link rel="canonical" href="${attr(url)}">`
+            : `<meta name="robots" content="noindex">`,
           `<meta property="og:type" content="website">`,
           `<meta property="og:site_name" content="LabML">`,
           `<meta property="og:url" content="${attr(url)}">`,
@@ -222,17 +236,15 @@ function prerenderShells(rootTargets: string[]): Plugin {
       const highlighted = (pre: string, highlight: string) =>
         `${esc(pre)} <span class="bg-accent-soft box-decoration-clone px-1 text-accent-strong">${esc(highlight)}</span>`;
 
-      // The root file is also the SPA fallback, so it answers for every route
-      // without a shell of its own — the home page's metadata is the honest
-      // default there. Written after the helpers above exist, and from a
-      // `base` that still carries none, so the shells below inherit preloads
-      // and stylesheet but never the home page's title or Open Graph tags.
-      //
-      // V41 — it now carries the home hero too. Measured on production: `/`
-      // was the one section that painted nothing before JavaScript, and the
-      // one most visitors land on. Its description also opened mid-sentence
-      // (« entirely in your browser. Drop a dataset… ») because only the
-      // highlighted half of the title was prepended to the lede.
+      // The root file is the home page. Until V41 it was also the SPA
+      // fallback, so it could carry no hero (a run page would have flashed
+      // the home title for a frame) and `/` was the one section painting
+      // nothing before JavaScript — the one most visitors land on. Its
+      // description also opened mid-sentence (« entirely in your browser.
+      // Drop a dataset… ») because only the highlighted half of the title was
+      // prepended to the lede. Written from a `base` that carries no metadata
+      // yet, so the shells below inherit preloads and stylesheet but never the
+      // home page's title or Open Graph tags.
       writeFileSync(
         htmlPath,
         withMeta(
@@ -253,6 +265,42 @@ function prerenderShells(rootTargets: string[]): Plugin {
           '/',
           pageTitle('home'),
           describe(`${key('home.titlePre')} ${key('home.titleHighlight')} ${key('home.lede')}`),
+        ),
+      );
+
+      // V41 — the bare shell: what `public/_redirects` hands to the routes
+      // that have no file of their own (a run, a comparison, a share link).
+      // It is exactly what the root file used to be — the site's card for
+      // previews, an empty root for the app to paint — plus a `noindex`,
+      // because those pages describe one visitor's local data. Also the
+      // service worker's navigation fallback, for the same reason: offline, a
+      // run page must not flash the home hero for a frame.
+      writeFileSync(
+        join(outDir, 'shell.html'),
+        withMeta(base, '/', pageTitle('home'), describe(key('home.lede')), { index: false }),
+      );
+
+      // V41 — a real 404. Pages serves this file, with a 404 status, for every
+      // address no file and no rule answers; without it the platform falls
+      // back to `index.html` with a 200 and every misspelled URL is a soft
+      // 404. The app then mounts and renders its own not-found page over
+      // this hero — same words, painted before JavaScript.
+      writeFileSync(
+        join(outDir, '404.html'),
+        withMeta(
+          base.replace(
+            '<div id="root"></div>',
+            () =>
+              `<div id="root"><div id="shell-header" class="border-b border-line"></div>` +
+              `<div class="mx-auto flex max-w-6xl flex-col items-start px-4 py-24">` +
+              `<p class="font-mono text-sm text-copper">404</p>` +
+              `<h1 class="mt-3 font-display text-3xl font-bold sm:text-5xl">${esc(key('notFound.title'))}</h1>` +
+              `<p class="mt-4 text-lg text-muted">${esc(key('notFound.lede'))}</p></div></div>`,
+          ),
+          '/',
+          pageTitle('notFound'),
+          describe(key('notFound.lede')),
+          { index: false },
         ),
       );
 
@@ -460,7 +508,8 @@ export default defineConfig({
         // module through the navigation fallback. Precaching them would add
         // ~1.5 MB to every install for pages that already work offline. The
         // section index (`docs/index.html`) stays precached like every other
-        // section shell — the extglob spares it.
+        // section shell — the extglob spares it. The 404 page is not needed
+        // offline either.
         globIgnores: [
           'models/**',
           'ort/**',
@@ -468,8 +517,11 @@ export default defineConfig({
           'llm/**',
           'duckdb/**',
           'docs/!(index).html',
+          '404.html',
         ],
-        navigateFallback: '/index.html',
+        // V41 — the bare shell, not the home page: offline, a run or a share
+        // link must not flash the home hero for a frame before the app mounts.
+        navigateFallback: '/shell.html',
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         runtimeCaching: [
           {
