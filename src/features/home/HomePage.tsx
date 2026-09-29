@@ -4,6 +4,15 @@ import { Link } from 'react-router';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
 
+/**
+ * V41 — `1.<wave>.0`: the minor is the latest delivered wave, kept there by
+ * `npm run changelog` and pinned to PLAN.md by its test. The card used to say
+ * « the three modules are live », a sentence written at V22 and untouched
+ * through the eighteen waves that followed.
+ */
+const LATEST_WAVE = `V${__APP_VERSION__.split('.')[1]}`;
+const CHANGELOG_URL = 'https://github.com/dapiced/LabML/blob/main/CHANGELOG.md';
+
 export function HomePage() {
   const { t } = useTranslation();
 
@@ -54,6 +63,16 @@ export function HomePage() {
         <Card className="bg-surface-2">
           <Eyebrow>{t('home.statusTitle')}</Eyebrow>
           <p className="mt-2 max-w-3xl text-sm text-muted">{t('home.statusBody')}</p>
+          <p className="mt-3 text-sm text-muted">
+            {t('home.latestWave')} <strong className="font-medium text-ink">{LATEST_WAVE}</strong>
+            {' · '}
+            <a
+              href={CHANGELOG_URL}
+              className="underline decoration-line underline-offset-4 hover:text-ink"
+            >
+              {t('home.changelog')}
+            </a>
+          </p>
         </Card>
       </section>
     </div>

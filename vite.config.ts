@@ -7,7 +7,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
-import { docsPlugin } from './vite-docs.ts';
+import { docsPlugin, readDocs } from './vite-docs.ts';
 
 /**
  * A prerendered route: its static shell (index.html + the page hero injected
@@ -67,13 +67,22 @@ const SITE = 'https://app.dominicdapice.com';
 const OG_IMAGE = '/og.png';
 
 /**
+ * V41 — `1.<wave>.0`, aligned on the latest delivered wave by `npm run
+ * changelog` and pinned to PLAN.md by `src/lib/changelog.test.ts`. Exposed to
+ * the app as `__APP_VERSION__` so the home page can name the wave without
+ * bundling `package.json`.
+ */
+const APP_VERSION = (JSON.parse(readFileSync('package.json', 'utf8')) as { version: string })
+  .version;
+
+/**
  * Lazy routes normally load in a second network phase after the entry has
  * executed. Injecting modulepreload hints for the main routes' chunk graphs
  * lets the browser fetch them in parallel with the entry — the waterfall
- * collapses without giving up code splitting. The root index.html (also the
- * SPA fallback) keeps the home + /ml facades; every prerendered shell carries
- * its own facade instead. Dynamic routes (/ml/run/:id, /ml/share) stay on the
- * fallback — a shell would show the wrong content there.
+ * collapses without giving up code splitting. The root index.html keeps the
+ * home + /ml facades; every prerendered shell carries its own facade instead.
+ * Dynamic routes (/ml/run/:id, /ml/share) are rewritten by `_redirects` to a
+ * bare `shell.html` (V41) — a hero would show the wrong content there.
  */
 function prerenderShells(rootTargets: string[]): Plugin {
   let outDir = 'dist';
@@ -166,11 +175,25 @@ function prerenderShells(rootTargets: string[]): Plugin {
        * Replace the shared head metadata with this page's own, and add what
        * the shells never had: a canonical URL, Open Graph and a Twitter card.
        * Without them a LabML link pasted anywhere shows no preview at all.
+       *
+       * `index: false` (V41) is for pages a crawler must not keep: the bare
+       * shell behind a run or a share link, and the 404 page. They get the
+       * social card — a share link pasted in a chat still previews — but a
+       * `noindex` instead of a canonical, since there is nothing there to be
+       * the canonical of.
        */
-      const withMeta = (html: string, path: string, title: string, description: string) => {
+      const withMeta = (
+        html: string,
+        path: string,
+        title: string,
+        description: string,
+        { index = true } = {},
+      ) => {
         const url = `${SITE}${path}`;
         const tags = [
-          `<link rel="canonical" href="${attr(url)}">`,
+          index
+            ? `<link rel="canonical" href="${attr(url)}">`
+            : `<meta name="robots" content="noindex">`,
           `<meta property="og:type" content="website">`,
           `<meta property="og:site_name" content="LabML">`,
           `<meta property="og:url" content="${attr(url)}">`,
@@ -200,44 +223,181 @@ function prerenderShells(rootTargets: string[]): Plugin {
         return name.includes(suffix) ? name : `${name} · ${suffix}`;
       };
 
-      // The root file is also the SPA fallback, so it answers for every route
-      // without a shell of its own — the home page's metadata is the honest
-      // default there. Written after the helpers above exist, and from a
-      // `base` that still carries none, so the shells below inherit preloads
-      // and stylesheet but never the home page's title or Open Graph tags.
+      /**
+       * The hero a shell paints before JavaScript: header footprint, eyebrow,
+       * title, lede. The classes are the page component's own — the eyebrow's
+       * are `<Eyebrow>`'s (the V9 shells had a copper, semibold label that the
+       * app then repainted teal on mount; V41 aligned it) — so React's mount
+       * replaces the shell with identical markup and shifts nothing.
+       */
+      const hero = (parts: {
+        eyebrow: string;
+        title: string;
+        lede: string;
+        section: string;
+        h1: string;
+        ledeClass: string;
+        body?: string;
+      }) =>
+        `<div id="shell-header" class="border-b border-line"></div>` +
+        `<div class="mx-auto max-w-6xl px-4"><section class="${parts.section}">` +
+        `<p class="font-mono text-xs font-medium tracking-[0.14em] text-accent-strong uppercase">${esc(parts.eyebrow)}</p>` +
+        `<h1 class="${parts.h1}">${parts.title}</h1>` +
+        `<p class="${parts.ledeClass}">${esc(parts.lede)}</p></section>${parts.body ?? ''}</div>`;
+      const highlighted = (pre: string, highlight: string) =>
+        `${esc(pre)} <span class="bg-accent-soft box-decoration-clone px-1 text-accent-strong">${esc(highlight)}</span>`;
+
+      // The root file is the home page. Until V41 it was also the SPA
+      // fallback, so it could carry no hero (a run page would have flashed
+      // the home title for a frame) and `/` was the one section painting
+      // nothing before JavaScript — the one most visitors land on. Its
+      // description also opened mid-sentence (« entirely in your browser.
+      // Drop a dataset… ») because only the highlighted half of the title was
+      // prepended to the lede. Written from a `base` that carries no metadata
+      // yet, so the shells below inherit preloads and stylesheet but never the
+      // home page's title or Open Graph tags.
       writeFileSync(
         htmlPath,
         withMeta(
-          base.replace('</head>', () => `${rootTargets.map(preload).join('')}  </head>`),
+          base
+            .replace('</head>', () => `${rootTargets.map(preload).join('')}  </head>`)
+            .replace(
+              '<div id="root"></div>',
+              () =>
+                `<div id="root">${hero({
+                  eyebrow: key('home.eyebrow'),
+                  title: highlighted(key('home.titlePre'), key('home.titleHighlight')),
+                  lede: key('home.lede'),
+                  section: 'py-16 sm:py-24',
+                  h1: 'mt-3 max-w-3xl font-display text-4xl font-bold text-balance sm:text-6xl',
+                  ledeClass: 'mt-6 max-w-2xl text-lg text-muted',
+                })}</div>`,
+            ),
           '/',
           pageTitle('home'),
-          describe(`${key('home.titleHighlight')} ${key('home.lede')}`),
+          describe(`${key('home.titlePre')} ${key('home.titleHighlight')} ${key('home.lede')}`),
         ),
       );
 
-      // Cloudflare Pages serves exact files before the SPA fallback, so only
-      // direct visits get this head start — measured LCP driver on /ml was
-      // 87% render delay without it.
+      // V41 — the bare shell: what `public/_redirects` hands to the routes
+      // that have no file of their own (a run, a comparison, a share link).
+      // It is exactly what the root file used to be — the site's card for
+      // previews, an empty root for the app to paint — plus a `noindex`,
+      // because those pages describe one visitor's local data. Also the
+      // service worker's navigation fallback, for the same reason: offline, a
+      // run page must not flash the home hero for a frame.
+      writeFileSync(
+        join(outDir, 'shell.html'),
+        withMeta(base, '/', pageTitle('home'), describe(key('home.lede')), { index: false }),
+      );
+
+      // V41 — a real 404. Pages serves this file, with a 404 status, for every
+      // address no file and no rule answers; without it the platform falls
+      // back to `index.html` with a 200 and every misspelled URL is a soft
+      // 404. The app then mounts and renders its own not-found page over
+      // this hero — same words, painted before JavaScript.
+      writeFileSync(
+        join(outDir, '404.html'),
+        withMeta(
+          base.replace(
+            '<div id="root"></div>',
+            () =>
+              `<div id="root"><div id="shell-header" class="border-b border-line"></div>` +
+              `<div class="mx-auto flex max-w-6xl flex-col items-start px-4 py-24">` +
+              `<p class="font-mono text-sm text-copper">404</p>` +
+              `<h1 class="mt-3 font-display text-3xl font-bold sm:text-5xl">${esc(key('notFound.title'))}</h1>` +
+              `<p class="mt-4 text-lg text-muted">${esc(key('notFound.lede'))}</p></div></div>`,
+          ),
+          '/',
+          pageTitle('notFound'),
+          describe(key('notFound.lede')),
+          { index: false },
+        ),
+      );
+
+      // Pages serves an exact file when one exists (after the rules below have
+      // had their say — see public/_redirects), so only direct visits get this
+      // head start — measured LCP driver on /ml was 87% render delay without it.
       for (const route of SHELL_ROUTES) {
         const title = route.highlight
-          ? `${esc(key(`${route.prefix}.titlePre`))} <span class="bg-accent-soft box-decoration-clone px-1 text-accent-strong">${esc(key(`${route.prefix}.titleHighlight`))}</span>`
+          ? highlighted(key(`${route.prefix}.titlePre`), key(`${route.prefix}.titleHighlight`))
           : esc(key(`${route.prefix}.title`));
-        const hero =
-          `<div id="shell-header" class="border-b border-line"></div>` +
-          `<div class="mx-auto max-w-6xl px-4"><section class="py-12 sm:py-16">` +
-          `<p class="font-mono text-xs font-semibold tracking-[0.18em] text-copper uppercase">${esc(key(`${route.prefix}.eyebrow`))}</p>` +
-          `<h1 class="mt-3 max-w-3xl font-display text-3xl font-bold text-balance sm:text-5xl">${title}</h1>` +
-          `<p class="mt-5 max-w-2xl text-lg text-muted">${esc(key(`${route.prefix}.lede`))}</p></section></div>`;
         const shell = withMeta(
           base
             .replace('</head>', () => `${preload(route.facade)}  </head>`)
-            .replace('<div id="root"></div>', () => `<div id="root">${hero}</div>`),
+            .replace(
+              '<div id="root"></div>',
+              () =>
+                `<div id="root">${hero({
+                  eyebrow: key(`${route.prefix}.eyebrow`),
+                  title,
+                  lede: key(`${route.prefix}.lede`),
+                  section: 'py-12 sm:py-16',
+                  h1: 'mt-3 max-w-3xl font-display text-3xl font-bold text-balance sm:text-5xl',
+                  ledeClass: 'mt-5 max-w-2xl text-lg text-muted',
+                })}</div>`,
+            ),
           `/${route.dir}/`,
           pageTitle(route.titleKey),
           describe(key(`${route.prefix}.lede`)),
         );
         mkdirSync(join(outDir, route.dir), { recursive: true });
         writeFileSync(join(outDir, route.dir, 'index.html'), shell);
+      }
+
+      // V41 — one shell per documentation page. Measured on production
+      // (29 Sep 2026): the twelve `/docs/<slug>` URLs the sitemap advertised
+      // were served by the root fallback — home title, home Open Graph, a
+      // canonical pointing at `/`, and an empty root. A crawler saw twelve
+      // duplicates of the home page; a tutorial link pasted into a chat
+      // previewed the home page. The Markdown is already compiled at build
+      // time (`vite-docs.ts`), so the shell carries the finished article: the
+      // page reads without JavaScript, and its own title, summary and
+      // canonical. Written as `docs/<slug>.html` because Pages serves that at
+      // the clean URL `/docs/<slug>` — the form the sitemap and the app's
+      // links already use — where a directory would add a redirect to `/`.
+      // English, like every other shell; the app switches on mount.
+      const docPages = readDocs();
+      const docSlugs = [...new Set(docPages.map((page) => page.slug))].sort();
+      const docsFacade = SHELL_ROUTES.find((route) => route.dir === 'docs')!.facade;
+      for (const slug of docSlugs) {
+        const page =
+          docPages.find((candidate) => candidate.slug === slug && candidate.lang === 'en') ??
+          docPages.find((candidate) => candidate.slug === slug)!;
+        const toc = page.headings
+          .map(
+            (heading) =>
+              `<li${heading.level === 3 ? ' class="pl-4"' : ''}><a href="#${attr(heading.id)}" class="text-muted underline decoration-line underline-offset-4 hover:text-accent-strong">${esc(heading.text)}</a></li>`,
+          )
+          .join('');
+        const body =
+          `<section class="grid gap-8 pb-20 lg:grid-cols-[1fr_16rem]">` +
+          `<article class="doc-prose min-w-0 max-w-3xl">${page.html}</article>` +
+          `<aside class="flex flex-col gap-4 lg:sticky lg:top-24 lg:self-start"><div class="flex flex-col gap-2">` +
+          `<p class="font-mono text-xs font-medium tracking-[0.14em] text-accent-strong uppercase">${esc(key('docs.onThisPage'))}</p>` +
+          `<nav aria-label="${attr(key('docs.onThisPage'))}"><ol class="flex flex-col gap-1.5 text-sm">${toc}</ol></nav>` +
+          `</div></aside></section>`;
+        const shell = withMeta(
+          base
+            .replace('</head>', () => `${preload(docsFacade)}  </head>`)
+            .replace(
+              '<div id="root"></div>',
+              () =>
+                `<div id="root">${hero({
+                  eyebrow: key('docs.eyebrow'),
+                  title: esc(page.title),
+                  lede: page.summary,
+                  section: 'py-12 sm:py-16',
+                  h1: 'mt-3 max-w-3xl font-display text-3xl font-bold text-balance sm:text-5xl',
+                  ledeClass: 'mt-5 max-w-2xl text-lg text-muted',
+                  body,
+                })}</div>`,
+            ),
+          `/docs/${slug}`,
+          `${page.title} · ${suffix}`,
+          describe(page.summary),
+        );
+        writeFileSync(join(outDir, 'docs', `${slug}.html`), shell);
       }
 
       // A sitemap built from the routes that exist, plus the documentation
@@ -273,6 +433,7 @@ function prerenderShells(rootTargets: string[]): Plugin {
 }
 
 export default defineConfig({
+  define: { __APP_VERSION__: JSON.stringify(APP_VERSION) },
   plugins: [
     react(),
     tailwindcss(),
@@ -353,8 +514,26 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,csv}'],
         // The vision model and ONNX runtime are cached on first use instead of
         // being precached — they would bloat the install for non-vision users.
-        globIgnores: ['models/**', 'ort/**', 'ort-llm/**', 'llm/**', 'duckdb/**'],
-        navigateFallback: '/index.html',
+        // V41 — the twelve documentation shells are left out too: each one
+        // embeds the inlined stylesheet and fonts (~130 KB), and the app
+        // already renders every doc page offline from its bundled `DOCS`
+        // module through the navigation fallback. Precaching them would add
+        // ~1.5 MB to every install for pages that already work offline. The
+        // section index (`docs/index.html`) stays precached like every other
+        // section shell — the extglob spares it. The 404 page is not needed
+        // offline either.
+        globIgnores: [
+          'models/**',
+          'ort/**',
+          'ort-llm/**',
+          'llm/**',
+          'duckdb/**',
+          'docs/!(index).html',
+          '404.html',
+        ],
+        // V41 — the bare shell, not the home page: offline, a run or a share
+        // link must not flash the home hero for a frame before the app mounts.
+        navigateFallback: '/shell.html',
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         runtimeCaching: [
           {

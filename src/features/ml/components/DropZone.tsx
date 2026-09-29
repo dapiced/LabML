@@ -40,6 +40,8 @@ export function DropZone() {
         <FileUp className="h-8 w-8 text-accent" aria-hidden="true" />
         <span className="font-display text-lg font-semibold">{t('ml.lab.dropTitle')}</span>
         <span className="max-w-md text-sm text-muted">{t('ml.lab.dropHint')}</span>
+        {/* V41 — the size guidance lives where the file is dropped, not in the page's lede. */}
+        <span className="max-w-md text-xs text-muted">{t('ml.lab.sizeNote')}</span>
       </button>
       <input
         ref={inputRef}

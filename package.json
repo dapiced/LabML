@@ -1,7 +1,7 @@
 {
   "name": "labml",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.41.0",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -15,6 +15,7 @@
     "llm:bench": "node scripts/run-llm-bench.mjs",
     "llm:bench:node": "LABML_LLM_BENCH=1 vitest run src/features/ai/llm/bench.node.test.ts",
     "llm:fetch": "node scripts/prepare-llm.mjs .llm-cache --flat",
+    "changelog": "node scripts/changelog.mjs",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

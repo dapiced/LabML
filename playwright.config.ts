@@ -26,7 +26,7 @@ export default defineConfig({
   // still runs once, and only the specs that can actually catch a viewport or
   // a theme regression are replayed.
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: /routing\.spec\.ts/ },
     {
       name: 'mobile',
       testMatch: /(layout|a11y)\.spec\.ts/,
@@ -58,10 +58,31 @@ export default defineConfig({
       testMatch: /a11y\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], colorScheme: 'dark' },
     },
+    {
+      // V41 — Cloudflare Pages' routing, emulated. `vite preview` serves
+      // `index.html` with a 200 for every unknown path and ignores
+      // `_redirects`, `_headers` and `404.html`, so the suite above cannot
+      // tell a real 404 from a soft one, nor see the headers production
+      // sends. `wrangler pages dev` applies the same asset routing Pages
+      // does; only the spec that needs it runs there.
+      name: 'pages',
+      testMatch: /routing\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:8788' },
+    },
   ],
-  webServer: {
-    command: 'npm run preview',
-    url: 'http://127.0.0.1:4173',
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: [
+    {
+      command: 'npm run preview',
+      url: 'http://127.0.0.1:4173',
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: 'npx wrangler pages dev dist --port 8788 --ip 127.0.0.1',
+      url: 'http://127.0.0.1:8788/',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      // No telemetry from the test runner, and no interactive prompt.
+      env: { WRANGLER_SEND_METRICS: 'false', CI: '1' },
+    },
+  ],
 });
