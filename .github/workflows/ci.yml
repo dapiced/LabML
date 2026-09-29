@@ -127,7 +127,20 @@ jobs:
       # checkout, for weights only the opt-in chat engine downloads. The script
       # verifies each file's size and fails loudly rather than shipping a
       # truncated model.
+      # V41.1 — Hugging Face rate-limits shared runner IPs (HTTP 429). The
+      # sharded model is cached, keyed on the script that pins it, so a normal
+      # deploy never touches Hugging Face; a miss retries with backoff and uses
+      # the optional HF_TOKEN secret to lift the anonymous limit.
+      - name: Cache the sharded language model
+        id: llm
+        uses: actions/cache@v4
+        with:
+          path: dist/llm
+          key: llm-sharded-${{ hashFiles('scripts/prepare-llm.mjs') }}
       - name: Fetch and shard the local language model
+        if: steps.llm.outputs.cache-hit != 'true'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: npm run llm:prepare -- dist/llm
       - name: Ensure the Pages project exists
         run: npx wrangler pages project create labml --production-branch=main || true

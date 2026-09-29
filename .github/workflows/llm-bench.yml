@@ -47,6 +47,8 @@ jobs:
           path: .llm-cache
           key: llm-cache-qwen3-0.6b-dq-q4f16-v1
       - if: steps.weights.outputs.cache-hit != 'true'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: npm run llm:fetch
       # Constrained decoding is the default, shared with the browser through
       # DECODE_CONSTRAINED_BY_DEFAULT — the first run of this workflow measured

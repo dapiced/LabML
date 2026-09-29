@@ -21,6 +21,7 @@
  */
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
+import { fetchWithRetry } from './fetch-retry.mjs';
 
 const REPO = 'onnx-community/Qwen3-0.6B-DQ-ONNX';
 /** Pinned so a silent upstream change can never reach production unnoticed. */
@@ -60,9 +61,21 @@ function url(path) {
 
 async function download(path) {
   // Hugging Face refuses requests without a User-Agent behind some proxies.
-  const response = await fetch(url(path), {
-    headers: { 'User-Agent': 'LabML-build/1.0 (+https://app.dominicdapice.com)' },
-  });
+  const headers = { 'User-Agent': 'LabML-build/1.0 (+https://app.dominicdapice.com)' };
+  // An HF token (optional) lifts the anonymous rate limit that CI runners hit.
+  if (process.env.HF_TOKEN && !process.env.LLM_MIRROR) {
+    headers.Authorization = `Bearer ${process.env.HF_TOKEN}`;
+  }
+  const response = await fetchWithRetry(
+    url(path),
+    { headers },
+    {
+      onRetry: ({ attempt, delay, reason }) =>
+        console.log(
+          `  ${path}: ${reason}, nouvel essai ${attempt} dans ${Math.round(delay / 1000)} s`,
+        ),
+    },
+  );
   if (!response.ok) throw new Error(`fetch-failed:${path}:${response.status}`);
   const bytes = new Uint8Array(await response.arrayBuffer());
   const expected = FILES[path];
@@ -87,6 +100,7 @@ async function main() {
   let totalBytes = 0;
 
   for (const path of [...Object.keys(FILES), 'LICENSE']) {
+    if (files.length > 0 || totalBytes > 0) await new Promise((r) => setTimeout(r, 500));
     const bytes = await download(path);
     totalBytes += bytes.byteLength;
     if (flat || bytes.byteLength <= SHARD_BYTES) {
