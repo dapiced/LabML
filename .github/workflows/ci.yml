@@ -95,7 +95,7 @@ jobs:
       # `quality`, `e2e` and `deploy` keep their scripts: they need esbuild to
       # build and workerd to deploy.
       - run: npm ci --ignore-scripts
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist
@@ -122,7 +122,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist
