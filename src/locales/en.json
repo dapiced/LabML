@@ -30,6 +30,24 @@
       "gotIt": "OK"
     },
     "privacyStrip": "Your data never leaves your browser — verify it yourself in the Network tab.",
+    "errorBoundary": {
+      "app": {
+        "title": "LabML stopped before the page could open",
+        "body": "Your data stayed in this browser. Try the page again; if the problem returns, copy the technical report before reloading."
+      },
+      "section": {
+        "title": "This section stopped",
+        "body": "The rest of LabML is still available, and your data has not been sent anywhere. Try this section again or return home."
+      },
+      "retry": "Try again",
+      "reload": "Reload LabML",
+      "home": "Go home",
+      "copy": "Copy technical report",
+      "copied": "Report copied",
+      "copyFailed": "Could not copy — open the report below and copy it manually.",
+      "showReport": "Show the report",
+      "reportPrivacy": "The report contains the app version, route, browser and component names. It excludes your dataset, file name, URL parameters and the error message, and nothing is sent automatically."
+    },
     "footer": {
       "privacy": "Privacy",
       "copyright": "© 2026 Dominic D'Apice",

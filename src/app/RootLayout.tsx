@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation } from 'react-router';
 import { Footer } from '@/app/Footer';
+import { ErrorBoundary } from '@/app/ErrorBoundary';
 import { Header } from '@/app/Header';
 import { ReloadPrompt } from '@/app/ReloadPrompt';
 import { formatTitle, titleKeyFor } from '@/lib/page-title';
@@ -36,7 +37,9 @@ export function RootLayout() {
       </a>
       <Header />
       <main id="main" className="flex-1">
-        <Outlet />
+        <ErrorBoundary key={pathname} scope="section">
+          <Outlet />
+        </ErrorBoundary>
       </main>
       <Footer />
       <ReloadPrompt />

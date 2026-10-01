@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V43 — A failed section no longer takes the whole lab with it
+
+Two React error boundaries now separate failures by reach: a route feature can stop while the header, navigation and footer remain usable; a second boundary catches failures above that shell.
+
+_Why:_ The application already protected data at the network boundary, but one unexpected render failure could still replace the complete interface with a blank page and leave no safe diagnostic to share. Recovery now follows the same rule as the rest of LabML: preserve useful context, disclose the limit, and never move data without an explicit action.
+
 ## V42 — A scientific reference outside our own implementation
 
 The metrics and the simplest compatible models were tested against hand-calculated examples, but a hand-written engine checking itself can reproduce the same misunderstanding in both code and test.
