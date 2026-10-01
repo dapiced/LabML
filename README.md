@@ -55,7 +55,9 @@ The project follows three non-negotiable principles:
   class, so on an imbalanced target you rank on F1 or recall instead, and the order changes.
 - **Hand-written, deterministic ML.** The model zoo, search, explanations, and statistics
   are implemented from scratch in TypeScript, seeded end to end — the same seed always
-  reproduces the same run.
+  reproduces the same run. Core metrics plus compatible ridge and k-NN predictions are
+  checked against committed scikit-learn references generated outside the TypeScript
+  implementation.
 
 ## Features
 
