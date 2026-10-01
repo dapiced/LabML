@@ -50,7 +50,7 @@
     "lz-string": "^1.5.0",
     "ml-cart": "^2.1.1",
     "ml-random-forest": "^2.1.0",
-    "onnxruntime-web": "^1.27.0",
+    "onnxruntime-web": "^1.30.0",
     "papaparse": "^5.7.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
