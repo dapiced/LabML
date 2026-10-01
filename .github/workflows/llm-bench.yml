@@ -42,7 +42,7 @@ jobs:
       # reads them from disk and has no 25 MiB limit to work around.
       - name: Cache the pinned weights
         id: weights
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .llm-cache
           key: llm-cache-qwen3-0.6b-dq-q4f16-v1
