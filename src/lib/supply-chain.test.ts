@@ -33,7 +33,21 @@ describe('supply-chain automation', () => {
               'dependency-type': 'development',
               'update-types': ['minor', 'patch'],
             },
+            react: {
+              patterns: ['react', 'react-dom', '@types/react', '@types/react-dom'],
+              'update-types': ['minor', 'patch'],
+            },
           },
+          ignore: [
+            {
+              'dependency-name': '@duckdb/duckdb-wasm',
+              versions: ['>=1.29.0'],
+            },
+            {
+              'dependency-name': '@huggingface/transformers',
+              versions: ['>=4.3.0 <4.4.0'],
+            },
+          ],
         },
         {
           'package-ecosystem': 'github-actions',
