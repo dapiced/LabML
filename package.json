@@ -90,7 +90,7 @@
     "vite": "^8.2.2",
     "vite-plugin-pwa": "^1.3.0",
     "vite-plugin-static-copy": "^4.1.1",
-    "vitest": "^4.1.11",
+    "vitest": "^5.0.2",
     "wrangler": "^4.125.0",
     "yaml": "^2.9.1"
   },
