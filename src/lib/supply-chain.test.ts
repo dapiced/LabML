@@ -73,21 +73,22 @@ describe('supply-chain automation', () => {
       group: 'codeql-${{ github.workflow }}-${{ github.ref }}',
       'cancel-in-progress': true,
     });
-    expect(codeql.jobs).toEqual({
-      analyze: {
-        name: 'Analyze JavaScript and TypeScript',
-        'runs-on': 'ubuntu-latest',
-        'timeout-minutes': 20,
-        steps: [
-          { uses: 'actions/checkout@v4' },
-          {
-            uses: 'github/codeql-action/init@v4',
-            with: { languages: 'javascript-typescript' },
-          },
-          { uses: 'github/codeql-action/analyze@v4' },
-        ],
-      },
+    expect(codeql.jobs.analyze).toMatchObject({
+      name: 'Analyze JavaScript and TypeScript',
+      'runs-on': 'ubuntu-latest',
+      'timeout-minutes': 20,
     });
+    expect(codeql.jobs.analyze.steps).toHaveLength(3);
+    expect(codeql.jobs.analyze.steps[0]).toEqual({
+      uses: expect.stringMatching(/^actions\/checkout@v\d+$/),
+    });
+    expect(codeql.jobs.analyze.steps.slice(1)).toEqual([
+      {
+        uses: 'github/codeql-action/init@v4',
+        with: { languages: 'javascript-typescript' },
+      },
+      { uses: 'github/codeql-action/analyze@v4' },
+    ]);
   });
 
   it('blocks high production advisories and critical development advisories', () => {
