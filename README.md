@@ -44,7 +44,9 @@ The project follows three non-negotiable principles:
   send to any server. `/privacy` states this in plain language and hands the reader a
   four-step protocol to verify it in their own DevTools — the policy quoted there is
   pinned to the served header by a unit test, so the page cannot claim a protection the
-  site stopped shipping.
+  site stopped shipping. If a screen fails, the recovery view can copy a bounded technical
+  report on request; it excludes error messages, URL parameters, file names, and dataset
+  content, and is never sent automatically.
 - **Honest evaluation.** Every run is scored against a naive baseline on a held-out test
   set. Models are **selected on a validation split and reported on a third, never-selected
   test split**, with the gap between the two shown — crowning the best of nine on the
@@ -239,7 +241,7 @@ Wikimedia Commons), the portrait is NASA, public domain._
   a doc page carries its whole article, in English until the app mounts); Lighthouse
   mobile ≈ 0.99 on `/ml` under real throttling. Heavy dependencies (Dexie, SheetJS, ONNX
   Runtime) load lazily.
-- **Quality bar.** 817 unit tests and 122 Playwright end-to-end tests across five
+- **Quality bar.** 835 unit tests and 122 Playwright end-to-end tests across five
   projects — desktop, a phone viewport in English and in French, dark mode, and
   Cloudflare Pages' own routing emulated by `wrangler pages dev` (a real 404, the security
   headers as served) — covering offline PWA, a fake webcam, a horizontal-overflow guard on

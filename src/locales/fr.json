@@ -30,6 +30,23 @@
       "gotIt": "OK"
     },
     "privacyStrip": "Vos données ne quittent jamais votre navigateur — vérifiez-le vous-même dans l'onglet Réseau.",
+    "errorBoundary": {
+      "app": {
+        "title": "LabML s’est arrêté avant d’ouvrir la page",
+        "body": "Vos données sont restées dans ce navigateur. Réessayez; si le problème revient, copiez le rapport technique avant de recharger."
+      },
+      "section": {
+        "title": "Cette section s’est arrêtée",
+        "body": "Le reste de LabML demeure accessible et aucune donnée n’a été envoyée. Réessayez cette section ou revenez à l’accueil."
+      },
+      "retry": "Réessayer",
+      "home": "Revenir à l’accueil",
+      "copy": "Copier le rapport technique",
+      "copied": "Rapport copié",
+      "copyFailed": "Copie impossible — ouvrez le rapport ci-dessous et copiez-le manuellement.",
+      "showReport": "Afficher le rapport",
+      "reportPrivacy": "Le rapport contient la version de l’application, la route, le navigateur et le nom des composants. Il exclut le jeu de données, le nom du fichier, les paramètres URL et le message d’erreur; rien n’est envoyé automatiquement."
+    },
     "footer": {
       "privacy": "Confidentialité",
       "copyright": "© 2026 Dominic D'Apice",
