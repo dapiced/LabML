@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V42 — A scientific reference outside our own implementation
+
+The metrics and the simplest compatible models were tested against hand-calculated examples, but a hand-written engine checking itself can reproduce the same misunderstanding in both code and test.
+
+_Why:_ This is the quality contract promised in §F since the original architecture. Independent expected values catch a wrong formula even when the local unit test repeats the same wrong assumption; committing the small fixture gives CI that protection without adding a Python toolchain to the application.
+
 ## V41 — The site says what it is
 
 Six corrections to what the site declared about itself — to crawlers, to link previews, to visitors — none of them touching the lab, all measured on production first (29/09/2026, `curl`).
