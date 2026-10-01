@@ -91,7 +91,8 @@
     "vite-plugin-pwa": "^1.3.0",
     "vite-plugin-static-copy": "^4.1.1",
     "vitest": "^4.1.11",
-    "wrangler": "^4.125.0"
+    "wrangler": "^4.125.0",
+    "yaml": "^2.9.1"
   },
   "overrides": {
     "@huggingface/transformers": {
