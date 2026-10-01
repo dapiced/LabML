@@ -40,6 +40,7 @@
         "body": "The rest of LabML is still available, and your data has not been sent anywhere. Try this section again or return home."
       },
       "retry": "Try again",
+      "reload": "Reload LabML",
       "home": "Go home",
       "copy": "Copy technical report",
       "copied": "Report copied",

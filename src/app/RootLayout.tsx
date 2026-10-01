@@ -37,7 +37,7 @@ export function RootLayout() {
       </a>
       <Header />
       <main id="main" className="flex-1">
-        <ErrorBoundary scope="section">
+        <ErrorBoundary key={pathname} scope="section">
           <Outlet />
         </ErrorBoundary>
       </main>

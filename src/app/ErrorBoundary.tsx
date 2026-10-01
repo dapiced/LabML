@@ -1,4 +1,12 @@
-import { Component, useMemo, useState, type ErrorInfo, type ReactNode } from 'react';
+import {
+  Component,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ErrorInfo,
+  type ReactNode,
+} from 'react';
 import { Copy, House, RotateCcw, TriangleAlert } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -18,19 +26,25 @@ function toError(value: unknown): Error {
   return value instanceof Error ? value : new Error(String(value));
 }
 
-function ErrorFallback({
+export function ErrorRecovery({
   error,
   componentStack,
   scope,
   onRetry,
+  reload = false,
 }: {
   error: Error;
   componentStack: string;
   scope: BoundaryProps['scope'];
   onRetry: () => void;
+  reload?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
   const report = useMemo(
     () =>
       buildErrorReport({
@@ -62,7 +76,11 @@ function ErrorFallback({
     >
       <div className="w-full max-w-2xl">
         <TriangleAlert aria-hidden="true" className="mb-6 size-9 text-copper" strokeWidth={1.8} />
-        <h1 className="max-w-xl font-display text-3xl leading-tight font-bold tracking-[-0.025em] text-balance sm:text-4xl">
+        <h1
+          ref={headingRef}
+          tabIndex={-1}
+          className="max-w-xl font-display text-3xl leading-tight font-bold tracking-[-0.025em] text-balance outline-none sm:text-4xl"
+        >
           {t(`common.errorBoundary.${scope}.title`)}
         </h1>
         <p className="mt-4 max-w-[65ch] text-base leading-7 text-muted">
@@ -72,7 +90,7 @@ function ErrorFallback({
         <div className="mt-8 flex flex-wrap gap-3">
           <Button onClick={onRetry}>
             <RotateCcw aria-hidden="true" className="size-4" />
-            {t('common.errorBoundary.retry')}
+            {t(reload ? 'common.errorBoundary.reload' : 'common.errorBoundary.retry')}
           </Button>
           <a
             href="/"
@@ -129,7 +147,7 @@ export class ErrorBoundary extends Component<BoundaryProps, BoundaryState> {
   render() {
     if (this.state.error) {
       return (
-        <ErrorFallback
+        <ErrorRecovery
           error={this.state.error}
           componentStack={this.state.componentStack}
           scope={this.props.scope}

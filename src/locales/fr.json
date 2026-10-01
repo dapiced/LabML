@@ -40,6 +40,7 @@
         "body": "Le reste de LabML demeure accessible et aucune donnée n’a été envoyée. Réessayez cette section ou revenez à l’accueil."
       },
       "retry": "Réessayer",
+      "reload": "Recharger LabML",
       "home": "Revenir à l’accueil",
       "copy": "Copier le rapport technique",
       "copied": "Rapport copié",

@@ -50,6 +50,26 @@ describe('buildErrorReport', () => {
     expect(report).not.toContain('Component12');
     expect(report).not.toContain('C:\\Users');
   });
+
+  it('bounds every caller-controlled field and rejects a sensitive error name', () => {
+    const error = new Error('private value');
+    error.name = `CustomerAlice\n${'x'.repeat(5000)}`;
+    const report = buildErrorReport({
+      error,
+      componentStack: `\n    at ${'PrivateComponent'.repeat(100)}`,
+      scope: 'app',
+      pathname: `/${'private-path'.repeat(100)}`,
+      language: 'en\nInjected',
+      userAgent: `Browser\n${'u'.repeat(5000)}`,
+      timestamp: '2026-10-01T16:00:00.000Z',
+      version: '1.43.0',
+    });
+
+    expect(report).toContain('Error type: Error');
+    expect(report).not.toContain('CustomerAlice');
+    expect(report).not.toContain('Injected');
+    expect(report.length).toBeLessThanOrEqual(1800);
+  });
 });
 
 describe('ErrorBoundary', () => {
@@ -123,5 +143,19 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText(/copy it manually/i)).toBeInTheDocument();
     await userEvent.click(screen.getByText('Show the report'));
     expect(screen.getByText(/Scope: section/)).toBeInTheDocument();
+  });
+
+  it('moves keyboard focus to the recovery heading', () => {
+    function BrokenSection(): never {
+      throw new Error('render failed');
+    }
+
+    render(
+      <ErrorBoundary scope="section">
+        <BrokenSection />
+      </ErrorBoundary>,
+    );
+
+    expect(screen.getByRole('heading', { name: 'This section stopped' })).toHaveFocus();
   });
 });
