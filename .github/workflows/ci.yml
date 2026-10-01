@@ -137,7 +137,7 @@ jobs:
       # the optional HF_TOKEN secret to lift the anonymous limit.
       - name: Cache the sharded language model
         id: llm
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: dist/llm
           key: llm-sharded-${{ hashFiles('scripts/prepare-llm.mjs') }}
