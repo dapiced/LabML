@@ -116,4 +116,12 @@ describe('supply-chain automation', () => {
       run: 'npm audit --omit=dev --audit-level=high\nnpm audit --audit-level=critical\n',
     });
   });
+
+  it('does not request deployment secrets for Dependabot pull requests', () => {
+    const ci = readYaml('.github/workflows/ci.yml');
+
+    expect(ci.jobs.deploy.if).toBe(
+      "github.actor != 'dependabot[bot]' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)",
+    );
+  });
 });
