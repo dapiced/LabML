@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V44 — The supply chain now fails closed where the signal is actionable
+
+Dependabot checks npm and GitHub Actions every Monday; minor and patch updates for development dependencies and Actions are grouped, while major updates stay isolated so their migration cost remains visible.
+
+_Why:_ The plan promised Dependabot, CodeQL, npm audit and least-privilege Actions permissions in §E but none was active. A security gate is useful only when it distinguishes a shipped exposure from an advisory with no safe upgrade path; this wave measures the baseline, removes the production findings, and makes future regressions blocking.
+
 ## V43 — A failed section no longer takes the whole lab with it
 
 Two React error boundaries now separate failures by reach: a route feature can stop while the header, navigation and footer remain usable; a second boundary catches failures above that shell.
