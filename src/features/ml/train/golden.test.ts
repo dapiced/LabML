@@ -17,16 +17,34 @@ describe('scikit-learn golden fixture', () => {
       python: expect.stringMatching(/^\d+\.\d+\.\d+$/),
       scikitLearn: expect.stringMatching(/^\d+\.\d+\.\d+$/),
     });
-    expect(reference.metrics.classification.yTrue.length).toBeGreaterThan(0);
-    expect(reference.models.linear.XTrain.length).toBeGreaterThan(0);
-    expect(reference.models.knnClassifier.XTrain.length).toBeGreaterThan(0);
-    expect(reference.models.knnRegressor.XTrain.length).toBeGreaterThan(0);
+    const classification = reference.metrics.classification;
+    expect(classification.yTrue.length).toBeGreaterThan(0);
+    expect(classification.yPred).toHaveLength(classification.yTrue.length);
+    expect(classification.probabilities).toHaveLength(classification.yTrue.length);
+    expect(classification.probabilities.every((row) => row.length === 3)).toBe(true);
+
+    for (const fixture of [
+      reference.models.linear,
+      reference.models.knnClassifier,
+      reference.models.knnRegressor,
+    ]) {
+      expect(fixture.XTrain.length).toBeGreaterThan(0);
+      expect(fixture.XTest.length).toBeGreaterThan(0);
+      expect(fixture.predictions).toHaveLength(fixture.XTest.length);
+    }
+    expect(reference.models.knnClassifier.probabilities).toHaveLength(
+      reference.models.knnClassifier.XTest.length,
+    );
+    expect(reference.models.knnClassifier.probabilities.every((row) => row.length === 3)).toBe(
+      true,
+    );
   });
 });
 
 describe('scikit-learn golden metrics', () => {
   it('matches classification metrics on a three-class reference', () => {
     const fixture = reference.metrics.classification;
+    expect(new Set([fixture.precision, fixture.recall, fixture.f1]).size).toBe(3);
     expect(accuracy(fixture.yTrue, fixture.yPred)).toBeCloseTo(fixture.accuracy!, 12);
     expect(macroPrf(fixture.yTrue, fixture.yPred, 3)).toEqual({
       precision: expect.closeTo(fixture.precision!, 12),

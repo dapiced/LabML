@@ -35,18 +35,18 @@ def floats(values: np.ndarray | list[float]) -> list[float]:
 
 
 def metrics() -> dict[str, object]:
-    classification_true = [0, 1, 2, 0, 1, 2, 0, 1, 2, 2]
-    classification_pred = [0, 2, 2, 0, 1, 1, 2, 1, 0, 2]
+    classification_true = [0, 0, 0, 0, 0, 0, 1, 1, 1, 2]
+    classification_pred = [0, 0, 0, 0, 1, 2, 1, 1, 2, 2]
     probabilities = [
         [0.80, 0.15, 0.05],
-        [0.10, 0.35, 0.55],
-        [0.05, 0.10, 0.85],
+        [0.70, 0.20, 0.10],
+        [0.60, 0.25, 0.15],
         [0.65, 0.25, 0.10],
+        [0.30, 0.55, 0.15],
+        [0.20, 0.30, 0.50],
         [0.15, 0.70, 0.15],
-        [0.10, 0.55, 0.35],
-        [0.20, 0.25, 0.55],
         [0.05, 0.90, 0.05],
-        [0.45, 0.20, 0.35],
+        [0.15, 0.35, 0.50],
         [0.05, 0.15, 0.80],
     ]
     binary_true = [0, 0, 1, 1, 0, 1, 0, 1]
@@ -100,19 +100,29 @@ def models() -> dict[str, object]:
     linear_test_design = np.column_stack([np.ones(len(linear_test)), linear_test])
     ridge = Ridge(alpha=1e-6, fit_intercept=False).fit(linear_design, linear_y)
 
-    class_x = [
-        [-3.0, -2.7], [-2.6, -3.2], [-2.2, -2.5], [-3.4, -3.1], [-2.8, -2.1],
-        [-0.4, 2.7], [0.2, 3.3], [0.8, 2.5], [-0.8, 3.5], [0.5, 3.8],
-        [2.3, -1.0], [3.1, -0.4], [2.7, 0.3], [3.6, -1.5], [2.0, 0.8],
+    # The first query deliberately has a different five-neighbor set under
+    # Manhattan distance. This makes the fixture verify Euclidean distance,
+    # not only generic nearest-neighbor voting.
+    neighbor_x = [
+        [1.0, -1.0],
+        [0.0, 1.0],
+        [-6.0, -5.0],
+        [-3.0, -5.0],
+        [-1.0, 2.0],
+        [2.0, 0.0],
+        [5.0, 1.0],
+        [-5.0, 3.0],
+        [1.0, 2.0],
+        [1.0, 1.0],
+        [-5.0, 1.0],
+        [4.0, -3.0],
     ]
-    class_y = [0] * 5 + [1] * 5 + [2] * 5
-    class_test = [[-2.7, -2.6], [0.1, 3.0], [2.8, -0.5], [1.2, 1.4]]
-    classifier = KNeighborsClassifier(n_neighbors=5).fit(class_x, class_y)
+    class_y = [0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2]
+    neighbor_test = [[-3.7534573234564848, -0.5062608861411011], [0.5, 1.5], [3.0, -1.5]]
+    classifier = KNeighborsClassifier(n_neighbors=5).fit(neighbor_x, class_y)
 
-    regression_x = [[float(i)] for i in range(10)]
-    regression_y = [0.0, 1.5, 1.0, 4.0, 3.5, 6.0, 8.0, 7.5, 10.0, 12.0]
-    regression_test = [[1.2], [4.4], [7.8]]
-    regressor = KNeighborsRegressor(n_neighbors=5).fit(regression_x, regression_y)
+    regression_y = [float(i) for i in range(len(neighbor_x))]
+    regressor = KNeighborsRegressor(n_neighbors=5).fit(neighbor_x, regression_y)
 
     return {
         "linear": {
@@ -122,17 +132,17 @@ def models() -> dict[str, object]:
             "predictions": floats(ridge.predict(linear_test_design)),
         },
         "knnClassifier": {
-            "XTrain": class_x,
+            "XTrain": neighbor_x,
             "yTrain": class_y,
-            "XTest": class_test,
-            "predictions": classifier.predict(class_test).astype(int).tolist(),
-            "probabilities": classifier.predict_proba(class_test).tolist(),
+            "XTest": neighbor_test,
+            "predictions": classifier.predict(neighbor_test).astype(int).tolist(),
+            "probabilities": classifier.predict_proba(neighbor_test).tolist(),
         },
         "knnRegressor": {
-            "XTrain": regression_x,
+            "XTrain": neighbor_x,
             "yTrain": regression_y,
-            "XTest": regression_test,
-            "predictions": floats(regressor.predict(regression_test)),
+            "XTest": neighbor_test,
+            "predictions": floats(regressor.predict(neighbor_test)),
         },
     }
 
