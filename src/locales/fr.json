@@ -500,6 +500,8 @@
         "coverage": "couverture {{value}} %",
         "accuracy": "accuracy globale {{value}} %",
         "decidedAccuracy": "accuracy décidée {{value}} %",
+        "class": "classe",
+        "baseline": "Argmax intact (seuils à zéro) : accuracy {{accuracy}} %, macro F1 {{macroF1}} %.",
         "test": "Évaluer sur le test",
         "testResult": "Test : couverture {{coverage}} %, accuracy globale {{accuracy}} %.",
         "metrics": {

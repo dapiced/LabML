@@ -19,6 +19,11 @@ export function MulticlassDecisionPanel() {
     analysis.validationProbabilities,
     editor.policy,
   );
+  const baseline = evaluateMulticlassPolicy(
+    analysis.validationLabels,
+    analysis.validationProbabilities,
+    { thresholds: analysis.classes.map(() => 0) },
+  );
   const pct = (value: number) =>
     (value * 100).toLocaleString(i18n.resolvedLanguage ?? 'en', { maximumFractionDigits: 1 });
 
@@ -69,7 +74,39 @@ export function MulticlassDecisionPanel() {
             value: pct(validation.decidedAccuracy),
           })}
         </Badge>
+        <Badge variant="outline">P {pct(validation.macroPrecision)} %</Badge>
+        <Badge variant="outline">R {pct(validation.macroRecall)} %</Badge>
+        <Badge variant="outline">F1 {pct(validation.macroF1)} %</Badge>
       </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs">
+          <thead>
+            <tr className="border-b border-line text-muted">
+              <th className="py-1 pr-3 font-normal">{t('ml.lab.multiclassDecision.class')}</th>
+              <th className="py-1 pr-3 font-normal">P</th>
+              <th className="py-1 pr-3 font-normal">R</th>
+              <th className="py-1 font-normal">F1</th>
+            </tr>
+          </thead>
+          <tbody>
+            {validation.perClass.map((metrics) => (
+              <tr key={metrics.classIndex} className="border-b border-line last:border-b-0">
+                <td className="py-1 pr-3">{analysis.classes[metrics.classIndex]}</td>
+                <td className="py-1 pr-3 font-mono">{pct(metrics.precision)} %</td>
+                <td className="py-1 pr-3 font-mono">{pct(metrics.recall)} %</td>
+                <td className="py-1 font-mono">{pct(metrics.f1)} %</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-muted">
+        {t('ml.lab.multiclassDecision.baseline', {
+          accuracy: pct(baseline.accuracy),
+          macroF1: pct(baseline.macroF1),
+        })}
+      </p>
 
       <div className="flex flex-wrap items-center gap-3">
         <Button type="button" size="sm" onClick={testPolicy}>

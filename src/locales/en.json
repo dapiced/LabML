@@ -500,6 +500,8 @@
         "coverage": "coverage {{value}}%",
         "accuracy": "overall accuracy {{value}}%",
         "decidedAccuracy": "decided accuracy {{value}}%",
+        "class": "class",
+        "baseline": "Untouched argmax (zero thresholds): {{accuracy}}% accuracy, {{macroF1}}% macro F1.",
         "test": "Evaluate on test set",
         "testResult": "Test: {{coverage}}% coverage, {{accuracy}}% overall accuracy.",
         "metrics": {
