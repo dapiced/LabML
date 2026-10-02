@@ -50,6 +50,7 @@ export const REFUSALS: Refusal[] = [
   { code: 'no-references', audience: 'internal', area: 'ml' },
   { code: 'no-model', audience: 'internal', area: 'ml' },
   { code: 'no-run', audience: 'internal', area: 'ml' },
+  { code: 'bad-policy', audience: 'internal', area: 'ml' },
 
   // --- Importing a model: five named reasons instead of one « invalid file » ---
   { code: 'invalid-json', audience: 'visitor', area: 'import' },

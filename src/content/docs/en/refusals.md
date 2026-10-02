@@ -112,8 +112,8 @@ Vision refuses without an error code, through a displayed verdict:
 These exist, but a visitor should never see one: they are invariants checked
 during execution. If one appears, it is a bug.
 
-`model-not-found`, `no-references`, `no-model`, `no-run`, `no-join`,
-`no-data`, `no-manifest`, `not-ready`, `canvas-2d`, `grammar-too-long`,
+`model-not-found`, `no-references`, `no-model`, `no-run`, `bad-policy`,
+`no-join`, `no-data`, `no-manifest`, `not-ready`, `canvas-2d`, `grammar-too-long`,
 `grammar-atom-long`, `grammar-option-long`, `grammar-too-many-options`.
 
 ## Guards that are not refusals

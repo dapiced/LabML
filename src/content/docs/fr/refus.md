@@ -113,8 +113,8 @@ La vision refuse sans code d'erreur, par un verdict affiché :
 Ceux-ci existent, mais un visiteur ne devrait jamais les voir : ce sont des
 invariantes vérifiées pendant l'exécution. Si l'un apparaît, c'est un bug.
 
-`model-not-found`, `no-references`, `no-model`, `no-run`, `no-join`,
-`no-data`, `no-manifest`, `not-ready`, `canvas-2d`, `grammar-too-long`,
+`model-not-found`, `no-references`, `no-model`, `no-run`, `bad-policy`,
+`no-join`, `no-data`, `no-manifest`, `not-ready`, `canvas-2d`, `grammar-too-long`,
 `grammar-atom-long`, `grammar-option-long`, `grammar-too-many-options`.
 
 ## Les garde-fous qui ne sont pas des refus
