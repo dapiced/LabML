@@ -46,7 +46,7 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'en';
   const { tuning, explanation, exploration, forecast, batchScore, threshold, segments } = artifacts;
-  const { uncertainty, learningCurve, robustRank } = artifacts;
+  const { uncertainty, learningCurve, robustRank, multiclassDecision } = artifacts;
   if (
     !tuning &&
     !explanation &&
@@ -54,6 +54,7 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
     !forecast &&
     !batchScore &&
     !threshold &&
+    !multiclassDecision &&
     !segments &&
     !uncertainty &&
     !learningCurve &&
@@ -229,6 +230,43 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
               TP {threshold.chosen.tp} · FP {threshold.chosen.fp} · FN {threshold.chosen.fn} · TN{' '}
               {threshold.chosen.tn}
             </p>
+          </ArtifactCard>
+        )}
+
+        {multiclassDecision && (
+          <ArtifactCard title={t('ml.lab.multiclassDecision.title')}>
+            <div className="flex flex-wrap gap-2">
+              {multiclassDecision.classes.map((label, index) => (
+                <Badge key={label} variant="outline" className="font-mono">
+                  {label} ≥ {multiclassDecision.policy.thresholds[index].toFixed(2)}
+                </Badge>
+              ))}
+            </div>
+            <table className="w-full max-w-md text-left text-xs">
+              <thead>
+                <tr className="border-b border-line text-muted">
+                  <th className="py-1 pr-3 font-normal"></th>
+                  <th className="py-1 pr-3 font-normal">Validation</th>
+                  <th className="py-1 font-normal">Test</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(['coverage', 'accuracy', 'decidedAccuracy', 'macroF1'] as const).map((key) => (
+                  <tr key={key} className="border-b border-line last:border-b-0">
+                    <td className="py-1 pr-3">{t(`ml.lab.multiclassDecision.metrics.${key}`)}</td>
+                    <td className="py-1 pr-3 font-mono">
+                      {score(multiclassDecision.validation[key])}
+                    </td>
+                    <td className="py-1 font-mono">{score(multiclassDecision.test[key])}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {multiclassDecision.exploratory && (
+              <p className="text-xs text-copper">
+                {t('ml.lab.multiclassDecision.exploratoryNote')}
+              </p>
+            )}
           </ArtifactCard>
         )}
 

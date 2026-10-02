@@ -500,6 +500,12 @@
         "decidedAccuracy": "accuracy décidée {{value}} %",
         "test": "Évaluer sur le test",
         "testResult": "Test : couverture {{coverage}} %, accuracy globale {{accuracy}} %.",
+        "metrics": {
+          "coverage": "couverture",
+          "accuracy": "accuracy globale",
+          "decidedAccuracy": "accuracy décidée",
+          "macroF1": "macro F1"
+        },
         "note": "Les réglages ci-dessus utilisent seulement la validation. La première évaluation du test fige la politique et conserve une lecture honnête.",
         "exploratoryNote": "La politique a changé après consultation du test. Les résultats suivants sont exploratoires et ne doivent pas être présentés comme une évaluation finale indépendante."
       },

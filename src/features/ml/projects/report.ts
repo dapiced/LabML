@@ -193,6 +193,28 @@ function artifactSections(record: RunRecord, t: Translate, lang: string): string
     )}</td><td>${fmt(th.chosen.f1)}</td><td>${th.chosen.cost}</td></tr></table>`);
   }
 
+  if (artifacts.multiclassDecision) {
+    const decision = artifacts.multiclassDecision;
+    const thresholds = decision.classes
+      .map((label, index) => `${esc(label)} ≥ ${decision.policy.thresholds[index].toFixed(2)}`)
+      .join(' · ');
+    const row = (key: 'coverage' | 'accuracy' | 'decidedAccuracy' | 'macroF1') =>
+      `<tr><td>${esc(t(`ml.lab.multiclassDecision.metrics.${key}`))}</td><td>${fmt(
+        decision.validation[key],
+      )}</td><td>${fmt(decision.test[key])}</td></tr>`;
+    sections.push(`<h2>${esc(t('ml.lab.multiclassDecision.title'))} — ${esc(
+      t(`ml.lab.models.${decision.model}`),
+    )}</h2>
+    <p class="meta">${thresholds}</p>
+    <table><tr><th></th><th>Validation</th><th>Test</th></tr>
+    ${row('coverage')}${row('accuracy')}${row('decidedAccuracy')}${row('macroF1')}</table>
+    ${
+      decision.exploratory
+        ? `<p class="meta">${esc(t('ml.lab.multiclassDecision.exploratoryNote'))}</p>`
+        : ''
+    }`);
+  }
+
   if (artifacts.uncertainty) {
     const unc = artifacts.uncertainty;
     const metricName = t(`ml.lab.leaderboard.${unc.metricLabel}`);

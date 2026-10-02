@@ -500,6 +500,12 @@
         "decidedAccuracy": "decided accuracy {{value}}%",
         "test": "Evaluate on test set",
         "testResult": "Test: {{coverage}}% coverage, {{accuracy}}% overall accuracy.",
+        "metrics": {
+          "coverage": "coverage",
+          "accuracy": "overall accuracy",
+          "decidedAccuracy": "decided accuracy",
+          "macroF1": "macro F1"
+        },
         "note": "The controls above use validation data only. The first test evaluation freezes the policy and preserves an honest reading.",
         "exploratoryNote": "The policy changed after the test was revealed. Further results are exploratory and must not be presented as an independent final evaluation."
       },

@@ -494,10 +494,21 @@ export const useLabStore = create<LabState>((set, get) => {
         } else if (message.kind === 'multiclass-decision-tested') {
           const current = get().multiclassDecision;
           if (current) {
-            set({
+            const editor = receiveMulticlassDecisionTest(current.editor, message.payload);
+            const validation = evaluateMulticlassPolicy(
+              current.analysis.validationLabels,
+              current.analysis.validationProbabilities,
+              editor.policy,
+            );
+            set({ multiclassDecision: { ...current, editor } });
+            attachArtifact({
               multiclassDecision: {
-                ...current,
-                editor: receiveMulticlassDecisionTest(current.editor, message.payload),
+                model: current.analysis.model,
+                classes: current.analysis.classes,
+                policy: editor.policy,
+                validation,
+                test: message.payload.metrics,
+                exploratory: editor.phase === 'exploratory',
               },
             });
           }

@@ -11,6 +11,10 @@ import type { RobustRankResult } from '@/features/ml/train/robust';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
 import type { ForecastPayload } from '@/features/ml/timeseries/run';
 import type { InsightsPayload, ModelResult, TrainSummary } from '@/features/ml/train/types';
+import type {
+  MulticlassDecisionMetrics,
+  MulticlassDecisionPolicy,
+} from '@/features/ml/train/multiclass-decision';
 
 /**
  * Optional analyses attached to a run after training — each holds the LATEST
@@ -33,8 +37,18 @@ export interface ThresholdArtifact {
   chosen: ThresholdMetrics & { costFp: number; costFn: number };
 }
 
+export interface MulticlassDecisionArtifact {
+  model: ModelKey;
+  classes: string[];
+  policy: MulticlassDecisionPolicy;
+  validation: MulticlassDecisionMetrics;
+  test: MulticlassDecisionMetrics;
+  exploratory: boolean;
+}
+
 export interface RunArtifacts {
   tuning?: TuneOutcome;
+  multiclassDecision?: MulticlassDecisionArtifact;
   /** Shapley explanation of the last explained what-if row. */
   explanation?: ShapleyExplanation;
   exploration?: ExplorationPayload;

@@ -125,6 +125,36 @@ function makeArtifacts(): RunArtifacts {
         costFn: 10,
       },
     },
+    multiclassDecision: {
+      model: 'logistic',
+      classes: ['a', 'b', 'c'],
+      policy: { thresholds: [0.2, 0.4, 0.6] },
+      validation: {
+        rows: 20,
+        decided: 18,
+        abstained: 2,
+        coverage: 0.9,
+        accuracy: 0.8,
+        decidedAccuracy: 0.889,
+        macroPrecision: 0.82,
+        macroRecall: 0.79,
+        macroF1: 0.8,
+        perClass: [],
+      },
+      test: {
+        rows: 10,
+        decided: 8,
+        abstained: 2,
+        coverage: 0.8,
+        accuracy: 0.7,
+        decidedAccuracy: 0.875,
+        macroPrecision: 0.72,
+        macroRecall: 0.69,
+        macroF1: 0.7,
+        perClass: [],
+      },
+      exploratory: true,
+    },
     uncertainty: {
       isClassification: true,
       metricLabel: 'accuracy',
@@ -238,6 +268,9 @@ describe('share link codec', () => {
     expect(decoded.artifacts?.forecast?.winner.key).toBe('holtWinters');
     expect(decoded.artifacts?.batchScore?.fileName).toBe('field.csv');
     expect(decoded.artifacts?.threshold?.chosen.threshold).toBe(0.3);
+    expect(decoded.artifacts?.multiclassDecision?.policy.thresholds).toEqual([0.2, 0.4, 0.6]);
+    expect(decoded.artifacts?.multiclassDecision?.test.abstained).toBe(2);
+    expect(decoded.artifacts?.multiclassDecision?.exploratory).toBe(true);
     expect(decoded.artifacts?.segments?.columns[0].segments[0].value).toBe('A');
     expect(decoded.artifacts?.uncertainty?.verdict?.decisive).toBe(true);
     // Oversized point clouds are downsampled / tailed, never dropped.
@@ -307,6 +340,9 @@ describe('report generation', () => {
     expect(html).toContain('field.csv');
     expect(html).toContain('ml.lab.threshold.title');
     expect(html).toContain('0.30');
+    expect(html).toContain('ml.lab.multiclassDecision.title');
+    expect(html).toContain('a ≥ 0.20');
+    expect(html).toContain('ml.lab.multiclassDecision.exploratoryNote');
     expect(html).toContain('ml.lab.segments.title');
     expect(html).toContain('-0.200');
     expect(html).toContain('ml.lab.uncertainty.title');
