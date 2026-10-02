@@ -30,6 +30,14 @@ import type {
 } from '@/features/ml/train/types';
 import type { WorkerRequest, WorkerResponse } from '@/features/ml/worker-protocol';
 import { bestResult } from '@/features/ml/train/ranking';
+import { evaluateMulticlassPolicy } from '@/features/ml/train/multiclass-decision';
+import type { MulticlassDecisionAnalysis } from '@/features/ml/train/multiclass-decision-analysis';
+import {
+  editMulticlassThreshold,
+  isExploratoryTestRequest,
+  receiveMulticlassDecisionTest,
+  type MulticlassDecisionEditorState,
+} from '@/features/ml/train/multiclass-decision-state';
 
 export type LabStatus = 'idle' | 'parsing' | 'ready' | 'error';
 export type TrainStatus = 'idle' | 'training' | 'done';
@@ -92,6 +100,13 @@ interface LabState {
   /** Binary + probabilistic models only — null otherwise. */
   thresholdAnalysis: ThresholdAnalysis | null;
   thresholdChoice: { threshold: number; costFp: number; costFn: number };
+  /** Validation-only editor for abstaining multiclass decisions. */
+  multiclassDecision: {
+    analysis: MulticlassDecisionAnalysis;
+    editor: MulticlassDecisionEditorState;
+  } | null;
+  multiclassDecisionTestPending: boolean;
+  multiclassDecisionUnavailable: boolean;
   /** Per-segment metrics of the inspected model — null when nothing sliceable. */
   segmentAnalysis: SegmentAnalysis | null;
   /** Leaderboard-wide 95% intervals — belongs to the run, not the inspected model. */
@@ -143,6 +158,8 @@ interface LabState {
   chooseThreshold: (
     partial: Partial<{ threshold: number; costFp: number; costFn: number }>,
   ) => void;
+  setMulticlassThreshold: (classIndex: number, threshold: number) => void;
+  testMulticlassDecision: () => void;
   exportModel: () => void;
   exportPredictions: () => void;
   clearExportedFile: () => void;
@@ -182,6 +199,9 @@ const initialTraining = {
   batchError: null,
   thresholdAnalysis: null as ThresholdAnalysis | null,
   thresholdChoice: { threshold: 0.5, costFp: 1, costFn: 1 },
+  multiclassDecision: null as LabState['multiclassDecision'],
+  multiclassDecisionTestPending: false,
+  multiclassDecisionUnavailable: false,
   segmentAnalysis: null as SegmentAnalysis | null,
   uncertaintyAnalysis: null as UncertaintyAnalysis | null,
   currentRun: null,
@@ -215,6 +235,11 @@ const initialData = {
   importedError: null as string | null,
   ...initialTraining,
 };
+
+function activeDecisionPolicy(state: LabState) {
+  const decision = state.currentRun?.artifacts?.multiclassDecision;
+  return decision && decision.model === state.insights?.model ? decision.policy : undefined;
+}
 
 export const useLabStore = create<LabState>((set, get) => {
   /**
@@ -356,6 +381,7 @@ export const useLabStore = create<LabState>((set, get) => {
             model: message.payload.model,
             focusClass: get().thresholdClass,
           });
+          send({ kind: 'multiclass-decision-analysis', model: message.payload.model });
           send({ kind: 'segment-analysis', model: message.payload.model });
           // First insights after a completed run = winning model → auto-save.
           const state = get();
@@ -459,6 +485,52 @@ export const useLabStore = create<LabState>((set, get) => {
           set({ thresholdAnalysis: message.payload, thresholdChoice: choice });
           if (message.payload) {
             attachArtifact({ threshold: thresholdArtifact(message.payload, choice) });
+          }
+        } else if (message.kind === 'multiclass-decision-result') {
+          const analysis = message.payload;
+          set({
+            multiclassDecisionTestPending: false,
+            multiclassDecisionUnavailable:
+              analysis === null && (get().task?.classes?.length ?? 0) > 2,
+            multiclassDecision: analysis
+              ? {
+                  analysis,
+                  editor: {
+                    policy: { thresholds: analysis.classes.map(() => 0) },
+                    phase: 'draft',
+                    test: null,
+                  },
+                }
+              : null,
+          });
+        } else if (message.kind === 'multiclass-decision-tested') {
+          const state = get();
+          const current = state.multiclassDecision;
+          if (
+            current &&
+            state.multiclassDecisionTestPending &&
+            current.analysis.model === message.model
+          ) {
+            const editor = receiveMulticlassDecisionTest(current.editor, message.payload);
+            const validation = evaluateMulticlassPolicy(
+              current.analysis.validationLabels,
+              current.analysis.validationProbabilities,
+              editor.policy,
+            );
+            set({
+              multiclassDecision: { ...current, editor },
+              multiclassDecisionTestPending: false,
+            });
+            attachArtifact({
+              multiclassDecision: {
+                model: current.analysis.model,
+                classes: current.analysis.classes,
+                policy: editor.policy,
+                validation,
+                test: message.payload.metrics,
+                exploratory: editor.phase === 'exploratory',
+              },
+            });
           }
         } else if (message.kind === 'segments-result') {
           set({ segmentAnalysis: message.payload });
@@ -639,6 +711,9 @@ export const useLabStore = create<LabState>((set, get) => {
         batchError: null,
         thresholdAnalysis: null,
         thresholdChoice: { threshold: 0.5, costFp: 1, costFn: 1 },
+        multiclassDecision: null,
+        multiclassDecisionTestPending: false,
+        multiclassDecisionUnavailable: false,
         segmentAnalysis: null,
       });
       send({ kind: 'model-insights', model });
@@ -779,7 +854,13 @@ export const useLabStore = create<LabState>((set, get) => {
       if (state.trainStatus !== 'done' || !state.insights || state.batchStatus === 'scoring')
         return;
       set({ batchStatus: 'scoring', batchResult: null, batchError: null });
-      send({ kind: 'score-batch-file', file, model: state.insights.model });
+      const decisionPolicy = activeDecisionPolicy(state);
+      send({
+        kind: 'score-batch-file',
+        file,
+        model: state.insights.model,
+        ...(decisionPolicy ? { decisionPolicy } : {}),
+      });
     },
 
     chooseThreshold(partial) {
@@ -790,23 +871,63 @@ export const useLabStore = create<LabState>((set, get) => {
       attachArtifact({ threshold: thresholdArtifact(state.thresholdAnalysis, choice) });
     },
 
+    setMulticlassThreshold(classIndex, threshold) {
+      const state = get();
+      const current = state.multiclassDecision;
+      if (
+        state.multiclassDecisionTestPending ||
+        !current ||
+        classIndex < 0 ||
+        classIndex >= current.analysis.classes.length
+      )
+        return;
+      const editor = editMulticlassThreshold(current.editor, classIndex, threshold);
+      // Evaluation remains local and validation-only while sliders move.
+      evaluateMulticlassPolicy(
+        current.analysis.validationLabels,
+        current.analysis.validationProbabilities,
+        editor.policy,
+      );
+      set({ multiclassDecision: { ...current, editor } });
+    },
+
+    testMulticlassDecision() {
+      const state = get();
+      const current = state.multiclassDecision;
+      if (!current || state.multiclassDecisionTestPending) return;
+      set({ multiclassDecisionTestPending: true });
+      send({
+        kind: 'multiclass-decision-test',
+        model: current.analysis.model,
+        policy: current.editor.policy,
+        exploratory: isExploratoryTestRequest(current.editor),
+      });
+    },
+
     scoreBatchDemo(fileName) {
       const state = get();
       if (state.trainStatus !== 'done' || !state.insights || state.batchStatus === 'scoring')
         return;
       set({ batchStatus: 'scoring', batchResult: null, batchError: null });
+      const decisionPolicy = activeDecisionPolicy(state);
       send({
         kind: 'score-batch-url',
         url: `/datasets/${fileName}`,
         name: fileName,
         model: state.insights.model,
+        ...(decisionPolicy ? { decisionPolicy } : {}),
       });
     },
 
     exportModel() {
       const state = get();
       if (state.trainStatus !== 'done' || !state.insights) return;
-      send({ kind: 'export-model', model: state.insights.model });
+      const decisionPolicy = activeDecisionPolicy(state);
+      send({
+        kind: 'export-model',
+        model: state.insights.model,
+        ...(decisionPolicy ? { decisionPolicy } : {}),
+      });
     },
 
     exportPredictions() {

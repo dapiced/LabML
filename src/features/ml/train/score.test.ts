@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { profileColumn } from '@/features/ml/data/profile';
-import { requiredColumns, scoreBatch } from '@/features/ml/train/score';
+import { requiredColumns, scoreBatch, scoreRows } from '@/features/ml/train/score';
 import { runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
 import type { Cell } from '@/features/ml/data/types';
 
@@ -103,6 +103,71 @@ describe('scoreBatch', () => {
     expect(score.labeledRows).toBe(2);
     expect(score.metrics?.rmse).toBeLessThan(1);
     expect(score.metrics?.r2).toBeGreaterThan(0.99);
+  });
+
+  it('applies a frozen multiclass policy while preserving raw predictions', () => {
+    const probabilities = [
+      [0.8, 0.1, 0.1],
+      [0.4, 0.35, 0.25],
+    ];
+    const score = scoreRows(
+      {
+        model: {
+          predict: () => [0, 0],
+          predictProba: () => probabilities,
+        },
+        specs: [{ kind: 'numeric', name: 'feature', median: 0, mean: 0, std: 1 }],
+        transformRow: (row) => [Number(row.feature)],
+        classes: ['a', 'b', 'c'],
+        isClassification: true,
+        decisionPolicy: { thresholds: [0.6, 0.6, 0.6] },
+      },
+      'logistic',
+      { accuracy: 0.7 },
+      'label',
+      'field.csv',
+      ['feature', 'label'],
+      [
+        ['1', '2'],
+        ['a', 'b'],
+      ],
+    );
+
+    expect(score.preview.map((row) => row.decisionStatus)).toEqual(['decided', 'abstained']);
+    expect(score.preview.map((row) => row.predicted)).toEqual(['a', 'a']);
+    expect(score.csv.split('\n')[0]).toBe(
+      'feature,label,predicted,p_a,p_b,p_c,policy_decision,decision_status',
+    );
+    expect(score.decisionSummary?.coverage).toBe(0.5);
+    expect(score.decision?.coverage).toBe(0.5);
+  });
+
+  it('reports policy coverage for an unlabeled production batch', () => {
+    const score = scoreRows(
+      {
+        model: {
+          predict: () => [0, 0],
+          predictProba: () => [
+            [0.8, 0.1, 0.1],
+            [0.4, 0.35, 0.25],
+          ],
+        },
+        specs: [{ kind: 'numeric', name: 'feature', median: 0, mean: 0, std: 1 }],
+        transformRow: (row) => [Number(row.feature)],
+        classes: ['a', 'b', 'c'],
+        isClassification: true,
+        decisionPolicy: { thresholds: [0.6, 0.6, 0.6] },
+      },
+      'logistic',
+      {},
+      'label',
+      'production.csv',
+      ['feature'],
+      [['1', '2']],
+    );
+
+    expect(score.decisionSummary).toEqual({ rows: 2, decided: 1, abstained: 1, coverage: 0.5 });
+    expect(score.decision).toBeUndefined();
   });
 
   it('is deterministic for the same input', async () => {

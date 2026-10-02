@@ -79,4 +79,18 @@ test('iris: multiclass thresholds read one class against all the others', async 
   await expect(picker).toBeVisible();
   await picker.selectOption({ index: 2 });
   await expect(panel).toContainText('virginica');
+
+  const decision = page.getByTestId('multiclass-decision-panel');
+  await expect(decision).toBeVisible();
+  await expect(decision).toContainText('coverage 100%');
+  const sliders = decision.locator('input[type="range"]');
+  for (let index = 0; index < (await sliders.count()); index++) {
+    await sliders.nth(index).fill('1');
+  }
+  await expect(decision).not.toContainText('coverage 100%');
+
+  await decision.getByRole('button', { name: 'Evaluate on test set' }).click();
+  await expect(decision).toContainText('test frozen');
+  await sliders.first().fill('0.99');
+  await expect(decision).toContainText('exploratory');
 });

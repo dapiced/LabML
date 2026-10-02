@@ -462,6 +462,8 @@
         "unknownLabels_other": "{{count}} lignes portent des étiquettes jamais vues à l’entraînement — prédites, mais exclues des métriques.",
         "noTarget": "Pas de colonne cible dans ce fichier — prédictions seulement, pas de métriques à comparer.",
         "downloadCsv": "Télécharger les prédictions (CSV)",
+        "decisionCoverage": "Politique : {{decided}} décisions, {{abstained}} sans décision — couverture {{coverage}} %.",
+        "noDecision": "aucune décision",
         "note": "Une baisse par rapport au jeu de test est un signal, pas un bug : le monde a bougé. Vérifiez la dérive des entrées dans le Data Studio (PSI) pour voir quelles colonnes ont glissé."
       },
       "threshold": {
@@ -485,6 +487,33 @@
         "note": "Une probabilité n’est pas une décision. Au-dessus du seuil, la ligne est marquée « positive » — le déplacer échange des fausses alertes contre des cas manqués, et le bon échange dépend de ce que chaque erreur VOUS coûte. Le point sur la courbe est votre choix courant ; il est sauvegardé avec le run.",
         "focusClass": "Classe lue contre toutes les autres",
         "oneVsRestNote": "Un-contre-tous : ceci lit à quel point le modèle sépare « {{class}} » de toutes les autres classes. Ce n'est pas une règle de décision multiclasse complète — deux classes peuvent dépasser leur seuil, et rien ici ne dit laquelle l'emporterait."
+      },
+      "multiclassDecision": {
+        "title": "Décisions multiclasses",
+        "hint": "Réglez un seuil par classe sur la validation. Si aucune classe ne passe son seuil, le modèle s’abstient; si plusieurs passent, l’excès normalisé tranche.",
+        "unavailable": "Cette politique ne peut pas être configurée, car aucune partition de validation n’est disponible pour cette exécution.",
+        "phase": {
+          "draft": "brouillon · validation",
+          "frozen": "test figé",
+          "exploratory": "exploratoire"
+        },
+        "thresholdFor": "Seuil pour {{class}}",
+        "coverage": "couverture {{value}} %",
+        "accuracy": "accuracy globale {{value}} %",
+        "decidedAccuracy": "accuracy décidée {{value}} %",
+        "class": "classe",
+        "baseline": "Argmax intact (seuils à zéro) : accuracy {{accuracy}} %, macro F1 {{macroF1}} %.",
+        "test": "Évaluer sur le test",
+        "testing": "Évaluation…",
+        "testResult": "Test : couverture {{coverage}} %, accuracy globale {{accuracy}} %.",
+        "metrics": {
+          "coverage": "couverture",
+          "accuracy": "accuracy globale",
+          "decidedAccuracy": "accuracy décidée",
+          "macroF1": "macro F1"
+        },
+        "note": "Les réglages ci-dessus utilisent seulement la validation. La première évaluation du test fige la politique et conserve une lecture honnête.",
+        "exploratoryNote": "La politique a changé après consultation du test. Les résultats suivants sont exploratoires et ne doivent pas être présentés comme une évaluation finale indépendante."
       },
       "segments": {
         "title": "Où le modèle échoue",
@@ -547,6 +576,7 @@
         "loading": "Lecture…",
         "clear": "Retirer le modèle importé",
         "targetBadge": "prédit {{target}}",
+        "abstentionPolicy": "politique d’abstention incluse",
         "summary": "variables : {{features}} · entraîné sur {{source}} · exporté le {{date}}",
         "scoreCta": "Scorer un CSV avec ce modèle",
         "scoring": "Scoring…",

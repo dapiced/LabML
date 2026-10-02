@@ -462,6 +462,8 @@
         "unknownLabels_other": "{{count}} rows carry labels never seen in training — predicted, but kept out of the metrics.",
         "noTarget": "No target column in this file — predictions only, no metrics to compare.",
         "downloadCsv": "Download the predictions (CSV)",
+        "decisionCoverage": "Policy: {{decided}} decisions, {{abstained}} with no decision — {{coverage}}% coverage.",
+        "noDecision": "no decision",
         "note": "A drop against the test set is a signal, not a bug: the world moved. Check the input drift in the Data Studio (PSI) to see which columns shifted."
       },
       "threshold": {
@@ -485,6 +487,33 @@
         "note": "A probability is not a decision. Above the threshold the row is flagged “positive” — moving it trades false alarms against missed cases, and the right trade depends on what each mistake costs YOU. The dot on the curve is your current choice; it is saved with the run.",
         "focusClass": "Class read against all others",
         "oneVsRestNote": "One-vs-rest: this reads how well the model separates « {{class}} » from every other class. It is not a complete multiclass decision rule — two classes can both clear their thresholds, and nothing here says which would win."
+      },
+      "multiclassDecision": {
+        "title": "Multiclass decisions",
+        "hint": "Set one threshold per class on validation data. If no class clears its threshold, the model abstains; if several do, normalized excess breaks the tie.",
+        "unavailable": "This policy cannot be configured because no validation split is available for this run.",
+        "phase": {
+          "draft": "draft · validation",
+          "frozen": "test frozen",
+          "exploratory": "exploratory"
+        },
+        "thresholdFor": "Threshold for {{class}}",
+        "coverage": "coverage {{value}}%",
+        "accuracy": "overall accuracy {{value}}%",
+        "decidedAccuracy": "decided accuracy {{value}}%",
+        "class": "class",
+        "baseline": "Untouched argmax (zero thresholds): {{accuracy}}% accuracy, {{macroF1}}% macro F1.",
+        "test": "Evaluate on test set",
+        "testing": "Evaluating…",
+        "testResult": "Test: {{coverage}}% coverage, {{accuracy}}% overall accuracy.",
+        "metrics": {
+          "coverage": "coverage",
+          "accuracy": "overall accuracy",
+          "decidedAccuracy": "decided accuracy",
+          "macroF1": "macro F1"
+        },
+        "note": "The controls above use validation data only. The first test evaluation freezes the policy and preserves an honest reading.",
+        "exploratoryNote": "The policy changed after the test was revealed. Further results are exploratory and must not be presented as an independent final evaluation."
       },
       "segments": {
         "title": "Where the model fails",
@@ -547,6 +576,7 @@
         "loading": "Reading…",
         "clear": "Remove the imported model",
         "targetBadge": "predicts {{target}}",
+        "abstentionPolicy": "abstention policy included",
         "summary": "features: {{features}} · trained on {{source}} · exported {{date}}",
         "scoreCta": "Score a CSV with this model",
         "scoring": "Scoring…",

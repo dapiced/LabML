@@ -32,7 +32,7 @@ async function train(
 
 const artifacts = () => train(data, 'label', ['f1', 'group']);
 
-describe('serializeModel (format v3)', () => {
+describe('serializeModel (format v4)', () => {
   it('exports a manifest with target, pipeline and honest reference metrics', async () => {
     const arts = await artifacts();
     for (const key of [
@@ -48,7 +48,7 @@ describe('serializeModel (format v3)', () => {
       expect(json, key).not.toBeNull();
       const parsed = JSON.parse(json!);
       expect(parsed.app).toBe('LabML');
-      expect(parsed.formatVersion).toBe(3);
+      expect(parsed.formatVersion).toBe(4);
       expect(parsed.model).toBe(key);
       expect(parsed.target).toBe('label');
       expect(parsed.classes).toEqual(['no', 'yes']);
@@ -57,6 +57,17 @@ describe('serializeModel (format v3)', () => {
       expect(parsed.pipeline.specs).toHaveLength(2);
       expect(parsed.featureNames.length).toBeGreaterThan(0);
     }
+  });
+
+  it('round-trips a multiclass decision policy', async () => {
+    const multiclass = {
+      ...data,
+      label: Array.from({ length: N }, (_, i) => (i < 40 ? 'a' : i < 80 ? 'b' : 'c')),
+    };
+    const arts = await train(multiclass, 'label', ['f1', 'group']);
+    const policy = { thresholds: [0.2, 0.4, 0.6] };
+    const imported = deserializeModel(serializeModel(arts, 'logistic', META, policy)!);
+    expect(imported.manifest.decisionPolicy).toEqual(policy);
   });
 
   it('refuses to export k-NN (it would embed the training data)', async () => {

@@ -113,6 +113,9 @@ export function ImportModelPanel() {
                 {t('ml.lab.leaderboard.accuracy')} {manifest.testMetrics.accuracy.toFixed(3)}
               </Badge>
             )}
+            {manifest.decisionPolicy && (
+              <Badge variant="copper">{t('ml.lab.imported.abstentionPolicy')}</Badge>
+            )}
             {manifest.testMetrics.rmse !== undefined && (
               <Badge variant="outline" className="font-mono">
                 RMSE {manifest.testMetrics.rmse.toFixed(3)}

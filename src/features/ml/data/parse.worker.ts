@@ -16,6 +16,10 @@ import { deserializeModel, type ImportedModel } from '@/features/ml/train/deseri
 import { scoreBatch, scoreRows } from '@/features/ml/train/score';
 import { analyzeSegments } from '@/features/ml/train/segments';
 import { analyzeThresholds } from '@/features/ml/train/threshold-analysis';
+import {
+  analyzeMulticlassDecision,
+  testMulticlassDecision,
+} from '@/features/ml/train/multiclass-decision-analysis';
 import { analyzeUncertainty, type ModelLosses } from '@/features/ml/train/uncertainty';
 import { detectTaskType, runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
 import type { Cell, ColumnProfile, ParseResultPayload } from '@/features/ml/data/types';
@@ -237,13 +241,26 @@ async function parseBatch(source: File | string): Promise<{ header: string[]; co
   return { header: batchHeader, cols };
 }
 
-async function handleScoreBatch(source: File | string, name: string, model: ModelKey) {
+async function handleScoreBatch(
+  source: File | string,
+  name: string,
+  model: ModelKey,
+  decisionPolicy?: import('@/features/ml/train/multiclass-decision').MulticlassDecisionPolicy,
+) {
   try {
     if (!artifacts || !lastTarget) throw new Error('no-run');
     const batch = await parseBatch(source);
     post({
       kind: 'batch-scored',
-      payload: scoreBatch(artifacts, model, lastTarget, name, batch.header, batch.cols),
+      payload: scoreBatch(
+        artifacts,
+        model,
+        lastTarget,
+        name,
+        batch.header,
+        batch.cols,
+        decisionPolicy,
+      ),
     });
   } catch (error) {
     post({ kind: 'batch-error', message: error instanceof Error ? error.message : String(error) });
@@ -263,6 +280,9 @@ async function handleScoreImported(source: File | string, name: string) {
           transformRow: imported.transformRow,
           classes: imported.manifest.classes,
           isClassification: imported.manifest.isClassification,
+          ...(imported.manifest.decisionPolicy
+            ? { decisionPolicy: imported.manifest.decisionPolicy }
+            : {}),
         },
         imported.manifest.model,
         imported.manifest.testMetrics,
@@ -461,11 +481,16 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       post({
         kind: 'model-json',
         model: request.model,
-        json: serializeModel(artifacts, request.model, {
-          target: lastTarget,
-          datasetName,
-          rowCount,
-        }),
+        json: serializeModel(
+          artifacts,
+          request.model,
+          {
+            target: lastTarget,
+            datasetName,
+            rowCount,
+          },
+          request.decisionPolicy,
+        ),
       });
     } else if (request.kind === 'export-predictions') {
       if (!artifacts) throw new Error('no-run');
@@ -479,6 +504,24 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       post({
         kind: 'threshold-result',
         payload: analyzeThresholds(artifacts, request.model, request.focusClass),
+      });
+    } else if (request.kind === 'multiclass-decision-analysis') {
+      if (!artifacts) throw new Error('no-run');
+      post({
+        kind: 'multiclass-decision-result',
+        payload: analyzeMulticlassDecision(artifacts, request.model),
+      });
+    } else if (request.kind === 'multiclass-decision-test') {
+      if (!artifacts) throw new Error('no-run');
+      post({
+        kind: 'multiclass-decision-tested',
+        model: request.model,
+        payload: testMulticlassDecision(
+          artifacts,
+          request.model,
+          request.policy,
+          request.exploratory,
+        ),
       });
     } else if (request.kind === 'uncertainty-analysis') {
       if (!artifacts) throw new Error('no-run');
@@ -530,11 +573,21 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       await handleScoreImported(await response.text(), request.name);
     } else if (request.kind === 'score-batch-file') {
-      await handleScoreBatch(request.file, request.file.name, request.model);
+      await handleScoreBatch(
+        request.file,
+        request.file.name,
+        request.model,
+        request.decisionPolicy,
+      );
     } else if (request.kind === 'score-batch-url') {
       const response = await fetch(request.url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      await handleScoreBatch(await response.text(), request.name, request.model);
+      await handleScoreBatch(
+        await response.text(),
+        request.name,
+        request.model,
+        request.decisionPolicy,
+      );
     }
   } catch (error) {
     post({ kind: 'error', message: error instanceof Error ? error.message : String(error) });

@@ -55,6 +55,41 @@ describe('deserializeModel — a broken manifest says which kind of broken', () 
     expect(() => deserializeModel(manifest(overrides))).toThrow('bad-manifest');
   });
 
+  it.each([
+    ['wrong threshold count', [0.2, 0.4]],
+    ['threshold below zero', [-0.1, 0.4, 0.6]],
+    ['threshold above one', [0.2, 1.1, 0.6]],
+    ['non-finite threshold', [0.2, null, 0.6]],
+  ])('refuses a multiclass policy with %s', (_label, thresholds) => {
+    expect(() =>
+      deserializeModel(
+        manifest({
+          formatVersion: 4,
+          classes: ['a', 'b', 'c'],
+          decisionPolicy: { thresholds },
+        }),
+      ),
+    ).toThrow('bad-manifest');
+  });
+
+  it('refuses a null decision policy by name', () => {
+    expect(() => deserializeModel(manifest({ formatVersion: 4, decisionPolicy: null }))).toThrow(
+      'bad-manifest',
+    );
+  });
+
+  it('refuses a decision policy on regression', () => {
+    expect(() =>
+      deserializeModel(
+        manifest({
+          formatVersion: 4,
+          task: 'regression',
+          decisionPolicy: { thresholds: [0.5, 0.5, 0.5] },
+        }),
+      ),
+    ).toThrow('bad-manifest');
+  });
+
   it('still names an unknown model family, which is a different problem', () => {
     // The catch must not swallow the more precise refusal underneath it.
     expect(() =>

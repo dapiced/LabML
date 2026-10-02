@@ -283,6 +283,8 @@ describe('multiclass thresholds — one-vs-rest (V36)', () => {
     return {
       models: new Map<ModelKey, TrainedModel>([['gbdt', model]]),
       pipeline: null as never,
+      validationX: [],
+      validationY: [],
       testX: proba.map(() => [0]),
       testY: [0, 1, 2, 0, 1, 2, 0, 1],
       testIndices: proba.map((_, i) => i),

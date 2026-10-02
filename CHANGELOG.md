@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V45 — A complete multiclass decision rule — including the right not to decide
+
+V36 deliberately stopped at one-vs-rest diagnosis: it can show the precision-recall and calibration curves for one class, but it cannot turn several class thresholds into one answer.
+
+_Why:_ Approved 02/10/2026 after the Dependabot hygiene pass. The current multiclass panel is honest about its limit but leaves the user with several disconnected one-vs-rest readings. A deterministic policy, an explicit abstention and a validation-before-test workflow turn those readings into an actionable decision without pretending that every row deserves an answer or spending the test set while tuning the rule.
+
 ## V44 — The supply chain now fails closed where the signal is actionable
 
 Dependabot checks npm and GitHub Actions every Monday; minor and patch updates for development dependencies and Actions are grouped, while major updates stay isolated so their migration cost remains visible.

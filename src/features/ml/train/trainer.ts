@@ -41,6 +41,8 @@ export interface PretrainedFamily {
 export interface TrainArtifacts {
   models: Map<ModelKey, TrainedModel>;
   pipeline: ReturnType<typeof fitPipeline>;
+  validationX: number[][];
+  validationY: number[];
   testX: number[][];
   testY: number[];
   /** Original row index of each test position — segment slicing needs it. */
@@ -615,6 +617,8 @@ export async function runTraining(
     artifacts: {
       models,
       pipeline,
+      validationX: valX ?? [],
+      validationY: valY ?? [],
       testX,
       testY,
       testIndices: test,

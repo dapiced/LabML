@@ -20,6 +20,8 @@ function makeArtifacts(model: TrainedModel, isClassification: boolean): TrainArt
   return {
     models: new Map([[isClassification ? 'logistic' : 'linear', model]]),
     pipeline,
+    validationX: [],
+    validationY: [],
     testX: pipeline.transform(indices.slice(0, 10)),
     testY: [],
     testIndices: indices.slice(0, 10),
