@@ -27,17 +27,21 @@ Elles ne se valent pas, et les mélanger serait malhonnête :
 
 ## Ce qui a été écarté par choix
 
-| Écarté                                    | Pourquoi                                                                                                                      |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Un mode AutoML « on s'occupe de tout »    | L'exact contraire d'un laboratoire qui montre ses décisions                                                                   |
-| Une dixième famille de modèles            | Neuf suffisent ; une dixième n'améliore ni l'honnêteté ni la compréhension                                                    |
-| Le deep learning tabulaire                | Coût élevé, aucun gain à cette échelle, et ce ne serait plus écrit à la main                                                  |
-| Un éditeur de cellules façon tableur      | Les retouches à la main cassent la reproductibilité — la recette est le seul enregistrement                                   |
-| La déduplication floue                    | Faux positifs garantis sur des noms et des adresses : fusionner deux personnes réelles en silence                             |
-| L'imputation par modèle                   | Opaque, et elle fabrique des valeurs plausibles — refusée deux fois, en V39 et en V40                                         |
-| Cacher les modèles entre exécutions       | La clé de cache serait la configuration entière plus les données ; un hit périmé, c'est un classement faux sans avertissement |
-| Deviner la locale d'un fichier            | Le navigateur n'a aucun rapport avec le fichier qu'on y dépose                                                                |
-| Rendre l'indicateur d'absence obligatoire | Il ajouterait des colonnes à toute recette existante : imposer n'est pas annoncer                                             |
+| Écarté                                                             | Pourquoi                                                                                                                                                                                  |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Un mode AutoML « on s'occupe de tout »                             | L'exact contraire d'un laboratoire qui montre ses décisions                                                                                                                               |
+| Une dixième famille de modèles                                     | Neuf suffisent ; une dixième n'améliore ni l'honnêteté ni la compréhension                                                                                                                |
+| Le deep learning tabulaire                                         | Coût élevé, aucun gain à cette échelle, et ce ne serait plus écrit à la main                                                                                                              |
+| Un éditeur de cellules façon tableur                               | Les retouches à la main cassent la reproductibilité — la recette est le seul enregistrement                                                                                               |
+| La déduplication floue                                             | Faux positifs garantis sur des noms et des adresses : fusionner deux personnes réelles en silence                                                                                         |
+| L'imputation par modèle                                            | Opaque, et elle fabrique des valeurs plausibles — refusée deux fois, en V39 et en V40                                                                                                     |
+| Cacher les modèles entre exécutions                                | La clé de cache serait la configuration entière plus les données ; un hit périmé, c'est un classement faux sans avertissement                                                             |
+| Deviner la locale d'un fichier                                     | Le navigateur n'a aucun rapport avec le fichier qu'on y dépose                                                                                                                            |
+| Rendre l'indicateur d'absence obligatoire                          | Il ajouterait des colonnes à toute recette existante : imposer n'est pas annoncer                                                                                                         |
+| Traduire le changelog et prérendre la documentation française      | Le changelog est un journal d'ingénierie, pas un contenu éditorial ; sans routes par langue, des alternates hreflang mentiraient                                                          |
+| Capter les erreurs asynchrones et envoyer des rapports de plantage | Les boundaries React ne voient pas les callbacks ni les gestionnaires d'événements — prétendre le contraire serait faux ; et rien ne quitte le navigateur, télémétrie comprise            |
+| Un Dependabot quotidien et un `npm audit fix --force`              | Une cadence quotidienne noie le signal ; `--force` change des majeures sans lire la rupture. Les advisories restantes touchent les outils de build, et on le dit plutôt que de le masquer |
+| Choisir les seuils multiclasses automatiquement                    | Le laboratoire montre ses décisions au lieu de les prendre à votre place ; et l'abstention n'est ni une calibration d'incertitude ni une garantie conforme                                |
 
 ## Ce qui a été abandonné après mesure
 

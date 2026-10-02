@@ -35,6 +35,22 @@ This is the most useful production gesture — checking that a model still holds
 on data it has never seen. A clear gap against the test score is a drift
 signal, to investigate in the [Data Studio](/docs/reference-data).
 
+## The decision columns
+
+If the scored model carries a multiclass decision rule — frozen in the lab, then
+exported with it — the produced CSV gains two columns:
+
+| Column            | Contents                                                                 |
+| ----------------- | ------------------------------------------------------------------------ |
+| `policy_decision` | The class the rule settled on, or an empty cell when the rule abstained. |
+| `decision_status` | `decided` or `abstained`.                                                |
+
+The `predicted` column stays the model's raw prediction. The two decision
+columns do not replace it: they say what the rule chose to do with it. An
+abstained row is a case to route to human review, not a model error.
+
+With no rule attached to the model, these columns do not appear at all.
+
 ## Labels never seen
 
 If your batch contains a class absent from training, LabML still predicts it

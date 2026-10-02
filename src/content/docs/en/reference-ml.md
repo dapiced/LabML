@@ -86,6 +86,29 @@ Precision-recall curve, calibration curve, and a threshold **you** decide,
 priced by your false-alarm and missed-case costs. A probability is not a
 decision; the threshold is saved with the run.
 
+## Deciding across several classes
+
+Past two classes, a single slider no longer cuts it. The multiclass decision
+panel gives you **one threshold per class** and a rule stated out loud: a class
+is a candidate when its probability reaches its own threshold; among candidates,
+the one with the largest normalized margin wins; ties are broken by class order,
+always the same order.
+
+When no class clears its threshold, the rule **abstains** and says so. It does
+not quietly fall back to the most probable class — that silent fallback is
+exactly what a threshold exists to prevent. Setting every threshold to zero
+reproduces argmax exactly, with full coverage: the default rule changes nothing
+until you ask it to.
+
+Two accuracies sit side by side: overall accuracy, where an abstention counts as
+an error, and accuracy conditional on the decided rows. The first answers "how
+good is the system", the second "how good is the rule when it commits".
+
+The editor works on the **validation split**, never on test. You freeze the rule
+before revealing the test result; changing it afterwards marks that result as
+exploratory rather than pretending it was earned blind. With no validation split
+— a dataset too small, for instance — the panel explains why it is absent.
+
 ## Where the model fails
 
 The test set is sliced by each categorical column — **including those outside
@@ -95,8 +118,10 @@ A gap is a lead to investigate, not a verdict.
 ## Export, import, score
 
 The model exports to JSON with its manifest: family, pipeline, versions. It
-re-imports into a fresh session and scores a CSV. The five named import
-refusals are on the [refusals page](/docs/refus).
+re-imports into a fresh session and scores a CSV. A frozen multiclass decision
+rule travels with the export, and the scored CSV then carries two extra columns
+— see [the formats page](/docs/formats). The five named import refusals are on
+the [refusals page](/docs/refus).
 
 ## Comparing runs
 

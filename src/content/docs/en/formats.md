@@ -50,20 +50,52 @@ TF-IDF vocabulary where relevant) and a manifest:
 
 ```json
 {
-  "labml": true,
-  "version": 3,
-  "kind": "logistic",
-  "task": "binary",
-  "features": ["pclass", "sex", "age"],
+  "app": "LabML",
+  "formatVersion": 4,
+  "model": "logistic",
+  "task": "classification",
   "target": "survived",
-  "seed": 42
+  "seed": 42,
+  "createdAt": 1759312800000,
+  "sourceDataset": { "name": "titanic.csv", "rowCount": 891 },
+  "classes": ["0", "1"],
+  "testMetrics": { "accuracy": 0.792 },
+  "testRows": 179,
+  "pipeline": { "specs": [] },
+  "featureNames": ["pclass", "sex", "age"],
+  "parameters": {}
 }
 ```
 
-`labml` and `version` are checked before anything else: JSON that is not a LabML
-export is refused by name (`not-labml`), not by a crash. An incomplete manifest
-is refused (`bad-manifest`) rather than completed by guesswork — an export that
-cannot be trusted to predict must not predict.
+`app` and `formatVersion` are checked before anything else: JSON that is not a
+LabML export is refused by name (`not-labml`), not by a crash. Versions 2, 3 and
+4 re-import; anything older or newer is refused by name
+(`unsupported-version:N`). An incomplete manifest is refused (`bad-manifest`)
+rather than completed by guesswork — an export that cannot be trusted to predict
+must not predict.
+
+`testMetrics` and `testRows` keep the test score of the run that produced the
+export: the honest reference a future batch is compared against.
+
+### The multiclass decision policy
+
+An export may carry an optional `decisionPolicy` key, one threshold per class in
+the order of `classes`:
+
+```json
+{ "decisionPolicy": { "thresholds": [0.5, 0.4, 0.6] } }
+```
+
+It is accepted only when all four conditions hold: `formatVersion` is 4, the
+task is a classification, `classes` has more than two entries, and `thresholds`
+is an array of the same length whose every value is a finite number between 0
+and 1. Otherwise the import is refused (`bad-manifest`) — a half-readable
+decision rule is a wrong decision rule.
+
+When an imported model carries that policy, scoring a batch adds two columns to
+the output CSV: `policy_decision`, the elected class — **empty** when the rule
+abstains — and `decision_status`, which reads `decided` or `abstained`. Without
+a policy, neither column appears.
 
 ## The reference profile
 

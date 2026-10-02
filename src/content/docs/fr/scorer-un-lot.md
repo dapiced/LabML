@@ -35,6 +35,23 @@ C'est le geste de production le plus utile — vérifier qu'un modèle tient enc
 sur des données qu'il n'a jamais vues. Un écart net avec le score de test est
 un signal de dérive, à instruire dans le [Data Studio](/docs/reference-data).
 
+## Les colonnes de décision
+
+Si le modèle scoré porte une règle de décision multiclasse — figée dans le
+laboratoire, puis exportée avec lui —, le CSV produit gagne deux colonnes :
+
+| Colonne           | Contenu                                                                         |
+| ----------------- | ------------------------------------------------------------------------------- |
+| `policy_decision` | La classe retenue par la règle, ou une cellule vide si la règle s'est abstenue. |
+| `decision_status` | `decided` ou `abstained`.                                                       |
+
+La colonne `predicted` reste la prédiction brute du modèle. Les deux colonnes
+de décision ne la remplacent pas : elles disent ce que la règle a choisi d'en
+faire. Une ligne en abstention est un dossier à router vers une revue humaine,
+pas une erreur du modèle.
+
+Sans règle attachée au modèle, ces colonnes n'apparaissent pas du tout.
+
 ## Les étiquettes jamais vues
 
 Si votre lot contient une classe absente de l'entraînement, LabML la prédit

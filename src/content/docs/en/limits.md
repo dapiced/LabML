@@ -27,17 +27,21 @@ They are not equivalent, and mixing them would be dishonest:
 
 ## Set aside by choice
 
-| Set aside                               | Why                                                                                                              |
-| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| An AutoML « we handle everything » mode | The exact opposite of a lab that shows its decisions                                                             |
-| A tenth model family                    | Nine is plenty; a tenth improves neither honesty nor understanding                                               |
-| Tabular deep learning                   | High cost, no gain at this scale, and no longer hand-written                                                     |
-| A spreadsheet-style cell editor         | Hand edits break reproducibility — the recipe is the only record                                                 |
-| Fuzzy deduplication                     | Guaranteed false positives on names and addresses: silently merging two real people                              |
-| Model-based imputation                  | Opaque, and it fabricates plausible values — refused twice, in V39 and V40                                       |
-| Caching models across runs              | The cache key would be the whole configuration plus the data; a stale hit is a wrong leaderboard with no warning |
-| Guessing a file's locale                | The browser has no relationship to the file dropped into it                                                      |
-| Making the absence indicator mandatory  | It would add columns to every existing recipe: imposing is not announcing                                        |
+| Set aside                                                  | Why                                                                                                                                                                    |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| An AutoML « we handle everything » mode                    | The exact opposite of a lab that shows its decisions                                                                                                                   |
+| A tenth model family                                       | Nine is plenty; a tenth improves neither honesty nor understanding                                                                                                     |
+| Tabular deep learning                                      | High cost, no gain at this scale, and no longer hand-written                                                                                                           |
+| A spreadsheet-style cell editor                            | Hand edits break reproducibility — the recipe is the only record                                                                                                       |
+| Fuzzy deduplication                                        | Guaranteed false positives on names and addresses: silently merging two real people                                                                                    |
+| Model-based imputation                                     | Opaque, and it fabricates plausible values — refused twice, in V39 and V40                                                                                             |
+| Caching models across runs                                 | The cache key would be the whole configuration plus the data; a stale hit is a wrong leaderboard with no warning                                                       |
+| Guessing a file's locale                                   | The browser has no relationship to the file dropped into it                                                                                                            |
+| Making the absence indicator mandatory                     | It would add columns to every existing recipe: imposing is not announcing                                                                                              |
+| Translating the changelog and prerendering the French docs | The changelog is an engineering log, not editorial content; without per-language routes, hreflang alternates would lie                                                 |
+| Catching async errors and shipping crash reports           | React boundaries cannot see callbacks or event handlers — claiming otherwise would be false; and nothing leaves the browser, telemetry included                        |
+| A daily Dependabot and `npm audit fix --force`             | A daily cadence drowns the signal; `--force` moves majors without reading the break. The remaining advisories sit in build tooling, and we say so instead of hiding it |
+| Picking multiclass thresholds automatically                | The lab shows its decisions instead of making them for you; and abstention is neither uncertainty calibration nor a conformal guarantee                                |
 
 ## Dropped after measurement
 
