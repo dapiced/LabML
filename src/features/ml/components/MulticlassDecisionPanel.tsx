@@ -11,6 +11,7 @@ export function MulticlassDecisionPanel() {
   const decision = useLabStore((state) => state.multiclassDecision);
   const setThreshold = useLabStore((state) => state.setMulticlassThreshold);
   const testPolicy = useLabStore((state) => state.testMulticlassDecision);
+  const testPending = useLabStore((state) => state.multiclassDecisionTestPending);
   if (!decision) return null;
 
   const { analysis, editor } = decision;
@@ -54,6 +55,7 @@ export function MulticlassDecisionPanel() {
               max={1}
               step={0.01}
               value={editor.policy.thresholds[classIndex]}
+              disabled={testPending}
               onChange={(event) => setThreshold(classIndex, Number(event.target.value))}
               className="accent-(--accent)"
               aria-label={t('ml.lab.multiclassDecision.thresholdFor', { class: label })}
@@ -109,8 +111,8 @@ export function MulticlassDecisionPanel() {
       </p>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="button" size="sm" onClick={testPolicy}>
-          {t('ml.lab.multiclassDecision.test')}
+        <Button type="button" size="sm" onClick={testPolicy} disabled={testPending}>
+          {t(testPending ? 'ml.lab.multiclassDecision.testing' : 'ml.lab.multiclassDecision.test')}
         </Button>
         {editor.test && (
           <p className="text-xs text-muted">

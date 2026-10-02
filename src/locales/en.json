@@ -503,6 +503,7 @@
         "class": "class",
         "baseline": "Untouched argmax (zero thresholds): {{accuracy}}% accuracy, {{macroF1}}% macro F1.",
         "test": "Evaluate on test set",
+        "testing": "Evaluating…",
         "testResult": "Test: {{coverage}}% coverage, {{accuracy}}% overall accuracy.",
         "metrics": {
           "coverage": "coverage",

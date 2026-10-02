@@ -111,12 +111,12 @@ export function BatchScorePanel() {
             })}
           </p>
 
-          {result.decision && (
+          {result.decisionSummary && (
             <p className="text-xs text-muted" data-testid="batch-decision-coverage">
               {t('ml.lab.batch.decisionCoverage', {
-                decided: result.decision.decided,
-                abstained: result.decision.abstained,
-                coverage: (result.decision.coverage * 100).toLocaleString(lang, {
+                decided: result.decisionSummary.decided,
+                abstained: result.decisionSummary.abstained,
+                coverage: (result.decisionSummary.coverage * 100).toLocaleString(lang, {
                   maximumFractionDigits: 1,
                 }),
               })}

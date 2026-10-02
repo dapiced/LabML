@@ -115,7 +115,11 @@ export type WorkerResponse =
   // null = no validation split, binary/regression, or no probabilities.
   | { kind: 'multiclass-decision-result'; payload: MulticlassDecisionAnalysis | null }
   // Test probabilities stay private; only aggregate metrics cross the worker boundary.
-  | { kind: 'multiclass-decision-tested'; payload: MulticlassDecisionTestResult }
+  | {
+      kind: 'multiclass-decision-tested';
+      model: ModelKey;
+      payload: MulticlassDecisionTestResult;
+    }
   // null = nothing sliceable (no categorical column, tiny test set).
   | { kind: 'segments-result'; payload: SegmentAnalysis | null }
   // null = tiny test set — no interval theater.

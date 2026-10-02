@@ -515,6 +515,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       if (!artifacts) throw new Error('no-run');
       post({
         kind: 'multiclass-decision-tested',
+        model: request.model,
         payload: testMulticlassDecision(
           artifacts,
           request.model,

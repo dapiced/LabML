@@ -72,6 +72,12 @@ describe('deserializeModel — a broken manifest says which kind of broken', () 
     ).toThrow('bad-manifest');
   });
 
+  it('refuses a null decision policy by name', () => {
+    expect(() => deserializeModel(manifest({ formatVersion: 4, decisionPolicy: null }))).toThrow(
+      'bad-manifest',
+    );
+  });
+
   it('refuses a decision policy on regression', () => {
     expect(() =>
       deserializeModel(

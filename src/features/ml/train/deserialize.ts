@@ -232,6 +232,7 @@ export function deserializeModel(text: string): ImportedModel {
   const rawPolicy = data.decisionPolicy as { thresholds?: unknown } | undefined;
   let decisionPolicy: MulticlassDecisionPolicy | undefined;
   if (rawPolicy !== undefined) {
+    if (typeof rawPolicy !== 'object' || rawPolicy === null) throw new Error('bad-manifest');
     const thresholds = rawPolicy.thresholds;
     if (
       data.formatVersion !== 4 ||

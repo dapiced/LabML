@@ -34,7 +34,9 @@ export interface BatchScore {
   metrics?: MetricMap;
   /** The same model's held-out test metrics, recomputed for the comparison. */
   testMetrics: MetricMap;
-  /** Policy metrics on known labeled rows; absent for historical argmax scoring. */
+  /** Label-independent policy coverage over every scored row. */
+  decisionSummary?: { rows: number; decided: number; abstained: number; coverage: number };
+  /** Policy metrics on known labeled rows; absent when labels are unavailable. */
   decision?: MulticlassDecisionMetrics;
   preview: {
     predicted: string;
@@ -187,6 +189,18 @@ export function scoreRows(
     scorer.decisionPolicy && probabilities
       ? probabilities.map((row) => applyMulticlassPolicy(row, scorer.decisionPolicy!))
       : null;
+  const decisionSummary = policyDecisions
+    ? {
+        rows: policyDecisions.length,
+        decided: policyDecisions.filter((item) => item.status === 'decided').length,
+        abstained: policyDecisions.filter((item) => item.status === 'abstained').length,
+        coverage:
+          policyDecisions.length === 0
+            ? 0
+            : policyDecisions.filter((item) => item.status === 'decided').length /
+              policyDecisions.length,
+      }
+    : undefined;
   const decision =
     scorer.decisionPolicy && probabilities && hasTarget && labeledRows > 0
       ? evaluateMulticlassPolicy(
@@ -243,6 +257,7 @@ export function scoreRows(
     unknownLabels,
     metrics,
     testMetrics,
+    ...(decisionSummary ? { decisionSummary } : {}),
     ...(decision ? { decision } : {}),
     preview,
     csv: lines.join('\n'),

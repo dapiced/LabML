@@ -138,7 +138,36 @@ describe('scoreBatch', () => {
     expect(score.csv.split('\n')[0]).toBe(
       'feature,label,predicted,p_a,p_b,p_c,policy_decision,decision_status',
     );
+    expect(score.decisionSummary?.coverage).toBe(0.5);
     expect(score.decision?.coverage).toBe(0.5);
+  });
+
+  it('reports policy coverage for an unlabeled production batch', () => {
+    const score = scoreRows(
+      {
+        model: {
+          predict: () => [0, 0],
+          predictProba: () => [
+            [0.8, 0.1, 0.1],
+            [0.4, 0.35, 0.25],
+          ],
+        },
+        specs: [{ kind: 'numeric', name: 'feature', median: 0, mean: 0, std: 1 }],
+        transformRow: (row) => [Number(row.feature)],
+        classes: ['a', 'b', 'c'],
+        isClassification: true,
+        decisionPolicy: { thresholds: [0.6, 0.6, 0.6] },
+      },
+      'logistic',
+      {},
+      'label',
+      'production.csv',
+      ['feature'],
+      [['1', '2']],
+    );
+
+    expect(score.decisionSummary).toEqual({ rows: 2, decided: 1, abstained: 1, coverage: 0.5 });
+    expect(score.decision).toBeUndefined();
   });
 
   it('is deterministic for the same input', async () => {
