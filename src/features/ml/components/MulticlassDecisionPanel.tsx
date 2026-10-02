@@ -12,7 +12,21 @@ export function MulticlassDecisionPanel() {
   const setThreshold = useLabStore((state) => state.setMulticlassThreshold);
   const testPolicy = useLabStore((state) => state.testMulticlassDecision);
   const testPending = useLabStore((state) => state.multiclassDecisionTestPending);
-  if (!decision) return null;
+  const unavailable = useLabStore((state) => state.multiclassDecisionUnavailable);
+  if (!decision) {
+    return unavailable ? (
+      <section
+        data-testid="multiclass-decision-unavailable"
+        className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4"
+      >
+        <div className="flex items-center gap-2">
+          <SlidersHorizontal className="h-4 w-4 text-muted" aria-hidden="true" />
+          <Eyebrow>{t('ml.lab.multiclassDecision.title')}</Eyebrow>
+        </div>
+        <p className="text-xs text-muted">{t('ml.lab.multiclassDecision.unavailable')}</p>
+      </section>
+    ) : null;
+  }
 
   const { analysis, editor } = decision;
   const validation = evaluateMulticlassPolicy(

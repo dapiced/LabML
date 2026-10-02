@@ -491,6 +491,7 @@
       "multiclassDecision": {
         "title": "Multiclass decisions",
         "hint": "Set one threshold per class on validation data. If no class clears its threshold, the model abstains; if several do, normalized excess breaks the tie.",
+        "unavailable": "This policy cannot be configured because no validation split is available for this run.",
         "phase": {
           "draft": "draft · validation",
           "frozen": "test frozen",

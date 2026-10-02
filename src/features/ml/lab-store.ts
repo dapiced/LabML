@@ -106,6 +106,7 @@ interface LabState {
     editor: MulticlassDecisionEditorState;
   } | null;
   multiclassDecisionTestPending: boolean;
+  multiclassDecisionUnavailable: boolean;
   /** Per-segment metrics of the inspected model — null when nothing sliceable. */
   segmentAnalysis: SegmentAnalysis | null;
   /** Leaderboard-wide 95% intervals — belongs to the run, not the inspected model. */
@@ -200,6 +201,7 @@ const initialTraining = {
   thresholdChoice: { threshold: 0.5, costFp: 1, costFn: 1 },
   multiclassDecision: null as LabState['multiclassDecision'],
   multiclassDecisionTestPending: false,
+  multiclassDecisionUnavailable: false,
   segmentAnalysis: null as SegmentAnalysis | null,
   uncertaintyAnalysis: null as UncertaintyAnalysis | null,
   currentRun: null,
@@ -488,6 +490,8 @@ export const useLabStore = create<LabState>((set, get) => {
           const analysis = message.payload;
           set({
             multiclassDecisionTestPending: false,
+            multiclassDecisionUnavailable:
+              analysis === null && (get().task?.classes?.length ?? 0) > 2,
             multiclassDecision: analysis
               ? {
                   analysis,
@@ -709,6 +713,7 @@ export const useLabStore = create<LabState>((set, get) => {
         thresholdChoice: { threshold: 0.5, costFp: 1, costFn: 1 },
         multiclassDecision: null,
         multiclassDecisionTestPending: false,
+        multiclassDecisionUnavailable: false,
         segmentAnalysis: null,
       });
       send({ kind: 'model-insights', model });

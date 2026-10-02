@@ -491,6 +491,7 @@
       "multiclassDecision": {
         "title": "Décisions multiclasses",
         "hint": "Réglez un seuil par classe sur la validation. Si aucune classe ne passe son seuil, le modèle s’abstient; si plusieurs passent, l’excès normalisé tranche.",
+        "unavailable": "Cette politique ne peut pas être configurée, car aucune partition de validation n’est disponible pour cette exécution.",
         "phase": {
           "draft": "brouillon · validation",
           "frozen": "test figé",
