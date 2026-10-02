@@ -155,6 +155,14 @@ export function compileDoc(raw: string, lang: string, file: string): DocPage {
     return `<h${depth}>${marked.parseInline(text, { async: false }) as string}</h${depth}>\n`;
   };
 
+  // Code blocks can scroll horizontally on a phone just like tables. Marked's
+  // default `<pre>` has no keyboard entry point, so axe correctly reports the
+  // hidden lines as unreachable.
+  const renderCode = marked.Renderer.prototype.code;
+  renderer.code = function (token) {
+    return renderCode.call(this, token).replace('<pre>', '<pre tabindex="0">');
+  };
+
   // V35 — a wide table scrolls inside its own region, and that region is
   // reachable by keyboard. Putting `overflow-x` on the `<table>` itself (what
   // V32 did) failed twice at once: the box was a scroll container nobody could
