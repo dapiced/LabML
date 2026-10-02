@@ -50,21 +50,52 @@ contient la famille, ses paramètres appris, le pipeline complet (encodages,
 
 ```json
 {
-  "labml": true,
-  "version": 3,
-  "kind": "logistic",
-  "task": "binary",
-  "features": ["pclass", "sex", "age"],
+  "app": "LabML",
+  "formatVersion": 4,
+  "model": "logistic",
+  "task": "classification",
   "target": "survived",
-  "seed": 42
+  "seed": 42,
+  "createdAt": 1759312800000,
+  "sourceDataset": { "name": "titanic.csv", "rowCount": 891 },
+  "classes": ["0", "1"],
+  "testMetrics": { "accuracy": 0.792 },
+  "testRows": 179,
+  "pipeline": { "specs": [] },
+  "featureNames": ["pclass", "sex", "age"],
+  "parameters": {}
 }
 ```
 
-`labml` et `version` sont vérifiés avant toute autre chose : un JSON qui n'est
-pas un export LabML est refusé par son nom (`not-labml`), pas par un plantage.
-Un manifeste incomplet est refusé (`bad-manifest`) plutôt que complété par des
-suppositions — un export auquel on ne peut pas se fier pour prédire ne doit pas
-prédire.
+`app` et `formatVersion` sont vérifiés avant toute autre chose : un JSON qui
+n'est pas un export LabML est refusé par son nom (`not-labml`), pas par un
+plantage. Les versions 2, 3 et 4 se réimportent ; une version plus ancienne ou
+plus récente est refusée en la nommant (`unsupported-version:N`). Un manifeste
+incomplet est refusé (`bad-manifest`) plutôt que complété par des suppositions —
+un export auquel on ne peut pas se fier pour prédire ne doit pas prédire.
+
+`testMetrics` et `testRows` conservent le score de test du run qui a produit
+l'export : c'est la référence honnête à laquelle comparer un lot futur.
+
+### La politique de décision multiclasse
+
+Un export peut porter une clé `decisionPolicy` facultative, un seuil par classe
+dans l'ordre de `classes` :
+
+```json
+{ "decisionPolicy": { "thresholds": [0.5, 0.4, 0.6] } }
+```
+
+Elle n'est acceptée que si les quatre conditions tiennent : `formatVersion` vaut
+4, la tâche est une classification, `classes` compte plus de deux entrées, et
+`thresholds` est un tableau de même longueur dont chaque valeur est un nombre
+fini entre 0 et 1. Sinon l'import est refusé (`bad-manifest`) — une règle de
+décision à moitié lisible est une règle de décision fausse.
+
+Quand un modèle importé porte cette politique, le scoring d'un lot ajoute deux
+colonnes au CSV de sortie : `policy_decision`, la classe retenue — **vide**
+quand la règle s'abstient — et `decision_status`, qui vaut `decided` ou
+`abstained`. Sans politique, ces colonnes n'apparaissent pas.
 
 ## Le profil de référence
 

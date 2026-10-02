@@ -92,6 +92,31 @@ Courbe précision-rappel, courbe de calibration, et un seuil que **vous**
 décidez, chiffré par vos coûts de faux positif et de cas manqué. Une
 probabilité n'est pas une décision ; le seuil est enregistré avec le run.
 
+## Décider en multiclasse
+
+Au-delà de deux classes, un seul curseur ne suffit plus. Le panneau de décision
+multiclasse donne **un seuil par classe**, et une règle énoncée : une classe est
+candidate si sa probabilité atteint son seuil ; entre plusieurs candidates, celle
+dont l'excédent normalisé est le plus grand l'emporte ; les égalités sont
+tranchées par l'ordre des classes, toujours le même.
+
+Quand aucune classe n'atteint son seuil, la règle **s'abstient** et le dit. Elle
+ne retombe pas en silence sur la classe la plus probable — c'est précisément ce
+qu'un seuil sert à empêcher. Mettre tous les seuils à zéro reproduit exactement
+l'argmax, avec une couverture totale : la règle par défaut ne change rien tant
+que vous n'avez rien demandé.
+
+Deux justesses sont affichées côte à côte : la justesse globale, où une
+abstention compte comme une erreur, et la justesse conditionnelle aux lignes
+décidées. La première répond à « que vaut le système », la seconde à « que vaut
+la règle quand elle se prononce ».
+
+L'éditeur travaille sur la **partition de validation**, jamais sur le test. Vous
+figez la règle avant de révéler le résultat de test ; la modifier après cette
+révélation marque le résultat comme exploratoire plutôt que de laisser croire
+qu'il a été obtenu à l'aveugle. Sans partition de validation — un dataset trop
+petit, par exemple — le panneau explique pourquoi il ne s'affiche pas.
+
 ## Où le modèle échoue
 
 Le test est découpé par chaque colonne catégorielle — **y compris celles hors
@@ -102,8 +127,10 @@ verdict.
 ## Exporter, importer, scorer
 
 Le modèle s'exporte en JSON avec son manifeste : famille, pipeline, versions.
-Il se réimporte dans une session vierge et score un CSV. Les cinq raisons de
-refus à l'import sont nommées — voir la [page des refus](/docs/refus).
+Il se réimporte dans une session vierge et score un CSV. Une règle de décision
+multiclasse figée voyage avec l'export, et le CSV scoré porte alors deux
+colonnes de plus — voir [la page des formats](/docs/formats). Les cinq raisons
+de refus à l'import sont nommées — voir la [page des refus](/docs/refus).
 
 ## Comparer des runs
 

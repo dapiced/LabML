@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V46 — Five waves of documentation debt, paid in one pass
+
+`/docs/formats` published an export manifest that no longer matched `serializeModel`, and nothing on the public site explained the multiclass decision policy shipped in V45.
+
+_Why:_ Approved 03/10/2026, right after V45 merged. A reference page describing a format the code does not produce is worse than a missing page, because it is read as authoritative. The fix is not to paraphrase the wave entries but to read `serialize.ts`, `deserialize.ts`, `score.ts` and `multiclass-decision.ts` and write down what they actually do.
+
 ## V45 — A complete multiclass decision rule — including the right not to decide
 
 V36 deliberately stopped at one-vs-rest diagnosis: it can show the precision-recall and calibration curves for one class, but it cannot turn several class thresholds into one answer.

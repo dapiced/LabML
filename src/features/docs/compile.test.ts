@@ -169,3 +169,15 @@ describe('tables', () => {
     expect(html).toContain('aria-label="Tableau : Le &quot;gagnant&quot;"');
   });
 });
+
+describe('code blocks', () => {
+  it('makes horizontally scrollable code reachable by keyboard', () => {
+    const html = compileDoc(
+      page(VALID, '## Export\n\n```json\n{"formatVersion": 4}\n```\n'),
+      'en',
+      'formats.md',
+    ).html;
+
+    expect(html).toMatch(/<pre[^>]*\stabindex="0"/);
+  });
+});
