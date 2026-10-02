@@ -12,6 +12,12 @@ import type { FittedPipeline } from '@/features/ml/train/pipeline';
 import type { Cell } from '@/features/ml/data/types';
 import type { MetricMap, ModelKey } from '@/features/ml/train/types';
 import { csvCell } from '@/lib/csv';
+import {
+  applyMulticlassPolicy,
+  evaluateMulticlassPolicy,
+  type MulticlassDecisionMetrics,
+  type MulticlassDecisionPolicy,
+} from '@/features/ml/train/multiclass-decision';
 
 const PREVIEW_ROWS = 8;
 
@@ -28,7 +34,16 @@ export interface BatchScore {
   metrics?: MetricMap;
   /** The same model's held-out test metrics, recomputed for the comparison. */
   testMetrics: MetricMap;
-  preview: { predicted: string; actual?: string; proba?: number }[];
+  /** Policy metrics on known labeled rows; absent for historical argmax scoring. */
+  decision?: MulticlassDecisionMetrics;
+  preview: {
+    predicted: string;
+    actual?: string;
+    proba?: number;
+    rawPredicted?: string;
+    policyPredicted?: string | null;
+    decisionStatus?: 'decided' | 'abstained';
+  }[];
   /** Full predictions: every original column + predicted (+ probabilities). */
   csv: string;
 }
@@ -43,6 +58,7 @@ export interface RowScorer {
   transformRow(record: Record<string, Cell>): number[];
   classes: string[];
   isClassification: boolean;
+  decisionPolicy?: MulticlassDecisionPolicy;
 }
 
 /** Source columns the fitted pipeline needs, in fitting order. */
@@ -61,6 +77,7 @@ export function scoreBatch(
   fileName: string,
   header: string[],
   columns: Cell[][],
+  decisionPolicy?: MulticlassDecisionPolicy,
 ): BatchScore {
   const model = artifacts.models.get(modelKey);
   if (!model) throw new Error('model-not-found');
@@ -78,6 +95,7 @@ export function scoreBatch(
       transformRow: artifacts.pipeline.transformRow,
       classes: artifacts.classes,
       isClassification: artifacts.isClassification,
+      ...(decisionPolicy ? { decisionPolicy } : {}),
     },
     modelKey,
     referenceMetrics,
@@ -165,11 +183,35 @@ export function scoreRows(
   }
 
   const testMetrics = referenceMetrics;
+  const policyDecisions =
+    scorer.decisionPolicy && probabilities
+      ? probabilities.map((row) => applyMulticlassPolicy(row, scorer.decisionPolicy!))
+      : null;
+  const decision =
+    scorer.decisionPolicy && probabilities && hasTarget && labeledRows > 0
+      ? evaluateMulticlassPolicy(
+          actuals.flatMap((actual) =>
+            actual === null ? [] : [classes.indexOf(actual)].filter((value) => value >= 0),
+          ),
+          probabilities.filter(
+            (_, row) => actuals[row] !== null && classes.includes(actuals[row]!),
+          ),
+          scorer.decisionPolicy,
+        )
+      : undefined;
 
   const preview = predictions.slice(0, PREVIEW_ROWS).map((value, r) => ({
     predicted: label(value),
     ...(hasTarget && actuals[r] !== null ? { actual: actuals[r]! } : {}),
     ...(probabilities ? { proba: probabilities[r][value] ?? 0 } : {}),
+    ...(policyDecisions
+      ? {
+          rawPredicted: label(policyDecisions[r].rawClass),
+          policyPredicted:
+            policyDecisions[r].policyClass === null ? null : label(policyDecisions[r].policyClass),
+          decisionStatus: policyDecisions[r].status,
+        }
+      : {}),
   }));
 
   // The exportable file keeps every original column so it re-joins cleanly.
@@ -177,12 +219,18 @@ export function scoreRows(
     ...header,
     'predicted',
     ...(probabilities ? classes.map((name) => `p_${name}`) : []),
+    ...(policyDecisions ? ['policy_decision', 'decision_status'] : []),
   ];
   const lines = [csvHeader.map(csvCell).join(',')];
   for (let r = 0; r < rowCount; r++) {
     const cells = header.map((_, c) => csvCell(columns[c][r] ?? ''));
     cells.push(csvCell(label(predictions[r])));
     if (probabilities) cells.push(...probabilities[r].map((p) => p.toFixed(4)));
+    if (policyDecisions) {
+      const policyClass = policyDecisions[r].policyClass;
+      cells.push(csvCell(policyClass === null ? '' : label(policyClass)));
+      cells.push(policyDecisions[r].status);
+    }
     lines.push(cells.join(','));
   }
 
@@ -195,6 +243,7 @@ export function scoreRows(
     unknownLabels,
     metrics,
     testMetrics,
+    ...(decision ? { decision } : {}),
     preview,
     csv: lines.join('\n'),
   };

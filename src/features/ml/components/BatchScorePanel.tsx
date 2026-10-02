@@ -111,6 +111,18 @@ export function BatchScorePanel() {
             })}
           </p>
 
+          {result.decision && (
+            <p className="text-xs text-muted" data-testid="batch-decision-coverage">
+              {t('ml.lab.batch.decisionCoverage', {
+                decided: result.decision.decided,
+                abstained: result.decision.abstained,
+                coverage: (result.decision.coverage * 100).toLocaleString(lang, {
+                  maximumFractionDigits: 1,
+                }),
+              })}
+            </p>
+          )}
+
           {result.metrics ? (
             <ScrollRegion>
               <table className="w-full max-w-xl text-left text-xs">
@@ -173,7 +185,12 @@ export function BatchScorePanel() {
             <span className="font-mono text-[0.65rem] text-muted">
               {result.preview
                 .slice(0, 4)
-                .map((p) => p.predicted + (p.actual ? ` (${p.actual})` : ''))
+                .map(
+                  (p) =>
+                    (p.decisionStatus === 'abstained'
+                      ? t('ml.lab.batch.noDecision')
+                      : (p.policyPredicted ?? p.predicted)) + (p.actual ? ` (${p.actual})` : ''),
+                )
                 .join(' · ')}
               {result.rowCount > 4 ? ' · …' : ''}
             </span>

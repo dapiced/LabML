@@ -832,7 +832,14 @@ export const useLabStore = create<LabState>((set, get) => {
       if (state.trainStatus !== 'done' || !state.insights || state.batchStatus === 'scoring')
         return;
       set({ batchStatus: 'scoring', batchResult: null, batchError: null });
-      send({ kind: 'score-batch-file', file, model: state.insights.model });
+      send({
+        kind: 'score-batch-file',
+        file,
+        model: state.insights.model,
+        ...(state.currentRun?.artifacts?.multiclassDecision?.policy
+          ? { decisionPolicy: state.currentRun.artifacts.multiclassDecision.policy }
+          : {}),
+      });
     },
 
     chooseThreshold(partial) {
@@ -877,6 +884,9 @@ export const useLabStore = create<LabState>((set, get) => {
         url: `/datasets/${fileName}`,
         name: fileName,
         model: state.insights.model,
+        ...(state.currentRun?.artifacts?.multiclassDecision?.policy
+          ? { decisionPolicy: state.currentRun.artifacts.multiclassDecision.policy }
+          : {}),
       });
     },
 

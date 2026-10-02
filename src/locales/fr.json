@@ -462,6 +462,8 @@
         "unknownLabels_other": "{{count}} lignes portent des étiquettes jamais vues à l’entraînement — prédites, mais exclues des métriques.",
         "noTarget": "Pas de colonne cible dans ce fichier — prédictions seulement, pas de métriques à comparer.",
         "downloadCsv": "Télécharger les prédictions (CSV)",
+        "decisionCoverage": "Politique : {{decided}} décisions, {{abstained}} sans décision — couverture {{coverage}} %.",
+        "noDecision": "aucune décision",
         "note": "Une baisse par rapport au jeu de test est un signal, pas un bug : le monde a bougé. Vérifiez la dérive des entrées dans le Data Studio (PSI) pour voir quelles colonnes ont glissé."
       },
       "threshold": {

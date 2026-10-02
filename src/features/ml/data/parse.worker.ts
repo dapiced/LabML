@@ -241,13 +241,26 @@ async function parseBatch(source: File | string): Promise<{ header: string[]; co
   return { header: batchHeader, cols };
 }
 
-async function handleScoreBatch(source: File | string, name: string, model: ModelKey) {
+async function handleScoreBatch(
+  source: File | string,
+  name: string,
+  model: ModelKey,
+  decisionPolicy?: import('@/features/ml/train/multiclass-decision').MulticlassDecisionPolicy,
+) {
   try {
     if (!artifacts || !lastTarget) throw new Error('no-run');
     const batch = await parseBatch(source);
     post({
       kind: 'batch-scored',
-      payload: scoreBatch(artifacts, model, lastTarget, name, batch.header, batch.cols),
+      payload: scoreBatch(
+        artifacts,
+        model,
+        lastTarget,
+        name,
+        batch.header,
+        batch.cols,
+        decisionPolicy,
+      ),
     });
   } catch (error) {
     post({ kind: 'batch-error', message: error instanceof Error ? error.message : String(error) });
@@ -551,11 +564,21 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       await handleScoreImported(await response.text(), request.name);
     } else if (request.kind === 'score-batch-file') {
-      await handleScoreBatch(request.file, request.file.name, request.model);
+      await handleScoreBatch(
+        request.file,
+        request.file.name,
+        request.model,
+        request.decisionPolicy,
+      );
     } else if (request.kind === 'score-batch-url') {
       const response = await fetch(request.url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      await handleScoreBatch(await response.text(), request.name, request.model);
+      await handleScoreBatch(
+        await response.text(),
+        request.name,
+        request.model,
+        request.decisionPolicy,
+      );
     }
   } catch (error) {
     post({ kind: 'error', message: error instanceof Error ? error.message : String(error) });

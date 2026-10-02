@@ -49,8 +49,19 @@ export type WorkerRequest =
   | { kind: 'forecast'; dateColumn: string; valueColumn: string }
   | { kind: 'export-model'; model: ModelKey }
   | { kind: 'export-predictions'; model: ModelKey }
-  | { kind: 'score-batch-file'; file: File; model: ModelKey }
-  | { kind: 'score-batch-url'; url: string; name: string; model: ModelKey }
+  | {
+      kind: 'score-batch-file';
+      file: File;
+      model: ModelKey;
+      decisionPolicy?: MulticlassDecisionPolicy;
+    }
+  | {
+      kind: 'score-batch-url';
+      url: string;
+      name: string;
+      model: ModelKey;
+      decisionPolicy?: MulticlassDecisionPolicy;
+    }
   | { kind: 'threshold-analysis'; model: ModelKey; focusClass?: number }
   | { kind: 'multiclass-decision-analysis'; model: ModelKey }
   | {
