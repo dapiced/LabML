@@ -486,6 +486,23 @@
         "focusClass": "Classe lue contre toutes les autres",
         "oneVsRestNote": "Un-contre-tous : ceci lit à quel point le modèle sépare « {{class}} » de toutes les autres classes. Ce n'est pas une règle de décision multiclasse complète — deux classes peuvent dépasser leur seuil, et rien ici ne dit laquelle l'emporterait."
       },
+      "multiclassDecision": {
+        "title": "Décisions multiclasses",
+        "hint": "Réglez un seuil par classe sur la validation. Si aucune classe ne passe son seuil, le modèle s’abstient; si plusieurs passent, l’excès normalisé tranche.",
+        "phase": {
+          "draft": "brouillon · validation",
+          "frozen": "test figé",
+          "exploratory": "exploratoire"
+        },
+        "thresholdFor": "Seuil pour {{class}}",
+        "coverage": "couverture {{value}} %",
+        "accuracy": "accuracy globale {{value}} %",
+        "decidedAccuracy": "accuracy décidée {{value}} %",
+        "test": "Évaluer sur le test",
+        "testResult": "Test : couverture {{coverage}} %, accuracy globale {{accuracy}} %.",
+        "note": "Les réglages ci-dessus utilisent seulement la validation. La première évaluation du test fige la politique et conserve une lecture honnête.",
+        "exploratoryNote": "La politique a changé après consultation du test. Les résultats suivants sont exploratoires et ne doivent pas être présentés comme une évaluation finale indépendante."
+      },
       "segments": {
         "title": "Où le modèle échoue",
         "hint": "Le jeu de test ({{rows}} lignes) est découpé par chaque colonne catégorielle — y compris celles exclues des variables, où peuvent se cacher des effets de proxy. Les tranches de moins de {{min}} lignes de test sont écartées.",

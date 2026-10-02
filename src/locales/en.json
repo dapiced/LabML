@@ -486,6 +486,23 @@
         "focusClass": "Class read against all others",
         "oneVsRestNote": "One-vs-rest: this reads how well the model separates « {{class}} » from every other class. It is not a complete multiclass decision rule — two classes can both clear their thresholds, and nothing here says which would win."
       },
+      "multiclassDecision": {
+        "title": "Multiclass decisions",
+        "hint": "Set one threshold per class on validation data. If no class clears its threshold, the model abstains; if several do, normalized excess breaks the tie.",
+        "phase": {
+          "draft": "draft · validation",
+          "frozen": "test frozen",
+          "exploratory": "exploratory"
+        },
+        "thresholdFor": "Threshold for {{class}}",
+        "coverage": "coverage {{value}}%",
+        "accuracy": "overall accuracy {{value}}%",
+        "decidedAccuracy": "decided accuracy {{value}}%",
+        "test": "Evaluate on test set",
+        "testResult": "Test: {{coverage}}% coverage, {{accuracy}}% overall accuracy.",
+        "note": "The controls above use validation data only. The first test evaluation freezes the policy and preserves an honest reading.",
+        "exploratoryNote": "The policy changed after the test was revealed. Further results are exploratory and must not be presented as an independent final evaluation."
+      },
       "segments": {
         "title": "Where the model fails",
         "hint": "The test set ({{rows}} rows) is sliced by each categorical column — including columns kept out of the features, where proxy effects can hide. Slices with fewer than {{min}} test rows are excluded.",

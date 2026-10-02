@@ -5,6 +5,7 @@ import { Leaderboard } from '@/features/ml/components/Leaderboard';
 import { BatchScorePanel } from '@/features/ml/components/BatchScorePanel';
 import { SegmentsPanel } from '@/features/ml/components/SegmentsPanel';
 import { ThresholdPanel } from '@/features/ml/components/ThresholdPanel';
+import { MulticlassDecisionPanel } from '@/features/ml/components/MulticlassDecisionPanel';
 import { UncertaintyPanel } from '@/features/ml/components/UncertaintyPanel';
 import { LearningCurvePanel } from '@/features/ml/components/LearningCurvePanel';
 import { TuningPanel } from '@/features/ml/components/TuningPanel';
@@ -149,6 +150,8 @@ export function TrainPanel() {
       <InsightsSection />
 
       <ThresholdPanel />
+
+      <MulticlassDecisionPanel />
 
       <SegmentsPanel />
 
