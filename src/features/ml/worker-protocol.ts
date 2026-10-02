@@ -47,7 +47,11 @@ export type WorkerRequest =
   | { kind: 'cancel-robust' }
   | { kind: 'explore'; features: string[]; seed: number }
   | { kind: 'forecast'; dateColumn: string; valueColumn: string }
-  | { kind: 'export-model'; model: ModelKey }
+  | {
+      kind: 'export-model';
+      model: ModelKey;
+      decisionPolicy?: MulticlassDecisionPolicy;
+    }
   | { kind: 'export-predictions'; model: ModelKey }
   | {
       kind: 'score-batch-file';

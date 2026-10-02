@@ -572,6 +572,7 @@
         "loading": "Lecture…",
         "clear": "Retirer le modèle importé",
         "targetBadge": "prédit {{target}}",
+        "abstentionPolicy": "politique d’abstention incluse",
         "summary": "variables : {{features}} · entraîné sur {{source}} · exporté le {{date}}",
         "scoreCta": "Scorer un CSV avec ce modèle",
         "scoring": "Scoring…",

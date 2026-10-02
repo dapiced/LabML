@@ -2,6 +2,7 @@ import { specsToJson } from '@/features/ml/train/pipeline';
 import { scoreModel, type TrainArtifacts } from '@/features/ml/train/trainer';
 import type { ModelKey } from '@/features/ml/train/types';
 import { csvCell } from '@/lib/csv';
+import type { MulticlassDecisionPolicy } from '@/features/ml/train/multiclass-decision';
 
 export interface ExportMeta {
   target: string;
@@ -20,6 +21,7 @@ export function serializeModel(
   artifacts: TrainArtifacts,
   key: ModelKey,
   meta: ExportMeta,
+  decisionPolicy?: MulticlassDecisionPolicy,
 ): string | null {
   const model = artifacts.models.get(key);
   if (!model?.toJSON) return null;
@@ -33,7 +35,7 @@ export function serializeModel(
   return JSON.stringify(
     {
       app: 'LabML',
-      formatVersion: 3,
+      formatVersion: 4,
       model: key,
       task: artifacts.isClassification ? 'classification' : 'regression',
       target: meta.target,
@@ -41,6 +43,7 @@ export function serializeModel(
       createdAt: Date.now(),
       sourceDataset: { name: meta.datasetName, rowCount: meta.rowCount },
       classes: artifacts.isClassification ? artifacts.classes : undefined,
+      ...(decisionPolicy ? { decisionPolicy } : {}),
       /** Held-out test metrics of the exporting run — the honest reference. */
       testMetrics: metrics,
       testRows: artifacts.testY.length,

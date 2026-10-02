@@ -280,6 +280,9 @@ async function handleScoreImported(source: File | string, name: string) {
           transformRow: imported.transformRow,
           classes: imported.manifest.classes,
           isClassification: imported.manifest.isClassification,
+          ...(imported.manifest.decisionPolicy
+            ? { decisionPolicy: imported.manifest.decisionPolicy }
+            : {}),
         },
         imported.manifest.model,
         imported.manifest.testMetrics,
@@ -478,11 +481,16 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       post({
         kind: 'model-json',
         model: request.model,
-        json: serializeModel(artifacts, request.model, {
-          target: lastTarget,
-          datasetName,
-          rowCount,
-        }),
+        json: serializeModel(
+          artifacts,
+          request.model,
+          {
+            target: lastTarget,
+            datasetName,
+            rowCount,
+          },
+          request.decisionPolicy,
+        ),
       });
     } else if (request.kind === 'export-predictions') {
       if (!artifacts) throw new Error('no-run');

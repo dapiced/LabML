@@ -572,6 +572,7 @@
         "loading": "Reading…",
         "clear": "Remove the imported model",
         "targetBadge": "predicts {{target}}",
+        "abstentionPolicy": "abstention policy included",
         "summary": "features: {{features}} · trained on {{source}} · exported {{date}}",
         "scoreCta": "Score a CSV with this model",
         "scoring": "Scoring…",

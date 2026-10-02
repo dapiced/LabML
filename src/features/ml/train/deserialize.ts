@@ -21,6 +21,7 @@ import {
 import type { TrainedModel } from '@/features/ml/train/models';
 import type { Cell } from '@/features/ml/data/types';
 import type { MetricMap, ModelKey } from '@/features/ml/train/types';
+import type { MulticlassDecisionPolicy } from '@/features/ml/train/multiclass-decision';
 
 export interface ImportedManifest {
   model: ModelKey;
@@ -35,6 +36,7 @@ export interface ImportedManifest {
   testRows: number | null;
   /** Source columns the pipeline needs on any file to score. */
   featureColumns: string[];
+  decisionPolicy?: MulticlassDecisionPolicy;
 }
 
 export interface ImportedModel {
@@ -211,7 +213,7 @@ export function deserializeModel(text: string): ImportedModel {
   if (data.app !== 'LabML') throw new Error('not-labml');
   // v2 (v22) and v3 (v24, adds TF-IDF text specs) both carry a full pipeline
   // manifest, so both stay importable; v1 predates it and cannot score a CSV.
-  if (data.formatVersion !== 2 && data.formatVersion !== 3) {
+  if (data.formatVersion !== 2 && data.formatVersion !== 3 && data.formatVersion !== 4) {
     throw new Error(`unsupported-version:${String(data.formatVersion ?? '?')}`);
   }
   const parameters = data.parameters as { kind?: string } | undefined;
@@ -226,6 +228,25 @@ export function deserializeModel(text: string): ImportedModel {
   }
 
   const isClassification = data.task === 'classification';
+  const classes = Array.isArray(data.classes) ? (data.classes as string[]) : [];
+  const rawPolicy = data.decisionPolicy as { thresholds?: unknown } | undefined;
+  let decisionPolicy: MulticlassDecisionPolicy | undefined;
+  if (rawPolicy !== undefined) {
+    const thresholds = rawPolicy.thresholds;
+    if (
+      data.formatVersion !== 4 ||
+      !isClassification ||
+      classes.length <= 2 ||
+      !Array.isArray(thresholds) ||
+      thresholds.length !== classes.length ||
+      !thresholds.every(
+        (value) => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1,
+      )
+    ) {
+      throw new Error('bad-manifest');
+    }
+    decisionPolicy = { thresholds: thresholds as number[] };
+  }
   // V35 wave 4 — the four checks above cover the manifest's outer shape, not
   // what is inside `pipeline.specs` or `parameters`. A hand-edited export with
   // a `null` spec, or a tree whose root has no children, got past them and
@@ -263,7 +284,8 @@ export function deserializeModel(text: string): ImportedModel {
       model: data.model as ModelKey,
       isClassification,
       target: data.target,
-      classes: Array.isArray(data.classes) ? (data.classes as string[]) : [],
+      classes,
+      ...(decisionPolicy ? { decisionPolicy } : {}),
       seed: typeof data.seed === 'number' ? data.seed : 0,
       createdAt: typeof data.createdAt === 'number' ? data.createdAt : null,
       sourceDataset:

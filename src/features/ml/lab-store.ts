@@ -893,7 +893,13 @@ export const useLabStore = create<LabState>((set, get) => {
     exportModel() {
       const state = get();
       if (state.trainStatus !== 'done' || !state.insights) return;
-      send({ kind: 'export-model', model: state.insights.model });
+      send({
+        kind: 'export-model',
+        model: state.insights.model,
+        ...(state.currentRun?.artifacts?.multiclassDecision?.policy
+          ? { decisionPolicy: state.currentRun.artifacts.multiclassDecision.policy }
+          : {}),
+      });
     },
 
     exportPredictions() {
