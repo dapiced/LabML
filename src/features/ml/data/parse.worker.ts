@@ -16,6 +16,10 @@ import { deserializeModel, type ImportedModel } from '@/features/ml/train/deseri
 import { scoreBatch, scoreRows } from '@/features/ml/train/score';
 import { analyzeSegments } from '@/features/ml/train/segments';
 import { analyzeThresholds } from '@/features/ml/train/threshold-analysis';
+import {
+  analyzeMulticlassDecision,
+  testMulticlassDecision,
+} from '@/features/ml/train/multiclass-decision-analysis';
 import { analyzeUncertainty, type ModelLosses } from '@/features/ml/train/uncertainty';
 import { detectTaskType, runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
 import type { Cell, ColumnProfile, ParseResultPayload } from '@/features/ml/data/types';
@@ -479,6 +483,23 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       post({
         kind: 'threshold-result',
         payload: analyzeThresholds(artifacts, request.model, request.focusClass),
+      });
+    } else if (request.kind === 'multiclass-decision-analysis') {
+      if (!artifacts) throw new Error('no-run');
+      post({
+        kind: 'multiclass-decision-result',
+        payload: analyzeMulticlassDecision(artifacts, request.model),
+      });
+    } else if (request.kind === 'multiclass-decision-test') {
+      if (!artifacts) throw new Error('no-run');
+      post({
+        kind: 'multiclass-decision-tested',
+        payload: testMulticlassDecision(
+          artifacts,
+          request.model,
+          request.policy,
+          request.exploratory,
+        ),
       });
     } else if (request.kind === 'uncertainty-analysis') {
       if (!artifacts) throw new Error('no-run');

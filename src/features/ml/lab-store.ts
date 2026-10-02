@@ -460,6 +460,11 @@ export const useLabStore = create<LabState>((set, get) => {
           if (message.payload) {
             attachArtifact({ threshold: thresholdArtifact(message.payload, choice) });
           }
+        } else if (
+          message.kind === 'multiclass-decision-result' ||
+          message.kind === 'multiclass-decision-tested'
+        ) {
+          // Task 3 connects these protocol results to editor state.
         } else if (message.kind === 'segments-result') {
           set({ segmentAnalysis: message.payload });
           if (message.payload) {

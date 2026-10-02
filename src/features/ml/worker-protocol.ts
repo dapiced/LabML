@@ -8,6 +8,11 @@ import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
 import type { LearningCurveOutcome } from '@/features/ml/train/learning-curve';
 import type { RobustRankResult } from '@/features/ml/train/robust';
 import type { ThresholdAnalysis } from '@/features/ml/train/threshold-analysis';
+import type {
+  MulticlassDecisionAnalysis,
+  MulticlassDecisionTestResult,
+} from '@/features/ml/train/multiclass-decision-analysis';
+import type { MulticlassDecisionPolicy } from '@/features/ml/train/multiclass-decision';
 import type { UncertaintyAnalysis } from '@/features/ml/train/uncertainty';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
 import type {
@@ -47,6 +52,13 @@ export type WorkerRequest =
   | { kind: 'score-batch-file'; file: File; model: ModelKey }
   | { kind: 'score-batch-url'; url: string; name: string; model: ModelKey }
   | { kind: 'threshold-analysis'; model: ModelKey; focusClass?: number }
+  | { kind: 'multiclass-decision-analysis'; model: ModelKey }
+  | {
+      kind: 'multiclass-decision-test';
+      model: ModelKey;
+      policy: MulticlassDecisionPolicy;
+      exploratory: boolean;
+    }
   | { kind: 'segment-analysis'; model: ModelKey }
   | { kind: 'uncertainty-analysis' }
   // v22: an exported model comes back to score files, no retraining.
@@ -85,6 +97,10 @@ export type WorkerResponse =
   | { kind: 'dataset-csv'; csv: string }
   // null = not applicable (multiclass, regression, or no probabilities).
   | { kind: 'threshold-result'; payload: ThresholdAnalysis | null }
+  // null = no validation split, binary/regression, or no probabilities.
+  | { kind: 'multiclass-decision-result'; payload: MulticlassDecisionAnalysis | null }
+  // Test probabilities stay private; only aggregate metrics cross the worker boundary.
+  | { kind: 'multiclass-decision-tested'; payload: MulticlassDecisionTestResult }
   // null = nothing sliceable (no categorical column, tiny test set).
   | { kind: 'segments-result'; payload: SegmentAnalysis | null }
   // null = tiny test set — no interval theater.
