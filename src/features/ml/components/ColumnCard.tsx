@@ -2,7 +2,7 @@ import { Crosshair } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { MiniDistribution } from '@/features/ml/components/MiniDistribution';
-import { effectiveExclusion, useLabStore } from '@/features/ml/lab-store';
+import { effectiveExclusion, isTrainingBusy, useLabStore } from '@/features/ml/lab-store';
 import type { ColumnProfile } from '@/features/ml/data/types';
 import { cn } from '@/lib/utils';
 
@@ -18,6 +18,8 @@ export function ColumnCard({ profile }: { profile: ColumnProfile }) {
   const overrides = useLabStore((s) => s.overrides);
   const setTarget = useLabStore((s) => s.setTarget);
   const toggleColumn = useLabStore((s) => s.toggleColumn);
+  // V47: same rule as the target picker — no edit while a run answers for it.
+  const busy = useLabStore(isTrainingBusy);
 
   const isTarget = target === profile.name;
   const exclusion = effectiveExclusion({ baseline, leaks, overrides, target }, profile.name);
@@ -77,7 +79,8 @@ export function ColumnCard({ profile }: { profile: ColumnProfile }) {
           <button
             type="button"
             onClick={() => setTarget(profile.name)}
-            className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted transition-colors hover:bg-accent-soft hover:text-accent-strong"
+            disabled={busy}
+            className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted transition-colors hover:bg-accent-soft hover:text-accent-strong disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent disabled:hover:text-muted"
           >
             <Crosshair className="h-3 w-3" aria-hidden="true" />
             {t('ml.lab.setTarget')}
@@ -87,7 +90,8 @@ export function ColumnCard({ profile }: { profile: ColumnProfile }) {
           <button
             type="button"
             onClick={() => toggleColumn(profile.name)}
-            className="rounded-full px-2 py-1 text-xs text-muted transition-colors hover:bg-surface-2 hover:text-ink"
+            disabled={busy}
+            className="rounded-full px-2 py-1 text-xs text-muted transition-colors hover:bg-surface-2 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent disabled:hover:text-muted"
           >
             {exclusion !== null ? t('ml.lab.include') : t('ml.lab.exclude')}
           </button>

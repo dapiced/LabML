@@ -24,8 +24,14 @@ import { dirname, join } from 'node:path';
 import { fetchWithRetry } from './fetch-retry.mjs';
 
 const REPO = 'onnx-community/Qwen3-0.6B-DQ-ONNX';
-/** Pinned so a silent upstream change can never reach production unnoticed. */
-const REVISION = 'main';
+/**
+ * Pinned so a silent upstream change can never reach production unnoticed.
+ * V47: it said « pinned » but held `main`, and on 07/10/2026 upstream commit
+ * 1e94c62 (« Add response template ») grew tokenizer_config.json from 9 762
+ * to 10 416 bytes. The size check caught it, as designed; the fix is to pin
+ * the commit the sizes below were measured on.
+ */
+const REVISION = 'd6beae7d59bc21264488d12f466f4ca6b252806f';
 const LICENSE = 'Apache-2.0';
 /** Parts stay under this; 24 MiB leaves room under the 25 MiB hard limit. */
 const SHARD_BYTES = 24 * 1024 * 1024;

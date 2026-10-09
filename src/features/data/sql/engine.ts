@@ -54,8 +54,17 @@ export async function openEngine(): Promise<SqlEngine> {
 
   const worker = new Worker(bundle.mainWorker);
   const db = new duckdb.AsyncDuckDB(new duckdb.ConsoleLogger(duckdb.LogLevel.WARNING), worker);
-  await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
-  const connection = await db.connect();
+  let connection: Awaited<ReturnType<typeof db.connect>>;
+  try {
+    await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+    connection = await db.connect();
+  } catch (error) {
+    // V47: a failed start used to leave the worker, and the Wasm heap it had
+    // begun to fill, alive for the rest of the tab's life.
+    worker.terminate();
+    throw error;
+  }
+  let exports = 0;
 
   return {
     flavour,
@@ -74,14 +83,18 @@ export async function openEngine(): Promise<SqlEngine> {
       return toSqlTable(columns, records, cap);
     },
     async toParquet(sql) {
-      // A per-call name so two exports can never collide on the virtual FS.
-      const name = `export-${Date.now()}.parquet`;
-      await connection.query(`COPY (${sql}) TO '${name}' (FORMAT PARQUET, COMPRESSION ZSTD)`);
-      const bytes = await db.copyFileToBuffer(name);
-      // Registered files live in the Wasm heap: dropping it keeps a session of
-      // repeated exports from growing without bound.
-      await db.dropFile(name);
-      return bytes;
+      // A per-call name so two exports can never collide on the virtual FS —
+      // V47: a counter, because two clicks can share one millisecond.
+      exports += 1;
+      const name = `export-${exports}.parquet`;
+      try {
+        await connection.query(`COPY (${sql}) TO '${name}' (FORMAT PARQUET, COMPRESSION ZSTD)`);
+        return await db.copyFileToBuffer(name);
+      } finally {
+        // Registered files live in the Wasm heap: dropping it keeps a session
+        // of repeated exports — failed ones included — from growing without bound.
+        await db.dropFile(name).catch(() => undefined);
+      }
     },
     async close() {
       await connection.close();

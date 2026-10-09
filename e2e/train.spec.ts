@@ -38,3 +38,22 @@ test('mpg: regression leaderboard ranks by RMSE', async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByText('best', { exact: true })).toBeVisible();
 });
+
+test('V47: the target and the feature set are locked while a run trains', async ({ page }) => {
+  await page.goto('/ml');
+  await page.getByRole('button', { name: /titanic\.csv/ }).click();
+  await page.selectOption('#target-select', 'survived');
+  await expect(page.getByTestId('task-badge')).toBeVisible();
+
+  await page.getByTestId('train-button').click();
+  // A result filed under a target it was not trained for is the defect this
+  // guards against: nothing that defines the question may move mid-run.
+  await expect(page.locator('#target-select')).toBeDisabled();
+  const ageCard = page.getByTestId('column-card-age');
+  await expect(ageCard.getByRole('button', { name: 'Set as target' })).toBeDisabled();
+  await expect(ageCard.getByRole('button', { name: /^(Exclude|Include)$/ })).toBeDisabled();
+
+  await expect(page.getByTestId('train-again')).toBeVisible({ timeout: 60000 });
+  await expect(page.locator('#target-select')).toBeEnabled();
+  await expect(ageCard.getByRole('button', { name: 'Set as target' })).toBeEnabled();
+});

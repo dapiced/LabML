@@ -228,7 +228,17 @@ export function VisionPage() {
     setWebcamOn(false);
   }, []);
 
-  useEffect(() => stopWebcam, [stopWebcam]);
+  // V47: getUserMedia can resolve after the page is gone — the permission
+  // prompt alone can outlive a navigation. The cleanup records the leave so
+  // a late stream is stopped at once instead of keeping the camera lit.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      stopWebcam();
+    };
+  }, [stopWebcam]);
 
   async function startWebcam() {
     setWebcamError(false);
@@ -236,6 +246,10 @@ export function VisionPage() {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment' },
       });
+      if (!mountedRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       streamRef.current = stream;
       setWebcamOn(true);
       // The <video> mounts with the state flip; attach on the next frame.

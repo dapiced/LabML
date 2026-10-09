@@ -1,7 +1,7 @@
 import { AlertTriangle, Target } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
-import { useLabStore } from '@/features/ml/lab-store';
+import { isTrainingBusy, useLabStore } from '@/features/ml/lab-store';
 
 export function TargetPicker() {
   const { t } = useTranslation();
@@ -11,6 +11,8 @@ export function TargetPicker() {
   const unsupported = useLabStore((s) => s.targetUnsupported);
   const leaks = useLabStore((s) => s.leaks);
   const setTarget = useLabStore((s) => s.setTarget);
+  // V47: the target cannot move under a computation that answers for it.
+  const busy = useLabStore(isTrainingBusy);
 
   return (
     <div className="flex flex-col gap-3">
@@ -26,7 +28,8 @@ export function TargetPicker() {
           id="target-select"
           value={target ?? ''}
           onChange={(e) => setTarget(e.target.value || null)}
-          className="h-9 min-w-48 rounded-full border border-line bg-surface px-3 font-mono text-sm"
+          disabled={busy}
+          className="h-9 min-w-48 rounded-full border border-line bg-surface px-3 font-mono text-sm disabled:cursor-not-allowed disabled:opacity-60"
         >
           <option value="">{t('ml.lab.targetPlaceholder')}</option>
           {profiles.map((p) => (

@@ -1,5 +1,5 @@
 import { Database, Play, TableIcon } from 'lucide-react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,7 @@ export function SqlPanel() {
   const sendSqlToLab = useDataStore((s) => s.sendSqlToLab);
 
   const engineRef = useRef<SqlEngine | null>(null);
+  const mountedRef = useRef(true);
   const [status, setStatus] = useState<Status>('idle');
   const [failure, setFailure] = useState<string | null>(null);
   const [tables, setTables] = useState<string[]>([]);
@@ -36,6 +37,18 @@ export function SqlPanel() {
   const [result, setResult] = useState<SqlTable | null>(null);
   const [queryError, setQueryError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
+
+  // V47: DuckDB runs in its own worker with its own Wasm heap. Nothing closed
+  // it, so every visit to the panel left one more engine behind.
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      const engine = engineRef.current;
+      engineRef.current = null;
+      void engine?.close().catch(() => undefined);
+    };
+  }, []);
 
   /** Registers one file and exposes it as a view; returns the view name. */
   const attach = useCallback(
@@ -57,9 +70,19 @@ export function SqlPanel() {
   const open = useCallback(async () => {
     setStatus('loading');
     setFailure(null);
+    // A retry replaces the engine: the previous one is closed, not orphaned.
+    const previous = engineRef.current;
+    engineRef.current = null;
+    void previous?.close().catch(() => undefined);
+    let engine: SqlEngine | null = null;
     try {
       const { openEngine } = await import('@/features/data/sql/engine');
-      const engine = await openEngine();
+      engine = await openEngine();
+      if (!mountedRef.current) {
+        // The panel was left while the engine was starting.
+        void engine.close().catch(() => undefined);
+        return;
+      }
       engineRef.current = engine;
       const attached: string[] = [];
       if (sqlSource) {
@@ -69,9 +92,15 @@ export function SqlPanel() {
         await attach(engine, sqlSource.name, bytes, MAIN_VIEW);
         attached.push(MAIN_VIEW);
       }
+      if (!mountedRef.current) return;
       setTables(attached);
       setStatus('ready');
     } catch (error) {
+      if (engine && engineRef.current === engine) {
+        engineRef.current = null;
+        void engine.close().catch(() => undefined);
+      }
+      if (!mountedRef.current) return;
       setFailure(error instanceof Error ? error.message : String(error));
       setStatus('failed');
     }
