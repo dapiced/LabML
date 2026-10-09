@@ -31,6 +31,11 @@ triggers task detection (binary, multi-class, regression) and **leak
 detection**: a column that almost perfectly mirrors the target is excluded
 automatically and named.
 
+While a run trains, and while anything computed from it is running
+(hyperparameter search, learning curve, robust ranking, batch scoring), the
+target and the columns are **locked**. Changing them at that moment would file
+results under a question they do not answer; wait for the end or cancel.
+
 ## Training and the leaderboard
 
 Eight hand-written families, plus an ensemble, plus a naive baseline. Split
@@ -42,6 +47,17 @@ that is the price of selection, and hiding it would make the score flattering.
 
 The baseline always answers the majority class (or the mean for regression). A
 model that does not beat it has learned nothing, whatever its absolute score.
+
+The split is stratified by class. A class with **a single row** stays on the
+training side: sending it to test would leave the models with no example of it
+at all. If every class has a single row, nothing is left to test on, and
+training refuses with `too-few-rows` rather than publishing metrics computed
+over an empty set.
+
+Precision, recall and F1 are **macro** averages, computed as scikit-learn does:
+over the classes present in the true labels or in the predictions. A class
+absent from both does not count as a zero; a class that is predicted but never
+true does, because those predictions are all wrong.
 
 ## How solid the numbers are
 
@@ -122,6 +138,11 @@ re-imports into a fresh session and scores a CSV. A frozen multiclass decision
 rule travels with the export, and the scored CSV then carries two extra columns
 — see [the formats page](/docs/formats). The five named import refusals are on
 the [refusals page](/docs/refus).
+
+A share link carries the run's metrics and charts in the URL fragment, never
+the data. A cut or damaged link never yields a half-read page: if it does not
+decode, or if part of the run it carries does not have the shape LabML writes,
+the page refuses to show it and says why.
 
 ## Comparing runs
 

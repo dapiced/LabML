@@ -30,14 +30,14 @@ Two audiences, and the distinction matters:
 
 ## ML Lab — training
 
-| Refusal             | What triggers it                                                | What to do                                                  |
-| ------------------- | --------------------------------------------------------------- | ----------------------------------------------------------- |
-| `no-features`       | Every column was excluded, or none is usable                    | Re-include at least one column in the columns panel         |
-| `target-not-found`  | The target column is no longer in the file                      | Pick a target again                                         |
-| `task-undetectable` | The target is neither continuous numeric nor usable categorical | Choose another column, or force its type in the Data Studio |
-| `too-few-rows`      | Grouping without a target needs more rows than there are        | Load a larger file                                          |
-| `too-few-points`    | The time series is too short for an honest forecast             | Extend the period, or aggregate less finely                 |
-| `missing-columns`   | The file to score lacks columns the model expects               | Add the columns named in the message                        |
+| Refusal             | What triggers it                                                                                                                       | What to do                                                  |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `no-features`       | Every column was excluded, or none is usable                                                                                           | Re-include at least one column in the columns panel         |
+| `target-not-found`  | The target column is no longer in the file                                                                                             | Pick a target again                                         |
+| `task-undetectable` | The target is neither continuous numeric nor usable categorical                                                                        | Choose another column, or force its type in the Data Studio |
+| `too-few-rows`      | Grouping without a target needs more rows than there are, or every class of the target has a single row and nothing is left to test on | Load a larger file, or pick a target whose classes repeat   |
+| `too-few-points`    | The time series is too short for an honest forecast                                                                                    | Extend the period, or aggregate less finely                 |
+| `missing-columns`   | The file to score lacks columns the model expects                                                                                      | Add the columns named in the message                        |
 
 ### The announced splits
 

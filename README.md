@@ -59,7 +59,8 @@ The project follows three non-negotiable principles:
   are implemented from scratch in TypeScript, seeded end to end — the same seed always
   reproduces the same run. Core metrics plus compatible ridge and k-NN predictions are
   checked against committed scikit-learn references generated outside the TypeScript
-  implementation.
+  implementation, including the edge where a class is missing from the rows being scored:
+  macro averages run over the classes present, as scikit-learn computes them.
 
 ## Features
 
@@ -78,7 +79,7 @@ The project follows three non-negotiable principles:
 | No target?     | Seeded k-means (k chosen by silhouette) + power-iteration PCA projection, groups described in plain language; date column? **Holt-Winters forecasting** validated by rolling-origin backtest                                                                                                                                                                                                                                                                                                              |
 | MLOps loop     | Score a **new batch** with honest test-vs-batch metrics; **compare two runs** side by side with cross-run uncertainty verdicts, or **up to six at once** read against the oldest of the selection; **export a model as JSON and re-import it later** — the exact predictor is rebuilt (byte-identical predictions) and scores any CSV without retraining                                                                                                                                                  |
 | Speed          | Heavy families train on **helper cores** (announced on the leaderboard, split by measured cost, never silent), and a model crosses back as JSON so it is rebuilt through the same path an imported model uses. Measured on a 60 000-row run: **74 s → 9.5 s**, with every leaderboard number identical                                                                                                                                                                                                    |
-| Persistence    | Local run history with attached artifacts, opted-in dataset storage (compressed, explicit 50 MB budget), self-contained HTML reports, data-free share links                                                                                                                                                                                                                                                                                                                                               |
+| Persistence    | Local run history with attached artifacts, opted-in dataset storage (compressed, explicit 50 MB budget), self-contained HTML reports, data-free share links (a damaged link is refused, never half-rendered)                                                                                                                                                                                                                                                                                              |
 
 **What the run gives you, past the ranking:**
 
@@ -217,7 +218,12 @@ Wikimedia Commons), the portrait is NASA, public domain._
 ## Engineering notes
 
 - **Everything off the main thread.** Parsing, cleaning, training, scoring and analysis
-  run in dedicated Web Workers behind typed message protocols.
+  run in dedicated Web Workers behind typed message protocols. Every answer a worker can
+  send has exactly one handler, checked by the compiler, and an answer that arrives for a
+  state already thrown away is dropped: the target and the features are locked while a
+  computation that depends on them runs, so a result can never be filed under a question
+  it did not answer. A worker that crashes is replaced rather than left holding the page,
+  and the DuckDB engine is closed when its panel goes away.
 - **From-scratch algorithms**, unit-tested against known results: gradient boosting
   (quantile bins, second-order gains, Newton leaves), MLP, k-means++, PCA, Holt-Winters,
   isolation forest, PSI, Shapley values, bootstrap intervals, PR/ROC/calibration curves,
@@ -241,16 +247,21 @@ Wikimedia Commons), the portrait is NASA, public domain._
   a doc page carries its whole article, in English until the app mounts); Lighthouse
   mobile ≈ 0.99 on `/ml` under real throttling. Heavy dependencies (Dexie, SheetJS, ONNX
   Runtime) load lazily.
-- **Quality bar.** 923 unit tests and 123 Playwright end-to-end tests across five
+- **Quality bar.** 924 unit tests and 123 Playwright end-to-end tests across five
   projects — desktop, a phone viewport in English and in French, dark mode, and
   Cloudflare Pages' own routing emulated by `wrangler pages dev` (a real 404, the security
   headers as served) — covering offline PWA, a fake webcam, a horizontal-overflow guard on
   every route, and axe-core WCAG A/AA checks on every page including the twenty-four
-  documentation pages. Plus strict TypeScript, ESLint, Prettier, and Lighthouse budgets —
-  all enforced in CI.
+  documentation pages. Plus strict TypeScript, ESLint, Prettier, Lighthouse budgets and
+  a **coverage floor** set from the measured baseline (statements, branches, functions,
+  lines), all enforced in CI.
 - **Supply-chain checks.** Dependabot reviews npm and GitHub Actions weekly, CodeQL
   analyzes JavaScript and TypeScript on pull requests and `main`, and CI blocks critical
-  advisories anywhere plus high advisories in dependencies shipped to production.
+  advisories anywhere plus high advisories in dependencies shipped to production. Every
+  GitHub Action is pinned to a full commit SHA, no checkout leaves the git token on the
+  runner, no pull-request value is expanded inside a script, and **zizmor** audits the
+  workflows on every pull request. A test holds each of those rules per workflow file.
+  The local language model is fetched at a pinned Hugging Face revision, not `main`.
 - **One dependency does not come from npm.** SheetJS left the registry, and the copy
   still published there (`xlsx@0.18.5`) carries two unfixable high advisories. The
   dependency points at the project's official tarball instead, which fixes both;
@@ -277,6 +288,7 @@ npm run dev        # start the dev server
 | Script                                  | Purpose                                                        |
 | --------------------------------------- | -------------------------------------------------------------- |
 | `npm run test`                          | Unit tests (Vitest)                                            |
+| `npm run test:coverage`                 | Unit tests with the coverage floor CI enforces                 |
 | `npm run e2e`                           | End-to-end tests (Playwright)                                  |
 | `npm run typecheck`                     | TypeScript, strict mode                                        |
 | `npm run lint` / `npm run format:check` | ESLint / Prettier                                              |
@@ -330,7 +342,10 @@ CI builds, tests and deploys on every push: pull requests get a Cloudflare Pages
 ## Roadmap
 
 Development proceeds in planned "caps" of feature waves; six caps have shipped (MVP
-through the lab meeting the real world — real photos, real text, real file sizes). The full plan, delivery log and design decisions live in
+through the lab meeting the real world: real photos, real text, real file sizes). Cap 7
+makes what already ships hold up under pressure: worker lifecycle, damaged share links,
+CI hardening, metric edge cases and a store refactor are delivered; major dependency
+upgrades come next. The full plan, delivery log and design decisions live in
 [PLAN.md](PLAN.md); [CHANGELOG.md](CHANGELOG.md) is extracted from it — one entry per
 wave, newest first — by `npm run changelog`, and a test fails when the two disagree.
 

@@ -42,6 +42,9 @@ They are not equivalent, and mixing them would be dishonest:
 | Catching async errors and shipping crash reports           | React boundaries cannot see callbacks or event handlers — claiming otherwise would be false; and nothing leaves the browser, telemetry included                        |
 | A daily Dependabot and `npm audit fix --force`             | A daily cadence drowns the signal; `--force` moves majors without reading the break. The remaining advisories sit in build tooling, and we say so instead of hiding it |
 | Picking multiclass thresholds automatically                | The lab shows its decisions instead of making them for you; and abstention is neither uncertainty calibration nor a conformal guarantee                                |
+| A run id in every worker message                           | The worker answers in the order it is written to, so the training status is enough to recognise a stale answer. The id becomes necessary the day requests can overlap  |
+| A « rare class » warning in the interface                  | A one-row class stays in training, and a target where every class has one row is refused by name; a banner would flag a problem the split already handles              |
+| Splitting the ML Lab store into independent slices         | Every action shares one worker: slicing would have moved code without separating anything                                                                              |
 
 ## Dropped after measurement
 
@@ -64,6 +67,12 @@ person — is covered for 0 MB by an honest refusal. CLIP would answer a
 **A better object detector** (YOLOX-S, ~35 MB, V31). This one the bench does
 arbitrate: the current detector's two misses are inert — both images are
 already named correctly.
+
+**A field-by-field validator for share links** (V48). Planned. Measured on
+three real links with every field deleted, nulled or retyped: the links the
+decoder accepted crashed the page on 99 distinct paths. A validator that size
+would drift with every new analysis; a guard at render time covers them all,
+and a test replays the measurement on every run.
 
 ## Predictions measurement refuted
 

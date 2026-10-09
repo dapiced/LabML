@@ -27,21 +27,24 @@ Elles ne se valent pas, et les mélanger serait malhonnête :
 
 ## Ce qui a été écarté par choix
 
-| Écarté                                                             | Pourquoi                                                                                                                                                                                  |
-| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Un mode AutoML « on s'occupe de tout »                             | L'exact contraire d'un laboratoire qui montre ses décisions                                                                                                                               |
-| Une dixième famille de modèles                                     | Neuf suffisent ; une dixième n'améliore ni l'honnêteté ni la compréhension                                                                                                                |
-| Le deep learning tabulaire                                         | Coût élevé, aucun gain à cette échelle, et ce ne serait plus écrit à la main                                                                                                              |
-| Un éditeur de cellules façon tableur                               | Les retouches à la main cassent la reproductibilité — la recette est le seul enregistrement                                                                                               |
-| La déduplication floue                                             | Faux positifs garantis sur des noms et des adresses : fusionner deux personnes réelles en silence                                                                                         |
-| L'imputation par modèle                                            | Opaque, et elle fabrique des valeurs plausibles — refusée deux fois, en V39 et en V40                                                                                                     |
-| Cacher les modèles entre exécutions                                | La clé de cache serait la configuration entière plus les données ; un hit périmé, c'est un classement faux sans avertissement                                                             |
-| Deviner la locale d'un fichier                                     | Le navigateur n'a aucun rapport avec le fichier qu'on y dépose                                                                                                                            |
-| Rendre l'indicateur d'absence obligatoire                          | Il ajouterait des colonnes à toute recette existante : imposer n'est pas annoncer                                                                                                         |
-| Traduire le changelog et prérendre la documentation française      | Le changelog est un journal d'ingénierie, pas un contenu éditorial ; sans routes par langue, des alternates hreflang mentiraient                                                          |
-| Capter les erreurs asynchrones et envoyer des rapports de plantage | Les boundaries React ne voient pas les callbacks ni les gestionnaires d'événements — prétendre le contraire serait faux ; et rien ne quitte le navigateur, télémétrie comprise            |
-| Un Dependabot quotidien et un `npm audit fix --force`              | Une cadence quotidienne noie le signal ; `--force` change des majeures sans lire la rupture. Les advisories restantes touchent les outils de build, et on le dit plutôt que de le masquer |
-| Choisir les seuils multiclasses automatiquement                    | Le laboratoire montre ses décisions au lieu de les prendre à votre place ; et l'abstention n'est ni une calibration d'incertitude ni une garantie conforme                                |
+| Écarté                                                             | Pourquoi                                                                                                                                                                                             |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Un mode AutoML « on s'occupe de tout »                             | L'exact contraire d'un laboratoire qui montre ses décisions                                                                                                                                          |
+| Une dixième famille de modèles                                     | Neuf suffisent ; une dixième n'améliore ni l'honnêteté ni la compréhension                                                                                                                           |
+| Le deep learning tabulaire                                         | Coût élevé, aucun gain à cette échelle, et ce ne serait plus écrit à la main                                                                                                                         |
+| Un éditeur de cellules façon tableur                               | Les retouches à la main cassent la reproductibilité — la recette est le seul enregistrement                                                                                                          |
+| La déduplication floue                                             | Faux positifs garantis sur des noms et des adresses : fusionner deux personnes réelles en silence                                                                                                    |
+| L'imputation par modèle                                            | Opaque, et elle fabrique des valeurs plausibles — refusée deux fois, en V39 et en V40                                                                                                                |
+| Cacher les modèles entre exécutions                                | La clé de cache serait la configuration entière plus les données ; un hit périmé, c'est un classement faux sans avertissement                                                                        |
+| Deviner la locale d'un fichier                                     | Le navigateur n'a aucun rapport avec le fichier qu'on y dépose                                                                                                                                       |
+| Rendre l'indicateur d'absence obligatoire                          | Il ajouterait des colonnes à toute recette existante : imposer n'est pas annoncer                                                                                                                    |
+| Traduire le changelog et prérendre la documentation française      | Le changelog est un journal d'ingénierie, pas un contenu éditorial ; sans routes par langue, des alternates hreflang mentiraient                                                                     |
+| Capter les erreurs asynchrones et envoyer des rapports de plantage | Les boundaries React ne voient pas les callbacks ni les gestionnaires d'événements — prétendre le contraire serait faux ; et rien ne quitte le navigateur, télémétrie comprise                       |
+| Un Dependabot quotidien et un `npm audit fix --force`              | Une cadence quotidienne noie le signal ; `--force` change des majeures sans lire la rupture. Les advisories restantes touchent les outils de build, et on le dit plutôt que de le masquer            |
+| Choisir les seuils multiclasses automatiquement                    | Le laboratoire montre ses décisions au lieu de les prendre à votre place ; et l'abstention n'est ni une calibration d'incertitude ni une garantie conforme                                           |
+| Un identifiant de run dans chaque message du worker                | Le worker répond dans l'ordre où on lui écrit : l'état de l'entraînement suffit à reconnaître une réponse périmée. L'identifiant deviendra nécessaire le jour où des requêtes pourront se chevaucher |
+| Un avertissement « classe rare » dans l'interface                  | Une classe d'une seule ligne reste à l'entraînement, et une cible où chaque classe n'a qu'une ligne est refusée par son nom ; un bandeau signalerait un problème que la découpe règle déjà           |
+| Découper le store du ML Lab en tranches indépendantes              | Toutes ses actions partagent un seul worker : découper aurait déplacé du code sans rien séparer                                                                                                      |
 
 ## Ce qui a été abandonné après mesure
 
@@ -65,6 +68,13 @@ répondrait à une **autre** question, et le banc ne peut pas l'arbitrer.
 **Un meilleur détecteur d'objets** (YOLOX-S, ~35 Mo, V31). Celui-là, le banc
 l'arbitre : les deux ratés du détecteur actuel sont inertes — les deux images
 sont déjà nommées correctement.
+
+**Un validateur champ par champ pour les liens de partage** (V48). Prévu par le
+plan. La mesure, sur trois vrais liens dont chaque champ a été supprimé, mis à
+null ou changé de type : les liens acceptés par le décodeur faisaient planter
+la page sur 99 chemins différents. Un validateur de cette taille dériverait à
+chaque nouvelle analyse ; un garde-fou au rendu les couvre tous, et un test
+rejoue la mesure à chaque exécution.
 
 ## Des prédictions que la mesure a démenties
 
