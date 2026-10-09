@@ -690,7 +690,8 @@
         "note": "Ce lien ne transporte que les métriques et graphiques — jamais les données d'origine. Il vit dans le fragment d'URL, que les navigateurs n'envoient à aucun serveur.",
         "invalid": "Lien de partage invalide ou incomplet.",
         "invalidTitle": "Ce lien ne peut pas être ouvert",
-        "invalidHelp": "Un lien de partage porte tout le run dans le fragment d'URL, après le « # ». S'il a été coupé — par une messagerie, un retour à la ligne, un copier-coller partiel — il ne reste pas assez pour reconstruire le run. Redemandez le lien complet à la personne qui vous l'a envoyé."
+        "invalidHelp": "Un lien de partage porte tout le run dans le fragment d'URL, après le « # ». S'il a été coupé — par une messagerie, un retour à la ligne, un copier-coller partiel — il ne reste pas assez pour reconstruire le run. Redemandez le lien complet à la personne qui vous l'a envoyé.",
+        "unreadable": "Le lien s'est décodé, mais une partie du run qu'il contient n'a pas la forme qu'écrit LabML : le plus souvent un lien modifié à la main, ou abîmé d'une façon qui se décompresse encore. Rien n'en est affiché, pour qu'aucun chiffre lu à moitié ne passe pour un vrai."
       },
       "reportFooter": "Généré localement par LabML — aucune donnée n'a quitté le navigateur.",
       "splitMode": {

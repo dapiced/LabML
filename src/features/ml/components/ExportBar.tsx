@@ -5,15 +5,7 @@ import { Button } from '@/components/ui/button';
 import { buildReportHtml } from '@/features/ml/projects/report';
 import { encodeShareFragment } from '@/features/ml/projects/share';
 import { useLabStore } from '@/features/ml/lab-store';
-
-function downloadFile(name: string, mime: string, content: string) {
-  const url = URL.createObjectURL(new Blob([content], { type: mime }));
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = name;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
+import { downloadFile } from '@/lib/download';
 
 /** Export & share actions for the completed run — everything generated locally. */
 export function ExportBar() {
@@ -28,7 +20,7 @@ export function ExportBar() {
 
   useEffect(() => {
     if (!exportedFile) return;
-    downloadFile(exportedFile.name, exportedFile.mime, exportedFile.content);
+    downloadFile(exportedFile.name, exportedFile.content, exportedFile.mime);
     clearExportedFile();
   }, [exportedFile, clearExportedFile]);
 
@@ -45,8 +37,8 @@ export function ExportBar() {
     if (!currentRun) return;
     downloadFile(
       `labml-${currentRun.dataset.name.replace(/\.[a-z]+$/i, '')}-report.html`,
-      'text/html',
       buildReportHtml(currentRun, t, lang),
+      'text/html',
     );
   }
 

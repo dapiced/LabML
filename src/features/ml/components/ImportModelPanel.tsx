@@ -6,15 +6,7 @@ import { Eyebrow } from '@/components/ui/eyebrow';
 import { METRIC_ROWS, metricDelta } from '@/features/ml/train/score-view';
 import { useLabStore } from '@/features/ml/lab-store';
 import { cn } from '@/lib/utils';
-
-function downloadCsv(content: string, name: string) {
-  const url = URL.createObjectURL(new Blob([content], { type: 'text/csv' }));
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = name;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
+import { downloadFile } from '@/lib/download';
 
 /** Maps a named worker refusal to its translation key (suffixes stripped). */
 function errorKey(message: string): { key: string; detail?: string } {
@@ -217,7 +209,9 @@ export function ImportModelPanel() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => downloadCsv(result.csv, `labml-imported-${result.fileName}`)}
+              onClick={() =>
+                downloadFile(`labml-imported-${result.fileName}`, result.csv, 'text/csv')
+              }
             >
               {t('ml.lab.batch.downloadCsv')}
             </Button>

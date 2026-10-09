@@ -690,7 +690,8 @@
         "note": "This link carries only metrics and charts — never the original data. It lives in the URL fragment, which browsers do not send to any server.",
         "invalid": "Invalid or incomplete share link.",
         "invalidTitle": "This link cannot be opened",
-        "invalidHelp": "A share link carries the whole run in the URL fragment, after the « # ». If it was cut short — by a chat client, a line break, a partial copy-paste — there is not enough left to rebuild the run. Ask whoever sent it for the complete link."
+        "invalidHelp": "A share link carries the whole run in the URL fragment, after the « # ». If it was cut short — by a chat client, a line break, a partial copy-paste — there is not enough left to rebuild the run. Ask whoever sent it for the complete link.",
+        "unreadable": "The link decoded, but part of the run inside it does not have the shape LabML writes: most often a link edited by hand, or damaged somewhere in a way that still decompresses. Nothing from it is shown, so no half-read figure can pass for a real one."
       },
       "reportFooter": "Generated locally by LabML — no data ever left the browser.",
       "splitMode": {
