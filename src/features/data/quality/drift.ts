@@ -5,8 +5,9 @@
  * the reference), new/vanished categories, missing-rate shifts. Pure and
  * deterministic; the conventional PSI thresholds 0.1 / 0.25 grade severity.
  */
-import { inferColumnType, isMissing, parseNumber } from '@/features/ml/data/infer';
+import { inferColumnType, isMissing } from '@/features/ml/data/infer';
 import { quantileSorted } from '@/features/data/quality/checks';
+import { missingRatio, numbersOf, sharesOverEdges } from '@/features/data/quality/distribution';
 import type { Cell, ColumnType } from '@/features/ml/data/types';
 
 const NUMERIC_BINS = 10;
@@ -62,34 +63,6 @@ export function psi(reference: number[], current: number[]): number {
   return total;
 }
 
-function numbersOf(values: Cell[]): number[] {
-  const numbers: number[] = [];
-  for (const value of values) {
-    if (isMissing(value)) continue;
-    const parsed = parseNumber((value as string).trim());
-    if (parsed !== null) numbers.push(parsed);
-  }
-  return numbers;
-}
-
-function missingRatio(values: Cell[]): number {
-  if (values.length === 0) return 0;
-  let missing = 0;
-  for (const value of values) if (isMissing(value)) missing += 1;
-  return missing / values.length;
-}
-
-/** Shares over bins whose edges are the reference's quantiles (open-ended tails). */
-function numericShares(edges: number[], numbers: number[]): number[] {
-  const counts = new Array<number>(edges.length + 1).fill(0);
-  for (const value of numbers) {
-    let bin = 0;
-    while (bin < edges.length && value > edges[bin]) bin += 1;
-    counts[bin] += 1;
-  }
-  return counts.map((count) => (numbers.length > 0 ? count / numbers.length : 0));
-}
-
 function numericDrift(column: string, ref: Cell[], next: Cell[]): ColumnDrift {
   const refNumbers = numbersOf(ref).sort((a, b) => a - b);
   const newNumbers = numbersOf(next);
@@ -101,7 +74,7 @@ function numericDrift(column: string, ref: Cell[], next: Cell[]): ColumnDrift {
   const value =
     refNumbers.length === 0 || newNumbers.length === 0
       ? 0
-      : psi(numericShares(edges, refNumbers), numericShares(edges, newNumbers));
+      : psi(sharesOverEdges(edges, refNumbers), sharesOverEdges(edges, newNumbers));
   const mean = (numbers: number[]) =>
     numbers.length > 0 ? numbers.reduce((a, v) => a + v, 0) / numbers.length : 0;
   return {

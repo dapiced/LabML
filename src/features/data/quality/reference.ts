@@ -13,7 +13,7 @@
  * salary distribution, not anybody's salary. That is what makes it safe to
  * commit next to the code it describes, which is the whole point of having it.
  */
-import { isMissing, inferColumnType, parseNumber } from '@/features/ml/data/infer';
+import { isMissing, inferColumnType } from '@/features/ml/data/infer';
 import {
   psi,
   severityOf,
@@ -21,6 +21,7 @@ import {
   type DriftSeverity,
 } from '@/features/data/quality/drift';
 import type { Cell } from '@/features/ml/data/types';
+import { missingRatio, numbersOf, sharesOverEdges } from '@/features/data/quality/distribution';
 
 /** Same bin count as V11, so a profile and a live comparison agree. */
 const NUMERIC_BINS = 10;
@@ -59,39 +60,12 @@ export interface DataProfile {
 
 const OTHER = '__other__';
 
-function numbersOf(values: Cell[]): number[] {
-  const numbers: number[] = [];
-  for (const value of values) {
-    if (isMissing(value)) continue;
-    const parsed = parseNumber((value as string).trim());
-    if (parsed !== null) numbers.push(parsed);
-  }
-  return numbers;
-}
-
-function missingRatio(values: Cell[]): number {
-  if (values.length === 0) return 0;
-  let missing = 0;
-  for (const value of values) if (isMissing(value)) missing += 1;
-  return missing / values.length;
-}
-
 function quantile(sorted: number[], q: number): number {
   if (sorted.length === 0) return 0;
   const position = (sorted.length - 1) * q;
   const low = Math.floor(position);
   const high = Math.ceil(position);
   return low === high ? sorted[low] : sorted[low] + (position - low) * (sorted[high] - sorted[low]);
-}
-
-function sharesOverEdges(edges: number[], numbers: number[]): number[] {
-  const counts = new Array<number>(edges.length + 1).fill(0);
-  for (const value of numbers) {
-    let bin = 0;
-    while (bin < edges.length && value > edges[bin]) bin += 1;
-    counts[bin] += 1;
-  }
-  return counts.map((count) => (numbers.length > 0 ? count / numbers.length : 0));
 }
 
 function categoryShares(values: Cell[]): { shares: Record<string, number>; names: string[] } {

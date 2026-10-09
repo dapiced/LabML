@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V51 — A store that fits on a screen
+
+No behaviour change, and the proof is the suite: the 906 unit tests and the 97 Chromium e2e tests that passed before pass unchanged after.
+
+_Why:_ Approved 09/10/2026 after V50. Only after V47 to V50, as the plan required: the store's concurrency rules and the metrics were pinned by tests before their code moved, so a regression in the move would have failed loudly.
+
 ## V50 — Metrics that agree with the reference on every edge
 
 Measured before anything changed, then checked against scikit-learn rather than against our own reading of it.
