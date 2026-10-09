@@ -241,7 +241,7 @@ Wikimedia Commons), the portrait is NASA, public domain._
   a doc page carries its whole article, in English until the app mounts); Lighthouse
   mobile ≈ 0.99 on `/ml` under real throttling. Heavy dependencies (Dexie, SheetJS, ONNX
   Runtime) load lazily.
-- **Quality bar.** 883 unit tests and 123 Playwright end-to-end tests across five
+- **Quality bar.** 889 unit tests and 123 Playwright end-to-end tests across five
   projects — desktop, a phone viewport in English and in French, dark mode, and
   Cloudflare Pages' own routing emulated by `wrangler pages dev` (a real 404, the security
   headers as served) — covering offline PWA, a fake webcam, a horizontal-overflow guard on

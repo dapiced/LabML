@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V48 — A damaged share link ends on a refusal, never on a crash
+
+The plan for this row was a deeper validator: check `insights.importance`, numeric metrics, `classes` and `confusion`, the fields the audit had named.
+
+_Why:_ Approved 09/10/2026 after V47. A link is input from a stranger, and the most common stranger is a chat client that cut it. The decoder already refused the shapes the V35 audit had found; the measurement showed it could not keep up with the format, and that the robust answer was at the point of failure rather than at the gate.
+
 ## V47 — Workers that cannot answer the wrong question
 
 Six lifecycle defects in shipped code, each reproduced by a test that failed before its fix.

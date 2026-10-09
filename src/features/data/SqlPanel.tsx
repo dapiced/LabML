@@ -9,6 +9,7 @@ import { useDataStore } from '@/features/data/data-store';
 import { BUNDLE_BYTES, type SqlEngine } from '@/features/data/sql/engine';
 import { readerFor, tableNameFor, tableToCsv, type SqlTable } from '@/features/data/sql/table';
 import { ScrollRegion } from '@/components/ui/scroll-region';
+import { downloadFile } from '@/lib/download';
 
 /** Rows painted at once. The count above the table always tells the truth. */
 const DISPLAY_CAP = 200;
@@ -141,13 +142,7 @@ export function SqlPanel() {
 
   const download = useCallback(() => {
     if (!result) return;
-    const blob = new Blob([tableToCsv(result)], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = 'query.csv';
-    anchor.click();
-    URL.revokeObjectURL(url);
+    downloadFile('query.csv', tableToCsv(result), 'text/csv');
   }, [result]);
 
   const toLab = useCallback(() => {

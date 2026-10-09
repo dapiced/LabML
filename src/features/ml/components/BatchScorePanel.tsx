@@ -7,15 +7,7 @@ import { Eyebrow } from '@/components/ui/eyebrow';
 import { useLabStore } from '@/features/ml/lab-store';
 import { METRIC_ROWS, metricDelta } from '@/features/ml/train/score-view';
 import { ScrollRegion } from '@/components/ui/scroll-region';
-
-function downloadCsv(name: string, content: string) {
-  const url = URL.createObjectURL(new Blob([content], { type: 'text/csv' }));
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = name;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
+import { downloadFile } from '@/lib/download';
 
 /** The production gesture: score a NEW file with the inspected model. */
 export function BatchScorePanel() {
@@ -177,7 +169,11 @@ export function BatchScorePanel() {
               variant="outline"
               size="sm"
               onClick={() =>
-                downloadCsv(result.fileName.replace(/\.[a-z]+$/i, '') + '-scored.csv', result.csv)
+                downloadFile(
+                  result.fileName.replace(/\.[a-z]+$/i, '') + '-scored.csv',
+                  result.csv,
+                  'text/csv',
+                )
               }
             >
               {t('ml.lab.batch.downloadCsv')}

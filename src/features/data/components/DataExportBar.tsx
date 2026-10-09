@@ -5,15 +5,7 @@ import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { useDataStore } from '@/features/data/data-store';
 import { useLabStore } from '@/features/ml/lab-store';
-
-function downloadFile(name: string, mime: string, content: string) {
-  const url = URL.createObjectURL(new Blob([content], { type: mime }));
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = name;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
+import { downloadFile } from '@/lib/download';
 
 /** Exports of the cleaned dataset — generated locally, like everything else. */
 export function DataExportBar() {
@@ -30,7 +22,7 @@ export function DataExportBar() {
 
   useEffect(() => {
     if (!exportedFile) return;
-    downloadFile(exportedFile.name, exportedFile.mime, exportedFile.content);
+    downloadFile(exportedFile.name, exportedFile.content, exportedFile.mime);
     clearExportedFile();
   }, [exportedFile, clearExportedFile]);
 
