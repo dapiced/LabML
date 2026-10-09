@@ -1,312 +1,37 @@
 import { create } from 'zustand';
-import type { ReadFormat } from '@/features/ml/data/locale';
-import type { RunArtifacts, RunRecord } from '@/features/ml/projects/types';
-import type {
-  ColumnSuggestion,
-  DatasetMeta,
-  ColumnProfile,
-  ExclusionReason,
-  TaskInfo,
-} from '@/features/ml/data/types';
-import { thresholdMetrics } from '@/features/ml/train/threshold';
-import type { BatchScore } from '@/features/ml/train/score';
-import type { ImportedManifest } from '@/features/ml/train/deserialize';
-import type { SegmentAnalysis } from '@/features/ml/train/segments';
-import type { ThresholdAnalysis } from '@/features/ml/train/threshold-analysis';
-import type { UncertaintyAnalysis } from '@/features/ml/train/uncertainty';
-import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
-import type { LearningCurveOutcome } from '@/features/ml/train/learning-curve';
-import type { RobustRankResult } from '@/features/ml/train/robust';
-import type { RankingMetric, SplitChoice } from '@/features/ml/train/types';
-import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
-import type { ForecastPayload } from '@/features/ml/timeseries/run';
-import type { ShapleyExplanation } from '@/features/ml/train/shapley';
-import type {
-  InsightsPayload,
-  ModelKey,
-  ModelResult,
-  TrainSummary,
-  WhatIfResult,
-} from '@/features/ml/train/types';
+import type { RunArtifacts } from '@/features/ml/projects/types';
+import type { ExclusionReason } from '@/features/ml/data/types';
 import type { WorkerRequest, WorkerResponse } from '@/features/ml/worker-protocol';
-import { bestResult } from '@/features/ml/train/ranking';
 import { evaluateMulticlassPolicy } from '@/features/ml/train/multiclass-decision';
-import type { MulticlassDecisionAnalysis } from '@/features/ml/train/multiclass-decision-analysis';
 import {
   editMulticlassThreshold,
   isExploratoryTestRequest,
-  receiveMulticlassDecisionTest,
-  type MulticlassDecisionEditorState,
 } from '@/features/ml/train/multiclass-decision-state';
+import {
+  initialData,
+  initialTraining,
+  TEST_RATIO,
+  TRAIN_SEED,
+  type LabState,
+} from '@/features/ml/store/state';
+import { isStaleResponse, isTrainingBusy } from '@/features/ml/store/fence';
+import { thresholdArtifact } from '@/features/ml/store/artifacts';
+import { createResponseHandlers } from '@/features/ml/store/responses';
 
-export type LabStatus = 'idle' | 'parsing' | 'ready' | 'error';
-export type TrainStatus = 'idle' | 'training' | 'done';
-
-export const TRAIN_SEED = 42;
-export const TEST_RATIO = 0.2;
-
-interface LabState {
-  status: LabStatus;
-  error: string | null;
-  rowsParsed: number;
-  meta: DatasetMeta | null;
-  profiles: ColumnProfile[];
-  preview: Record<string, string>[];
-  /** V38: how the file was read — null until a file has been parsed. */
-  readFormat: ReadFormat | null;
-  /** Target-independent suggestions computed at parse time. */
-  baseline: ColumnSuggestion[];
-  target: string | null;
-  task: TaskInfo | null;
-  targetUnsupported: 'type' | 'tooManyClasses' | 'empty' | null;
-  /** Target-dependent leak suggestions. */
-  leaks: ColumnSuggestion[];
-  /** Manual include/exclude decisions that override the suggestions. */
-  overrides: Record<string, 'include' | 'exclude'>;
-  /** V35: announced non-random split, chosen in the UI. Null = seeded random. */
-  splitChoice: SplitChoice | null;
-  /** V36: class weighting, off by default — a knob that does nothing is worse than none. */
-  classWeighting: boolean;
-  /** V36: which metric the leaderboard ranks on. Null = the task's default. */
-  rankMetric: RankingMetric | null;
-  /** V36: which class the threshold panel reads one-vs-rest (multiclass only). */
-  thresholdClass: number;
-  trainStatus: TrainStatus;
-  modelProgress: { key: ModelKey; index: number; total: number } | null;
-  results: ModelResult[];
-  summary: TrainSummary | null;
-  /** Insights bundle for the currently inspected model (defaults to the best). */
-  insights: InsightsPayload | null;
-  whatIf: WhatIfResult | null;
-  /** Shapley explanation of the latest what-if row (cleared with it). */
-  explanation: ShapleyExplanation | null;
-  tuneStatus: 'idle' | 'running' | 'done';
-  tuneProgress: { done: number; total: number; bestCv: number | null } | null;
-  tuneOutcome: TuneOutcome | null;
-  curveStatus: 'idle' | 'running' | 'done';
-  curveProgress: { done: number; total: number } | null;
-  robustStatus: 'idle' | 'running' | 'done';
-  robustProgress: { done: number; total: number } | null;
-  robustOutcome: RobustRankResult | null;
-  /** null after a run = the worker refused (named): no curve theater. */
-  curveOutcome: LearningCurveOutcome | null;
-  exploreStatus: 'idle' | 'running' | 'done';
-  exploration: ExplorationPayload | null;
-  forecastStatus: 'idle' | 'running' | 'done' | 'error';
-  forecastPayload: ForecastPayload | null;
-  batchStatus: 'idle' | 'scoring' | 'done' | 'error';
-  batchResult: BatchScore | null;
-  batchError: string | null;
-  /** Binary + probabilistic models only — null otherwise. */
-  thresholdAnalysis: ThresholdAnalysis | null;
-  thresholdChoice: { threshold: number; costFp: number; costFn: number };
-  /** Validation-only editor for abstaining multiclass decisions. */
-  multiclassDecision: {
-    analysis: MulticlassDecisionAnalysis;
-    editor: MulticlassDecisionEditorState;
-  } | null;
-  multiclassDecisionTestPending: boolean;
-  multiclassDecisionUnavailable: boolean;
-  /** Per-segment metrics of the inspected model — null when nothing sliceable. */
-  segmentAnalysis: SegmentAnalysis | null;
-  /** Leaderboard-wide 95% intervals — belongs to the run, not the inspected model. */
-  uncertaintyAnalysis: UncertaintyAnalysis | null;
-  /** The auto-saved record of the current run (id set once stored). */
-  currentRun: RunRecord | null;
-  /** Local id of the stored copy of the CURRENT dataset — null if not kept. */
-  savedDatasetId: number | null;
-  datasetSaving: boolean;
-  /** Refusal detail when a save does not fit the quota — named, never silent. */
-  datasetQuotaError: { usedBytes: number; neededBytes: number; quotaBytes: number } | null;
-  /** v22: the manifest of a re-imported exported model — null when none. */
-  importedManifest: ImportedManifest | null;
-  importedStatus: 'idle' | 'loading' | 'scoring';
-  importedResult: BatchScore | null;
-  importedError: string | null;
-  /** File produced by an export action, consumed once by the UI download effect. */
-  exportedFile: { name: string; mime: string; content: string } | null;
-  loadFile: (file: File) => void;
-  loadDemo: (fileName: string) => void;
-  saveDataset: () => void;
-  openDataset: (id: number) => void;
-  forgetDataset: (id: number) => void;
-  importModelFile: (file: File) => void;
-  importedScoreFile: (file: File) => void;
-  importedScoreDemo: (fileName: string) => void;
-  clearImported: () => void;
-  setTarget: (column: string | null) => void;
-  toggleColumn: (column: string) => void;
-  train: () => void;
-  cancelTrain: () => void;
-  selectInsightModel: (model: ModelKey) => void;
-  requestWhatIf: (values: Record<string, string>) => void;
-  requestExplanation: (values: Record<string, string>) => void;
-  tune: (model: TunableKey) => void;
-  cancelTune: () => void;
-  learningCurve: (model: ModelKey) => void;
-  robustRank: () => void;
-  cancelRobust: () => void;
-  setSplitChoice: (choice: SplitChoice | null) => void;
-  setClassWeighting: (on: boolean) => void;
-  setRankMetric: (metric: RankingMetric | null) => void;
-  setThresholdClass: (index: number) => void;
-  cancelCurve: () => void;
-  explore: () => void;
-  forecast: (dateColumn: string, valueColumn: string) => void;
-  scoreBatch: (file: File) => void;
-  scoreBatchDemo: (fileName: string) => void;
-  chooseThreshold: (
-    partial: Partial<{ threshold: number; costFp: number; costFn: number }>,
-  ) => void;
-  setMulticlassThreshold: (classIndex: number, threshold: number) => void;
-  testMulticlassDecision: () => void;
-  exportModel: () => void;
-  exportPredictions: () => void;
-  clearExportedFile: () => void;
-  reset: () => void;
-}
+export {
+  TEST_RATIO,
+  TRAIN_SEED,
+  type LabStatus,
+  type TrainStatus,
+} from '@/features/ml/store/state';
+export { isStaleResponse, isTrainingBusy } from '@/features/ml/store/fence';
 
 let worker: Worker | null = null;
-
-/** V47: the worker answers that belong to one training stream. */
-const TRAINING_STREAM = new Set<WorkerResponse['kind']>([
-  'model-start',
-  'model-result',
-  'train-complete',
-  'train-cancelled',
-]);
-
-/**
- * V47: the answers computed FROM a finished run — insights, analyses, tuning,
- * exports. They are only meaningful while that run is the one on screen.
- */
-const RUN_DERIVED = new Set<WorkerResponse['kind']>([
-  'insights',
-  'what-if-result',
-  'explanation',
-  'tune-progress',
-  'tune-complete',
-  'tune-cancelled',
-  'curve-progress',
-  'curve-complete',
-  'curve-cancelled',
-  'robust-progress',
-  'robust-complete',
-  'robust-cancelled',
-  'batch-scored',
-  'batch-error',
-  'threshold-result',
-  'multiclass-decision-result',
-  'multiclass-decision-tested',
-  'segments-result',
-  'uncertainty-result',
-  'model-json',
-  'predictions-csv',
-]);
-
-/**
- * V47: a worker answer that no longer matches what the page shows. Changing
- * the target or the feature set resets the training state, but the worker
- * keeps answering requests sent before the reset; without this fence a late
- * `model-result` joined the new leaderboard and the auto-save recorded the
- * NEW target beside the OLD scores. Messages arrive in the order the worker
- * sends them, so the training status alone is enough to tell them apart: a
- * training message outside a run, or a run-derived answer when no run is
- * done, belongs to a state that was already thrown away.
- */
-export function isStaleResponse(kind: WorkerResponse['kind'], trainStatus: TrainStatus): boolean {
-  if (TRAINING_STREAM.has(kind)) return trainStatus !== 'training';
-  if (RUN_DERIVED.has(kind)) return trainStatus !== 'done';
-  return false;
-}
-
-/**
- * V47: true while the worker is computing something tied to the current
- * target and feature set. Changing either is refused until it ends or is
- * cancelled, so a result can never be filed under a question it did not answer.
- */
-export function isTrainingBusy(
-  state: Pick<
-    LabState,
-    'trainStatus' | 'tuneStatus' | 'curveStatus' | 'robustStatus' | 'batchStatus'
-  >,
-): boolean {
-  return (
-    state.trainStatus === 'training' ||
-    state.tuneStatus === 'running' ||
-    state.curveStatus === 'running' ||
-    state.robustStatus === 'running' ||
-    state.batchStatus === 'scoring'
-  );
-}
 
 function terminateWorker() {
   worker?.terminate();
   worker = null;
 }
-
-const initialTraining = {
-  trainStatus: 'idle' as TrainStatus,
-  modelProgress: null,
-  results: [],
-  summary: null,
-  insights: null,
-  whatIf: null,
-  explanation: null,
-  tuneStatus: 'idle' as const,
-  tuneProgress: null,
-  tuneOutcome: null,
-  curveStatus: 'idle' as const,
-  curveProgress: null,
-  curveOutcome: null as LearningCurveOutcome | null,
-  robustStatus: 'idle' as const,
-  robustProgress: null,
-  robustOutcome: null as RobustRankResult | null,
-  exploreStatus: 'idle' as const,
-  exploration: null,
-  forecastStatus: 'idle' as const,
-  forecastPayload: null,
-  batchStatus: 'idle' as const,
-  batchResult: null,
-  batchError: null,
-  thresholdAnalysis: null as ThresholdAnalysis | null,
-  thresholdChoice: { threshold: 0.5, costFp: 1, costFn: 1 },
-  multiclassDecision: null as LabState['multiclassDecision'],
-  multiclassDecisionTestPending: false,
-  multiclassDecisionUnavailable: false,
-  segmentAnalysis: null as SegmentAnalysis | null,
-  uncertaintyAnalysis: null as UncertaintyAnalysis | null,
-  currentRun: null,
-  exportedFile: null,
-};
-
-const initialData = {
-  status: 'idle' as LabStatus,
-  splitChoice: null as SplitChoice | null,
-  classWeighting: false,
-  rankMetric: null as RankingMetric | null,
-  thresholdClass: 0,
-  error: null,
-  rowsParsed: 0,
-  meta: null,
-  profiles: [],
-  preview: [],
-  readFormat: null,
-  baseline: [],
-  target: null,
-  task: null,
-  targetUnsupported: null,
-  leaks: [],
-  overrides: {},
-  savedDatasetId: null as number | null,
-  datasetSaving: false,
-  datasetQuotaError: null as LabState['datasetQuotaError'],
-  importedManifest: null as ImportedManifest | null,
-  importedStatus: 'idle' as const,
-  importedResult: null as BatchScore | null,
-  importedError: null as string | null,
-  ...initialTraining,
-};
 
 function activeDecisionPolicy(state: LabState) {
   const decision = state.currentRun?.artifacts?.multiclassDecision;
@@ -329,29 +54,6 @@ export const useLabStore = create<LabState>((set, get) => {
       const id = current.id;
       void import('@/features/ml/projects/db').then(({ db }) => db.runs.update(id, { artifacts }));
     }
-  }
-
-  /** The persisted form of the analysis + the user's current cut. */
-  function thresholdArtifact(
-    analysis: ThresholdAnalysis,
-    choice: { threshold: number; costFp: number; costFn: number },
-  ) {
-    const y = analysis.pairs.map(([, label]) => label);
-    const p = analysis.pairs.map(([proba]) => proba);
-    return {
-      model: analysis.model,
-      positiveClass: analysis.positiveClass,
-      positiveRate: analysis.pr.positiveRate,
-      averagePrecision: analysis.pr.averagePrecision,
-      brier: analysis.calibration.brier,
-      prPoints: analysis.pr.points,
-      calibrationBins: analysis.calibration.bins,
-      chosen: {
-        ...thresholdMetrics(y, p, choice.threshold, choice.costFp, choice.costFn),
-        costFp: choice.costFp,
-        costFn: choice.costFn,
-      },
-    };
   }
 
   /**
@@ -407,237 +109,10 @@ export const useLabStore = create<LabState>((set, get) => {
       worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
         const message = event.data;
         if (isStaleResponse(message.kind, get().trainStatus)) return;
-        if (message.kind === 'progress') {
-          set({ rowsParsed: message.rows });
-        } else if (message.kind === 'parsed') {
-          const { meta, profiles, preview, suggestions, readFormat } = message.payload;
-          set({
-            status: 'ready',
-            meta,
-            profiles,
-            preview,
-            baseline: suggestions,
-            readFormat: readFormat ?? null,
-            rowsParsed: meta.rowCount,
-          });
-        } else if (message.kind === 'target-analyzed') {
-          set({
-            task: message.payload.task,
-            targetUnsupported: message.payload.unsupportedReason ?? null,
-            leaks: message.payload.suggestions,
-          });
-        } else if (message.kind === 'model-start') {
-          set({
-            trainStatus: 'training',
-            modelProgress: { key: message.key, index: message.index, total: message.total },
-          });
-        } else if (message.kind === 'model-result') {
-          set({ results: [...get().results, message.result] });
-        } else if (message.kind === 'train-complete') {
-          set({ trainStatus: 'done', modelProgress: null, summary: message.summary });
-          // Fetch insights for the winning model right away.
-          // V35: the SAME ranking rule as the leaderboard — otherwise the
-          // table crowns one model and the insights panel opens another.
-          const best = bestResult(get().results, message.summary.taskType);
-          if (best !== null) {
-            send({ kind: 'model-insights', model: best.key });
-            // Leaderboard-wide intervals ride along with every completed run.
-            send({ kind: 'uncertainty-analysis' });
-          }
-        } else if (message.kind === 'train-cancelled') {
-          set({ ...initialTraining });
-        } else if (message.kind === 'insights') {
-          set({ insights: message.payload, whatIf: null });
-          // Imbalance tools ride along; the worker answers null when N/A.
-          send({
-            kind: 'threshold-analysis',
-            model: message.payload.model,
-            focusClass: get().thresholdClass,
-          });
-          send({ kind: 'multiclass-decision-analysis', model: message.payload.model });
-          send({ kind: 'segment-analysis', model: message.payload.model });
-          // First insights after a completed run = winning model → auto-save.
-          const state = get();
-          if (
-            state.trainStatus === 'done' &&
-            state.currentRun === null &&
-            state.meta &&
-            state.target &&
-            state.task &&
-            state.summary
-          ) {
-            const createdAt = Date.now();
-            const record: RunRecord = {
-              name: `${state.meta.name.replace(/\.[a-z]+$/i, '')} · ${state.target}`,
-              createdAt,
-              dataset: {
-                name: state.meta.name,
-                rowCount: state.meta.rowCount,
-                columnCount: state.meta.columnCount,
-              },
-              target: state.target,
-              taskType: state.task.type,
-              seed: state.summary.seed,
-              results: state.results,
-              summary: state.summary,
-              insights: message.payload,
-              ...(state.savedDatasetId !== null ? { datasetId: state.savedDatasetId } : {}),
-            };
-            set({ currentRun: record });
-            // Dexie is loaded on demand so /ml renders without it.
-            void import('@/features/ml/projects/db').then(({ db }) =>
-              db.runs.add(record).then((id) => {
-                // Match by createdAt: an artifact may have replaced the object
-                // meanwhile — keep it, and persist what it attached.
-                const current = get().currentRun;
-                if (current && current.createdAt === record.createdAt) {
-                  set({ currentRun: { ...current, id } });
-                  if (current.artifacts) {
-                    void db.runs.update(id, { artifacts: current.artifacts });
-                  }
-                }
-              }),
-            );
-          }
-        } else if (message.kind === 'what-if-result') {
-          set({ whatIf: message.payload, explanation: null });
-        } else if (message.kind === 'explanation') {
-          set({ explanation: message.payload });
-          attachArtifact({ explanation: message.payload });
-        } else if (message.kind === 'tune-progress') {
-          set({
-            tuneProgress: { done: message.done, total: message.total, bestCv: message.bestCv },
-          });
-        } else if (message.kind === 'tune-complete') {
-          set({ tuneStatus: 'done', tuneProgress: null, tuneOutcome: message.payload });
-          attachArtifact({ tuning: message.payload });
-        } else if (message.kind === 'tune-cancelled') {
-          set({ tuneStatus: 'idle', tuneProgress: null });
-        } else if (message.kind === 'curve-progress') {
-          set({ curveProgress: { done: message.done, total: message.total } });
-        } else if (message.kind === 'curve-complete') {
-          set({ curveStatus: 'done', curveProgress: null, curveOutcome: message.payload });
-          if (message.payload) attachArtifact({ learningCurve: message.payload });
-        } else if (message.kind === 'curve-cancelled') {
-          set({ curveStatus: 'idle', curveProgress: null });
-        } else if (message.kind === 'robust-progress') {
-          set({ robustProgress: { done: message.done, total: message.total } });
-        } else if (message.kind === 'robust-complete') {
-          set({ robustStatus: 'done', robustProgress: null, robustOutcome: message.payload });
-          attachArtifact({ robustRank: message.payload });
-        } else if (message.kind === 'robust-cancelled') {
-          set({ robustStatus: 'idle', robustProgress: null });
-        } else if (message.kind === 'explore-result') {
-          set({ exploreStatus: 'done', exploration: message.payload });
-          attachArtifact({ exploration: message.payload });
-        } else if (message.kind === 'forecast-result') {
-          set({ forecastStatus: 'done', forecastPayload: message.payload });
-          attachArtifact({ forecast: message.payload });
-        } else if (message.kind === 'batch-scored') {
-          set({ batchStatus: 'done', batchResult: message.payload, batchError: null });
-          // The record keeps the numbers, never the row-level CSV.
-          const artifact = { ...message.payload } as Partial<BatchScore>;
-          delete artifact.csv;
-          delete artifact.preview;
-          attachArtifact({ batchScore: artifact as Omit<BatchScore, 'csv' | 'preview'> });
-        } else if (message.kind === 'batch-error') {
-          set({ batchStatus: 'error', batchResult: null, batchError: message.message });
-        } else if (message.kind === 'model-loaded') {
-          set({
-            importedManifest: message.manifest,
-            importedStatus: 'idle',
-            importedResult: null,
-            importedError: null,
-          });
-        } else if (message.kind === 'imported-scored') {
-          set({ importedResult: message.payload, importedStatus: 'idle', importedError: null });
-        } else if (message.kind === 'import-error') {
-          set({ importedError: message.message, importedStatus: 'idle' });
-        } else if (message.kind === 'threshold-result') {
-          const choice = { threshold: 0.5, costFp: 1, costFn: 1 };
-          set({ thresholdAnalysis: message.payload, thresholdChoice: choice });
-          if (message.payload) {
-            attachArtifact({ threshold: thresholdArtifact(message.payload, choice) });
-          }
-        } else if (message.kind === 'multiclass-decision-result') {
-          const analysis = message.payload;
-          set({
-            multiclassDecisionTestPending: false,
-            multiclassDecisionUnavailable:
-              analysis === null && (get().task?.classes?.length ?? 0) > 2,
-            multiclassDecision: analysis
-              ? {
-                  analysis,
-                  editor: {
-                    policy: { thresholds: analysis.classes.map(() => 0) },
-                    phase: 'draft',
-                    test: null,
-                  },
-                }
-              : null,
-          });
-        } else if (message.kind === 'multiclass-decision-tested') {
-          const state = get();
-          const current = state.multiclassDecision;
-          if (
-            current &&
-            state.multiclassDecisionTestPending &&
-            current.analysis.model === message.model
-          ) {
-            const editor = receiveMulticlassDecisionTest(current.editor, message.payload);
-            const validation = evaluateMulticlassPolicy(
-              current.analysis.validationLabels,
-              current.analysis.validationProbabilities,
-              editor.policy,
-            );
-            set({
-              multiclassDecision: { ...current, editor },
-              multiclassDecisionTestPending: false,
-            });
-            attachArtifact({
-              multiclassDecision: {
-                model: current.analysis.model,
-                classes: current.analysis.classes,
-                policy: editor.policy,
-                validation,
-                test: message.payload.metrics,
-                exploratory: editor.phase === 'exploratory',
-              },
-            });
-          }
-        } else if (message.kind === 'segments-result') {
-          set({ segmentAnalysis: message.payload });
-          if (message.payload) {
-            attachArtifact({ segments: message.payload });
-          }
-        } else if (message.kind === 'uncertainty-result') {
-          set({ uncertaintyAnalysis: message.payload });
-          if (message.payload) {
-            attachArtifact({ uncertainty: message.payload });
-          }
-        } else if (message.kind === 'model-json') {
-          if (message.json !== null) {
-            set({
-              exportedFile: {
-                name: `labml-${message.model}.json`,
-                mime: 'application/json',
-                content: message.json,
-              },
-            });
-          }
-        } else if (message.kind === 'dataset-csv') {
-          void persistDatasetCsv(message.csv);
-        } else if (message.kind === 'predictions-csv') {
-          set({
-            exportedFile: {
-              name: `labml-${message.model}-predictions.csv`,
-              mime: 'text/csv',
-              content: message.csv,
-            },
-          });
-        } else {
-          set({ status: 'error', error: message.message, ...initialTraining });
-        }
+        // TypeScript cannot correlate `message.kind` with the handler it
+        // indexes, so the call is widened once here; the table itself is
+        // checked kind by kind in store/responses.ts.
+        (handlers[message.kind] as (response: WorkerResponse) => void)(message);
       };
       // V47: a crashed worker is gone — keeping its reference sent every
       // later request into the void, and leaving the busy flags up kept the
@@ -655,6 +130,14 @@ export const useLabStore = create<LabState>((set, get) => {
     }
     worker.postMessage(request);
   }
+
+  const handlers = createResponseHandlers({
+    set,
+    get,
+    send,
+    attachArtifact,
+    persistDatasetCsv,
+  });
 
   return {
     ...initialData,
