@@ -1,12 +1,29 @@
 const EPSILON = 1e-15;
 
+/*
+ * V50: every metric over an EMPTY set is NaN, not a number that reads as a
+ * result. Before, an empty set scored RMSE 0, MAE 0 and R² 1: a perfect
+ * model, measured on nothing. No caller passes an empty set today (the test
+ * split keeps at least one row, batch scoring skips files with no label), so
+ * this is a contract for the next caller rather than a visible fix.
+ */
+
 export function accuracy(yTrue: number[], yPred: number[]): number {
   let correct = 0;
   for (let i = 0; i < yTrue.length; i++) if (yTrue[i] === yPred[i]) correct += 1;
-  return yTrue.length === 0 ? 0 : correct / yTrue.length;
+  return yTrue.length === 0 ? Number.NaN : correct / yTrue.length;
 }
 
-/** Macro-averaged precision, recall and F1 over the given number of classes. */
+/**
+ * Macro-averaged precision, recall and F1.
+ *
+ * V50: averaged over the classes PRESENT in `yTrue` or `yPred`, as
+ * scikit-learn does, not over every class the task knows. A class that
+ * appears on neither side has nothing to be right or wrong about; counting
+ * it as a zero made a perfect score on a batch holding two of three classes
+ * read 0.667. A class that is predicted but never true still counts, as a
+ * zero, because those predictions are all wrong.
+ */
 export function macroPrf(
   yTrue: number[],
   yPred: number[],
@@ -15,6 +32,7 @@ export function macroPrf(
   let precisionSum = 0;
   let recallSum = 0;
   let f1Sum = 0;
+  let present = 0;
   for (let c = 0; c < classCount; c++) {
     let tp = 0;
     let fp = 0;
@@ -26,6 +44,8 @@ export function macroPrf(
       else if (!isTrue && isPred) fp += 1;
       else if (isTrue && !isPred) fn += 1;
     }
+    if (tp + fp + fn === 0) continue;
+    present += 1;
     const precision = tp + fp === 0 ? 0 : tp / (tp + fp);
     const recall = tp + fn === 0 ? 0 : tp / (tp + fn);
     const f1 = precision + recall === 0 ? 0 : (2 * precision * recall) / (precision + recall);
@@ -33,10 +53,11 @@ export function macroPrf(
     recallSum += recall;
     f1Sum += f1;
   }
+  if (present === 0) return { precision: Number.NaN, recall: Number.NaN, f1: Number.NaN };
   return {
-    precision: precisionSum / classCount,
-    recall: recallSum / classCount,
-    f1: f1Sum / classCount,
+    precision: precisionSum / present,
+    recall: recallSum / present,
+    f1: f1Sum / present,
   };
 }
 
@@ -47,7 +68,7 @@ export function logLoss(yTrue: number[], probabilities: number[][]): number {
     const p = Math.min(1 - EPSILON, Math.max(EPSILON, probabilities[i][yTrue[i]] ?? EPSILON));
     sum += -Math.log(p);
   }
-  return yTrue.length === 0 ? 0 : sum / yTrue.length;
+  return yTrue.length === 0 ? Number.NaN : sum / yTrue.length;
 }
 
 /**
@@ -81,16 +102,17 @@ export function rocAuc(yTrue: number[], scores: number[]): number | null {
 export function rmse(yTrue: number[], yPred: number[]): number {
   let sum = 0;
   for (let i = 0; i < yTrue.length; i++) sum += (yTrue[i] - yPred[i]) ** 2;
-  return yTrue.length === 0 ? 0 : Math.sqrt(sum / yTrue.length);
+  return yTrue.length === 0 ? Number.NaN : Math.sqrt(sum / yTrue.length);
 }
 
 export function mae(yTrue: number[], yPred: number[]): number {
   let sum = 0;
   for (let i = 0; i < yTrue.length; i++) sum += Math.abs(yTrue[i] - yPred[i]);
-  return yTrue.length === 0 ? 0 : sum / yTrue.length;
+  return yTrue.length === 0 ? Number.NaN : sum / yTrue.length;
 }
 
 export function r2(yTrue: number[], yPred: number[]): number {
+  if (yTrue.length === 0) return Number.NaN;
   const mean = yTrue.reduce((a, v) => a + v, 0) / (yTrue.length || 1);
   let ssRes = 0;
   let ssTot = 0;

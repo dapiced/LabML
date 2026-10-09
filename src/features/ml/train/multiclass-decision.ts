@@ -121,8 +121,15 @@ export function evaluateMulticlassPolicy(
     const f1 = precision + recall === 0 ? 0 : (2 * precision * recall) / (precision + recall);
     return { classIndex, support: classSupport, precision, recall, f1 };
   });
+  // V50: the same rule as `macroPrf` and scikit-learn — the macro average
+  // runs over the classes present among the true labels or the decisions.
+  const present = perClass.filter(
+    (metrics) => metrics.support > 0 || falsePositives[metrics.classIndex] > 0,
+  );
   const sum = (field: 'precision' | 'recall' | 'f1') =>
-    perClass.reduce((total, metrics) => total + metrics[field], 0) / classCount;
+    present.length === 0
+      ? Number.NaN
+      : present.reduce((total, metrics) => total + metrics[field], 0) / present.length;
   const rows = labels.length;
 
   return {

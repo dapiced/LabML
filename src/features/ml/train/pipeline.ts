@@ -240,7 +240,12 @@ export function splitIndices(
     });
     for (const bucket of [...byClass.keys()].sort().map((k) => byClass.get(k)!)) {
       shuffleInPlace(bucket, rng);
-      const testCount = Math.max(1, Math.round(bucket.length * testRatio));
+      // V50: a class with a single row stays on the training side. Sending it
+      // to test (the old `max(1, …)`) left the models with no example of it at
+      // all, and the validation carve repeated the loss for two-row classes.
+      // An untested class is announced by its absence from the test metrics;
+      // an unlearnable one was not announced anywhere.
+      const testCount = bucket.length < 2 ? 0 : Math.max(1, Math.round(bucket.length * testRatio));
       append(test, bucket, 0, testCount);
       append(train, bucket, testCount, bucket.length);
     }

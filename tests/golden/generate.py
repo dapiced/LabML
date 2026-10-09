@@ -54,7 +54,25 @@ def metrics() -> dict[str, object]:
     regression_true = [3.0, -0.5, 2.0, 7.0, 4.5, 1.25]
     regression_pred = [2.5, 0.0, 2.0, 8.0, 3.75, 1.5]
 
+    # V50: the task knows four classes, the evaluated rows carry three of
+    # them, and class 2 is predicted but never true. scikit-learn's macro
+    # average runs over the labels present in y_true or y_pred, so class 3
+    # (in neither) does not count and class 2 (predicted only) counts as 0.
+    # A batch scored on a subset of the classes is the everyday case.
+    absent_true = [0, 0, 0, 1, 1, 1, 1]
+    absent_pred = [0, 0, 1, 1, 1, 2, 1]
+
     return {
+        "absentClass": {
+            "classCount": 4,
+            "yTrue": absent_true,
+            "yPred": absent_pred,
+            "precision": precision_score(
+                absent_true, absent_pred, average="macro", zero_division=0
+            ),
+            "recall": recall_score(absent_true, absent_pred, average="macro", zero_division=0),
+            "f1": f1_score(absent_true, absent_pred, average="macro", zero_division=0),
+        },
         "classification": {
             "yTrue": classification_true,
             "yPred": classification_pred,
