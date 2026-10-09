@@ -54,6 +54,17 @@ describe('scikit-learn golden metrics', () => {
     expect(logLoss(fixture.yTrue, fixture.probabilities)).toBeCloseTo(fixture.logLoss!, 12);
   });
 
+  it('averages macro metrics over the labels present, as scikit-learn does', () => {
+    // V50: a class in neither y_true nor y_pred is not scored as a zero; a
+    // class that is only predicted still is.
+    const fixture = reference.metrics.absentClass;
+    expect(macroPrf(fixture.yTrue, fixture.yPred, fixture.classCount)).toEqual({
+      precision: expect.closeTo(fixture.precision, 12),
+      recall: expect.closeTo(fixture.recall, 12),
+      f1: expect.closeTo(fixture.f1, 12),
+    });
+  });
+
   it('matches binary ROC-AUC, including tied scores', () => {
     const fixture = reference.metrics.binaryRoc;
     expect(rocAuc(fixture.yTrue, fixture.scores)).toBeCloseTo(fixture.rocAuc!, 12);

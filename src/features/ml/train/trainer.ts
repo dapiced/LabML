@@ -215,6 +215,10 @@ export function prepareData(
       train = second.train;
       validation = second.test;
     }
+    // V50: when every class holds a single row, the stratified split keeps
+    // them all for training and nothing is left to test on. Refused by name
+    // rather than reported as metrics computed over an empty set.
+    if (train.length === 0 || test.length === 0) throw new Error('too-few-rows');
   }
 
   const trainLabels = isClassification

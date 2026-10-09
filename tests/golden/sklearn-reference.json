@@ -1,10 +1,34 @@
 {
   "provenance": {
     "generator": "tests/golden/generate.py",
-    "python": "3.13.15",
+    "python": "3.13.16",
     "scikitLearn": "1.7.2"
   },
   "metrics": {
+    "absentClass": {
+      "classCount": 4,
+      "yTrue": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1
+      ],
+      "yPred": [
+        0,
+        0,
+        1,
+        1,
+        1,
+        2,
+        1
+      ],
+      "precision": 0.5833333333333334,
+      "recall": 0.47222222222222215,
+      "f1": 0.5166666666666667
+    },
     "classification": {
       "yTrue": [
         0,

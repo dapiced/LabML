@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V50 — Metrics that agree with the reference on every edge
+
+Measured before anything changed, then checked against scikit-learn rather than against our own reading of it.
+
+_Why:_ Approved 09/10/2026 after V49. The same rule as V35: a number must not flatter or punish by accident. Two of the three edges were reachable from the demo picker, and the reference that would have caught the first one existed since V42 but held no case with an absent class.
+
 ## V49 — CI that cannot be steered by a branch name
 
 The wave opened with zizmor 1.30.1 on the three workflows: **28 findings** (1 template injection, 21 actions pinned by a movable tag, 6 checkouts leaving the git token on the runner disk).
