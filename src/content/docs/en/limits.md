@@ -74,6 +74,13 @@ decoder accepted crashed the page on 99 distinct paths. A validator that size
 would drift with every new analysis; a guard at render time covers them all,
 and a test replays the measurement on every run.
 
+**TypeScript 7** (V52.3). Deferred, not dropped. The new compiler, rewritten
+in Go, checks the whole project with not a single error, and about seven times
+faster than TypeScript 6. But the tool that runs the lint does not accept
+that version yet, and the lint is part of the CI gate. A check is not removed
+to make an upgrade fit: the migration waits for the tool to support it, and on
+our side it will then be a version bump.
+
 ## Predictions measurement refuted
 
 This is the most useful category, and the most uncomfortable.

@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V52.3 — TypeScript 7, measured and deferred
+
+The third major, and the one the plan flagged as uncertain.
+
+_Why:_ Approved 09/10/2026 with V52, option chosen by the owner after the measurement. A gate is not removed to make an upgrade fit; the upgrade waits for the gate.
+
 ## V52.2 — vite-plugin-pwa 2, and a service worker that did not change by one byte of content
 
 The second of V52's three majors.
@@ -17,6 +23,12 @@ _Why:_ Approved 09/10/2026 with V52. The one upgrade of the three whose failure 
 The first of V52's three majors, each in its own pull request.
 
 _Why:_ Approved 09/10/2026 with V52. The safest of the three majors goes first: the suite it runs is also the instrument that proves it changed nothing.
+
+## V52 — Major upgrades, one at a time, each measured
+
+Three majors, three pull requests, each with the before/after numbers that matter for it: Vitest 5 (V52.1), vite-plugin-pwa 2 (V52.2), TypeScript 7 (V52.3, measured and deferred).
+
+_Why:_ V44's rule: a major update keeps its migration cost visible.
 
 ## V51 — A store that fits on a screen
 

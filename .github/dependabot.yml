@@ -33,6 +33,12 @@ updates:
       - dependency-name: '@huggingface/transformers'
         versions:
           - '>=4.3.0 <4.4.0'
+      # V52.3: TypeScript 7 typechecks this code with 0 errors, but
+      # typescript-eslint 8.71.1 only supports TypeScript <6.1. Lift this when
+      # it does; until then a weekly PR would only fail the lint.
+      - dependency-name: typescript
+        versions:
+          - '>=7.0.0'
 
   - package-ecosystem: github-actions
     directory: /
