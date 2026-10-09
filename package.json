@@ -47,7 +47,7 @@
     "dexie-react-hooks": "^4.4.0",
     "i18next": "^26.4.2",
     "i18next-browser-languagedetector": "^8.2.1",
-    "lucide-react": "^1.50.0",
+    "lucide-react": "^1.52.0",
     "lz-string": "^1.5.0",
     "ml-cart": "^2.1.1",
     "ml-random-forest": "^2.1.0",
