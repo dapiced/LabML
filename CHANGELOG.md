@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V52.1 — Vitest 5, measured against Vitest 4 on the same commit
+
+The first of V52's three majors, each in its own pull request.
+
+_Why:_ Approved 09/10/2026 with V52. The safest of the three majors goes first: the suite it runs is also the instrument that proves it changed nothing.
+
 ## V51 — A store that fits on a screen
 
 No behaviour change, and the proof is the suite: the 906 unit tests and the 97 Chromium e2e tests that passed before pass unchanged after.

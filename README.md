@@ -278,7 +278,7 @@ Cloudflare Pages
 
 ## Getting started
 
-Requires Node 20+.
+Requires Node 22.12+ (the floor Vitest 5 sets; CI runs Node 22).
 
 ```bash
 npm ci             # install dependencies
