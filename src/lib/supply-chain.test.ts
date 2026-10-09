@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 
@@ -94,14 +94,15 @@ describe('supply-chain automation', () => {
     });
     expect(codeql.jobs.analyze.steps).toHaveLength(3);
     expect(codeql.jobs.analyze.steps[0]).toEqual({
-      uses: expect.stringMatching(/^actions\/checkout@v\d+$/),
+      uses: expect.stringMatching(/^actions\/checkout@[0-9a-f]{40}$/),
+      with: { 'persist-credentials': false },
     });
     expect(codeql.jobs.analyze.steps.slice(1)).toEqual([
       {
-        uses: 'github/codeql-action/init@v4',
+        uses: expect.stringMatching(/^github\/codeql-action\/init@[0-9a-f]{40}$/),
         with: { languages: 'javascript-typescript' },
       },
-      { uses: 'github/codeql-action/analyze@v4' },
+      { uses: expect.stringMatching(/^github\/codeql-action\/analyze@[0-9a-f]{40}$/) },
     ]);
   });
 
@@ -123,5 +124,45 @@ describe('supply-chain automation', () => {
     expect(ci.jobs.deploy.if).toBe(
       "github.actor != 'dependabot[bot]' && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)",
     );
+  });
+
+  // V49 — a tag can be moved by whoever controls the action's repository; a
+  // commit SHA cannot. Dependabot keeps the pins current and reads the
+  // trailing `# vX.Y.Z` comment to say which release a pin is.
+  const WORKFLOWS = readdirSync('.github/workflows')
+    .filter((name) => name.endsWith('.yml'))
+    .map((name) => `.github/workflows/${name}`);
+
+  it.each(WORKFLOWS)('%s pins every action to a full commit SHA with its release', (path) => {
+    const uses = read(path)
+      .split('\n')
+      .filter((line) => /^\s*(- )?uses:/.test(line));
+    expect(uses.length).toBeGreaterThan(0);
+    for (const line of uses) {
+      expect(line).toMatch(/uses: [\w.-]+\/[\w./-]+@[0-9a-f]{40} # v\d+\.\d+\.\d+$/);
+    }
+  });
+
+  it.each(WORKFLOWS)('%s never leaves the git token on the runner disk', (path) => {
+    const workflow = readYaml(path);
+    for (const job of Object.values(workflow.jobs) as {
+      steps: { uses?: string; with?: object }[];
+    }[]) {
+      for (const step of job.steps.filter((s) => s.uses?.startsWith('actions/checkout@'))) {
+        expect(step.with).toMatchObject({ 'persist-credentials': false });
+      }
+    }
+  });
+
+  it.each(WORKFLOWS)('%s expands no pull-request-controlled value inside a script', (path) => {
+    // `${{ }}` is pasted into the script before the shell parses it, so a
+    // branch name or a title there runs as code. Such values go through `env:`.
+    const workflow = readYaml(path);
+    const risky = /\$\{\{[^}]*github\.(head_ref|event\.(pull_request|issue|comment|review)\.)/;
+    for (const job of Object.values(workflow.jobs) as { steps: { run?: string }[] }[]) {
+      for (const step of job.steps) {
+        if (step.run) expect(step.run).not.toMatch(risky);
+      }
+    }
   });
 });

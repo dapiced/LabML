@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V49 — CI that cannot be steered by a branch name
+
+The wave opened with zizmor 1.30.1 on the three workflows: **28 findings** (1 template injection, 21 actions pinned by a movable tag, 6 checkouts leaving the git token on the runner disk).
+
+_Why:_ Approved 09/10/2026 after V48. Continues V44: a security gate is worth its maintenance only when it distinguishes a real exposure, and every rule here is now enforced by a test or a job rather than by a reviewer remembering it.
+
 ## V48 — A damaged share link ends on a refusal, never on a crash
 
 The plan for this row was a deeper validator: check `insights.importance`, numeric metrics, `classes` and `confusion`, the fields the audit had named.
