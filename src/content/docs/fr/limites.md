@@ -76,6 +76,14 @@ la page sur 99 chemins différents. Un validateur de cette taille dériverait à
 chaque nouvelle analyse ; un garde-fou au rendu les couvre tous, et un test
 rejoue la mesure à chaque exécution.
 
+**TypeScript 7** (V52.3). Reporté, pas abandonné. Le nouveau compilateur,
+réécrit en Go, vérifie tout le projet sans une seule erreur, et environ sept
+fois plus vite que TypeScript 6. Mais l'outil qui fait tourner le lint
+n'accepte pas encore cette version, et le lint fait partie de la porte de la
+CI. On ne retire pas une vérification pour faire entrer une mise à jour : la
+migration attend que l'outil la supporte, et de notre côté elle se résumera
+alors à changer un numéro de version.
+
 ## Des prédictions que la mesure a démenties
 
 C'est la catégorie la plus utile, et la plus inconfortable.

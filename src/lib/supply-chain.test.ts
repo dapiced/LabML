@@ -47,6 +47,10 @@ describe('supply-chain automation', () => {
               'dependency-name': '@huggingface/transformers',
               versions: ['>=4.3.0 <4.4.0'],
             },
+            {
+              'dependency-name': 'typescript',
+              versions: ['>=7.0.0'],
+            },
           ],
         },
         {
