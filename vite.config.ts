@@ -571,5 +571,18 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
+    // V49 — `npm run test:coverage` (what CI runs). The floor is the measured
+    // baseline rounded down, not a round number: it exists to catch a change
+    // that removes tests or ships a large untested module, and it should be
+    // raised whenever a wave moves the measurement up.
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/**/*.d.ts', 'src/test/**'],
+      reporter: ['text-summary', 'json-summary'],
+      reportsDirectory: 'coverage',
+      // Measured 09/10/2026 on 898 tests: 64.56 / 53.28 / 54.46 / 65.62.
+      thresholds: { statements: 64, branches: 53, functions: 54, lines: 65 },
+    },
   },
 });
