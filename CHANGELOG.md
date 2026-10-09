@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V52.2 — vite-plugin-pwa 2, and a service worker that did not change by one byte of content
+
+The second of V52's three majors.
+
+_Why:_ Approved 09/10/2026 with V52. The one upgrade of the three whose failure would reach visitors rather than developers, so its proof is the artifact visitors receive.
+
 ## V52.1 — Vitest 5, measured against Vitest 4 on the same commit
 
 The first of V52's three majors, each in its own pull request.
