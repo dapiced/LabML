@@ -368,12 +368,12 @@ comfort, /ml 0.77 → 0.86 measured), V10 (replayable recipes, forced types,
 derived dates) — delivered and verified in production. 16 PRs merged,
 177 unit tests, 36 e2e.
 
-| Wave                | Content                                                                                                                                                                                                                                                                                                                                                                                          | Why                                                                                              |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| **V11 — delivered** | **Data drift** in the Data Studio: a reference file, a file to compare → schema differences (columns added/removed/retyped), **PSI per column** (quantile bins from the reference, thresholds 0.1/0.25), new/vanished categories, missing-rate gaps, overall verdict — with a deliberately drifted demo (`cafe-sales-june.csv`)                                                                  | The MLOps gesture par excellence: checking that a new batch looks like what the model learned on |
-| V12 — pending       | **Consented generative chat**: a Cloudflare Pages Function (same repo) proxying the Anthropic API — the key lives in a Cloudflare secret, never in the browser; the LLM translates the question into an intent executed **locally** by the V6 engine (only the question and the column schema leave, never the data); explicit consent screen; clean degradation if the secret is not configured | Owner's product decision (21/08/2026): postponed for now                                         |
-| **V13 — delivered** | **Complete runs**: tuning, latest Shapley explanation, exploration and forecast attached to the run record — IndexedDB history (with chips), stored-run page, HTML report and v2 share links (subsampled scatter plots in the URL; v1 links remain decodable)                                                                                                                                    | The V5–V8 artifacts did not survive the run                                                      |
-| **V14 — delivered** | **Generalized prerendering**: static shells for all six sections (the V9 approach extended — inlined CSS, Latin fonts as data:, per-route preloaded façade, header template), Lighthouse /ml 0.86 → 0.99 and /data 1.0 under real throttling (3-run medians); the root stays the SPA fallback (accepted)                                                                                         | The last Lighthouse gap                                                                          |
+| Wave                | Content                                                                                                                                                                                                                                                                                                                                                                                          | Why                                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| **V11 — delivered** | **Data drift** in the Data Studio: a reference file, a file to compare → schema differences (columns added/removed/retyped), **PSI per column** (quantile bins from the reference, thresholds 0.1/0.25), new/vanished categories, missing-rate gaps, overall verdict — with a deliberately drifted demo (`cafe-sales-june.csv`)                                                                  | The MLOps gesture par excellence: checking that a new batch looks like what the model learned on            |
+| V12 — pending       | **Consented generative chat**: a Cloudflare Pages Function (same repo) proxying the Anthropic API — the key lives in a Cloudflare secret, never in the browser; the LLM translates the question into an intent executed **locally** by the V6 engine (only the question and the column schema leave, never the data); explicit consent screen; clean degradation if the secret is not configured | Owner's product decision (21/08/2026): postponed for now. Confirmed 09/10/2026, after Cap 7: not scheduled. |
+| **V13 — delivered** | **Complete runs**: tuning, latest Shapley explanation, exploration and forecast attached to the run record — IndexedDB history (with chips), stored-run page, HTML report and v2 share links (subsampled scatter plots in the URL; v1 links remain decodable)                                                                                                                                    | The V5–V8 artifacts did not survive the run                                                                 |
+| **V14 — delivered** | **Generalized prerendering**: static shells for all six sections (the V9 approach extended — inlined CSS, Latin fonts as data:, per-route preloaded façade, header template), Lighthouse /ml 0.86 → 0.99 and /data 1.0 under real throttling (3-run medians); the root stays the SPA fallback (accepted)                                                                                         | The last Lighthouse gap                                                                                     |
 
 ---
 
@@ -624,5 +624,38 @@ before features, and the one that produces wrong data comes first of all.
 
 **Cap 7 closed (09/10/2026)**: V47 to V52 delivered. What the lab already did now holds when the user does two things at once (V47), when a link is damaged (V48), when CI runs on a branch nobody checked (V49), when a class is rare or absent (V50); the store fits on a screen (V51), and the three majors were taken one at a time, one of them deferred on a measurement rather than forced (V52).
 
-V12 (consented generative chat) remains pending a product decision. No wave
-starts without an explicit launch command.
+V12 (consented generative chat) is not scheduled: the owner confirmed on
+09/10/2026, once Cap 7 closed, that it stays postponed. The row keeps its
+« pending » status because nothing was built or refused; it is a decision not to
+start, not a measurement. No wave starts without an explicit launch command.
+
+## P. Future directions (not scheduled, 09/10/2026)
+
+Written at the close of Cap 7 so the next session starts from a list rather
+than from a fresh audit. None of these is a wave: each has the condition that
+would justify starting it, and none starts without an explicit launch command.
+
+- **Adopt TypeScript 7.** Condition: typescript-eslint supports it (V52.3). The
+  code already typechecks with 0 errors; the work is a version bump, removing
+  the Dependabot ignore, and re-measuring the typecheck time in CI.
+- **Re-measure DuckDB-Wasm above 1.28.0.** Condition: a release whose eh and
+  mvp binaries fit under Cloudflare Pages' 25 MiB per-file limit, or a reason
+  to shard them (V29). The Dependabot ignore keeps the question closed until
+  someone re-measures; it should be re-opened at least once a year.
+- **Raise the coverage floors where they are lowest.** Functions (54 %) and
+  branches (53 %) trail statements and lines. Condition: none, it is
+  maintenance; the method is V51's, tests on the modules with the lowest
+  function coverage, then the floor moves up and never down.
+- **A lint with zero warnings.** `badge.tsx` and `button.tsx` export their
+  variant helpers next to the component, which `react-refresh` flags. Moving
+  the helpers to their own file and adding `--max-warnings 0` makes the next
+  warning a failure instead of a line nobody reads.
+- **A run id in the ML worker protocol.** Condition: the day two requests can
+  be in flight at once (for example, an analysis that runs during training).
+  Until then V47's fence is enough, and the limits page says so.
+- **Widen the text vocabulary.** V24 capped it; V25 measured that the memory
+  guard made the typed-array rewrite unnecessary. Condition: a real dataset
+  where the cap visibly costs accuracy, measured before and after.
+- **V12, consented generative chat.** Postponed by the owner (09/10/2026).
+  Condition: a product decision, plus a fresh read of the provider's data
+  policy, since the consent screen would have to quote it.
