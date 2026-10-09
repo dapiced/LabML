@@ -126,8 +126,23 @@ export const useChatStore = create<ChatState>((set, get) => {
           set({ status: 'error', error: message.message, thinking: false });
         }
       };
+      // V47: the crashed worker took the parsed file and any loaded model
+      // with it. Drop its reference so the next request starts a fresh one,
+      // and lower the « thinking » flag that no answer will ever clear.
       worker.onerror = () => {
-        set({ status: 'error', error: 'worker' });
+        terminateWorker();
+        const llm = get().llmStatus;
+        set({
+          status: 'error',
+          error: 'worker',
+          thinking: false,
+          llmProgress: null,
+          engine: 'deterministic',
+          ...((llm === 'loading' || llm === 'ready') && {
+            llmStatus: 'failed' as const,
+            llmError: 'worker',
+          }),
+        });
       };
     }
     worker.postMessage(request);

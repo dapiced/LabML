@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V47 — Workers that cannot answer the wrong question
+
+Six lifecycle defects in shipped code, each reproduced by a test that failed before its fix.
+
+_Why:_ Approved 09/10/2026 after the post-V46 audit. The defect in (1) does not crash and does not warn: it saves a run that looks valid and is not, which is the one kind of failure an honest lab must never produce. The others are the same class of bug, a worker outliving the state it was started for, and fixing them together keeps the rule in one place.
+
 ## V46 — Five waves of documentation debt, paid in one pass
 
 `/docs/formats` published an export manifest that no longer matched `serializeModel`, and nothing on the public site explained the multiclass decision policy shipped in V45.

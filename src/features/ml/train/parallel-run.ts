@@ -17,6 +17,14 @@ import type { FamilyRequest, FamilyResponse } from '@/features/ml/train/family.w
 import type { PretrainedFamily } from '@/features/ml/train/trainer';
 import type { ModelKey, TrainConfig } from '@/features/ml/train/types';
 
+/**
+ * V47: how often the parallel phase looks at the cancel flag. The phase awaits
+ * its helpers, so the ML worker's event loop is free and a `cancel-train`
+ * message does set the flag — but nothing read it until every helper had
+ * finished, and the heavy families are exactly the ones that take longest.
+ */
+export const CANCEL_POLL_MS = 100;
+
 export interface ParallelReport {
   helpers: number;
   families: ModelKey[];
@@ -50,12 +58,20 @@ export async function trainInParallel(
   const started = performance.now();
   const pretrained = new Map<ModelKey, PretrainedFamily>();
   const workers: Worker[] = [];
+  const pending: Array<() => void> = [];
+  // V47: on cancel, stop the helpers mid-fit and release every batch at once.
+  const poll = setInterval(() => {
+    if (!isCancelled()) return;
+    for (const worker of workers) worker.terminate();
+    for (const release of pending.splice(0)) release();
+  }, CANCEL_POLL_MS);
 
   try {
     await Promise.all(
       batches.map(
         (families) =>
           new Promise<void>((resolve) => {
+            pending.push(resolve);
             let worker: Worker;
             try {
               worker = new Worker(new URL('./family.worker.ts', import.meta.url), {
@@ -117,6 +133,7 @@ export async function trainInParallel(
       ),
     );
   } finally {
+    clearInterval(poll);
     for (const worker of workers) worker.terminate();
   }
 
