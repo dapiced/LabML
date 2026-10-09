@@ -628,3 +628,34 @@ V12 (consented generative chat) is not scheduled: the owner confirmed on
 09/10/2026, once Cap 7 closed, that it stays postponed. The row keeps its
 « pending » status because nothing was built or refused; it is a decision not to
 start, not a measurement. No wave starts without an explicit launch command.
+
+## P. Future directions (not scheduled, 09/10/2026)
+
+Written at the close of Cap 7 so the next session starts from a list rather
+than from a fresh audit. None of these is a wave: each has the condition that
+would justify starting it, and none starts without an explicit launch command.
+
+- **Adopt TypeScript 7.** Condition: typescript-eslint supports it (V52.3). The
+  code already typechecks with 0 errors; the work is a version bump, removing
+  the Dependabot ignore, and re-measuring the typecheck time in CI.
+- **Re-measure DuckDB-Wasm above 1.28.0.** Condition: a release whose eh and
+  mvp binaries fit under Cloudflare Pages' 25 MiB per-file limit, or a reason
+  to shard them (V29). The Dependabot ignore keeps the question closed until
+  someone re-measures; it should be re-opened at least once a year.
+- **Raise the coverage floors where they are lowest.** Functions (54 %) and
+  branches (53 %) trail statements and lines. Condition: none, it is
+  maintenance; the method is V51's, tests on the modules with the lowest
+  function coverage, then the floor moves up and never down.
+- **A lint with zero warnings.** `badge.tsx` and `button.tsx` export their
+  variant helpers next to the component, which `react-refresh` flags. Moving
+  the helpers to their own file and adding `--max-warnings 0` makes the next
+  warning a failure instead of a line nobody reads.
+- **A run id in the ML worker protocol.** Condition: the day two requests can
+  be in flight at once (for example, an analysis that runs during training).
+  Until then V47's fence is enough, and the limits page says so.
+- **Widen the text vocabulary.** V24 capped it; V25 measured that the memory
+  guard made the typed-array rewrite unnecessary. Condition: a real dataset
+  where the cap visibly costs accuracy, measured before and after.
+- **V12, consented generative chat.** Postponed by the owner (09/10/2026).
+  Condition: a product decision, plus a fresh read of the provider's data
+  policy, since the consent screen would have to quote it.

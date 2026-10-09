@@ -341,12 +341,14 @@ CI builds, tests and deploys on every push: pull requests get a Cloudflare Pages
 
 ## Roadmap
 
-Development proceeds in planned "caps" of feature waves; six caps have shipped (MVP
-through the lab meeting the real world: real photos, real text, real file sizes). Cap 7 (closed)
+Development proceeds in planned "caps" of feature waves; seven caps have shipped (MVP
+through the lab meeting the real world: real photos, real text, real file sizes). The last, Cap 7,
 made what already ships hold up under pressure: worker lifecycle, damaged share links,
 CI hardening, metric edge cases, a store refactor, and major upgrades taken one at a time
 (Vitest 5 and vite-plugin-pwa 2 shipped; TypeScript 7 typechecks this code with no error
-in 1.5 s instead of about 11, and waits for typescript-eslint to support it). The full plan, delivery log and design decisions live in
+in 1.5 s instead of about 11, and waits for typescript-eslint to support it). No wave is scheduled: the consented
+generative chat (V12) stays postponed by product decision, and the candidates for a next
+cap are listed, each with the condition that would start it. The full plan, delivery log and design decisions live in
 [PLAN.md](PLAN.md); [CHANGELOG.md](CHANGELOG.md) is extracted from it — one entry per
 wave, newest first — by `npm run changelog`, and a test fails when the two disagree.
 
