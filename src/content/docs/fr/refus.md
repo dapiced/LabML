@@ -30,14 +30,14 @@ Deux publics, et la distinction compte :
 
 ## ML Lab — l'entraînement
 
-| Refus               | Ce qui le déclenche                                              | Quoi faire                                                           |
-| ------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `no-features`       | Toutes les colonnes ont été exclues, ou aucune n'est utilisable  | Réincluez au moins une colonne dans le panneau des colonnes          |
-| `target-not-found`  | La colonne cible n'existe plus dans le fichier                   | Rechoisissez une cible                                               |
-| `task-undetectable` | La cible n'est ni numérique continue ni catégorielle exploitable | Choisissez une autre colonne, ou forcez son type dans le Data Studio |
-| `too-few-rows`      | Le regroupement sans cible demande plus de lignes qu'il n'y en a | Chargez un fichier plus grand                                        |
-| `too-few-points`    | La série temporelle est trop courte pour une prévision honnête   | Étendez la période, ou agrégez moins finement                        |
-| `missing-columns`   | Le fichier à scorer n'a pas les colonnes que le modèle attend    | Ajoutez les colonnes nommées dans le message                         |
+| Refus               | Ce qui le déclenche                                                                                                                          | Quoi faire                                                                          |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `no-features`       | Toutes les colonnes ont été exclues, ou aucune n'est utilisable                                                                              | Réincluez au moins une colonne dans le panneau des colonnes                         |
+| `target-not-found`  | La colonne cible n'existe plus dans le fichier                                                                                               | Rechoisissez une cible                                                              |
+| `task-undetectable` | La cible n'est ni numérique continue ni catégorielle exploitable                                                                             | Choisissez une autre colonne, ou forcez son type dans le Data Studio                |
+| `too-few-rows`      | Le regroupement sans cible demande plus de lignes qu'il n'y en a, ou chaque classe de la cible n'a qu'une ligne et il ne reste rien à tester | Chargez un fichier plus grand, ou choisissez une cible dont les classes se répètent |
+| `too-few-points`    | La série temporelle est trop courte pour une prévision honnête                                                                               | Étendez la période, ou agrégez moins finement                                       |
+| `missing-columns`   | Le fichier à scorer n'a pas les colonnes que le modèle attend                                                                                | Ajoutez les colonnes nommées dans le message                                        |
 
 ### Les découpes annoncées
 

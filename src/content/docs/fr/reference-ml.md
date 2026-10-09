@@ -33,6 +33,12 @@ et ses extrêmes. Choisir une cible déclenche la détection de tâche
 une colonne qui reflète presque parfaitement la cible est exclue
 automatiquement et nommée.
 
+Pendant un entraînement, et pendant tout calcul qui en dépend (recherche
+d'hyperparamètres, courbe d'apprentissage, classement robuste, scoring d'un
+lot), la cible et les colonnes sont **verrouillées**. Les changer à ce
+moment-là classerait les résultats sous une question à laquelle ils ne
+répondent pas ; il faut attendre la fin ou annuler.
+
 ## Entraînement et classement
 
 Huit familles écrites à la main, plus un ensemble, plus une baseline naïve.
@@ -45,6 +51,18 @@ de la sélection, et le cacher rendrait le score flatteur.
 La baseline répond toujours la classe majoritaire (ou la moyenne en
 régression). Un modèle qui ne la dépasse pas n'a rien appris, quel que soit son
 score absolu.
+
+La découpe est stratifiée par classe. Une classe qui n'a **qu'une seule
+ligne** reste du côté entraînement : l'envoyer au test laisserait les modèles
+sans aucun exemple d'elle. Si toutes les classes n'ont qu'une ligne, il ne
+reste rien à tester, et l'entraînement refuse avec `too-few-rows` plutôt que
+de publier des métriques calculées sur un ensemble vide.
+
+Précision, rappel et F1 sont des moyennes **macro**, calculées comme dans
+scikit-learn : sur les classes présentes dans les vraies valeurs ou dans les
+prédictions. Une classe absente des deux ne compte pas comme un zéro ; une
+classe prédite mais jamais vraie compte, parce que ces prédictions sont toutes
+fausses.
 
 ## Solidité des chiffres
 
@@ -131,6 +149,12 @@ Il se réimporte dans une session vierge et score un CSV. Une règle de décisio
 multiclasse figée voyage avec l'export, et le CSV scoré porte alors deux
 colonnes de plus — voir [la page des formats](/docs/formats). Les cinq raisons
 de refus à l'import sont nommées — voir la [page des refus](/docs/refus).
+
+Un lien de partage transporte les métriques et les graphiques du run dans le
+fragment d'URL, jamais les données. Un lien coupé ou abîmé ne donne jamais une
+page à moitié lue : s'il ne se décode pas, ou si une partie du run qu'il porte
+n'a pas la forme qu'écrit LabML, la page refuse de l'afficher et dit
+pourquoi.
 
 ## Comparer des runs
 

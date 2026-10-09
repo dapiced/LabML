@@ -92,6 +92,7 @@ describe('the limits page', () => {
     { claim: '35', inPlan: /YOLOX-S \(~35 MB\)/ },
     { claim: '0.792', inPlan: /the real champion figure is \*\*0\.792\*\*/ },
     { claim: '18.5', inPlan: /they weigh \*\*18\.5\*\*/ },
+    { claim: '99', inPlan: /on 99 distinct paths/ },
   ];
 
   it.each(TRACEABLE)('traces « $claim » back to PLAN.md', ({ inPlan }) => {
