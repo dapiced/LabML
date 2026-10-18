@@ -341,8 +341,9 @@ CI builds, tests and deploys on every push: pull requests get a Cloudflare Pages
 
 ## Roadmap
 
-Development proceeds in planned "caps" of feature waves; seven caps have shipped (MVP
-through the lab meeting the real world: real photos, real text, real file sizes). The last, Cap 7,
+Development proceeds in planned "caps" of feature waves; seven caps have shipped. The
+first six took it from the MVP to the lab meeting the real world (real photos, real text, real
+file sizes); the last, Cap 7,
 made what already ships hold up under pressure: worker lifecycle, damaged share links,
 CI hardening, metric edge cases, a store refactor, and major upgrades taken one at a time
 (Vitest 5 and vite-plugin-pwa 2 shipped; TypeScript 7 typechecks this code with no error

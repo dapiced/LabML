@@ -653,8 +653,9 @@ would justify starting it, and none starts without an explicit launch command.
 - **A run id in the ML worker protocol.** Condition: the day two requests can
   be in flight at once (for example, an analysis that runs during training).
   Until then V47's fence is enough, and the limits page says so.
-- **Widen the text vocabulary.** V24 capped it; V25 measured that the memory
-  guard made the typed-array rewrite unnecessary. Condition: a real dataset
+- **Widen the text vocabulary.** V24 capped it; V25 measured that the pipeline
+  was never the bottleneck, so the typed-array rewrite was dropped and a named
+  memory guard was added instead. Condition: a real dataset
   where the cap visibly costs accuracy, measured before and after.
 - **V12, consented generative chat.** Postponed by the owner (09/10/2026).
   Condition: a product decision, plus a fresh read of the provider's data
