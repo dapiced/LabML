@@ -7,6 +7,7 @@ import { SegmentsPanel } from '@/features/ml/components/SegmentsPanel';
 import { ThresholdPanel } from '@/features/ml/components/ThresholdPanel';
 import { MulticlassDecisionPanel } from '@/features/ml/components/MulticlassDecisionPanel';
 import { UncertaintyPanel } from '@/features/ml/components/UncertaintyPanel';
+import { ConformalPanel } from '@/features/ml/components/ConformalPanel';
 import { LearningCurvePanel } from '@/features/ml/components/LearningCurvePanel';
 import { TuningPanel } from '@/features/ml/components/TuningPanel';
 import { InsightsSection } from '@/features/ml/components/insights/InsightsSection';
@@ -148,6 +149,8 @@ export function TrainPanel() {
       <LearningCurvePanel />
 
       <InsightsSection />
+
+      <ConformalPanel />
 
       <ThresholdPanel />
 

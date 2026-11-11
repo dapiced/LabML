@@ -33,6 +33,7 @@ const RUN_DERIVED = new Set<WorkerResponse['kind']>([
   'multiclass-decision-tested',
   'segments-result',
   'uncertainty-result',
+  'conformal-result',
   'model-json',
   'predictions-csv',
 ]);

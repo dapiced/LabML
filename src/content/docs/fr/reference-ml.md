@@ -116,6 +116,37 @@ vaut le coup ; si elle est plate, travaillez les variables ou le modèle.
   plage, tout le reste inchangé.
 - **What-if** : éditez les valeurs, la prédiction se recalcule localement.
 
+## Ensembles de prédiction
+
+Une prédiction est une réponse ; elle ne dit pas à quel point le modèle est sûr
+de cette ligne. Le panneau des ensembles de prédiction fait répondre le modèle
+par un **ensemble de classes** (« chat ou lynx »), ou par une **valeur avec une
+marge** (« 42 ± 6 »), dimensionnés pour que la vérité tombe dedans au taux que
+vous choisissez : 80, 90 ou 95 %. Une réponse large, c'est le modèle qui dit
+qu'il ne sait pas trancher.
+
+La méthode est la prédiction conforme par découpe. Sur des lignes que le modèle
+n'a pas vues à l'ajustement, le laboratoire mesure à quel point il se trompe,
+prend le quantile de ces erreurs au niveau demandé, et s'en sert comme seuil
+pour toute nouvelle ligne.
+
+Le laboratoire ne demande pas à être cru. Le seuil est calibré sur une moitié
+du jeu de test et **mesuré sur l'autre**, dans les deux sens, et la couverture
+mesurée est affichée à côté de la cible avec son intervalle. Le jeu de
+validation n'est pas utilisé : il a choisi le modèle gagnant, ce qui fait
+paraître ses erreurs plus petites qu'elles ne sont.
+
+Trois limites, écrites aussi dans le panneau :
+
+- la promesse est une **moyenne** sur des lignes comme celles-ci, pas une
+  promesse pour chaque classe, chaque segment ou chaque ligne ;
+- elle cesse de tenir quand les nouvelles données dérivent de celles du run ;
+- en régression, la marge est la même pour toutes les lignes.
+
+Quand le jeu de test est trop petit pour le niveau demandé (95 % exige 19
+lignes par moitié), aucun seuil n'est donné et le panneau dit combien de lignes
+manquent.
+
 ## Seuil de décision
 
 Courbe précision-rappel, courbe de calibration, et un seuil que **vous**

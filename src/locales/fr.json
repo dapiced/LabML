@@ -702,6 +702,20 @@
         "chronological": "Chronologique — {{column}}",
         "group": "Par groupe — {{column}}"
       },
+      "conformal": {
+        "title": "Ensembles de prédiction avec couverture visée",
+        "hint": "Une prédiction seule cache à quel point le modèle est sûr de cette ligne. Ici le modèle répond par un ensemble de classes, ou par une valeur avec une marge, dimensionnés pour que la vérité tombe dedans au taux que vous demandez. Une réponse large, c'est le modèle qui dit qu'il ne sait pas trancher.",
+        "level": "Couverture visée",
+        "coverageLine": "Mesuré sur les {{rows}} lignes de test : {{coverage}} % couvertes (intervalle à 95 % de {{lo}} à {{hi}} %), pour une cible de {{target}} %.",
+        "setsLine": "Un ensemble contient {{mean}} classes en moyenne : {{single}} % des lignes reçoivent une seule classe, {{several}} % en reçoivent plusieurs, {{empty}} % aucune.",
+        "thresholdLine": "Pour une nouvelle ligne, une classe entre dans l'ensemble quand sa probabilité atteint {{floor}}.",
+        "intervalLine": "Pour une nouvelle ligne, la réponse est la prédiction ± {{half}} : la même marge pour chaque ligne.",
+        "howLine": "Le seuil a été calibré sur une moitié du jeu de test et mesuré sur l'autre, dans les deux sens ({{rows}} lignes par moitié) : aucune ligne n'est jugée par un seuil qu'elle a contribué à fixer.",
+        "verdictOnTarget": "La cible est dans ce que ce jeu de test permet de distinguer : la promesse a tenu ici.",
+        "verdictOffTarget": "La cible est hors de l'intervalle mesuré : sur ce jeu de test, la promesse n'a pas tenu telle qu'énoncée. Lisez le chiffre mesuré, pas la cible.",
+        "refused": "Aucune couverture ne peut être promise à {{target}} % : chaque moitié du jeu de test doit avoir au moins {{needed}} lignes et en a {{available}}. Choisissez une cible plus basse, ou chargez plus de données.",
+        "note": "La promesse vaut en moyenne sur des lignes comme celles-ci, pas pour chaque classe, chaque segment ou chaque ligne, et elle cesse de tenir quand les nouvelles données dérivent de celles de ce run. Le jeu de validation n'est pas utilisé ici : il a choisi le modèle gagnant, et un seuil calibré dessus a mesuré jusqu'à 2,6 points sous la cible pour ce modèle."
+      },
       "journal": {
         "title": "Journal du run : ce dont ce run s'est replié",
         "ensemble-failed": "L'ensemble n'a pas pu être construit : le classement montre les familles seules.",

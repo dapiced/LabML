@@ -8,6 +8,7 @@ import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
 import type { LearningCurveOutcome } from '@/features/ml/train/learning-curve';
 import type { RobustRankResult } from '@/features/ml/train/robust';
 import type { ThresholdAnalysis } from '@/features/ml/train/threshold-analysis';
+import type { ConformalOutcome } from '@/features/ml/train/conformal-analysis';
 import type {
   MulticlassDecisionAnalysis,
   MulticlassDecisionTestResult,
@@ -76,6 +77,8 @@ export type WorkerRequest =
     }
   | { kind: 'segment-analysis'; model: ModelKey }
   | { kind: 'uncertainty-analysis' }
+  /** V57: prediction sets or intervals of one model, at miscoverage `alpha`. */
+  | { kind: 'conformal-analysis'; model: ModelKey; alpha: number }
   // v22: an exported model comes back to score files, no retraining.
   | { kind: 'load-model'; text: string }
   | { kind: 'score-imported-file'; file: File }
@@ -124,6 +127,7 @@ export type WorkerResponse =
   | { kind: 'segments-result'; payload: SegmentAnalysis | null }
   // null = tiny test set — no interval theater.
   | { kind: 'uncertainty-result'; payload: UncertaintyAnalysis | null }
+  | { kind: 'conformal-result'; payload: ConformalOutcome | null }
   // Dedicated channel: a bad batch file must not tear down the run state.
   | { kind: 'batch-error'; message: string }
   // v22 import flow — its errors never touch the run or dataset state.

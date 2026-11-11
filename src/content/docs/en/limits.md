@@ -41,7 +41,7 @@ They are not equivalent, and mixing them would be dishonest:
 | Translating the changelog and prerendering the French docs | The changelog is an engineering log, not editorial content; without per-language routes, hreflang alternates would lie                                                                                              |
 | Catching async errors and shipping crash reports           | React boundaries cannot see callbacks or event handlers — claiming otherwise would be false; and nothing leaves the browser, telemetry included                                                                     |
 | A daily Dependabot and `npm audit fix --force`             | A daily cadence drowns the signal; `--force` moves majors without reading the break. The remaining advisories sit in build tooling, and we say so instead of hiding it                                              |
-| Picking multiclass thresholds automatically                | The lab shows its decisions instead of making them for you; and abstention is neither uncertainty calibration nor a conformal guarantee                                                                             |
+| Picking multiclass thresholds automatically                | The lab shows its decisions instead of making them for you; and abstention is neither uncertainty calibration nor a conformal guarantee (that guarantee exists on its own panel, as prediction sets)                |
 | A run id in every worker message                           | The worker answers in the order it is written to, so the training status is enough to recognise a stale answer. The id becomes necessary the day requests can overlap                                               |
 | A « rare class » warning in the interface                  | A one-row class stays in training, and a target where every class has one row is refused by name; a banner would flag a problem the split already handles                                                           |
 | Splitting the ML Lab store into independent slices         | Every action shares one worker: slicing would have moved code without separating anything                                                                                                                           |
@@ -81,6 +81,16 @@ faster than TypeScript 6. But the tool that runs the lint does not accept
 that version yet, and the lint is part of the CI gate. A check is not removed
 to make an upgrade fit: the migration waits for the tool to support it, and on
 our side it will then be a version bump.
+
+**Calibrating prediction sets on the validation split** (V57). It was the
+plan: the validation rows are held out, and the multiclass decision panel
+already tunes on them. Measured over 40 seeds, classification held its
+targets. Regression did not for the model the leaderboard crowns: on the mpg
+demo the winner covered 77.4 % for a target of 80, 88.7 % for 90 and 93.6 %
+for 95, while the other families sat on target. Choosing the winner by
+validation error is choosing the family whose validation residuals are
+smallest. The threshold is calibrated on one half of the test split and
+measured on the other instead, both ways: 79.8, 90.2 and 95.2 %.
 
 ## Predictions measurement refuted
 

@@ -4,6 +4,7 @@ import type { ShapleyExplanation } from '@/features/ml/train/shapley';
 import type { CalibrationBin, PrPoint, ThresholdMetrics } from '@/features/ml/train/threshold';
 import type { SegmentAnalysis } from '@/features/ml/train/segments';
 import type { UncertaintyAnalysis } from '@/features/ml/train/uncertainty';
+import type { ConformalOutcome } from '@/features/ml/train/conformal-analysis';
 import type { ModelKey } from '@/features/ml/train/types';
 import type { TuneOutcome } from '@/features/ml/train/search';
 import type { LearningCurveOutcome } from '@/features/ml/train/learning-curve';
@@ -57,6 +58,8 @@ export interface RunArtifacts {
   threshold?: ThresholdArtifact;
   segments?: SegmentAnalysis;
   uncertainty?: UncertaintyAnalysis;
+  /** V57: prediction sets or intervals of the inspected model — figures only. */
+  conformal?: ConformalOutcome;
   /** v26: metric vs training size, with the plain-language verdict. */
   learningCurve?: LearningCurveOutcome;
   /** v35: 5x2 CV ranking on train+validation - mean, spread, top-pair wins. */

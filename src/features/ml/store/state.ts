@@ -14,6 +14,8 @@ import type { BatchScore } from '@/features/ml/train/score';
 import type { ImportedManifest } from '@/features/ml/train/deserialize';
 import type { SegmentAnalysis } from '@/features/ml/train/segments';
 import type { ThresholdAnalysis } from '@/features/ml/train/threshold-analysis';
+import { DEFAULT_ALPHA } from '@/features/ml/train/conformal';
+import type { ConformalOutcome } from '@/features/ml/train/conformal-analysis';
 import type { UncertaintyAnalysis } from '@/features/ml/train/uncertainty';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
 import type { LearningCurveOutcome } from '@/features/ml/train/learning-curve';
@@ -104,6 +106,10 @@ export interface LabState {
   segmentAnalysis: SegmentAnalysis | null;
   /** Leaderboard-wide 95% intervals — belongs to the run, not the inspected model. */
   uncertaintyAnalysis: UncertaintyAnalysis | null;
+  /** V57: prediction sets or intervals of the inspected model, or the refusal. */
+  conformalAnalysis: ConformalOutcome | null;
+  /** V57: the miscoverage rate the user asked for (0.1 = a 90 % target). */
+  conformalAlpha: number;
   /** The auto-saved record of the current run (id set once stored). */
   currentRun: RunRecord | null;
   /** Local id of the stored copy of the CURRENT dataset — null if not kept. */
@@ -143,6 +149,7 @@ export interface LabState {
   setClassWeighting: (on: boolean) => void;
   setRankMetric: (metric: RankingMetric | null) => void;
   setThresholdClass: (index: number) => void;
+  setConformalLevel: (alpha: number) => void;
   cancelCurve: () => void;
   explore: () => void;
   forecast: (dateColumn: string, valueColumn: string) => void;
@@ -190,6 +197,8 @@ export const initialTraining = {
   multiclassDecisionUnavailable: false,
   segmentAnalysis: null as SegmentAnalysis | null,
   uncertaintyAnalysis: null as UncertaintyAnalysis | null,
+  conformalAnalysis: null as ConformalOutcome | null,
+  conformalAlpha: DEFAULT_ALPHA,
   currentRun: null,
   exportedFile: null,
 };

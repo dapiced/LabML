@@ -165,6 +165,97 @@ def models() -> dict[str, object]:
     }
 
 
+def conformal_quantile(scores: list[float], alpha: float) -> float | None:
+    """The ceil((n+1)(1-alpha))-th smallest score, or None when it does not exist.
+
+    Computed two independent ways and required to agree: by rank on the sorted
+    scores, and as numpy's inverted-CDF quantile at level rank/n.
+    """
+    n = len(scores)
+    rank = int(np.ceil((n + 1) * (1 - alpha) - 1e-9))
+    if rank > n:
+        return None
+    by_rank = float(np.sort(np.asarray(scores, dtype=float))[rank - 1])
+    by_numpy = float(
+        np.quantile(np.asarray(scores, dtype=float), (rank - 0.5) / n, method="inverted_cdf")
+    )
+    assert by_rank == by_numpy, (by_rank, by_numpy)
+    return by_rank
+
+
+def conformal() -> dict[str, object]:
+    """Split conformal prediction on fixed data. numpy only: the method is a quantile."""
+    calibration_proba = [
+        [0.80, 0.15, 0.05],
+        [0.10, 0.70, 0.20],
+        [0.05, 0.15, 0.80],
+        [0.55, 0.35, 0.10],
+        [0.30, 0.45, 0.25],
+        [0.20, 0.20, 0.60],
+        [0.40, 0.50, 0.10],
+        [0.15, 0.60, 0.25],
+        [0.25, 0.30, 0.45],
+        [0.70, 0.20, 0.10],
+        [0.35, 0.25, 0.40],
+        [0.10, 0.25, 0.65],
+    ]
+    calibration_labels = [0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 0, 2]
+    test_proba = [
+        [0.90, 0.07, 0.03],
+        [0.40, 0.35, 0.25],
+        [0.34, 0.33, 0.33],
+        [0.05, 0.90, 0.05],
+        [0.20, 0.30, 0.50],
+        [0.48, 0.47, 0.05],
+    ]
+    test_labels = [0, 1, 2, 1, 2, 0]
+    class_scores = [1 - row[label] for row, label in zip(calibration_proba, calibration_labels)]
+
+    calibration_pred = [10.0, 12.5, 9.0, 15.0, 11.0, 13.5, 8.0, 14.0, 10.5, 12.0, 9.5, 16.0]
+    calibration_true = [11.0, 12.0, 9.5, 13.0, 11.2, 15.0, 8.4, 14.1, 9.0, 12.9, 9.5, 18.5]
+    test_pred = [10.0, 14.0, 9.0, 12.0, 15.5, 11.0]
+    test_true = [10.4, 16.0, 9.1, 11.0, 15.0, 13.9]
+    residuals = [abs(t - p) for t, p in zip(calibration_true, calibration_pred)]
+
+    levels: list[dict[str, object]] = []
+    for alpha in (0.2, 0.1):
+        q_class = conformal_quantile(class_scores, alpha)
+        q_reg = conformal_quantile(residuals, alpha)
+        assert q_class is not None and q_reg is not None
+        sets = [
+            [k for k, value in enumerate(row) if value >= 1 - q_class - 1e-12]
+            for row in test_proba
+        ]
+        covered = [abs(t - p) <= q_reg + 1e-12 for t, p in zip(test_true, test_pred)]
+        levels.append(
+            {
+                "alpha": alpha,
+                "classificationQuantile": q_class,
+                "sets": sets,
+                "setCoverage": float(
+                    np.mean([label in found for label, found in zip(test_labels, sets)])
+                ),
+                "meanSetSize": float(np.mean([len(found) for found in sets])),
+                "regressionQuantile": q_reg,
+                "intervalCoverage": float(np.mean(covered)),
+            }
+        )
+
+    return {
+        "calibrationProbabilities": calibration_proba,
+        "calibrationLabels": calibration_labels,
+        "testProbabilities": test_proba,
+        "testLabels": test_labels,
+        "calibrationPredictions": calibration_pred,
+        "calibrationTargets": calibration_true,
+        "testPredictions": test_pred,
+        "testTargets": test_true,
+        "levels": levels,
+        # Five scores cannot carry a 90 % level: the rank asked for is the sixth.
+        "tooFew": {"scores": [0.1, 0.4, 0.2, 0.9, 0.3], "alpha": 0.1, "quantile": None},
+    }
+
+
 def main() -> None:
     reference = {
         "provenance": {
@@ -174,6 +265,7 @@ def main() -> None:
         },
         "metrics": metrics(),
         "models": models(),
+        "conformal": conformal(),
     }
     OUTPUT.write_text(
         json.dumps(reference, indent=2, ensure_ascii=True) + "\n", encoding="utf-8"

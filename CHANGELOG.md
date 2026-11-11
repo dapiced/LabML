@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V57 — Prediction sets with a coverage that is measured, not promised
+
+The first feature of the cap, listed as F1 below until it shipped.
+
+_Why:_ Approved 11/11/2026, calibration rows chosen by the owner after the measurement. The lab's own rule turned on itself: a guarantee calibrated on rows that had already made a choice flattered the model that won, by 1.3 to 2.6 points, on exactly the model a reader looks at first.
+
 ## V55 — A run that fell back says so
 
 The wave opened with the inventory: 25 silent handlers in shipped code, 20 `catch` blocks with no variable and 5 `.catch(() => undefined)`.
