@@ -43,7 +43,7 @@
     "@huggingface/transformers": "4.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "dexie": "^4.4.6",
+    "dexie": "^4.4.7",
     "dexie-react-hooks": "^4.4.0",
     "i18next": "^26.4.3",
     "i18next-browser-languagedetector": "^8.2.1",
@@ -53,13 +53,13 @@
     "ml-random-forest": "^2.1.0",
     "onnxruntime-web": "^1.30.0",
     "papaparse": "^5.7.0",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
-    "react-i18next": "^17.1.13",
-    "react-router": "^8.4.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-i18next": "^17.0.16",
+    "react-router": "^8.5.1",
     "tailwind-merge": "^3.7.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
-    "zustand": "^5.0.15"
+    "zustand": "^5.0.16"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
