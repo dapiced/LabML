@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V53 — A threshold chosen where it is not graded
+
+The binary threshold panel offered a « best for these costs » cut and showed its metrics beside it, both computed on the same test pairs: `analyzeThresholds` built the pairs from `testX`/`testY` and `ThresholdPanel` ran `bestThresholdByCost` on them.
+
+_Why:_ Approved 11/11/2026 after the Cap 8 audit. The same rule as V35 and V50: a number must not flatter by accident, and this one flattered most on the imbalanced data the panel exists for.
+
 ## V52.3 — TypeScript 7, measured and deferred
 
 The third major, and the one the plan flagged as uncertain.

@@ -10,8 +10,17 @@
  * decision rule — two classes can both clear their thresholds, and nothing
  * here says which wins. The panel states that rather than implying a rule it
  * does not provide.
+ *
+ * V53: the cost-optimal threshold is a choice, and the panel used to make it
+ * on the very pairs that then graded it. Measured over ten seeds and the six
+ * probabilistic models: the cost shown at that cut was 33 to 60 % below what a cut picked
+ * on validation costs on test (fraud demo), 12 to 16 % on titanic. The bundle
+ * now carries the validation pairs too, and `suggestThreshold` reads only
+ * those: validation chooses, test measures, the rule V45 already follows for
+ * multiclass decisions.
  */
 import {
+  bestThresholdByCost,
   calibrationCurve,
   prCurve,
   type CalibrationCurve,
@@ -26,6 +35,11 @@ export interface ThresholdAnalysis {
   positiveClass: string;
   /** Test-set pairs: [probability of the positive class, actual 0/1]. */
   pairs: [number, number][];
+  /**
+   * V53: the same pairs on the validation split, the only ones a threshold
+   * may be picked on. Absent when the run has no validation split.
+   */
+  validationPairs?: [number, number][];
   pr: PrCurve;
   calibration: CalibrationCurve;
   /**
@@ -52,20 +66,48 @@ export function analyzeThresholds(
     ? Math.min(Math.max(focusClass ?? 0, 0), artifacts.classes.length - 1)
     : 1;
 
+  const binarise = (labels: number[]) =>
+    multiclass ? labels.map((label) => (label === index ? 1 : 0)) : labels;
+
   const p = model.predictProba(artifacts.testX).map((row) => row[index] ?? 0);
-  const y = multiclass
-    ? artifacts.testY.map((label) => (label === index ? 1 : 0))
-    : artifacts.testY;
+  const y = binarise(artifacts.testY);
 
   const pr = prCurve(y, p);
   if (!pr) return null;
+
+  const validationY = binarise(artifacts.validationY);
+  const validationPairs: [number, number][] | null =
+    artifacts.validationX.length > 0
+      ? model.predictProba(artifacts.validationX).map((row, i) => [row[index] ?? 0, validationY[i]])
+      : null;
 
   return {
     model: modelKey,
     positiveClass: artifacts.classes[index],
     pairs: y.map((label, i) => [p[i], label]),
+    ...(validationPairs !== null && { validationPairs }),
     pr,
     calibration: calibrationCurve(y, p),
     ...(multiclass && { oneVsRest: { classIndex: index, classes: artifacts.classes } }),
   };
+}
+
+/**
+ * V53: the threshold minimising the user's costs, picked on VALIDATION so the
+ * test metrics shown beside it stay a measurement. Null is a refusal, not a
+ * fallback: with no validation split, or one holding a single class, any cut
+ * would have to come from the test pairs, and the panel then offers none.
+ */
+export function suggestThreshold(
+  analysis: ThresholdAnalysis,
+  costFp: number,
+  costFn: number,
+): number | null {
+  const pairs = analysis.validationPairs;
+  if (!pairs || pairs.length === 0) return null;
+  const y = pairs.map(([, label]) => label);
+  const positives = y.reduce((a, v) => a + v, 0);
+  if (positives === 0 || positives === y.length) return null;
+  const p = pairs.map(([proba]) => proba);
+  return bestThresholdByCost(y, p, costFp, costFn).threshold;
 }

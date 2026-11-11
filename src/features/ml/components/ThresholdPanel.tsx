@@ -4,7 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { useLabStore } from '@/features/ml/lab-store';
-import { bestThresholdByCost, thresholdMetrics } from '@/features/ml/train/threshold';
+import { thresholdMetrics } from '@/features/ml/train/threshold';
+import { suggestThreshold } from '@/features/ml/train/threshold-analysis';
 
 /**
  * Imbalance tools for binary runs: a probability is not a decision — the
@@ -23,7 +24,8 @@ export function ThresholdPanel() {
   const p = analysis.pairs.map(([proba]) => proba);
   const at = thresholdMetrics(y, p, choice.threshold, choice.costFp, choice.costFn);
   const atDefault = thresholdMetrics(y, p, 0.5, choice.costFp, choice.costFn);
-  const best = bestThresholdByCost(y, p, choice.costFp, choice.costFn);
+  // V53: picked on validation; the table below then measures it on test.
+  const suggested = suggestThreshold(analysis, choice.costFp, choice.costFn);
   const pct = (v: number) => (v * 100).toLocaleString(lang, { maximumFractionDigits: 1 });
 
   const prPath = analysis.pr.points
@@ -233,15 +235,24 @@ export function ThresholdPanel() {
                 className="h-8 w-20 rounded-lg border border-line bg-surface px-2 font-mono text-sm text-ink"
               />
             </label>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => chooseThreshold({ threshold: best.threshold })}
-              data-testid="threshold-best"
-            >
-              {t('ml.lab.threshold.bestForCosts', { threshold: best.threshold.toFixed(2) })}
-            </Button>
+            {suggested !== null && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => chooseThreshold({ threshold: suggested })}
+                data-testid="threshold-best"
+              >
+                {t('ml.lab.threshold.bestForCosts', { threshold: suggested.toFixed(2) })}
+              </Button>
+            )}
           </div>
+          <p className="max-w-sm text-xs text-muted" data-testid="threshold-suggestion-note">
+            {t(
+              suggested !== null
+                ? 'ml.lab.threshold.suggestionSource'
+                : 'ml.lab.threshold.noSuggestion',
+            )}
+          </p>
 
           <table className="w-full max-w-sm text-left text-xs" data-testid="threshold-metrics">
             <thead>

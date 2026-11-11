@@ -1,6 +1,9 @@
 /**
- * Imbalance tools for binary classification — all computed on the held-out
- * test set's (probability, label) pairs, all deterministic:
+ * Imbalance tools for binary classification — pure functions over
+ * (probability, label) pairs, all deterministic. The curves and the metrics
+ * at a threshold read the held-out test pairs; the cost-optimal threshold is
+ * a choice, so its caller feeds it validation pairs (V53,
+ * `suggestThreshold`):
  *  - precision-recall curve with Average Precision (step interpolation);
  *  - metrics at ANY decision threshold (a probability is not a decision);
  *  - the cost-optimal threshold for a user-supplied FP/FN cost matrix;
