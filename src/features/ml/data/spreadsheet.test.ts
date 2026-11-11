@@ -24,7 +24,7 @@
 import * as XLSX from 'xlsx';
 import { describe, expect, it } from 'vitest';
 
-/** The exact call shape the three workers use. */
+/** The exact call shape `spreadsheetToCsv` (ingest.ts) uses for every section. */
 const readFirstSheetAsCsv = (bytes: Uint8Array) => {
   const workbook = XLSX.read(bytes, { type: 'array' });
   const firstSheet = workbook.Sheets[workbook.SheetNames[0]];

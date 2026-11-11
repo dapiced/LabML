@@ -60,6 +60,15 @@ stage reading stopped.
 | `bad-manifest`        | The manifest is incomplete — this export cannot be trusted to predict | Export again; do not force it             |
 | `unsupported-kind`    | Unknown model family in this export                                   | Export again from this version of LabML   |
 
+## Reading a file
+
+The same refusal in the ML Lab, the Data Studio and the data assistant: one
+reader, one memory budget.
+
+| Refusal     | What triggers it                                                          | What to do                                     |
+| ----------- | ------------------------------------------------------------------------- | ---------------------------------------------- |
+| `too-large` | Rows × columns pass the 20-million-cell budget; reading stops at that row | Split the file or drop columns, then try again |
+
 ## Data Studio
 
 | Refusal                | What triggers it                                                   | What to do                                         |

@@ -60,6 +60,15 @@ quel étage la lecture s'est arrêtée.
 | `bad-manifest`        | Le manifeste est incomplet — cet export ne peut pas être cru pour prédire | Réexportez ; ne forcez pas                              |
 | `unsupported-kind`    | Famille de modèle inconnue dans cet export                                | Réexportez depuis cette version de LabML                |
 
+## Lecture d'un fichier
+
+Le même refus dans le ML Lab, le Data Studio et l'assistant de données : un
+seul lecteur, un seul budget mémoire.
+
+| Refus       | Ce qui le déclenche                                                                       | Quoi faire                                                 |
+| ----------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `too-large` | Lignes × colonnes dépassent le budget de 20 millions de cellules ; la lecture s'arrête là | Scindez le fichier ou retirez des colonnes, puis réessayez |
+
 ## Data Studio
 
 | Refus                  | Ce qui le déclenche                                                 | Quoi faire                                                    |

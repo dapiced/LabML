@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V54 — One ingestion for every section
+
+V38 unified how a CSV is read; the loop that keeps the rows stayed copied in each worker, four times counting the batch scorer, and the copies had drifted.
+
+_Why:_ Approved 11/11/2026 with the Cap 8 audit, launched after V53. The same class of defect as V25: a file that is refused by name in one section and kills the tab in another is not a limit, it is an accident of where the user dropped it.
+
 ## V53 — A threshold chosen where it is not graded
 
 The binary threshold panel offered a « best for these costs » cut and showed its metrics beside it, both computed on the same test pairs: `analyzeThresholds` built the pairs from `testX`/`testY` and `ThresholdPanel` ran `bestThresholdByCost` on them.

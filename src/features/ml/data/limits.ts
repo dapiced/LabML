@@ -6,3 +6,13 @@
  * numbers, instead of letting the browser die silently.
  */
 export const MAX_CELLS = 20_000_000;
+
+/**
+ * V54: reads the detail of the guard's refusal (`too-large:<rows>:<columns>`),
+ * so every section spells out the budget and where reading stopped instead of
+ * showing the raw code. Null for any other error.
+ */
+export function tooLargeDetail(error: string | null): { rows: number; columns: number } | null {
+  const match = /^too-large:(\d+):(\d+)$/.exec(error ?? '');
+  return match ? { rows: Number(match[1]), columns: Number(match[2]) } : null;
+}

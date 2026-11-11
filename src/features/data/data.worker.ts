@@ -12,21 +12,11 @@ import { buildDriftReport } from '@/features/data/quality/drift';
 import { joinDatasets } from '@/features/data/quality/join';
 import { DEFAULT_RECIPE } from '@/features/data/quality/types';
 import type { Cell } from '@/features/ml/data/types';
-import {
-  applyDecimalFormats,
-  buildReadFormat,
-  countParseErrors,
-  isRaggedRow,
-  papaConfig,
-  sniffFile,
-  sniffText,
-} from '@/features/ml/data/read';
+import { readTable } from '@/features/ml/data/ingest';
 import type { ReadFormat } from '@/features/ml/data/locale';
 import type { DataWorkerRequest, DataWorkerResponse } from '@/features/data/data-protocol';
-import { readHeader, type HeaderIssue } from '@/features/ml/data/header';
 
 const PREVIEW_ROWS = 8;
-const PROGRESS_EVERY = 5000;
 
 let sourceName = '';
 let sourceBytes = 0;
@@ -36,8 +26,6 @@ let rowCount = 0;
 // Cleaning always restarts from the pristine columns, so toggles never compound.
 let cleanedHeader: string[] = [];
 let cleanedColumns: Cell[][] = [];
-// Ingestion writes into the main dataset or the comparison one (drift/join).
-let target: 'main' | 'compare' = 'main';
 let compareHeader: string[] = [];
 let compareColumns: Cell[][] = [];
 let compareRowCount = 0;
@@ -47,42 +35,6 @@ let joinName = '';
 
 function post(message: DataWorkerResponse) {
   self.postMessage(message);
-}
-
-function ingestRows(rows: string[][]) {
-  const intoCompare = target === 'compare';
-  for (const row of rows) {
-    const head = intoCompare ? compareHeader : header;
-    if (head.length === 0) {
-      // V35 wave 4: unique by construction. Two columns called « age » used
-      // to collapse into one key in the preview and in every recipe entry.
-      const read = readHeader(row);
-      const parsedHead = read.names;
-      if (!intoCompare) headerIssues = read.issues;
-      const cols = parsedHead.map<Cell[]>(() => []);
-      if (intoCompare) {
-        compareHeader = parsedHead;
-        compareColumns = cols;
-      } else {
-        header = parsedHead;
-        columns = cols;
-      }
-      continue;
-    }
-    if (row.length === 1 && row[0].trim() === '') continue;
-    // V35 wave 4: a row of the wrong width still loads — extra cells dropped,
-    // missing ones null — but it is counted so the UI can say it happened.
-    if (!intoCompare && isRaggedRow(row, head.length)) malformedRows += 1;
-    const cols = intoCompare ? compareColumns : columns;
-    for (let i = 0; i < head.length; i++) {
-      cols[i].push(row[i] ?? null);
-    }
-    if (intoCompare) compareRowCount += 1;
-    else {
-      rowCount += 1;
-      if (rowCount % PROGRESS_EVERY === 0) post({ kind: 'progress', rows: rowCount });
-    }
-  }
 }
 
 function previewOf(head: string[], cols: Cell[][]): Record<string, string>[] {
@@ -103,15 +55,12 @@ function resetState() {
   header = [];
   columns = [];
   rowCount = 0;
-  headerIssues = [];
-  malformedRows = 0;
   cleanedHeader = [];
   cleanedColumns = [];
   resetCompare();
 }
 
 function resetCompare() {
-  target = 'main';
   compareHeader = [];
   compareColumns = [];
   compareRowCount = 0;
@@ -122,10 +71,6 @@ function resetCompare() {
 
 /** V38: how the current file was actually read — announced, never assumed. */
 let readFormat: ReadFormat | null = null;
-/** V35 wave 4: columns whose name LabML had to change to keep names unique. */
-let headerIssues: HeaderIssue[] = [];
-/** V35 wave 4: rows the file did not deliver as declared — counted, not guessed. */
-let malformedRows = 0;
 
 function mainPayload() {
   return {
@@ -139,123 +84,71 @@ function mainPayload() {
   };
 }
 
-function finishParse(name: string, bytes: number, sniffed?: Sniffed) {
-  if (target === 'compare') {
-    if (compareHeader.length === 0 || compareRowCount === 0) {
-      post({ kind: 'error', message: 'empty' });
-      return;
-    }
-    if (joinPending) {
-      // The buffers stay put; the UI answers with apply-join and a key.
-      target = 'main';
-      joinName = name;
-      post({
-        kind: 'join-ready',
-        name,
-        rows: compareRowCount,
-        candidates: compareHeader.filter((column) => header.includes(column)),
-      });
-      return;
-    }
-    post({
-      kind: 'drift',
-      meta: { name, rowCount: compareRowCount, columnCount: compareHeader.length, bytes },
-      payload: buildDriftReport(header, columns, compareHeader, compareColumns),
-    });
-    return;
-  }
-  if (header.length === 0 || rowCount === 0) {
-    post({ kind: 'error', message: 'empty' });
-    return;
-  }
+/**
+ * V54: the reading itself lives in `ingest.ts`, shared with the ML Lab and the
+ * chat, so the Studio now has the same memory budget and the same named
+ * refusals (`too-large:rows:cols`, `empty`), thrown there and posted by the
+ * handler below.
+ */
+async function loadMain(source: File | string, name: string, bytes: number) {
+  resetState();
+  const table = await readTable(source, {
+    onProgress: (rows) => post({ kind: 'progress', rows }),
+  });
+  header = table.header;
+  columns = table.columns;
+  rowCount = table.rowCount;
+  readFormat = table.readFormat;
   sourceName = name;
   sourceBytes = bytes;
-  // V38: whole columns, after ingestion — the same reader the ML Lab uses, so
-  // a file read one way in the Studio is read the same way in the Lab.
-  if (sniffed !== undefined) {
-    readFormat = buildReadFormat(sniffed, applyDecimalFormats(header, columns), {
-      headerIssues,
-      malformedRows,
-    });
-  }
   cleanedHeader = header;
   cleanedColumns = columns;
   post({ kind: 'parsed', payload: mainPayload() });
 }
 
-type Sniffed = Awaited<ReturnType<typeof sniffFile>>;
-
-function parseText(text: string, name: string, bytes: number) {
-  resetState();
-  const sniffed = sniffText(text);
-  Papa.parse<string[]>(text, {
-    ...papaConfig(sniffed.delimiter),
-    complete: (results) => {
-      // V35 wave 4: these errors used to be dropped, so an unterminated quote
-      // silently swallowed the rest of the file.
-      if (target !== 'compare') malformedRows += countParseErrors(results.errors);
-      ingestRows(results.data);
-      finishParse(name, bytes, sniffed);
-    },
-  });
-}
-
-async function parseFile(file: File) {
-  resetState();
-  const sniffed = await sniffFile(file);
-  Papa.parse<string[]>(file, {
-    ...papaConfig(sniffed.delimiter, sniffed.encoding.encoding),
-    chunk: (results) => {
-      if (target !== 'compare') malformedRows += countParseErrors(results.errors);
-      ingestRows(results.data);
-    },
-    complete: () => finishParse(file.name, file.size, sniffed),
-    error: (error) => post({ kind: 'error', message: error.message }),
-  });
-}
-
-async function parseCompareFile(file: File) {
-  // A drift or join file is read exactly like the main one: comparing a
-  // French export against a normalised dataset would report drift that is
-  // nothing but a decimal separator.
-  const sniffed = await sniffFile(file);
-  Papa.parse<string[]>(file, {
-    ...papaConfig(sniffed.delimiter, sniffed.encoding.encoding),
-    chunk: (results) => ingestRows(results.data),
-    complete: () => finishParse(file.name, file.size, sniffed),
-    error: (error) => post({ kind: 'error', message: error.message }),
-  });
-}
-
-async function parseCompareExcel(file: File) {
-  const XLSX = await import('xlsx');
-  const workbook = XLSX.read(new Uint8Array(await file.arrayBuffer()), { type: 'array' });
-  const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-  if (!firstSheet) {
-    post({ kind: 'error', message: 'empty' });
+/**
+ * A drift batch or a join candidate. It is read exactly like the main file,
+ * decimals included: comparing a French export against a normalised dataset
+ * would otherwise report a drift that is nothing but a decimal separator.
+ */
+async function loadCompare(
+  source: File | string,
+  name: string,
+  bytes: number,
+  purpose: 'drift' | 'join',
+) {
+  if (header.length === 0) throw new Error('no-data');
+  compareHeader = [];
+  compareColumns = [];
+  compareRowCount = 0;
+  joinPending = false;
+  const table = await readTable(source);
+  compareHeader = table.header;
+  compareColumns = table.columns;
+  compareRowCount = table.rowCount;
+  if (purpose === 'join') {
+    // The buffers stay put; the UI answers with apply-join and a key.
+    joinPending = true;
+    joinName = name;
+    post({
+      kind: 'join-ready',
+      name,
+      rows: compareRowCount,
+      candidates: compareHeader.filter((column) => header.includes(column)),
+    });
     return;
   }
-  const csv = XLSX.utils.sheet_to_csv(firstSheet);
-  const sniffed = sniffText(csv);
-  Papa.parse<string[]>(csv, {
-    ...papaConfig(sniffed.delimiter),
-    complete: (results) => {
-      ingestRows(results.data);
-      finishParse(file.name, file.size, sniffed);
-    },
+  post({
+    kind: 'drift',
+    meta: { name, rowCount: compareRowCount, columnCount: compareHeader.length, bytes },
+    payload: buildDriftReport(header, columns, compareHeader, compareColumns),
   });
 }
 
-/** Excel support: SheetJS is loaded lazily, the first sheet becomes CSV. */
-async function parseExcel(file: File) {
-  const XLSX = await import('xlsx');
-  const workbook = XLSX.read(new Uint8Array(await file.arrayBuffer()), { type: 'array' });
-  const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-  if (!firstSheet) {
-    post({ kind: 'error', message: 'empty' });
-    return;
-  }
-  parseText(XLSX.utils.sheet_to_csv(firstSheet), file.name, file.size);
+async function fetchText(url: string): Promise<string> {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.text();
 }
 
 function cleanedCsv(): string {
@@ -271,63 +164,17 @@ self.onmessage = async (event: MessageEvent<DataWorkerRequest>) => {
   const request = event.data;
   try {
     if (request.kind === 'parse-file') {
-      resetCompare();
-      if (/\.(xlsx|xls)$/i.test(request.file.name)) await parseExcel(request.file);
-      else await parseFile(request.file);
+      await loadMain(request.file, request.file.name, request.file.size);
     } else if (request.kind === 'parse-compare-file') {
-      if (header.length === 0) throw new Error('no-data');
-      target = 'compare';
-      compareHeader = [];
-      compareColumns = [];
-      compareRowCount = 0;
-      joinPending = false;
-      if (/\.(xlsx|xls)$/i.test(request.file.name)) await parseCompareExcel(request.file);
-      else await parseCompareFile(request.file);
+      await loadCompare(request.file, request.file.name, request.file.size, 'drift');
     } else if (request.kind === 'parse-compare-url') {
-      if (header.length === 0) throw new Error('no-data');
-      target = 'compare';
-      compareHeader = [];
-      compareColumns = [];
-      compareRowCount = 0;
-      joinPending = false;
-      const response = await fetch(request.url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const text = await response.text();
-      const sniffed = sniffText(text);
-      Papa.parse<string[]>(text, {
-        ...papaConfig(sniffed.delimiter),
-        complete: (results) => {
-          ingestRows(results.data);
-          finishParse(request.name, text.length, sniffed);
-        },
-      });
+      const text = await fetchText(request.url);
+      await loadCompare(text, request.name, text.length, 'drift');
     } else if (request.kind === 'parse-join-file') {
-      if (header.length === 0) throw new Error('no-data');
-      target = 'compare';
-      compareHeader = [];
-      compareColumns = [];
-      compareRowCount = 0;
-      joinPending = true;
-      if (/\.(xlsx|xls)$/i.test(request.file.name)) await parseCompareExcel(request.file);
-      else await parseCompareFile(request.file);
+      await loadCompare(request.file, request.file.name, request.file.size, 'join');
     } else if (request.kind === 'parse-join-url') {
-      if (header.length === 0) throw new Error('no-data');
-      target = 'compare';
-      compareHeader = [];
-      compareColumns = [];
-      compareRowCount = 0;
-      joinPending = true;
-      const response = await fetch(request.url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const text = await response.text();
-      const sniffed = sniffText(text);
-      Papa.parse<string[]>(text, {
-        ...papaConfig(sniffed.delimiter),
-        complete: (results) => {
-          ingestRows(results.data);
-          finishParse(request.name, text.length, sniffed);
-        },
-      });
+      const text = await fetchText(request.url);
+      await loadCompare(text, request.name, text.length, 'join');
     } else if (request.kind === 'apply-join') {
       if (header.length === 0 || compareHeader.length === 0 || !joinPending) {
         throw new Error('no-join');
@@ -347,10 +194,8 @@ self.onmessage = async (event: MessageEvent<DataWorkerRequest>) => {
       resetCompare();
       post({ kind: 'joined', stats: result.stats, payload: mainPayload() });
     } else if (request.kind === 'parse-url') {
-      const response = await fetch(request.url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const text = await response.text();
-      parseText(text, request.name, text.length);
+      const text = await fetchText(request.url);
+      await loadMain(text, request.name, text.length);
     } else if (request.kind === 'apply') {
       if (header.length === 0) throw new Error('no-data');
       const options = { ...DEFAULT_RECIPE, ...request.options };

@@ -9,6 +9,7 @@ import { Eyebrow } from '@/components/ui/eyebrow';
 import { EnginePicker } from '@/features/ai/chat/EnginePicker';
 import { useChatStore, type ChatMessage } from '@/features/ai/chat/chat-store';
 import type { GroupRow, QueryResult } from '@/features/ai/chat/engine';
+import { MAX_CELLS, tooLargeDetail } from '@/features/ml/data/limits';
 import { cn } from '@/lib/utils';
 
 const DEMO_DATASETS = [
@@ -246,6 +247,9 @@ export function ChatPage() {
   const loadDemo = useChatStore((s) => s.loadDemo);
   const ask = useChatStore((s) => s.ask);
   const reset = useChatStore((s) => s.reset);
+  // V54: the memory guard now covers the chat; it refuses by name, with the
+  // numbers, as the ML Lab does.
+  const tooLarge = tooLargeDetail(useChatStore((s) => s.error));
   const inputRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -344,7 +348,15 @@ export function ChatPage() {
             </p>
           )}
           {status === 'error' && (
-            <Card className="border-copper text-sm">{t('ai.chat.error')}</Card>
+            <Card className="border-copper text-sm" data-testid="chat-error">
+              {tooLarge
+                ? t('ml.lab.errorTooLarge', {
+                    max: MAX_CELLS.toLocaleString(lang),
+                    rows: tooLarge.rows.toLocaleString(lang),
+                    cols: tooLarge.columns,
+                  })
+                : t('ai.chat.error')}
+            </Card>
           )}
         </section>
       )}

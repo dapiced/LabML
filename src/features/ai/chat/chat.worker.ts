@@ -4,7 +4,6 @@
  * interpreted and computed here — the page only receives column summaries and
  * structured answers. Same privacy contract as the ML Lab and the Data Studio.
  */
-import Papa from 'papaparse';
 import { runQuery, type QueryResult } from '@/features/ai/chat/engine';
 import { parseQuestion, type ColumnInfo } from '@/features/ai/chat/parser';
 import { resolveIntent, type AnsweredBy, type ChatEngine } from '@/features/ai/chat/route';
@@ -12,7 +11,7 @@ import type { LoadedModel } from '@/features/ai/llm/interpret';
 import { inferColumnType } from '@/features/ml/data/infer';
 import { isMissing } from '@/features/ml/data/infer';
 import type { Cell, DatasetMeta } from '@/features/ml/data/types';
-import { readHeader } from '@/features/ml/data/header';
+import { readTable } from '@/features/ml/data/ingest';
 
 export type { AnsweredBy, ChatEngine };
 
@@ -51,23 +50,6 @@ function post(message: ChatWorkerResponse) {
   self.postMessage(message);
 }
 
-function ingestRows(rows: string[][]) {
-  for (const row of rows) {
-    if (header.length === 0) {
-      // V35 wave 4: unique names, so a question about « age » cannot resolve
-      // to a different column than the profile the user is reading.
-      header = readHeader(row).names;
-      columns = header.map(() => []);
-      continue;
-    }
-    if (row.length === 1 && row[0].trim() === '') continue;
-    for (let i = 0; i < header.length; i++) {
-      columns[i].push(row[i] ?? null);
-    }
-    rowCount += 1;
-  }
-}
-
 function resetState() {
   header = [];
   columns = [];
@@ -93,11 +75,18 @@ function buildColumnInfo(): ColumnInfo[] {
   });
 }
 
-function finishParse(name: string, bytes: number) {
-  if (header.length === 0 || rowCount === 0) {
-    post({ kind: 'error', message: 'empty' });
-    return;
-  }
+/**
+ * V54: the reading lives in `ingest.ts`, shared with the ML Lab and the Data
+ * Studio. This worker used to call Papa with no detection at all: no encoding,
+ * no delimiter decision, no decimal rewrite, no memory budget. A question
+ * about a French export now meets the same numbers the two other sections see.
+ */
+async function loadDataset(source: File | string, name: string, bytes: number) {
+  resetState();
+  const table = await readTable(source);
+  header = table.header;
+  columns = table.columns;
+  rowCount = table.rowCount;
   columnInfo = buildColumnInfo();
   post({
     kind: 'ready',
@@ -106,50 +95,16 @@ function finishParse(name: string, bytes: number) {
   });
 }
 
-function parseText(text: string, name: string, bytes: number) {
-  resetState();
-  Papa.parse<string[]>(text, {
-    skipEmptyLines: true,
-    complete: (results) => {
-      ingestRows(results.data);
-      finishParse(name, bytes);
-    },
-  });
-}
-
-function parseFile(file: File) {
-  resetState();
-  Papa.parse<string[]>(file, {
-    skipEmptyLines: true,
-    chunk: (results) => ingestRows(results.data),
-    complete: () => finishParse(file.name, file.size),
-    error: (error) => post({ kind: 'error', message: error.message }),
-  });
-}
-
-/** Excel support: SheetJS is loaded lazily, the first sheet becomes CSV. */
-async function parseExcel(file: File) {
-  const XLSX = await import('xlsx');
-  const workbook = XLSX.read(new Uint8Array(await file.arrayBuffer()), { type: 'array' });
-  const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-  if (!firstSheet) {
-    post({ kind: 'error', message: 'empty' });
-    return;
-  }
-  parseText(XLSX.utils.sheet_to_csv(firstSheet), file.name, file.size);
-}
-
 self.onmessage = async (event: MessageEvent<ChatWorkerRequest>) => {
   const request = event.data;
   try {
     if (request.kind === 'parse-file') {
-      if (/\.(xlsx|xls)$/i.test(request.file.name)) await parseExcel(request.file);
-      else parseFile(request.file);
+      await loadDataset(request.file, request.file.name, request.file.size);
     } else if (request.kind === 'parse-url') {
       const response = await fetch(request.url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const text = await response.text();
-      parseText(text, request.name, text.length);
+      await loadDataset(text, request.name, text.length);
     } else if (request.kind === 'llm-probe') {
       const { probeCapability } = await import('@/features/ai/llm/interpret');
       const capability = await probeCapability();

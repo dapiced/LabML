@@ -105,11 +105,11 @@ is what makes it safe to commit beside the code.
 
 ## The limits
 
-| Limit          | Value                  | Why                                                                    |
-| -------------- | ---------------------- | ---------------------------------------------------------------------- |
-| Memory budget  | rows × columns, capped | reading stops and says so (`too-large`) instead of killing the tab     |
-| Served file    | 25 MiB                 | Cloudflare Pages hard limit; the language model is split to respect it |
-| Target classes | at most 20             | beyond that the task is no longer a usable classification              |
+| Limit          | Value                  | Why                                                                                  |
+| -------------- | ---------------------- | ------------------------------------------------------------------------------------ |
+| Memory budget  | rows × columns, capped | reading stops and says so (`too-large`) instead of killing the tab, in every section |
+| Served file    | 25 MiB                 | Cloudflare Pages hard limit; the language model is split to respect it               |
+| Target classes | at most 20             | beyond that the task is no longer a usable classification                            |
 
 ## Where to go next
 

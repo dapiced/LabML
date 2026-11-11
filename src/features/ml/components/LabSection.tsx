@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
-import { MAX_CELLS } from '@/features/ml/data/limits';
+import { MAX_CELLS, tooLargeDetail } from '@/features/ml/data/limits';
 import { DropZone } from '@/features/ml/components/DropZone';
 import { ImportModelPanel } from '@/features/ml/components/ImportModelPanel';
 import { useLabStore } from '@/features/ml/lab-store';
@@ -37,7 +37,7 @@ function ErrorPanel() {
   const reset = useLabStore((s) => s.reset);
   const error = useLabStore((s) => s.error);
   // V25: the memory guard refuses by name, with the numbers ('too-large:rows:cols').
-  const tooLarge = error?.startsWith('too-large:') ? error.split(':') : null;
+  const tooLarge = tooLargeDetail(error);
   // V33: found by the refusal inventory. A kept dataset that IndexedDB no
   // longer holds used to fall through to « the file looks empty or not
   // tabular » — sending the reader to hunt a format problem that does not
@@ -60,8 +60,8 @@ function ErrorPanel() {
         {tooLarge
           ? t('ml.lab.errorTooLarge', {
               max: MAX_CELLS.toLocaleString(lang),
-              rows: Number(tooLarge[1]).toLocaleString(lang),
-              cols: tooLarge[2],
+              rows: tooLarge.rows.toLocaleString(lang),
+              cols: tooLarge.columns,
             })
           : datasetMissing
             ? t('ml.lab.errorDatasetMissing')
