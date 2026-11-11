@@ -110,6 +110,13 @@ Courbe précision-rappel, courbe de calibration, et un seuil que **vous**
 décidez, chiffré par vos coûts de faux positif et de cas manqué. Une
 probabilité n'est pas une décision ; le seuil est enregistré avec le run.
 
+La suggestion « optimal pour ces coûts » est choisie sur le jeu de
+**validation**, et les chiffres affichés à côté sont mesurés sur le jeu de
+test, qui n'a pas participé au choix. Un seuil choisi sur le jeu de test lui
+serait ajusté, et ses métriques cesseraient d'être une mesure. Quand un run n'a
+pas de jeu de validation contenant les deux classes, aucun seuil n'est suggéré
+et le panneau dit pourquoi.
+
 ## Décider en multiclasse
 
 Au-delà de deux classes, un seul curseur ne suffit plus. Le panneau de décision

@@ -102,6 +102,12 @@ Precision-recall curve, calibration curve, and a threshold **you** decide,
 priced by your false-alarm and missed-case costs. A probability is not a
 decision; the threshold is saved with the run.
 
+The « best for these costs » suggestion is picked on the **validation** split,
+and the figures beside it are measured on the test set, which had no say in the
+choice. A threshold picked on the test set would be fitted to it, and its
+metrics would stop being a measurement. When a run has no validation split
+holding both classes, no threshold is suggested and the panel says why.
+
 ## Deciding across several classes
 
 Past two classes, a single slider no longer cuts it. The multiclass decision
