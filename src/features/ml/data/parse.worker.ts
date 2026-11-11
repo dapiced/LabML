@@ -5,6 +5,7 @@ import { analyzeTarget, baselineSuggestions } from '@/features/ml/data/suggest';
 import { computeInsights, computeWhatIf } from '@/features/ml/train/insights';
 import { runLearningCurve } from '@/features/ml/train/learning-curve';
 import { robustRank } from '@/features/ml/train/robust';
+import { createJournal } from '@/features/ml/train/journal';
 import { trainInParallel } from '@/features/ml/train/parallel-run';
 import { runSearch } from '@/features/ml/train/search';
 import { runExploration } from '@/features/ml/unsupervised/explore';
@@ -214,6 +215,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       // undetectable task skips the parallel phase entirely so that runTraining
       // stays the code that raises the named error.
       const taskType = detectTaskType(columnsAsMap(), profiles, request.config);
+      // V55: one journal for the whole run, parallel phase included.
+      const journal = createJournal();
       const parallel =
         taskType === null
           ? { pretrained: undefined, report: null }
@@ -224,6 +227,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
               taskType === 'classification',
               () => undefined,
               () => cancelTraining,
+              journal,
             );
 
       const outcome = await runTraining(
@@ -236,6 +240,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           isCancelled: () => cancelTraining,
         },
         parallel.pretrained,
+        journal,
       );
       if (outcome) {
         artifacts = outcome.artifacts;

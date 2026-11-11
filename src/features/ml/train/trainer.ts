@@ -12,6 +12,7 @@ import {
 } from '@/features/ml/train/class-weight';
 import { buildEnsemble, planEnsemble } from '@/features/ml/train/ensemble';
 import { parseDate } from '@/features/ml/timeseries/series';
+import { createJournal, notesField, type Journal } from '@/features/ml/train/journal';
 import type { Cell, ColumnProfile } from '@/features/ml/data/types';
 import type {
   MetricMap,
@@ -404,6 +405,8 @@ export async function runTraining(
   callbacks: TrainerCallbacks,
   /** V37: families already fitted in parallel — skipped by the loop below. */
   pretrained?: Map<ModelKey, PretrainedFamily>,
+  /** V55: the run's journal, already holding what the parallel phase noted. */
+  journal: Journal = createJournal(),
 ): Promise<TrainOutcome | null> {
   const startedAt = performance.now();
   const prepared = prepareData(columns, profiles, config);
@@ -590,9 +593,11 @@ export async function runTraining(
           valPrimary: validationScore.primary,
         }),
       });
-    } catch {
-      // An ensemble that cannot be built is simply absent — the zoo stands.
+    } catch (error) {
+      // An ensemble that cannot be built is absent — the zoo stands. V55: and
+      // the run says so, instead of showing a leaderboard one row short.
       models.delete('ensemble');
+      journal.add('ensemble-failed', undefined, error);
     }
   }
 
@@ -617,6 +622,7 @@ export async function runTraining(
       }),
       ...(weights !== undefined && { classWeighting: 'balanced' as const }),
       ...(plan !== null && { ensemble: plan }),
+      ...notesField(journal),
     },
     artifacts: {
       models,

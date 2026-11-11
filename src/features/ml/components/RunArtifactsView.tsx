@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { RunNotes } from '@/features/ml/components/RunNotes';
 import { CurveChart } from '@/features/ml/components/LearningCurvePanel';
 import { Badge } from '@/components/ui/badge';
 import { Eyebrow } from '@/components/ui/eyebrow';
@@ -365,6 +366,7 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
                 )}
               </p>
             )}
+            <RunNotes notes={robustRank.notes} />
             <p className="font-mono text-[0.68rem] text-muted">
               {t('ml.lab.robust.note', {
                 folds: robustRank.reps * 2,

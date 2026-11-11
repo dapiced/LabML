@@ -1,4 +1,5 @@
 import type { TaskInfo, TaskType } from '@/features/ml/data/types';
+import type { RunNote } from '@/features/ml/train/journal';
 
 export type ModelKey =
   | 'baseline'
@@ -169,6 +170,12 @@ export interface TrainSummary {
    * warning, never as a victory.
    */
   leakWarnings?: { column: string; score: number }[];
+  /**
+   * V55: what the run fell back from (an ensemble that could not be built, a
+   * helper worker that gave up). Absent when nothing did, and on runs stored
+   * before V55.
+   */
+  notes?: RunNote[];
   /**
    * V36: the largest class's share of the training split, and whether that
    * crosses the threshold where class weighting is worth offering. Absent on

@@ -8,8 +8,12 @@
  * leaves that family out of the returned map, and the sequential trainer
  * fits it as it always did. Parallelism must never change WHICH models a run
  * produces, only how long it takes to produce them.
+ *
+ * V55: best-effort no longer means silent. Each of those fallbacks is noted in
+ * the run's journal, so a run that took the slow path says which one and why.
  */
 import { rebuildTrainedModel } from '@/features/ml/train/deserialize';
+import type { Journal } from '@/features/ml/train/journal';
 import { modelZoo } from '@/features/ml/train/models';
 import { familyCost, helperCount, planBatches } from '@/features/ml/train/parallel';
 import type { Cell } from '@/features/ml/data/types';
@@ -39,6 +43,7 @@ export async function trainInParallel(
   isClassification: boolean,
   onFamilyDone: (key: ModelKey) => void,
   isCancelled: () => boolean,
+  journal?: Journal,
 ): Promise<{ pretrained: Map<ModelKey, PretrainedFamily>; report: ParallelReport | null }> {
   const empty = { pretrained: new Map<ModelKey, PretrainedFamily>(), report: null };
   if (typeof Worker === 'undefined') return empty;
@@ -77,18 +82,29 @@ export async function trainInParallel(
               worker = new Worker(new URL('./family.worker.ts', import.meta.url), {
                 type: 'module',
               });
-            } catch {
-              resolve(); // no helper: the sequential path covers these families
+            } catch (error) {
+              // No helper: the sequential path covers these families.
+              journal?.add('helper-unavailable', undefined, error);
+              resolve();
               return;
             }
             workers.push(worker);
 
             const finish = () => resolve();
-            worker.onerror = finish;
-            worker.onmessageerror = finish;
+            // A helper that dies leaves its families to the sequential path.
+            const failed = (cause: unknown) => {
+              if (!isCancelled()) journal?.add('helper-failed', undefined, cause);
+              finish();
+            };
+            worker.onerror = (event: ErrorEvent) => failed(event.message);
+            worker.onmessageerror = () => failed('message could not be read');
             worker.onmessage = (event: MessageEvent<FamilyResponse>) => {
               const message = event.data;
-              if (message.kind === 'batch-done' || message.kind === 'batch-error') {
+              if (message.kind === 'batch-error') {
+                failed(message.message);
+                return;
+              }
+              if (message.kind === 'batch-done') {
                 finish();
                 return;
               }
@@ -122,8 +138,9 @@ export async function trainInParallel(
                   },
                 });
                 onFamilyDone(outcome.key);
-              } catch {
-                // Rebuild failed — leave it to the sequential trainer.
+              } catch (error) {
+                // Rebuild failed — the sequential trainer fits it again.
+                journal?.add('helper-rebuild-failed', outcome.key, error);
               }
             };
 

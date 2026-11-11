@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V55 — A run that fell back says so
+
+The wave opened with the inventory: 25 silent handlers in shipped code, 20 `catch` blocks with no variable and 5 `.catch(() => undefined)`.
+
+_Why:_ Approved 11/11/2026 with the Cap 8 audit, launched after V54. A partial result the reader cannot explain is a quieter version of a wrong one; and the model card (F3) needs a record to quote.
+
 ## V54 — One ingestion for every section
 
 V38 unified how a CSV is read; the loop that keeps the rows stayed copied in each worker, four times counting the batch scorer, and the copies had drifted.

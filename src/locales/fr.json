@@ -702,6 +702,14 @@
         "chronological": "Chronologique — {{column}}",
         "group": "Par groupe — {{column}}"
       },
+      "journal": {
+        "title": "Journal du run : ce dont ce run s'est replié",
+        "ensemble-failed": "L'ensemble n'a pas pu être construit : le classement montre les familles seules.",
+        "helper-unavailable": "Un worker auxiliaire n'a pas pu démarrer ; ses familles ont été ajustées l'une après l'autre. Les modèles sont les mêmes, le run a pris plus de temps.",
+        "helper-failed": "Un worker auxiliaire s'est arrêté en cours de lot ({{count}}×) ; ses familles ont été ajustées l'une après l'autre. Les modèles sont les mêmes, le run a pris plus de temps.",
+        "helper-rebuild-failed": "{{model}} est revenu d'un worker auxiliaire sous une forme illisible et a été réajusté en séquence.",
+        "fold-failed": "{{model}} a échoué sur {{count}} pli(s) : sa moyenne couvre moins de plis que les autres, ou il est absent s'il les a tous échoués."
+      },
       "robust": {
         "title": "Ce classement est-il réel ?",
         "hint": "Une découpe unique classe sur un seul tirage de quelques centaines de lignes, et deux modèles séparés d'un point peuvent échanger leur place au tirage suivant. Ceci réentraîne chaque famille sur 5 répétitions × 2 moitiés des lignes d'entraînement et de validation — dix ajustements chacune — et rapporte une moyenne, une dispersion, et combien de fois le premier a réellement battu le second. Le jeu de test reste hors des plis : on reclasse, on ne re-teste pas.",

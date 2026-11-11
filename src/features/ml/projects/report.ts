@@ -1,3 +1,4 @@
+import { noteText } from '@/features/ml/train/journal';
 import { METRIC_ROWS, metricDelta } from '@/features/ml/train/score-view';
 import type { RunRecord } from '@/features/ml/projects/types';
 import type { ClusterTrait } from '@/features/ml/unsupervised/explore';
@@ -455,6 +456,16 @@ export function buildReportHtml(record: RunRecord, t: Translate, lang: string): 
           .join(' ')} ${esc(t('ml.lab.leaderboard.leakAdvice'))}</p>`
       : '';
 
+  // V55: what the run fell back from. `detail` can come from a share link, so
+  // every sentence is escaped like the rest of this page.
+  const notes = Array.isArray(summary.notes) ? summary.notes : [];
+  const journalNote =
+    notes.length > 0
+      ? `<p class="warn">${esc(t('ml.lab.journal.title'))}</p><ul>${notes
+          .map((note) => `<li>${esc(noteText(note, t))}</li>`)
+          .join('')}</ul>`
+      : '';
+
   const confusion =
     record.insights.confusion && record.insights.classes
       ? `<h2>${esc(t('ml.lab.insights.confusionTitle'))} — ${esc(t(`ml.lab.models.${record.insights.model}`))}</h2>
@@ -528,6 +539,7 @@ ${read ? `<div class="read">${esc(read)}</div>` : ''}
 ${leaderboardRows}
 </table>
 ${leakNote}
+${journalNote}
 ${championNote}
 ${sampledNote}
 ${confusion}
