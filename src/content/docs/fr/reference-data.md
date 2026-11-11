@@ -8,6 +8,18 @@ summary: Score de qualité, règles de validité, recette par colonne, jointure,
 
 :::try /data | Ouvrir le Data Studio
 
+## Lecture du fichier
+
+Le Studio lit un fichier avec le même lecteur que le ML Lab : encodage tranché
+par décodage, séparateur et virgule décimale détectés par colonne, lignes
+malformées comptées. Le même budget mémoire s'applique, lignes × colonnes
+plafonné à 20 millions de cellules ; au-delà, la lecture s'arrête à cette ligne
+et la page dit où (`too-large`), au lieu de laisser tomber l'onglet.
+
+Un fichier chargé pour un **contrôle de dérive** ou une **jointure** est lu de
+la même façon, décimales comprises. Comparer un export français à un jeu
+normalisé signalerait sinon une dérive qui n'est qu'une virgule décimale.
+
 ## Score de qualité
 
 Un score décomposé en parties, chacune avec son poids et ce qu'elle a

@@ -77,9 +77,23 @@ describe('ConformalPanel', () => {
     const summary = screen.getByTestId('conformal-summary');
     expect(summary).toHaveTextContent('the prediction ± 3.25');
     // 80 % asked, 60 % measured, interval 49 to 70: the target is outside.
-    expect(screen.getByTestId('conformal-verdict')).toHaveTextContent(
-      'the promise did not hold as stated',
-    );
+    expect(screen.getByTestId('conformal-verdict')).toHaveTextContent('the promise did not hold');
+  });
+
+  it('does not call a coverage above the target a broken promise (V57.1)', () => {
+    // 90 % asked, 96.1 % measured, interval 92.1 to 98.1: above, and kept.
+    useLabStore.setState({
+      conformalAnalysis: {
+        ...classification,
+        coverage: 0.961,
+        coverageLo: 0.921,
+        coverageHi: 0.981,
+      },
+    });
+    render(<ConformalPanel />);
+    const verdict = screen.getByTestId('conformal-verdict');
+    expect(verdict).toHaveTextContent('the promise held, with room to spare');
+    expect(verdict).not.toHaveTextContent('did not hold');
   });
 
   it('refuses with the numbers when the test split is too small for the level', () => {

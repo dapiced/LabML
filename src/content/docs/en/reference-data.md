@@ -8,6 +8,18 @@ summary: Quality score, validity rules, per-column recipe, join, drift, anomalie
 
 :::try /data | Open the Data Studio
 
+## Reading the file
+
+The Studio reads a file with the same reader as the ML Lab: encoding settled by
+decoding, delimiter and decimal separator detected per column, malformed rows
+counted. The same memory budget applies, rows × columns capped at 20 million
+cells; past it reading stops at that row and the page says where
+(`too-large`), instead of the tab dying.
+
+A file loaded for a **drift check** or a **join** is read the same way,
+decimals included. Comparing a French export against a normalised dataset would
+otherwise report a drift that is nothing but a decimal comma.
+
 ## Quality score
 
 A score broken into parts, each with its weight and what it actually cost. The

@@ -49,6 +49,13 @@ encadrée.
 Deux interpréteurs, **dans cet ordre** : le déterministe d'abord, le modèle de
 langage seulement sur ce qu'il refuse.
 
+Le fichier est lu par le même lecteur que le ML Lab et le Data Studio. Un
+export français, avec points-virgules, virgules décimales ou encodage
+windows-1252, donne ici aussi des colonnes numériques : une question sur une
+moyenne rencontre des nombres et non du texte. Le même budget mémoire
+s'applique, et un fichier qui le dépasse est refusé avec la ligne où la lecture
+s'est arrêtée.
+
 ### L'interpréteur déterministe
 
 Un parseur FR/EN sur lexiques, qui produit une requête typée exécutée par le

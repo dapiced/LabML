@@ -132,8 +132,9 @@ Rien de tout cela n'a quitté votre navigateur.
 
 Cliquez sur n'importe quelle ligne du classement pour inspecter un autre modèle
 que le champion. Les panneaux sous le classement répondent chacun à une
-question précise : la solidité des chiffres, la réalité du classement, le seuil
-de décision, et les endroits où le modèle échoue.
+question précise : la solidité des chiffres, la réalité du classement, la
+confiance du modèle sur une ligne donnée, le seuil de décision, et les endroits
+où le modèle échoue.
 
 - [Scorer un nouveau lot](/docs/scorer-un-lot) — le geste de production.
 - [Lire une courbe d'apprentissage](/docs/lire-une-courbe) — faut-il plus de données ?

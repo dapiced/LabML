@@ -26,6 +26,10 @@ des variables absentes.
 Les colonnes supplémentaires sont ignorées sans bruit : un export de production
 porte souvent des identifiants dont le modèle n'a jamais eu besoin.
 
+Le lot est lu comme le fichier d'entraînement l'a été, sous le même budget
+mémoire. Un lot de plus de 20 millions de cellules est refusé (`too-large`)
+plutôt que lu en entier.
+
 ## Si le fichier contient la vraie réponse
 
 Alors LabML ne se contente pas de prédire : il compare, et affiche les mêmes

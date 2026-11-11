@@ -712,7 +712,8 @@
         "intervalLine": "For a new row, the answer is the prediction ± {{half}}: the same margin for every row.",
         "howLine": "The threshold was calibrated on one half of the test split and measured on the other, both ways ({{rows}} rows per half), so no row was judged by a threshold it helped to set.",
         "verdictOnTarget": "The target sits inside what this test split can tell apart: the promise held here.",
-        "verdictOffTarget": "The target sits outside the measured interval: on this test split the promise did not hold as stated. Read the measured figure, not the target.",
+        "verdictAbove": "The measured coverage sits above the target: the promise held, with room to spare. The sets are wider than they need to be, which happens when a model's probabilities take few distinct values.",
+        "verdictBelow": "The measured coverage sits below the target, interval included: on this test split the promise did not hold. Read the measured figure, not the target.",
         "refused": "No coverage can be promised at {{target}} %: each half of the test split needs at least {{needed}} rows and has {{available}}. Pick a lower target, or load more data.",
         "note": "The promise is an average over rows like these, not a promise for each class, each segment or each row, and it stops holding when new data drift away from the data of this run. The validation split is not used here: it chose the winning model, and a threshold calibrated on it measured up to 2.6 points under target for that model."
       },

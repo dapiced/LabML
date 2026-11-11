@@ -45,6 +45,13 @@ One limit, stated rather than buried: these intervals measure sensitivity **to
 the test draw**, not training variance. Retraining on another split would be a
 different source of variation, which the panel does not measure.
 
+A second limit follows from the first: an interval on a **metric** says nothing
+about **one prediction**. A model at 0.79 is sure of some rows and guessing on
+others. That question has its own panel, the
+[prediction sets](/docs/reference-ml): the model answers with a set of classes
+or a value with a margin, at a coverage you choose, and the coverage actually
+measured on the test split is shown beside the target.
+
 ## Why seed 42, everywhere
 
 Everything that draws at random in LabML — the split, initialisation,
@@ -83,7 +90,8 @@ show up throughout the product:
 - The SQL engine is single-threaded: LabML does not serve the COOP/COEP headers
   that would unlock multi-threading, because they would break other things.
 - A named memory guard stops reading an oversized file and says so, rather than
-  killing the tab.
+  killing the tab. It is the same guard in the ML Lab, the Data Studio and the
+  data assistant: one reader, one budget.
 - The models are hand-written: nothing calls a remote library.
 
 ## Where to go next

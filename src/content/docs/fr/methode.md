@@ -47,6 +47,14 @@ sensibilité **au tirage du test**, pas la variance d'entraînement. Réentraîn
 sur un autre découpage donnerait une autre source de variation, que le panneau
 ne mesure pas.
 
+Une seconde limite découle de la première : un intervalle sur une **métrique**
+ne dit rien d'**une prédiction**. Un modèle à 0,79 est sûr de certaines lignes
+et devine sur d'autres. Cette question a son propre panneau, les
+[ensembles de prédiction](/docs/reference-ml) : le modèle répond par un
+ensemble de classes ou une valeur avec une marge, à la couverture que vous
+choisissez, et la couverture réellement mesurée sur le jeu de test est affichée
+à côté de la cible.
+
 ## Pourquoi la graine 42, partout
 
 Tout ce qui tire au hasard dans LabML — le découpage, l'initialisation, les
@@ -87,7 +95,8 @@ qu'elles se lisent partout dans le produit :
 - Le moteur SQL est mono-thread : LabML ne sert pas les en-têtes COOP/COEP qui
   débloqueraient le multi-thread, parce qu'ils casseraient d'autres choses.
 - Une garde mémoire nommée arrête la lecture d'un fichier trop gros et le dit,
-  plutôt que de faire tomber l'onglet.
+  plutôt que de faire tomber l'onglet. C'est la même garde dans le ML Lab, le
+  Data Studio et l'assistant de données : un seul lecteur, un seul budget.
 - Les modèles sont écrits à la main : rien n'appelle une bibliothèque distante.
 
 ## Et ensuite ?

@@ -24,6 +24,12 @@ ranking for free, since its members are already fitted. Every model is **selecte
 validation split and reported on a third split it never touched**, with the gap between the two
 spelled out: here the winner is picked at 0.818 and scores 0.792, and the page says so.
 
+Past the ranking, the run answers two more questions. **How sure is the model of one row?** It
+can answer with a set of classes or a value with a margin, at a coverage you choose, and the
+coverage actually measured on the test split is shown beside that target. **Did every step of
+the run succeed?** When one fell back (an ensemble that could not be built, a helper worker that
+gave up), a run journal says which and why, instead of leaving a result one row short.
+
 ![The ML Lab leaderboard: nine models ranked with validation and test scores, delta vs the naive
 baseline, F1, ROC-AUC, log-loss, training time and inference latency](docs/screenshots/leaderboard.png)
 
@@ -66,20 +72,21 @@ The project follows three non-negotiable principles:
 
 ### ML Lab — `/ml`
 
-| Area           | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Data in        | Drag & drop CSV/Excel (parsed in a worker), demo datasets, per-column profiling, automatic task detection, smart exclusions and **target-leakage detection**; **a French export reads correctly** — encoding settled by decoding and failing (not sniffing), delimiter and decimal separator detected per column and announced with the count that proved them; **free-text columns** join the pipeline as hand-written TF-IDF (FR/EN tokenization, capped vocabulary, fitted on the training split only) |
-| Models         | 8 classifiers / 7 regressors trained live: naive baseline, linear/logistic regression, k-NN, Gaussian Naive Bayes, decision tree, random forest, **hand-written histogram gradient boosting** (LightGBM-style) and **MLP** (seeded He init, Adam)                                                                                                                                                                                                                                                         |
-| Leaderboard    | Accuracy/F1/ROC-AUC/log-loss or RMSE/MAE/R², delta vs baseline, train time, inference latency p50/p95, **95% bootstrap intervals** with a paired winner-vs-baseline verdict                                                                                                                                                                                                                                                                                                                               |
-| Understanding  | Confusion matrix, ROC, permutation importance, partial dependence, live what-if with **exact Shapley explanations**, **signed word effects** for text columns (which words push the answer up or down), plain-language read (FR/EN, rule-generated)                                                                                                                                                                                                                                                       |
-| Where it fails | **Per-segment analysis**: the test set sliced by every categorical column — including excluded ones, where proxy effects hide — worst gaps first                                                                                                                                                                                                                                                                                                                                                          |
-| Imbalance      | Precision-recall curve (AP), calibration curve (Brier), **cost-priced decision threshold** with the optimal cut computed by exhaustive sweep, and a **multiclass decision policy** — one threshold per class, normalized-margin tie-break, explicit abstention instead of a silent argmax fallback, tuned on validation and frozen before the test reveal                                                                                                                                                 |
-| Tuning         | Seeded random search scored by stratified 3-fold cross-validation, pipeline refitted inside each fold — the test set is scored exactly once                                                                                                                                                                                                                                                                                                                                                               |
-| More data?     | **Learning curve** on demand: one model retrained on growing seeded nested fractions, 95% bootstrap band, plain verdict — still climbing (collect more rows) or flattened (work on features) — including whether an announced training cap costs accuracy                                                                                                                                                                                                                                                 |
-| No target?     | Seeded k-means (k chosen by silhouette) + power-iteration PCA projection, groups described in plain language; date column? **Holt-Winters forecasting** validated by rolling-origin backtest                                                                                                                                                                                                                                                                                                              |
-| MLOps loop     | Score a **new batch** with honest test-vs-batch metrics; **compare two runs** side by side with cross-run uncertainty verdicts, or **up to six at once** read against the oldest of the selection; **export a model as JSON and re-import it later** — the exact predictor is rebuilt (byte-identical predictions) and scores any CSV without retraining                                                                                                                                                  |
-| Speed          | Heavy families train on **helper cores** (announced on the leaderboard, split by measured cost, never silent), and a model crosses back as JSON so it is rebuilt through the same path an imported model uses. Measured on a 60 000-row run: **74 s → 9.5 s**, with every leaderboard number identical                                                                                                                                                                                                    |
-| Persistence    | Local run history with attached artifacts, opted-in dataset storage (compressed, explicit 50 MB budget), self-contained HTML reports, data-free share links (a damaged link is refused, never half-rendered)                                                                                                                                                                                                                                                                                              |
+| Area            | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Data in         | Drag & drop CSV/Excel (parsed in a worker), demo datasets, per-column profiling, automatic task detection, smart exclusions and **target-leakage detection**; **a French export reads correctly** — encoding settled by decoding and failing (not sniffing), delimiter and decimal separator detected per column and announced with the count that proved them; **free-text columns** join the pipeline as hand-written TF-IDF (FR/EN tokenization, capped vocabulary, fitted on the training split only); the same reader and the same **20-million-cell memory budget** serve the ML Lab, the Data Studio, the data assistant and batch scoring, so a file is never refused by name in one section and left to exhaust the tab in another |
+| Models          | 8 classifiers / 7 regressors trained live: naive baseline, linear/logistic regression, k-NN, Gaussian Naive Bayes, decision tree, random forest, **hand-written histogram gradient boosting** (LightGBM-style) and **MLP** (seeded He init, Adam)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Leaderboard     | Accuracy/F1/ROC-AUC/log-loss or RMSE/MAE/R², delta vs baseline, train time, inference latency p50/p95, **95% bootstrap intervals** with a paired winner-vs-baseline verdict                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Prediction sets | **Split conformal prediction** for the inspected model: a set of classes or a value with a margin, at an 80, 90 or 95 % coverage target, with the **coverage measured on the test split shown beside the target** and its interval. The threshold is calibrated on one half of the test split and measured on the other, both ways, never on validation: validation chose the winner, and a threshold calibrated there covered 77.4 % for a target of 80 on the mpg sample. A level the split cannot carry is refused with the numbers                                                                                                                                                                                                      |
+| Understanding   | Confusion matrix, ROC, permutation importance, partial dependence, live what-if with **exact Shapley explanations**, **signed word effects** for text columns (which words push the answer up or down), plain-language read (FR/EN, rule-generated)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Where it fails  | **Per-segment analysis**: the test set sliced by every categorical column — including excluded ones, where proxy effects hide — worst gaps first                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| Imbalance       | Precision-recall curve (AP), calibration curve (Brier), **cost-priced decision threshold** with the optimal cut computed by exhaustive sweep, and a **multiclass decision policy** — one threshold per class, normalized-margin tie-break, explicit abstention instead of a silent argmax fallback, tuned on validation and frozen before the test reveal. The cost-optimal cut is **suggested on validation and measured on test**: picked on the test set it was fitted to it, and the cost shown read 33 to 60 % below the honest one on the fraud sample                                                                                                                                                                                |
+| Tuning          | Seeded random search scored by stratified 3-fold cross-validation, pipeline refitted inside each fold — the test set is scored exactly once                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| More data?      | **Learning curve** on demand: one model retrained on growing seeded nested fractions, 95% bootstrap band, plain verdict — still climbing (collect more rows) or flattened (work on features) — including whether an announced training cap costs accuracy                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| No target?      | Seeded k-means (k chosen by silhouette) + power-iteration PCA projection, groups described in plain language; date column? **Holt-Winters forecasting** validated by rolling-origin backtest                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| MLOps loop      | Score a **new batch** with honest test-vs-batch metrics; **compare two runs** side by side with cross-run uncertainty verdicts, or **up to six at once** read against the oldest of the selection; **export a model as JSON and re-import it later** — the exact predictor is rebuilt (byte-identical predictions) and scores any CSV without retraining                                                                                                                                                                                                                                                                                                                                                                                    |
+| Speed           | Heavy families train on **helper cores** (announced on the leaderboard, split by measured cost, never silent), and a model crosses back as JSON so it is rebuilt through the same path an imported model uses. Measured on a 60 000-row run: **74 s → 9.5 s**, with every leaderboard number identical. Every best-effort step that gives up is recorded in a **run journal** shown with the leaderboard and in the report: which step, which family, how many times, and the error it met                                                                                                                                                                                                                                                  |
+| Persistence     | Local run history with attached artifacts, opted-in dataset storage (compressed, explicit 50 MB budget), self-contained HTML reports, data-free share links (a damaged link is refused, never half-rendered)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 **What the run gives you, past the ranking:**
 
@@ -91,6 +98,10 @@ The project follows three non-negotiable principles:
 ![Insights for the winning model: a plain-language read, confusion matrix, ROC curve with AUC,
 permutation importance, partial dependence, and a live what-if with exact Shapley
 contributions](docs/screenshots/insights.png)
+
+![Prediction sets for the winning model on titanic: a 90 % coverage target, 96.1 % measured on
+the 178 test rows with its interval, sets of 1.5 classes on average, and the sentence saying the
+promise held with room to spare](docs/screenshots/prediction-sets.png)
 
 _Every figure above was produced by the app itself, on the `titanic.csv` sample, seed 42 —
 reproducible by pressing train._
@@ -121,6 +132,9 @@ reproducible by pressing train._
   named, never silent; the joined result becomes the working dataset.
 - **Drift check**: compare a new batch against the reference — schema diff, PSI per
   column, new/vanished categories, severity verdict on conventional thresholds.
+- **One reader for every section**: a drift or join file is read exactly like the main
+  one, decimals included, and the Studio stops at the same named memory budget as the ML
+  Lab instead of letting the tab die.
 - One-click hand-off to the ML Lab.
 
 ![The Data Studio auditing cafe-sales.csv: 48/100 before, 92/100 after cleaning, then one card per
@@ -187,7 +201,9 @@ _The index is built at compile time and queried in the tab — typing here sends
   reason: from 1.29 its binaries exceed Cloudflare's 25 MiB per-file limit.
 - **Data assistant** (`/ai/chat`): plain French or English questions about a loaded
   dataset (averages, counts, top-N, correlations…) answered by a deterministic local
-  interpreter — when it does not understand, it says so. It only claims to understand
+  interpreter — when it does not understand, it says so. The file is read by the same reader as
+  the ML Lab, so a French export (semicolons, decimal commas, windows-1252) gives numeric
+  columns here too, under the same memory budget. It only claims to understand
   once it has read the **whole** question: a word it cannot account for is a refusal, not
   an answer to a shorter question. A **real local language model** (Qwen3-0.6B, 355 MB,
   Apache-2.0, self-hosted and split into 24 MiB parts to clear Cloudflare's limit) can be
@@ -235,19 +251,27 @@ Wikimedia Commons), the portrait is NASA, public domain._
   be split **chronologically** and grouped files **by group**, both announced — a random
   split puts the future in training. A one-column stump flags any lone column that predicts
   the target at 99%: that is a leak warning, never a victory.
+- **Validation chooses, the test measures.** A figure shown beside a choice is never
+  computed on the rows that made the choice: the winner is picked on validation and
+  reported on test, the cost-optimal threshold likewise, and a conformal threshold is
+  calibrated on one half of the test split and judged on the other. Each of those rules
+  was adopted after measuring what its absence cost.
+- **No silent fallback.** A step that is allowed to give up says so: the fallback stays,
+  and a bounded run journal records it. Twenty-one other silent handlers were reviewed and
+  left as they are, each for a stated reason.
 - **Determinism.** A single seed drives splits, model initialization, search, sampling
   and resampling — runs are exactly reproducible, and the test suite depends on it.
 - **Scale, honestly.** 100k–1M-row files train comfortably: past 100 000 usable rows an
   **announced** seeded stratified sample takes over (never silent — the leaderboard says
   so), slow model families train on measured, announced caps scored against the same
   full test set, and parsing refuses past a named 20M-cell memory budget instead of
-  letting the tab die.
+  letting the tab die, in every section and for a batch to score.
 - **Performance.** Every page — the sections, the home page and each of the twelve
   documentation URLs — serves a prerendered static shell (hero paints before JavaScript;
   a doc page carries its whole article, in English until the app mounts); Lighthouse
   mobile ≈ 0.99 on `/ml` under real throttling. Heavy dependencies (Dexie, SheetJS, ONNX
   Runtime) load lazily.
-- **Quality bar.** 996 unit tests and 124 Playwright end-to-end tests across five
+- **Quality bar.** 997 unit tests and 124 Playwright end-to-end tests across five
   projects — desktop, a phone viewport in English and in French, dark mode, and
   Cloudflare Pages' own routing emulated by `wrangler pages dev` (a real 404, the security
   headers as served) — covering offline PWA, a fake webcam, a horizontal-overflow guard on
@@ -341,15 +365,22 @@ CI builds, tests and deploys on every push: pull requests get a Cloudflare Pages
 
 ## Roadmap
 
-Development proceeds in planned "caps" of feature waves; seven caps have shipped. The
-first six took it from the MVP to the lab meeting the real world (real photos, real text, real
-file sizes); the last, Cap 7,
-made what already ships hold up under pressure: worker lifecycle, damaged share links,
-CI hardening, metric edge cases, a store refactor, and major upgrades taken one at a time
-(Vitest 5 and vite-plugin-pwa 2 shipped; TypeScript 7 typechecks this code with no error
-in 1.5 s instead of about 11, and waits for typescript-eslint to support it). No wave is scheduled: the consented
-generative chat (V12) stays postponed by product decision, and the candidates for a next
-cap are listed, each with the condition that would start it. The full plan, delivery log and design decisions live in
+Development proceeds in planned "caps" of feature waves; seven caps have shipped and an
+eighth is under way. The first six took it from the MVP to the lab meeting the real world
+(real photos, real text, real file sizes). Cap 7 made what already ships hold up under
+pressure: worker lifecycle, damaged share links, CI hardening, metric edge cases, a store
+refactor, and major upgrades taken one at a time (Vitest 5 and vite-plugin-pwa 2 shipped;
+TypeScript 7 typechecks this code with no error in 1.5 s instead of about 11, and waits for
+typescript-eslint to support it).
+
+Cap 8 takes the lab from an honest score to a model one can defend and watch. Delivered so
+far: the decision threshold suggested where it is not graded (V53), one ingestion and one
+memory budget for every section (V54), a run journal for the fallbacks that used to be
+silent (V55), and prediction sets with a measured coverage (V57). Proposed, each with its
+launch condition and none scheduled: CI and supply-chain guards (V56), a test-set ledger, a
+model card, a production check, a data contract, a per-group audit, counterfactuals, and a
+step-by-step view of the hand-written models. The consented generative chat (V12) stays
+postponed by product decision. No wave starts without an explicit launch command. The full plan, delivery log and design decisions live in
 [PLAN.md](PLAN.md); [CHANGELOG.md](CHANGELOG.md) is extracted from it — one entry per
 wave, newest first — by `npm run changelog`, and a test fails when the two disagree.
 
