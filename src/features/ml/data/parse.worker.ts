@@ -1,6 +1,5 @@
 /// <reference lib="webworker" />
 import Papa from 'papaparse';
-import { MAX_CELLS } from '@/features/ml/data/limits';
 import { profileColumn } from '@/features/ml/data/profile';
 import { analyzeTarget, baselineSuggestions } from '@/features/ml/data/suggest';
 import { computeInsights, computeWhatIf } from '@/features/ml/train/insights';
@@ -24,21 +23,11 @@ import { analyzeUncertainty, type ModelLosses } from '@/features/ml/train/uncert
 import { detectTaskType, runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
 import type { Cell, ColumnProfile, ParseResultPayload } from '@/features/ml/data/types';
 import type { ModelKey } from '@/features/ml/train/types';
-import {
-  applyDecimalFormats,
-  buildReadFormat,
-  countParseErrors,
-  isRaggedRow,
-  papaConfig,
-  sniffFile,
-  sniffText,
-} from '@/features/ml/data/read';
-import { readHeader, type HeaderIssue } from '@/features/ml/data/header';
-import { decodeBytes, type ReadFormat } from '@/features/ml/data/locale';
+import { readTable } from '@/features/ml/data/ingest';
+import type { ReadFormat } from '@/features/ml/data/locale';
 import type { WorkerRequest, WorkerResponse } from '@/features/ml/worker-protocol';
 
 const PREVIEW_ROWS = 50;
-const PROGRESS_EVERY = 5000;
 
 // The parsed dataset stays in the worker: the UI only receives profiles and a
 // small preview, and later sprints train models here without ever moving the
@@ -46,8 +35,6 @@ const PROGRESS_EVERY = 5000;
 let header: string[] = [];
 let columns: Cell[][] = [];
 let rowCount = 0;
-/** V25 memory guard: set when the stream blew the MAX_CELLS budget. */
-let overflowed = false;
 let cancelTraining = false;
 let cancelTuning = false;
 let cancelCurve = false;
@@ -63,45 +50,9 @@ let datasetName = '';
 let imported: ImportedModel | null = null;
 /** V38: how the current file was actually read — announced, never assumed. */
 let readFormat: ReadFormat | null = null;
-/** V35 wave 4: columns whose name LabML had to change to keep names unique. */
-let headerIssues: HeaderIssue[] = [];
-/** V35 wave 4: rows the file did not deliver as declared — counted, not guessed. */
-let malformedRows = 0;
 
 function post(message: WorkerResponse) {
   self.postMessage(message);
-}
-
-/** Returns false when the MAX_CELLS budget is blown — callers stop the stream. */
-function ingestRows(rows: string[][]): boolean {
-  for (const row of rows) {
-    if (header.length === 0) {
-      // V35 wave 4: unique by construction, and every rename reported — two
-      // columns called « age » used to resolve to different data depending on
-      // whether the caller used `indexOf` or `columnsAsMap()`.
-      const read = readHeader(row);
-      header = read.names;
-      headerIssues = read.issues;
-      columns = header.map(() => []);
-      continue;
-    }
-    // Skip fully empty trailing lines.
-    if (row.length === 1 && row[0].trim() === '') continue;
-    // V35 wave 4: a row of the wrong width still loads — extra cells dropped,
-    // missing ones null — but it is counted so the UI can say it happened.
-    if (isRaggedRow(row, header.length)) malformedRows += 1;
-    // V25: named memory guard — refuse past MAX_CELLS instead of dying silently.
-    if ((rowCount + 1) * header.length > MAX_CELLS) {
-      overflowed = true;
-      return false;
-    }
-    for (let i = 0; i < header.length; i++) {
-      columns[i].push(row[i] ?? null);
-    }
-    rowCount += 1;
-    if (rowCount % PROGRESS_EVERY === 0) post({ kind: 'progress', rows: rowCount });
-  }
-  return true;
 }
 
 function buildResult(name: string, bytes: number): ParseResultPayload {
@@ -131,114 +82,39 @@ function resetState() {
   header = [];
   columns = [];
   rowCount = 0;
-  overflowed = false;
   artifacts = null;
   readFormat = null;
-  headerIssues = [];
-  malformedRows = 0;
 }
 
-function parseText(text: string, name: string, bytes: number) {
+/**
+ * V54: the reading itself lives in `ingest.ts`, shared with the Data Studio
+ * and the chat. A refusal (`too-large:rows:cols`, `empty`) is thrown there and
+ * posted by the handler below; the previous dataset is already gone by then,
+ * as it always was.
+ */
+async function loadDataset(source: File | string, name: string, bytes: number) {
   resetState();
-  const sniffed = sniffText(text);
-  Papa.parse<string[]>(text, {
-    ...papaConfig(sniffed.delimiter),
-    complete: (results) => {
-      // V35 wave 4: Papa's row errors used to be dropped here, so an
-      // unterminated quote silently swallowed the rest of the file.
-      malformedRows += countParseErrors(results.errors);
-      ingestRows(results.data);
-      finishParse(name, bytes, sniffed);
-    },
+  const table = await readTable(source, {
+    onProgress: (rows) => post({ kind: 'progress', rows }),
   });
-}
-
-async function parseFile(file: File) {
-  resetState();
-  // V38: only the head of the file is read as bytes, so V25's streaming abort
-  // below survives intact — a 2 GB file still stops at the cell budget.
-  const sniffed = await sniffFile(file);
-  Papa.parse<string[]>(file, {
-    ...papaConfig(sniffed.delimiter, sniffed.encoding.encoding),
-    chunk: (results, parser) => {
-      malformedRows += countParseErrors(results.errors);
-      // Stop reading the file the moment the budget is blown (streaming abort).
-      if (!ingestRows(results.data)) parser.abort();
-    },
-    complete: () => finishParse(file.name, file.size, sniffed),
-    error: (error) => post({ kind: 'error', message: error.message }),
-  });
-}
-
-/** Excel support: SheetJS is loaded lazily, the first sheet becomes CSV. */
-async function parseExcel(file: File) {
-  const XLSX = await import('xlsx');
-  const workbook = XLSX.read(new Uint8Array(await file.arrayBuffer()), { type: 'array' });
-  const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-  if (!firstSheet) {
-    post({ kind: 'error', message: 'empty' });
-    return;
-  }
-  parseText(XLSX.utils.sheet_to_csv(firstSheet), file.name, file.size);
-}
-
-function finishParse(name: string, bytes: number, sniffed: Awaited<ReturnType<typeof sniffFile>>) {
-  if (overflowed) {
-    // Named numeric refusal: the UI spells out the budget and where we stopped.
-    post({ kind: 'error', message: `too-large:${rowCount}:${header.length}` });
-    resetState();
-    return;
-  }
-  if (header.length === 0 || rowCount === 0) {
-    post({ kind: 'error', message: 'empty' });
-    return;
-  }
+  header = table.header;
+  columns = table.columns;
+  rowCount = table.rowCount;
+  readFormat = table.readFormat;
   datasetName = name;
-  // V38: whole columns, after ingestion — the evidence for a column only
-  // exists once all of its values are in hand.
-  readFormat = buildReadFormat(sniffed, applyDecimalFormats(header, columns), {
-    headerIssues,
-    malformedRows,
-  });
   post({ kind: 'parsed', payload: buildResult(name, bytes) });
 }
 
 /**
  * Parses a NEW batch into local structures — the main dataset and the run
- * artifacts stay untouched, whatever is in the file.
+ * artifacts stay untouched, whatever is in the file. V38: a batch is read
+ * exactly like the training file was — a French batch scored against a model
+ * trained on normalised numbers would otherwise be compared against garbage.
+ * V54: and under the same memory budget.
  */
 async function parseBatch(source: File | string): Promise<{ header: string[]; cols: Cell[][] }> {
-  let text: string;
-  if (typeof source === 'string') {
-    text = source;
-  } else if (/\.(xlsx|xls)$/i.test(source.name)) {
-    const XLSX = await import('xlsx');
-    const workbook = XLSX.read(new Uint8Array(await source.arrayBuffer()), { type: 'array' });
-    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-    if (!firstSheet) throw new Error('empty');
-    text = XLSX.utils.sheet_to_csv(firstSheet);
-  } else {
-    const bytes = new Uint8Array(await source.arrayBuffer());
-    text = decodeBytes(bytes).text;
-  }
-  // V38: a batch is read exactly like the training file was — a French batch
-  // scored against a model trained on normalised numbers would otherwise be
-  // compared against garbage.
-  const parsed = Papa.parse<string[]>(text, papaConfig(sniffText(text).delimiter));
-  const rows = parsed.data;
-  if (rows.length < 2) throw new Error('empty');
-  // V35 wave 4: the batch gets the same unique names as the training file, so
-  // the schema check either matches or names a missing column, instead of
-  // silently resolving a repeated name to whichever copy came last.
-  const batchHeader = readHeader(rows[0]).names;
-  const cols: Cell[][] = batchHeader.map(() => []);
-  for (let r = 1; r < rows.length; r++) {
-    const row = rows[r];
-    if (row.length === 1 && row[0].trim() === '') continue;
-    for (let c = 0; c < batchHeader.length; c++) cols[c].push(row[c] ?? null);
-  }
-  applyDecimalFormats(batchHeader, cols);
-  return { header: batchHeader, cols };
+  const table = await readTable(source);
+  return { header: table.header, cols: table.columns };
 }
 
 async function handleScoreBatch(
@@ -301,15 +177,14 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   const request = event.data;
   try {
     if (request.kind === 'parse-file') {
-      if (/\.(xlsx|xls)$/i.test(request.file.name)) await parseExcel(request.file);
-      else await parseFile(request.file);
+      await loadDataset(request.file, request.file.name, request.file.size);
     } else if (request.kind === 'parse-url') {
       const response = await fetch(request.url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const text = await response.text();
-      parseText(text, request.name, text.length);
+      await loadDataset(text, request.name, text.length);
     } else if (request.kind === 'parse-text') {
-      parseText(request.text, request.name, request.text.length);
+      await loadDataset(request.text, request.name, request.text.length);
     } else if (request.kind === 'export-dataset') {
       if (header.length === 0) throw new Error('no-data');
       const rows: string[][] = [header];

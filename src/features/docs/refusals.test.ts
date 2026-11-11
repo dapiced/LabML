@@ -98,8 +98,6 @@ describe('the /docs refusals page', () => {
       // are set as an outcome, never thrown, and the reader is told why.
       'not-parallelisable',
       'not-serialisable',
-      // Carries a `:rows:cols` detail, so it is a prefix rather than a throw.
-      'too-large',
     ]);
     const invented = [...text.matchAll(/`([a-z][a-z0-9]*(?:-[a-z0-9]+)+)`/g)]
       .map((match) => match[1])

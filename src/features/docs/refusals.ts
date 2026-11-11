@@ -59,6 +59,9 @@ export const REFUSALS: Refusal[] = [
   { code: 'bad-manifest', audience: 'visitor', area: 'import' },
   { code: 'unsupported-kind', audience: 'visitor', area: 'import' },
 
+  // --- Reading a file, in any section (V54: one ingestion, one budget) ---
+  { code: 'too-large', audience: 'visitor', area: 'data' },
+
   // --- Data Studio ---
   { code: 'join-key-missing', audience: 'visitor', area: 'data' },
   { code: 'no-join', audience: 'internal', area: 'data' },

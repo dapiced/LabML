@@ -12,14 +12,19 @@ import { SqlPanel } from '@/features/data/SqlPanel';
 import { QualitySummary } from '@/features/data/components/QualitySummary';
 import { RecipePanel } from '@/features/data/components/RecipePanel';
 import { useDataStore } from '@/features/data/data-store';
+import { MAX_CELLS, tooLargeDetail } from '@/features/ml/data/limits';
 
 export function DataPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const status = useDataStore((s) => s.status);
   const rowsParsed = useDataStore((s) => s.rowsParsed);
   const meta = useDataStore((s) => s.meta);
   const error = useDataStore((s) => s.error);
   const reset = useDataStore((s) => s.reset);
+  // V54: the memory guard now covers the Studio; it refuses by name, with the
+  // numbers, as the ML Lab does.
+  const tooLarge = tooLargeDetail(error);
+  const lang = i18n.resolvedLanguage ?? 'en';
 
   return (
     <div className="mx-auto max-w-6xl px-4">
@@ -48,7 +53,15 @@ export function DataPage() {
 
       {status === 'error' && (
         <section className="flex flex-col items-start gap-4 pb-12">
-          <Card className="border-copper text-sm">{t('data.error', { detail: error ?? '' })}</Card>
+          <Card className="border-copper text-sm" data-testid="data-error">
+            {tooLarge
+              ? t('ml.lab.errorTooLarge', {
+                  max: MAX_CELLS.toLocaleString(lang),
+                  rows: tooLarge.rows.toLocaleString(lang),
+                  cols: tooLarge.columns,
+                })
+              : t('data.error', { detail: error ?? '' })}
+          </Card>
           <Button variant="outline" onClick={reset}>
             <RotateCcw className="h-4 w-4" aria-hidden="true" />
             {t('data.restart')}
