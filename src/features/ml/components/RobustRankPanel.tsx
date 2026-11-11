@@ -2,6 +2,7 @@ import { Loader2, Scale, Square } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/eyebrow';
+import { RunNotes } from '@/features/ml/components/RunNotes';
 import { useLabStore } from '@/features/ml/lab-store';
 import type { RobustRankResult } from '@/features/ml/train/robust';
 import { ScrollRegion } from '@/components/ui/scroll-region';
@@ -122,6 +123,7 @@ function RobustOutcome({
           })}
         </p>
       )}
+      <RunNotes notes={outcome.notes} />
       <p className="text-xs text-muted">
         {t('ml.lab.robust.note', {
           folds,

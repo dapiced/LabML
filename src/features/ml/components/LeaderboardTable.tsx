@@ -9,6 +9,7 @@ import {
   rankingValue,
   sortResults,
 } from '@/features/ml/train/ranking';
+import { RunNotes } from '@/features/ml/components/RunNotes';
 import type { TaskType } from '@/features/ml/data/types';
 import type { ModelResult, RankingMetric, TrainSummary } from '@/features/ml/train/types';
 import { cn } from '@/lib/utils';
@@ -151,6 +152,7 @@ export function LeaderboardTable({
           </div>
         </div>
       )}
+      <RunNotes notes={summary?.notes} className="border-b border-line px-3 py-2.5" />
       <ScrollRegion>
         <table className="w-full text-left text-sm">
           <thead>

@@ -59,6 +59,17 @@ over the classes present in the true labels or in the predictions. A class
 absent from both does not count as a zero; a class that is predicted but never
 true does, because those predictions are all wrong.
 
+## The run journal
+
+Some steps of a run are best-effort: the ensemble is optional, the helper
+workers only buy time, a family that fails one fold of the robust ranking still
+reports the others. When one of them gives up, the run stays usable and the
+**run journal** says what happened, next to the result it affects and in the
+HTML report: which step, which family, how many times, and the error it met.
+
+A run where every step succeeded shows no journal at all. The journal stays in
+the run; nothing is sent anywhere.
+
 ## How solid the numbers are
 
 The test set is bootstrap-resampled 1,000 times and the metric recomputed each

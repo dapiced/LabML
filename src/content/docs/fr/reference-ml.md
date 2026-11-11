@@ -64,6 +64,18 @@ prédictions. Une classe absente des deux ne compte pas comme un zéro ; une
 classe prédite mais jamais vraie compte, parce que ces prédictions sont toutes
 fausses.
 
+## Le journal du run
+
+Certaines étapes d'un run sont facultatives : l'ensemble est optionnel, les
+workers auxiliaires ne font que gagner du temps, une famille qui échoue sur un
+pli du classement robuste rapporte quand même les autres. Quand l'une d'elles
+renonce, le run reste utilisable et le **journal du run** dit ce qui s'est
+passé, à côté du résultat concerné et dans le rapport HTML : quelle étape,
+quelle famille, combien de fois, et l'erreur rencontrée.
+
+Un run dont toutes les étapes ont réussi n'affiche aucun journal. Le journal
+reste dans le run ; rien n'est envoyé nulle part.
+
 ## Solidité des chiffres
 
 Le jeu de test est rééchantillonné 1 000 fois par bootstrap et la métrique

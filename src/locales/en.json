@@ -702,6 +702,14 @@
         "chronological": "Chronological — {{column}}",
         "group": "By group — {{column}}"
       },
+      "journal": {
+        "title": "Run journal: what this run fell back from",
+        "ensemble-failed": "The ensemble could not be built, so the leaderboard shows the families alone.",
+        "helper-unavailable": "A helper worker could not be started; its families were fitted one after the other instead. The models are the same, the run took longer.",
+        "helper-failed": "A helper worker stopped mid-batch ({{count}}×); its families were fitted one after the other instead. The models are the same, the run took longer.",
+        "helper-rebuild-failed": "{{model}} came back from a helper worker in a form that could not be read, and was fitted again in sequence.",
+        "fold-failed": "{{model}} failed {{count}} fold(s): its mean covers fewer folds than the others, or it is absent when it failed them all."
+      },
       "robust": {
         "title": "Is this ranking real?",
         "hint": "A single split ranks on one draw of a few hundred rows, and two models a point apart can swap places on the next draw. This retrains every family on 5 repetitions × 2 halves of the training and validation rows — ten fits each — and reports a mean, a spread, and how often the leader actually beat the runner-up. The test set stays out of the folds: this re-ranks, it does not re-test.",

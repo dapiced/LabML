@@ -8,6 +8,7 @@
  * family, ten scores, a mean and a spread. The TEST SET IS NEVER TOUCHED:
  * this is a statement about the ranking, not a second bite at the test.
  */
+import { createJournal, notesField, type RunNote } from '@/features/ml/train/journal';
 import { MODEL_TRAIN_CAPS, modelZoo } from '@/features/ml/train/models';
 import { fitPipeline, splitIndices } from '@/features/ml/train/pipeline';
 import { nestedSampleOrder } from '@/features/ml/train/random';
@@ -39,6 +40,12 @@ export interface RobustRankResult {
    * 6/10 means the order between them is inside the noise.
    */
   topPair: { leader: ModelKey; runnerUp: ModelKey; leaderWins: number; folds: number } | null;
+  /**
+   * V55: the folds a family failed, with the count. Its mean then covers
+   * fewer folds than the others, and the reader is told. Absent when every
+   * fold was fitted.
+   */
+  notes?: RunNote[];
 }
 
 export interface RobustCallbacks {
@@ -65,6 +72,7 @@ export async function robustRank(
   const scores = new Map<ModelKey, number[]>(zoo.map((def) => [def.key, []]));
   const totalFits = reps * 2 * zoo.length;
   let done = 0;
+  const journal = createJournal();
 
   const context = {
     task: isClassification ? ('classification' as const) : ('regression' as const),
@@ -107,8 +115,9 @@ export async function robustRank(
           const model = def.train(fitX, fitY, context);
           const { primary } = scoreModel(model, evalX, evalY, isClassification, classes.length);
           scores.get(def.key)!.push(primary);
-        } catch {
-          // A family that fails a fold simply reports fewer folds — shown as-is.
+        } catch (error) {
+          // A family that fails a fold reports fewer folds. V55: and says so.
+          journal.add('fold-failed', def.key, error);
         }
         done += 1;
         callbacks.onProgress(done, totalFits);
@@ -143,5 +152,5 @@ export async function robustRank(
     };
   }
 
-  return { entries, reps, rows: pool.length, isClassification, topPair };
+  return { entries, reps, rows: pool.length, isClassification, topPair, ...notesField(journal) };
 }
