@@ -16,13 +16,16 @@ jobs:
   quality:
     name: Lint, typecheck, test, build
     runs-on: ubuntu-latest
+    # V56 — about 5 minutes in practice. Without a limit a hung job runs for
+    # GitHub's default six hours.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - name: Audit production and development dependencies
@@ -64,16 +67,27 @@ jobs:
   e2e:
     name: End-to-end (Playwright)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # V56 — this step once died resolving archive.ubuntu.com for six minutes
+      # and failed the suite before a single test had run. The runner's DNS is
+      # not this project's to fix; waiting and trying again is.
+      - name: Install the browser, retrying on a network error
+        run: |
+          for attempt in 1 2 3; do
+            if npx playwright install --with-deps chromium; then exit 0; fi
+            echo "playwright install failed (attempt $attempt of 3)"
+            sleep $((attempt * 20))
+          done
+          exit 1
       - run: npm run build
       - run: npm run e2e
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -87,6 +101,7 @@ jobs:
     name: Lighthouse budgets
     needs: quality
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # Informational for now — scores on shared runners are noisy.
     continue-on-error: true
     steps:
@@ -95,7 +110,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
       # V35 — this job died on `npm ci` with ETIMEDOUT reaching a Microsoft CDN.
       # The same `npm ci`, same commit, same lockfile, succeeded in the two
@@ -141,6 +156,8 @@ jobs:
       github.actor != 'dependabot[bot]' &&
       (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
+    # V56 — a cache miss downloads and splits 355 MB of weights first.
+    timeout-minutes: 30
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -150,7 +167,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -177,8 +194,17 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: npm run llm:prepare -- dist/llm
+      # V56 — this used to be `project create … || true`, which forgave an
+      # expired token or a network error as readily as « already exists », and
+      # left the next step to fail with a less useful message. The project is
+      # now created only when the account does not list it; anything else that
+      # goes wrong here stops the job, by name.
       - name: Ensure the Pages project exists
-        run: npx wrangler pages project create labml --production-branch=main || true
+        run: |
+          projects="$(npx wrangler pages project list --json)"
+          if ! printf '%s' "$projects" | grep -q '"labml"'; then
+            npx wrangler pages project create labml --production-branch=main
+          fi
       # V49 — the branch name reaches the shell through the environment, never
       # through template expansion: `${{ }}` is pasted into the script before
       # bash parses it, so a branch named `x";curl …;"` would have run as code.

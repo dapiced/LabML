@@ -18,6 +18,12 @@ The first feature of the cap, listed as F1 below until it shipped.
 
 _Why:_ Approved 11/11/2026, calibration rows chosen by the owner after the measurement. The lab's own rule turned on itself: a guarantee calibrated on rows that had already made a choice flattered the model that won, by 1.3 to 2.6 points, on exactly the model a reader looks at first.
 
+## V56 — CI guards, each one bought by an incident
+
+The audit had listed these as hygiene.
+
+_Why:_ Approved 11/11/2026, launched after V57.1. V49's rule again: a guard is worth its upkeep when a test or a job holds it. This time each guard also has the incident that asked for it, and the one that mattered most turned out not to be code.
+
 ## V55 — A run that fell back says so
 
 The wave opened with the inventory: 25 silent handlers in shipped code, 20 `catch` blocks with no variable and 5 `.catch(() => undefined)`.

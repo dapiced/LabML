@@ -271,7 +271,7 @@ Wikimedia Commons), the portrait is NASA, public domain._
   a doc page carries its whole article, in English until the app mounts); Lighthouse
   mobile ≈ 0.99 on `/ml` under real throttling. Heavy dependencies (Dexie, SheetJS, ONNX
   Runtime) load lazily.
-- **Quality bar.** 997 unit tests and 124 Playwright end-to-end tests across five
+- **Quality bar.** 1014 unit tests and 124 Playwright end-to-end tests across five
   projects — desktop, a phone viewport in English and in French, dark mode, and
   Cloudflare Pages' own routing emulated by `wrangler pages dev` (a real 404, the security
   headers as served) — covering offline PWA, a fake webcam, a horizontal-overflow guard on
@@ -285,7 +285,12 @@ Wikimedia Commons), the portrait is NASA, public domain._
   GitHub Action is pinned to a full commit SHA, no checkout leaves the git token on the
   runner, no pull-request value is expanded inside a script, and **zizmor** audits the
   workflows on every pull request. A test holds each of those rules per workflow file.
-  The local language model is fetched at a pinned Hugging Face revision, not `main`.
+  The local language model is fetched at a pinned Hugging Face revision, not `main`, and
+  every file is verified by size **and SHA-256**; the three vision models committed here
+  are pinned by SHA-256 too. Every job has a time limit, the browser install retries on a
+  network error, and no step forgives a failure wholesale. The lint reads type
+  information for the rules that catch a promise nobody awaits, and covers the build
+  scripts as well as the source.
 - **One dependency does not come from npm.** SheetJS left the registry, and the copy
   still published there (`xlsx@0.18.5`) carries two unfixable high advisories. The
   dependency points at the project's official tarball instead, which fixes both;
@@ -376,8 +381,9 @@ typescript-eslint to support it).
 Cap 8 takes the lab from an honest score to a model one can defend and watch. Delivered so
 far: the decision threshold suggested where it is not graded (V53), one ingestion and one
 memory budget for every section (V54), a run journal for the fallbacks that used to be
-silent (V55), and prediction sets with a measured coverage (V57). Proposed, each with its
-launch condition and none scheduled: CI and supply-chain guards (V56), a test-set ledger, a
+silent (V55), CI and supply-chain guards (V56), and prediction sets with a measured
+coverage (V57). Proposed, each with its
+launch condition and none scheduled: a test-set ledger, a
 model card, a production check, a data contract, a per-group audit, counterfactuals, and a
 step-by-step view of the hand-written models. The consented generative chat (V12) stays
 postponed by product decision. No wave starts without an explicit launch command. The full plan, delivery log and design decisions live in

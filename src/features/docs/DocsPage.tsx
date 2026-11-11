@@ -160,7 +160,7 @@ export function DocsPage() {
         <section className="pb-20">
           <button
             type="button"
-            onClick={() => navigate('/ml')}
+            onClick={() => void navigate('/ml')}
             className={cn(buttonVariants({ variant: 'outline' }))}
           >
             {t('docs.toLab')}
