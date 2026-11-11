@@ -712,7 +712,8 @@
         "intervalLine": "Pour une nouvelle ligne, la réponse est la prédiction ± {{half}} : la même marge pour chaque ligne.",
         "howLine": "Le seuil a été calibré sur une moitié du jeu de test et mesuré sur l'autre, dans les deux sens ({{rows}} lignes par moitié) : aucune ligne n'est jugée par un seuil qu'elle a contribué à fixer.",
         "verdictOnTarget": "La cible est dans ce que ce jeu de test permet de distinguer : la promesse a tenu ici.",
-        "verdictOffTarget": "La cible est hors de l'intervalle mesuré : sur ce jeu de test, la promesse n'a pas tenu telle qu'énoncée. Lisez le chiffre mesuré, pas la cible.",
+        "verdictAbove": "La couverture mesurée est au-dessus de la cible : la promesse a tenu, avec de la marge. Les ensembles sont plus larges que nécessaire, ce qui arrive quand les probabilités d'un modèle prennent peu de valeurs distinctes.",
+        "verdictBelow": "La couverture mesurée est sous la cible, intervalle compris : sur ce jeu de test, la promesse n'a pas tenu. Lisez le chiffre mesuré, pas la cible.",
         "refused": "Aucune couverture ne peut être promise à {{target}} % : chaque moitié du jeu de test doit avoir au moins {{needed}} lignes et en a {{available}}. Choisissez une cible plus basse, ou chargez plus de données.",
         "note": "La promesse vaut en moyenne sur des lignes comme celles-ci, pas pour chaque classe, chaque segment ou chaque ligne, et elle cesse de tenir quand les nouvelles données dérivent de celles de ce run. Le jeu de validation n'est pas utilisé ici : il a choisi le modèle gagnant, et un seuil calibré dessus a mesuré jusqu'à 2,6 points sous la cible pour ce modèle."
       },

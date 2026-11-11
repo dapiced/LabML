@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V57.1 — A coverage above the target is a promise kept
+
+Found while taking the README screenshot, the day V57 shipped.
+
+_Why:_ Owner request (11/11/2026) to bring the documentation and the README up to date; the defect was found doing it. A sentence that calls a kept promise broken is the same failure as a number that flatters, in the other direction.
+
 ## V57 — Prediction sets with a coverage that is measured, not promised
 
 The first feature of the cap, listed as F1 below until it shipped.

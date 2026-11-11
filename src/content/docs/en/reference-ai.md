@@ -45,6 +45,12 @@ Rule 1 wins over rule 2. The label is never hidden, only framed.
 Two interpreters, **in this order**: the deterministic one first, the language
 model only on what it refuses.
 
+The file is read by the same reader as the ML Lab and the Data Studio. A French
+export, with semicolons, decimal commas or a windows-1252 encoding, gives
+numeric columns here too, so a question about an average meets numbers and not
+text. The same memory budget applies, and a file past it is refused with the
+row where reading stopped.
+
 ### The deterministic interpreter
 
 A lexicon-based FR/EN parser producing a typed query executed by the V6 engine.

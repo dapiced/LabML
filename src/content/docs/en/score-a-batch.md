@@ -26,6 +26,9 @@ absent features.
 Extra columns are ignored without noise: a production export often carries
 identifiers the model never needed.
 
+The batch is read like the training file was, under the same memory budget. A
+batch past 20 million cells is refused (`too-large`) rather than read whole.
+
 ## If the file contains the real answer
 
 Then LabML does not merely predict: it compares, and shows the same metrics as

@@ -129,8 +129,8 @@ None of it left your browser.
 
 Click any leaderboard row to inspect a model other than the champion. Each
 panel below the leaderboard answers one precise question: how solid the numbers
-are, whether the ranking is real, where the decision threshold should sit, and
-where the model fails.
+are, whether the ranking is real, how sure the model is of one row, where the
+decision threshold should sit, and where the model fails.
 
 - [Score a new batch](/docs/scorer-un-lot) — the production gesture.
 - [Read a learning curve](/docs/lire-une-courbe) — would more data help?

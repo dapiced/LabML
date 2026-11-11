@@ -22,9 +22,17 @@ export function ConformalPanel() {
 
   const refused = isConformalRefusal(outcome);
   const lines = conformalLines(outcome, t, lang);
-  // Whether the target sits inside what the test split can tell apart.
-  const onTarget =
-    !refused && outcome.coverageLo <= 1 - outcome.alpha && 1 - outcome.alpha <= outcome.coverageHi;
+  // V57.1: three readings, not two. Coverage above the target KEEPS the
+  // promise (the sets are wider than needed); only coverage below it breaks
+  // it. The first version called both « did not hold ».
+  const target = 1 - outcome.alpha;
+  const verdict = refused
+    ? null
+    : outcome.coverageHi < target
+      ? 'verdictBelow'
+      : outcome.coverageLo > target
+        ? 'verdictAbove'
+        : 'verdictOnTarget';
 
   return (
     <section
@@ -67,9 +75,9 @@ export function ConformalPanel() {
             {line}
           </p>
         ))}
-        {!refused && (
+        {verdict !== null && (
           <p className="text-muted" data-testid="conformal-verdict">
-            {t(onTarget ? 'ml.lab.conformal.verdictOnTarget' : 'ml.lab.conformal.verdictOffTarget')}
+            {t(`ml.lab.conformal.${verdict}`)}
           </p>
         )}
       </div>
