@@ -16,6 +16,7 @@ import { deserializeModel, type ImportedModel } from '@/features/ml/train/deseri
 import { scoreBatch, scoreRows } from '@/features/ml/train/score';
 import { analyzeSegments } from '@/features/ml/train/segments';
 import { analyzeThresholds } from '@/features/ml/train/threshold-analysis';
+import { analyzeConformal } from '@/features/ml/train/conformal-analysis';
 import {
   analyzeMulticlassDecision,
   testMulticlassDecision,
@@ -402,6 +403,12 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           request.policy,
           request.exploratory,
         ),
+      });
+    } else if (request.kind === 'conformal-analysis') {
+      if (!artifacts) throw new Error('no-run');
+      post({
+        kind: 'conformal-result',
+        payload: analyzeConformal(artifacts, request.model, request.alpha),
       });
     } else if (request.kind === 'uncertainty-analysis') {
       if (!artifacts) throw new Error('no-run');

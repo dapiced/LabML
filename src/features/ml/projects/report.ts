@@ -1,3 +1,4 @@
+import { conformalLines } from '@/features/ml/train/conformal-analysis';
 import { noteText } from '@/features/ml/train/journal';
 import { METRIC_ROWS, metricDelta } from '@/features/ml/train/score-view';
 import type { RunRecord } from '@/features/ml/projects/types';
@@ -214,6 +215,18 @@ function artifactSections(record: RunRecord, t: Translate, lang: string): string
         ? `<p class="meta">${esc(t('ml.lab.multiclassDecision.exploratoryNote'))}</p>`
         : ''
     }`);
+  }
+
+  if (artifacts.conformal) {
+    // V57: the same sentences as the panel, escaped like the rest of the page.
+    const conformal = artifacts.conformal;
+    sections.push(`<h2>${esc(t('ml.lab.conformal.title'))}: ${esc(
+      t(`ml.lab.models.${conformal.model}`),
+    )}</h2>
+    ${conformalLines(conformal, t, lang)
+      .map((line) => `<p>${esc(line)}</p>`)
+      .join('\n')}
+    <p class="meta">${esc(t('ml.lab.conformal.note'))}</p>`);
   }
 
   if (artifacts.uncertainty) {

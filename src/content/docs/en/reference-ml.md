@@ -107,6 +107,34 @@ work on features or the model.
   everything else unchanged.
 - **What-if**: edit the values, the prediction recomputes locally.
 
+## Prediction sets
+
+A prediction is one answer; it does not say how sure the model is of this row.
+The prediction-sets panel makes the model answer with a **set of classes** («
+cat or lynx »), or a **value with a margin** (« 42 ± 6 »), sized so the truth
+falls inside at the rate you choose: 80, 90 or 95 %. A wide answer is the model
+saying it cannot tell.
+
+The method is split conformal prediction. On rows the model was not fitted on,
+the lab measures how wrong it is, takes the quantile of those errors at the
+level asked, and uses it as a threshold for any new row.
+
+The lab does not ask to be believed. The threshold is calibrated on one half
+of the test split and **measured on the other**, both ways, and the measured
+coverage is shown beside the target with its interval. The validation split is
+not used: it chose the winning model, which makes its errors look smaller than
+they are.
+
+Three limits, stated on the panel too:
+
+- the promise is an **average** over rows like these, not a promise for each
+  class, each segment or each row;
+- it stops holding when new data drift away from the data of the run;
+- a regression margin is the same for every row.
+
+When the test split is too small for the level asked (95 % needs 19 rows per
+half), no threshold is given and the panel says how many rows are missing.
+
 ## Decision threshold
 
 Precision-recall curve, calibration curve, and a threshold **you** decide,

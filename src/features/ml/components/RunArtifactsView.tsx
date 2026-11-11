@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { conformalLines } from '@/features/ml/train/conformal-analysis';
 import { RunNotes } from '@/features/ml/components/RunNotes';
 import { CurveChart } from '@/features/ml/components/LearningCurvePanel';
 import { Badge } from '@/components/ui/badge';
@@ -47,7 +48,7 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'en';
   const { tuning, explanation, exploration, forecast, batchScore, threshold, segments } = artifacts;
-  const { uncertainty, learningCurve, robustRank, multiclassDecision } = artifacts;
+  const { uncertainty, learningCurve, robustRank, multiclassDecision, conformal } = artifacts;
   if (
     !tuning &&
     !explanation &&
@@ -59,7 +60,8 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
     !segments &&
     !uncertainty &&
     !learningCurve &&
-    !robustRank
+    !robustRank &&
+    !conformal
   ) {
     return null;
   }
@@ -328,6 +330,19 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
                 )}
               </p>
             )}
+          </ArtifactCard>
+        )}
+
+        {conformal && (
+          <ArtifactCard title={t('ml.lab.conformal.title')}>
+            <div className="flex flex-col gap-1 text-xs" data-testid="artifact-conformal">
+              <p className="font-mono text-[0.68rem] text-muted">
+                {t(`ml.lab.models.${conformal.model}`)}
+              </p>
+              {conformalLines(conformal, t, lang ?? 'en').map((line, index) => (
+                <p key={index}>{line}</p>
+              ))}
+            </div>
           </ArtifactCard>
         )}
 

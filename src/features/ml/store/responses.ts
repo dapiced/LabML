@@ -93,6 +93,12 @@ export function createResponseHandlers({
       });
       send({ kind: 'multiclass-decision-analysis', model: message.payload.model });
       send({ kind: 'segment-analysis', model: message.payload.model });
+      // V57: prediction sets ride along too, at the level last asked for.
+      send({
+        kind: 'conformal-analysis',
+        model: message.payload.model,
+        alpha: get().conformalAlpha,
+      });
       // First insights after a completed run = winning model → auto-save.
       const state = get();
       if (
@@ -273,6 +279,13 @@ export function createResponseHandlers({
       set({ uncertaintyAnalysis: message.payload });
       if (message.payload) {
         attachArtifact({ uncertainty: message.payload });
+      }
+    },
+    'conformal-result': (message) => {
+      set({ conformalAnalysis: message.payload });
+      // A refusal is kept with the run too: « not at 95 % » is an answer.
+      if (message.payload) {
+        attachArtifact({ conformal: message.payload });
       }
     },
     'model-json': (message) => {

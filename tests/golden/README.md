@@ -15,7 +15,13 @@ The generator uses the same stated assumptions as LabML where equivalence matter
 
 - ridge regression includes and regularizes the bias column;
 - k-NN uses five uniformly weighted Euclidean neighbors;
-- class labels are `0..k-1`.
+- class labels are `0..k-1`;
+- the conformal threshold is the `ceil((n+1)(1-alpha))`-th smallest score, absent when that rank
+  exceeds `n`.
+
+The `conformal` block needs numpy only: split conformal prediction is a quantile, and the
+generator computes it two ways (by rank, and as numpy's inverted-CDF quantile) and requires them
+to agree before writing.
 
 The random forest, decision-tree, GBDT, MLP and logistic implementations are intentionally not
 compared to scikit-learn predictions. Their algorithms or defaults differ, so numerical equality

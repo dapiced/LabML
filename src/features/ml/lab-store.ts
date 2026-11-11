@@ -283,6 +283,7 @@ export const useLabStore = create<LabState>((set, get) => {
         multiclassDecisionTestPending: false,
         multiclassDecisionUnavailable: false,
         segmentAnalysis: null,
+        conformalAnalysis: null,
       });
       send({ kind: 'model-insights', model });
     },
@@ -389,6 +390,16 @@ export const useLabStore = create<LabState>((set, get) => {
     // Ranking is a reading of results already computed — no retraining.
     setRankMetric(metric) {
       set({ rankMetric: metric });
+    },
+
+    // V57: another coverage target is another reading of the same model.
+    setConformalLevel(alpha) {
+      const state = get();
+      if (state.conformalAlpha === alpha || state.trainStatus !== 'done') return;
+      set({ conformalAlpha: alpha, conformalAnalysis: null });
+      if (state.insights) {
+        send({ kind: 'conformal-analysis', model: state.insights.model, alpha });
+      }
     },
 
     setThresholdClass(index) {

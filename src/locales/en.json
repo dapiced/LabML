@@ -702,6 +702,20 @@
         "chronological": "Chronological — {{column}}",
         "group": "By group — {{column}}"
       },
+      "conformal": {
+        "title": "Prediction sets with a coverage target",
+        "hint": "A single prediction hides how sure the model is of this row. Here the model answers with a set of classes, or a value with a margin, sized so that the truth falls inside at the rate you ask for. A wide answer is the model saying it cannot tell.",
+        "level": "Coverage target",
+        "coverageLine": "Measured on the {{rows}} test rows: {{coverage}} % covered (95 % interval {{lo}} to {{hi}} %), for a target of {{target}} %.",
+        "setsLine": "A set holds {{mean}} classes on average: {{single}} % of rows get a single class, {{several}} % get several, {{empty}} % get none.",
+        "thresholdLine": "For a new row, a class enters the set when its probability reaches {{floor}}.",
+        "intervalLine": "For a new row, the answer is the prediction ± {{half}}: the same margin for every row.",
+        "howLine": "The threshold was calibrated on one half of the test split and measured on the other, both ways ({{rows}} rows per half), so no row was judged by a threshold it helped to set.",
+        "verdictOnTarget": "The target sits inside what this test split can tell apart: the promise held here.",
+        "verdictOffTarget": "The target sits outside the measured interval: on this test split the promise did not hold as stated. Read the measured figure, not the target.",
+        "refused": "No coverage can be promised at {{target}} %: each half of the test split needs at least {{needed}} rows and has {{available}}. Pick a lower target, or load more data.",
+        "note": "The promise is an average over rows like these, not a promise for each class, each segment or each row, and it stops holding when new data drift away from the data of this run. The validation split is not used here: it chose the winning model, and a threshold calibrated on it measured up to 2.6 points under target for that model."
+      },
       "journal": {
         "title": "Run journal: what this run fell back from",
         "ensemble-failed": "The ensemble could not be built, so the leaderboard shows the families alone.",
