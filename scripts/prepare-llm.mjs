@@ -15,10 +15,11 @@
  * download, the same size checks, and the same revision as the deployed copy —
  * so the bench measures the model production actually ships, not a lookalike.
  *
- * Every file is checked against the byte sizes pinned below. A mismatch is a
- * hard failure: shipping a truncated model would fail in the browser, later,
+ * Every file is checked against the byte size and the SHA-256 pinned below. A
+ * mismatch is a hard failure: shipping a truncated model would fail in the browser, later,
  * in a way nobody could diagnose from the symptom.
  */
+import { createHash } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fetchWithRetry } from './fetch-retry.mjs';
@@ -36,17 +37,47 @@ const LICENSE = 'Apache-2.0';
 /** Parts stay under this; 24 MiB leaves room under the 25 MiB hard limit. */
 const SHARD_BYTES = 24 * 1024 * 1024;
 
-/** path -> expected bytes. Measured at acquisition (V27), verified on every build. */
+/**
+ * path -> expected bytes and SHA-256. Sizes were measured at acquisition (V27).
+ * V56 added the hashes: a size says a file is complete, not that it is the
+ * file. Each hash was computed on a download of the pinned revision, and the
+ * three large ones agree with the LFS object ids Hugging Face publishes for
+ * that revision. Both are verified on every build.
+ */
 const FILES = {
-  'config.json': 983,
-  'generation_config.json': null, // taken from the base model, size not pinned
-  'tokenizer.json': 11422654,
-  'tokenizer_config.json': 9762,
-  'special_tokens_map.json': 613,
-  'added_tokens.json': 707,
-  'vocab.json': 2776833,
-  'onnx/model_q4f16.onnx': 64238474,
-  'onnx/model_q4f16.onnx_data': 291272704,
+  'config.json': {
+    bytes: 983,
+    sha256: '9fa670961499f0fca753e34f1c0cea22d4392557e733103f9cfbb1e96a717b2e',
+  },
+  'generation_config.json': null, // taken from the base model's moving branch: not pinned
+  'tokenizer.json': {
+    bytes: 11422654,
+    sha256: 'aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4',
+  },
+  'tokenizer_config.json': {
+    bytes: 9762,
+    sha256: '3c0884a30471f4f542dc89630f62a380bb70a341fafda826136a7be921fec7ea',
+  },
+  'special_tokens_map.json': {
+    bytes: 613,
+    sha256: '76862e765266b85aa9459767e33cbaf13970f327a0e88d1c65846c2ddd3a1ecd',
+  },
+  'added_tokens.json': {
+    bytes: 707,
+    sha256: 'c0284b582e14987fbd3d5a2cb2bd139084371ed9acbae488829a1c900833c680',
+  },
+  'vocab.json': {
+    bytes: 2776833,
+    sha256: 'ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910',
+  },
+  'onnx/model_q4f16.onnx': {
+    bytes: 64238474,
+    sha256: 'e020dd2bd158459e12296648fe73b6ec92c15a2cd83da5487f1efdf42c3d1b52',
+  },
+  'onnx/model_q4f16.onnx_data': {
+    bytes: 291272704,
+    sha256: '2705201c0bc9a7b11e31c3354644f99d274e266272870045d61e7410966a88e5',
+  },
 };
 
 /** generation_config.json is absent from the ONNX repo — the base model has it. */
@@ -85,8 +116,15 @@ async function download(path) {
   if (!response.ok) throw new Error(`fetch-failed:${path}:${response.status}`);
   const bytes = new Uint8Array(await response.arrayBuffer());
   const expected = FILES[path];
-  if (expected != null && bytes.byteLength !== expected) {
-    throw new Error(`size-mismatch:${path}:got ${bytes.byteLength}:want ${expected}`);
+  if (expected != null) {
+    if (bytes.byteLength !== expected.bytes) {
+      throw new Error(`size-mismatch:${path}:got ${bytes.byteLength}:want ${expected.bytes}`);
+    }
+    // V56: the right size with the wrong content used to pass.
+    const actual = createHash('sha256').update(bytes).digest('hex');
+    if (actual !== expected.sha256) {
+      throw new Error(`hash-mismatch:${path}:got ${actual}:want ${expected.sha256}`);
+    }
   }
   return bytes;
 }
