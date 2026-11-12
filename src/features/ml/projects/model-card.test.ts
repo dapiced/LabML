@@ -167,7 +167,11 @@ describe('rule 1 — nothing is invented', () => {
   it('says the model was picked on test when the run had no validation split', () => {
     const noValidation: RunRecord = {
       ...titanic,
-      results: titanic.results.map(({ valMetrics: _m, valPrimary: _p, ...rest }) => rest),
+      results: titanic.results.map((result) => ({
+        ...result,
+        valMetrics: undefined,
+        valPrimary: undefined,
+      })),
       summary: { ...titanic.summary, validationRows: undefined },
     };
     const built = card(noValidation);
