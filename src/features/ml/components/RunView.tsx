@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/eyebrow';
+import { ModelCardDownloads } from '@/features/ml/components/ModelCardDownloads';
 import { db } from '@/features/ml/projects/db';
 import { useLabStore } from '@/features/ml/lab-store';
 import { LeaderboardTable } from '@/features/ml/components/LeaderboardTable';
@@ -73,6 +74,9 @@ export function RunView({ record }: { record: RunRecord }) {
           <p className="max-w-3xl text-sm leading-relaxed">{read}</p>
         </div>
       )}
+
+      {/* V58: a stored or shared run gives its card too, read-only. */}
+      <ModelCardDownloads record={record} />
 
       <LeaderboardTable
         results={record.results}

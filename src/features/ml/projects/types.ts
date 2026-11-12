@@ -1,4 +1,5 @@
 import type { TaskType } from '@/features/ml/data/types';
+import type { CardFields } from '@/features/ml/projects/model-card';
 import type { BatchScore } from '@/features/ml/train/score';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
 import type { CalibrationBin, PrPoint, ThresholdMetrics } from '@/features/ml/train/threshold';
@@ -84,6 +85,12 @@ export interface RunRecord {
   insights: InsightsPayload;
   /** Analyses that joined the run after training (v13+ records). */
   artifacts?: RunArtifacts;
+  /**
+   * V58: what only the user can say about the model — its intended use, what
+   * it must not be used for, who answers for it. Absent until something is
+   * typed, and on every run stored before V58.
+   */
+  card?: CardFields;
   /**
    * Local id of the dataset copy kept in the browser (v19), when the user
    * opted in — never part of share links, meaningless outside this browser.

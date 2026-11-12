@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { MAX_FIELD_LENGTH } from '@/features/ml/projects/model-card';
 import type { RunArtifacts } from '@/features/ml/projects/types';
 import type { ExclusionReason } from '@/features/ml/data/types';
 import type { WorkerRequest, WorkerResponse } from '@/features/ml/worker-protocol';
@@ -390,6 +391,19 @@ export const useLabStore = create<LabState>((set, get) => {
     // Ranking is a reading of results already computed — no retraining.
     setRankMetric(metric) {
       set({ rankMetric: metric });
+    },
+
+    // V58: the card's typed fields live in the run record, like the artifacts:
+    // in memory at once, in IndexedDB when the run has been stored.
+    setCardField(field, value) {
+      const current = get().currentRun;
+      if (!current) return;
+      const card = { ...current.card, [field]: value.slice(0, MAX_FIELD_LENGTH) };
+      set({ currentRun: { ...current, card } });
+      if (current.id !== undefined) {
+        const id = current.id;
+        void import('@/features/ml/projects/db').then(({ db }) => db.runs.update(id, { card }));
+      }
     },
 
     // V57: another coverage target is another reading of the same model.

@@ -176,6 +176,31 @@ The test set is sliced by each categorical column — **including those outside
 the features**, where proxy effects can hide. Slices under 8 rows are excluded.
 A gap is a lead to investigate, not a verdict.
 
+## The model card
+
+The run report is a technical account for whoever trained the model. The
+**model card** is for whoever must decide to use it or approve it: what the
+model is for, what it was built on, what it is worth, where it fails, and what
+was never checked. It downloads as HTML or Markdown, from the run on screen and
+from any stored or shared run.
+
+Two rules shape it:
+
+- **Nothing is invented.** The intended use, what the model must not be used
+  for and who answers for it are typed by you. Left empty, the card writes « not
+  stated » and says on top that it is incomplete. It does not guess a purpose.
+- **What was not assessed is listed.** An analysis nobody ran (the robust
+  ranking, the segments, the prediction sets…) appears under « Not assessed »
+  instead of disappearing. Performance by protected group is always there:
+  LabML has no such audit.
+
+The analyses attached to a run describe the model that was inspected when they
+were computed, which is not always the winner. Each section names its model and
+says so when it is not the one the card is about.
+
+The card holds figures only, never a row of the data. What you type is kept
+with the run in your browser and travels in its share link.
+
 ## Export, import, score
 
 The model exports to JSON with its manifest: family, pipeline, versions. It

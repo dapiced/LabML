@@ -15,6 +15,7 @@ import type { ImportedManifest } from '@/features/ml/train/deserialize';
 import type { SegmentAnalysis } from '@/features/ml/train/segments';
 import type { ThresholdAnalysis } from '@/features/ml/train/threshold-analysis';
 import { DEFAULT_ALPHA } from '@/features/ml/train/conformal';
+import type { CardField } from '@/features/ml/projects/model-card';
 import type { ConformalOutcome } from '@/features/ml/train/conformal-analysis';
 import type { UncertaintyAnalysis } from '@/features/ml/train/uncertainty';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
@@ -150,6 +151,8 @@ export interface LabState {
   setRankMetric: (metric: RankingMetric | null) => void;
   setThresholdClass: (index: number) => void;
   setConformalLevel: (alpha: number) => void;
+  /** V58: one typed field of the model card, kept with the run. */
+  setCardField: (field: CardField, value: string) => void;
   cancelCurve: () => void;
   explore: () => void;
   forecast: (dateColumn: string, valueColumn: string) => void;
