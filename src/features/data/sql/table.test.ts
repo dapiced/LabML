@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  exportableQuery,
   formatCell,
   NULL_CELL,
+  queryFileName,
   readerFor,
   tableNameFor,
   tableToCsv,
@@ -80,5 +82,28 @@ describe('tableNameFor', () => {
     expect(tableNameFor('cafe-sales.csv')).toBe('cafe_sales');
     expect(tableNameFor('2024 report.parquet')).toBe('t_2024_report');
     expect(tableNameFor('.csv')).toBe('dropped');
+  });
+});
+
+describe('exportableQuery', () => {
+  it('removes a trailing semicolon and nothing else', () => {
+    expect(exportableQuery('  SELECT 1 ;;  \n')).toBe('SELECT 1');
+    expect(exportableQuery("SELECT ';' AS s")).toBe("SELECT ';' AS s");
+    expect(exportableQuery('SELECT 1; SELECT 2')).toBe('SELECT 1; SELECT 2');
+  });
+});
+
+describe('queryFileName', () => {
+  it('gives each query a name of its own, stable, and free of the query text', () => {
+    const a = queryFileName("SELECT * FROM dataset WHERE city = 'Lyon'", 'csv');
+    const b = queryFileName("SELECT * FROM dataset WHERE city = 'Paris'", 'csv');
+    expect(a).toMatch(/^query-[0-9a-f]{8}\.csv$/);
+    expect(a).not.toBe(b);
+    expect(a).not.toContain('Lyon');
+    expect(queryFileName('SELECT 1', 'parquet')).toMatch(/\.parquet$/);
+  });
+
+  it('names the same query the same way with or without its semicolon', () => {
+    expect(queryFileName('SELECT 1;', 'csv')).toBe(queryFileName('SELECT 1', 'csv'));
   });
 });

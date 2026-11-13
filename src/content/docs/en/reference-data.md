@@ -155,8 +155,10 @@ DuckDB-Wasm, MIT, self-hosted, single-threaded (no COOP/COEP headers). Pinned to
 25 MiB per-file limit.
 
 Queries the active dataset plus any CSV, Parquet or JSON attached to the
-session. Results export to CSV or move to the ML Lab in one click. **Parquet**
-export through `COPY … TO`.
+session. A result exports to CSV or **Parquet**, or moves to the ML Lab, in one
+click. All three are written by the engine through `COPY … TO` and carry every
+row of the result, not the 200 the console paints; a NULL leaves as an empty
+cell. See [hand a SQL result to the ML Lab](/docs/sql-vers-le-lab).
 
 ## Where to go next
 

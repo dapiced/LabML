@@ -9,6 +9,7 @@
  * Pure functions, so the formatting is unit-tested rather than eyeballed in a
  * browser.
  */
+import { fingerprint } from '@/lib/fingerprint';
 import { toCsv } from '@/lib/csv';
 
 export interface SqlTable {
@@ -60,7 +61,31 @@ export function toSqlTable(
   };
 }
 
-/** RFC-4180-ish escaping, matching what the Data Studio exports elsewhere. */
+/**
+ * V69: the query as `COPY (…)` can take it. A trailing semicolon is the only
+ * thing removed: anything else DuckDB refuses is refused in DuckDB's words.
+ */
+export function exportableQuery(sql: string): string {
+  return sql
+    .trim()
+    .replace(/;+\s*$/, '')
+    .trim();
+}
+
+/**
+ * V69: a name of its own for the file a query produces. Every handoff used to
+ * be `query.csv`, and the test-set ledger (V60), which knows a file by its
+ * name and shape, took two queries of the same shape for one file. The name
+ * carries a fingerprint of the query, never its text.
+ */
+export function queryFileName(sql: string, extension: 'csv' | 'parquet'): string {
+  return `query-${fingerprint(exportableQuery(sql))}.${extension}`;
+}
+
+/**
+ * The painted rows as CSV. Not an export of the result: it holds what the
+ * console shows, NULL marks included. Exports go through the engine (V69).
+ */
 export function tableToCsv(table: SqlTable): string {
   return toCsv(table.columns, table.rows);
 }

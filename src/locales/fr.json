@@ -1386,9 +1386,14 @@
       "addFile": "Ajouter un fichier (CSV, Parquet, JSON)",
       "rows": "{{total}} lignes.",
       "rowsTruncated": "{{shown}} premières lignes affichées sur {{total}} au total.",
-      "capNote": "L'affichage est plafonné pour rester fluide ; l'export CSV et l'envoi au ML Lab portent sur les lignes affichées. Ajoutez un LIMIT ou un filtre pour cadrer le résultat.",
+      "capNote": "L'affichage est plafonné pour rester fluide. Les exports et l'envoi au ML Lab ne le sont pas : ils portent les {{total}} lignes, écrites par le moteur lui-même.",
       "exportCsv": "Exporter en CSV",
-      "toLab": "Ouvrir dans le ML Lab"
+      "toLab": "Ouvrir dans le ML Lab",
+      "exportNote": "Les exports et l'envoi au ML Lab sont écrits par le moteur lui-même : une valeur vide reste une cellule vide.",
+      "exportParquet": "Exporter en Parquet",
+      "exporting": "Écriture de {{total}} lignes…",
+      "exportFailed": "Le résultat n'a pas pu être exporté ({{reason}}).",
+      "tooLarge": "Ce résultat a {{rows}} lignes et {{columns}} colonnes : plus de cellules que les {{budget}} que le labo sait lire. Agrégez ou filtrez la requête, puis exportez."
     }
   },
   "ai": {

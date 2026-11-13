@@ -167,8 +167,10 @@ DuckDB-Wasm, MIT, auto-hébergé, mono-thread (pas d'en-têtes COOP/COEP). Épin
 la limite Cloudflare de 25 Mio par fichier.
 
 Interroge le dataset actif plus tout CSV, Parquet ou JSON attaché à la session.
-Résultats exportables en CSV ou transférables au ML Lab en un clic. Export
-**Parquet** par `COPY … TO`.
+Un résultat s'exporte en CSV ou en **Parquet**, ou part au ML Lab, en un clic.
+Les trois sont écrits par le moteur via `COPY … TO` et portent toutes les lignes
+du résultat, pas les 200 que la console peint ; un NULL part comme une cellule
+vide. Voir [envoyer un résultat SQL au ML Lab](/docs/sql-vers-le-lab).
 
 ## Et ensuite ?
 
