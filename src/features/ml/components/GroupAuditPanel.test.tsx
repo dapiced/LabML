@@ -1,10 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GroupAuditPanel } from '@/features/ml/components/GroupAuditPanel';
 import { useLabStore } from '@/features/ml/lab-store';
 import type { ColumnProfile } from '@/features/ml/data/types';
 import type { GroupAudit, GroupAuditRefusal } from '@/features/ml/train/group-audit';
 import type { InsightsPayload } from '@/features/ml/train/types';
+import type { WorkerRequest } from '@/features/ml/worker-protocol';
 import i18n from '@/lib/i18n';
 
 // V59: the panel waits for the user to name a column, then says of each gap
@@ -61,6 +62,18 @@ const audit: GroupAudit = {
   missingRows: 3,
 };
 
+// jsdom has no Worker. Picking a column sends a request, so the test gives the
+// store a worker that records what it was asked and never answers.
+const sent: WorkerRequest[] = [];
+class SilentWorker {
+  onmessage: unknown = null;
+  onerror: unknown = null;
+  postMessage(request: WorkerRequest) {
+    sent.push(request);
+  }
+  terminate() {}
+}
+
 const refusal: GroupAuditRefusal = {
   model: 'gbdt',
   column: 'deck',
@@ -74,6 +87,8 @@ const refusal: GroupAuditRefusal = {
 
 describe('GroupAuditPanel', () => {
   beforeEach(async () => {
+    sent.length = 0;
+    vi.stubGlobal('Worker', SilentWorker);
     await i18n.changeLanguage('en');
     useLabStore.setState({
       trainStatus: 'done',
@@ -91,6 +106,10 @@ describe('GroupAuditPanel', () => {
       groupAuditColumn: null,
       groupAuditPending: false,
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('renders nothing before a run is done', () => {
@@ -115,9 +134,12 @@ describe('GroupAuditPanel', () => {
     fireEvent.change(select, { target: { value: 'sex' } });
     expect(useLabStore.getState().groupAuditColumn).toBe('sex');
     expect(useLabStore.getState().groupAuditPending).toBe(true);
+    expect(sent).toEqual([{ kind: 'group-audit', model: 'gbdt', column: 'sex' }]);
     fireEvent.change(select, { target: { value: '' } });
     expect(useLabStore.getState().groupAuditColumn).toBeNull();
     expect(useLabStore.getState().groupAuditPending).toBe(false);
+    // Unpicking asks the worker for nothing.
+    expect(sent).toHaveLength(1);
   });
 
   it('shows each group with its rates, and marks the real gap apart from the noise', () => {
