@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { METRIC_ROWS, metricDelta } from '@/features/ml/train/score-view';
+import { ProductionCheckView } from '@/features/ml/components/ProductionCheckView';
 import { useLabStore } from '@/features/ml/lab-store';
 import { cn } from '@/lib/utils';
 import { downloadFile } from '@/lib/download';
@@ -121,6 +122,11 @@ export function ImportModelPanel() {
               date: manifest.createdAt ? new Date(manifest.createdAt).toLocaleString(lang) : '—',
             })}
           </p>
+          {manifest.referenceRejected && (
+            <p className="max-w-xl text-xs text-copper" data-testid="imported-reference-rejected">
+              {t('ml.lab.production.referenceRejected')}
+            </p>
+          )}
 
           <div className="flex flex-wrap items-center gap-3">
             <label className={cn(buttonVariants({ size: 'sm' }), 'cursor-pointer')}>
@@ -205,6 +211,7 @@ export function ImportModelPanel() {
               {t('ml.lab.batch.unknownLabels', { count: result.unknownLabels })}
             </p>
           )}
+          {result.check && <ProductionCheckView check={result.check} />}
           <div>
             <Button
               variant="outline"

@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V61 — A production check
+
+Listed as F4 below until it shipped.
+
+_Why:_ Approved 13/11/2026. The model card (V58) says what a model was worth when it was built; this is what it is worth on the file that arrived this morning.
+
 ## V60 — A test-set ledger
 
 Listed as F2 below until it shipped.

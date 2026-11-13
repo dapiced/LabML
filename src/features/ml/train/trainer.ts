@@ -48,6 +48,11 @@ export interface TrainArtifacts {
   testY: number[];
   /** Original row index of each test position — segment slicing needs it. */
   testIndices: number[];
+  /**
+   * V61: original row index of each training row, so an export can profile
+   * the columns the model was fitted on. Absent on hand-built artifacts.
+   */
+  trainIndices?: number[];
   classes: string[];
   isClassification: boolean;
   seed: number;
@@ -632,6 +637,7 @@ export async function runTraining(
       testX,
       testY,
       testIndices: test,
+      trainIndices: train,
       classes,
       isClassification,
       seed: config.seed,

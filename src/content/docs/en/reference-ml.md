@@ -285,6 +285,14 @@ rule travels with the export, and the scored CSV then carries two extra columns
 — see [the formats page](/docs/formats). The five named import refusals are on
 the [refusals page](/docs/refus).
 
+Since format 5 the export also carries a **production reference**: shares and
+counts describing the columns and the model's answers, never a row. Every batch
+scored afterwards, by the live run or by the re-imported file, gets a
+**production check**: one verdict (stable, watch, retrain) from three signals,
+the columns, the answers, and the performance when the file carries labels. A
+drift counts only above its own noise ceiling, and only a measured drop says
+« retrain ». See [score a batch](/docs/scorer-un-lot).
+
 A share link carries the run's metrics and charts in the URL fragment, never
 the data. A cut or damaged link never yields a half-read page: if it does not
 decode, or if part of the run it carries does not have the shape LabML writes,

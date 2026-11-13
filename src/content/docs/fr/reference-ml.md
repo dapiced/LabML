@@ -313,6 +313,15 @@ multiclasse figée voyage avec l'export, et le CSV scoré porte alors deux
 colonnes de plus — voir [la page des formats](/docs/formats). Les cinq raisons
 de refus à l'import sont nommées — voir la [page des refus](/docs/refus).
 
+Depuis le format 5, l'export porte aussi une **référence de production** : des
+parts et des effectifs qui décrivent les colonnes et les réponses du modèle,
+jamais une ligne. Chaque lot scoré ensuite, par le run en cours ou par le
+fichier réimporté, reçoit une **vérification en production** : un verdict
+(stable, surveiller, réentraîner) à partir de trois signaux, les colonnes, les
+réponses, et la performance quand le fichier porte des étiquettes. Une dérive
+ne compte qu'au-dessus de son propre plafond de bruit, et seule une baisse
+mesurée dit « réentraîner ». Voir [scorer un lot](/docs/scorer-un-lot).
+
 Un lien de partage transporte les métriques et les graphiques du run dans le
 fragment d'URL, jamais les données. Un lien coupé ou abîmé ne donne jamais une
 page à moitié lue : s'il ne se décode pas, ou si une partie du run qu'il porte

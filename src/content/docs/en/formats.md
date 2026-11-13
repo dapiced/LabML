@@ -52,7 +52,7 @@ TF-IDF vocabulary where relevant) and a manifest:
 ```json
 {
   "app": "LabML",
-  "formatVersion": 4,
+  "formatVersion": 5,
   "model": "logistic",
   "task": "classification",
   "target": "survived",
@@ -69,14 +69,52 @@ TF-IDF vocabulary where relevant) and a manifest:
 ```
 
 `app` and `formatVersion` are checked before anything else: JSON that is not a
-LabML export is refused by name (`not-labml`), not by a crash. Versions 2, 3 and
-4 re-import; anything older or newer is refused by name
+LabML export is refused by name (`not-labml`), not by a crash. Versions 2 to 5
+re-import; anything older or newer is refused by name
 (`unsupported-version:N`). An incomplete manifest is refused (`bad-manifest`)
 rather than completed by guesswork — an export that cannot be trusted to predict
 must not predict.
 
 `testMetrics` and `testRows` keep the test score of the run that produced the
 export: the honest reference a future batch is compared against.
+
+### The production reference
+
+Since format 5 an export carries a `reference` key: what the columns and the
+model's answers looked like when it was exported, so a later batch can be read
+against them.
+
+```json
+{
+  "reference": {
+    "v": 1,
+    "rows": 570,
+    "columns": [
+      {
+        "kind": "numeric",
+        "column": "age",
+        "missingRatio": 0.2,
+        "mean": 29.6,
+        "edges": [14, 19, 22, 25, 28, 31, 36, 41, 50],
+        "shares": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+      },
+      { "kind": "categorical", "column": "sex", "missingRatio": 0, "shares": { "male": 0.65 } }
+    ],
+    "predictions": { "kind": "classes", "rows": 321, "shares": [0.62, 0.38] },
+    "performance": { "rows": 178, "accuracy": 0.82 }
+  }
+}
+```
+
+It holds bin edges, shares and counts, and never a row. The columns are profiled
+on the training rows; the answers are read on the rows the model was not fitted
+on. A regression stores the bins of its predicted values, its mean squared error
+and the spread of its squared errors.
+
+A reference that is not complete is **set aside, not fatal**: the model loads
+without it, the panel says the block could not be read, and a batch is then
+checked on its labels alone. Exports of formats 2 to 4 carry none and load as
+before.
 
 ### The multiclass decision policy
 
@@ -87,8 +125,8 @@ the order of `classes`:
 { "decisionPolicy": { "thresholds": [0.5, 0.4, 0.6] } }
 ```
 
-It is accepted only when all four conditions hold: `formatVersion` is 4, the
-task is a classification, `classes` has more than two entries, and `thresholds`
+It is accepted only when all four conditions hold: `formatVersion` is 4 or 5,
+the task is a classification, `classes` has more than two entries, and `thresholds`
 is an array of the same length whose every value is a finite number between 0
 and 1. Otherwise the import is refused (`bad-manifest`) — a half-readable
 decision rule is a wrong decision rule.

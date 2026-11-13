@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { profileColumn } from '@/features/ml/data/profile';
 import { deserializeModel } from '@/features/ml/train/deserialize';
 import { scoreBatch, scoreRows } from '@/features/ml/train/score';
-import { buildPredictionsCsv, serializeModel } from '@/features/ml/train/serialize';
+import { buildPredictionsCsv, referenceOf, serializeModel } from '@/features/ml/train/serialize';
 import { runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
 import type { Cell } from '@/features/ml/data/types';
 
@@ -32,7 +32,7 @@ async function train(
 
 const artifacts = () => train(data, 'label', ['f1', 'group']);
 
-describe('serializeModel (format v4)', () => {
+describe('serializeModel (format v5)', () => {
   it('exports a manifest with target, pipeline and honest reference metrics', async () => {
     const arts = await artifacts();
     for (const key of [
@@ -48,7 +48,7 @@ describe('serializeModel (format v4)', () => {
       expect(json, key).not.toBeNull();
       const parsed = JSON.parse(json!);
       expect(parsed.app).toBe('LabML');
-      expect(parsed.formatVersion).toBe(4);
+      expect(parsed.formatVersion).toBe(5);
       expect(parsed.model).toBe(key);
       expect(parsed.target).toBe('label');
       expect(parsed.classes).toEqual(['no', 'yes']);
@@ -169,6 +169,116 @@ describe('deserializeModel — the exported model comes back (v22)', () => {
     const valid = JSON.parse(serializeModel(await artifacts(), 'logistic', META)!);
     valid.parameters.kind = 'quantum';
     expect(() => deserializeModel(JSON.stringify(valid))).toThrow('unsupported-kind:quantum');
+  });
+});
+
+describe('V61: the production reference travels in the export', () => {
+  const header = ['f1', 'group', 'label'];
+  const columns = () => new Map(Object.entries(data));
+
+  it('profiles the training rows only, and reads the answers on held-out rows', async () => {
+    const arts = await artifacts();
+    const reference = referenceOf(arts, 'logistic', columns())!;
+    expect(reference.rows).toBe(arts.trainIndices!.length);
+    expect(reference.columns.map((column) => column.column)).toEqual(['f1', 'group']);
+    expect(reference.predictions.rows).toBe(arts.validationX.length + arts.testX.length);
+    expect(reference.performance.rows).toBe(arts.testY.length);
+    // The target is not a column the model reads: it has no profile.
+    expect(reference.columns.some((column) => column.column === 'label')).toBe(false);
+  });
+
+  it('comes back from the file as it went in', async () => {
+    const arts = await artifacts();
+    const reference = referenceOf(arts, 'logistic', columns());
+    const text = serializeModel(arts, 'logistic', META, undefined, reference)!;
+    const imported = deserializeModel(text);
+    expect(imported.manifest.reference).toEqual(reference);
+    expect(imported.manifest.referenceRejected).toBeUndefined();
+  });
+
+  it('loads a model whose reference is damaged, without the reference', async () => {
+    const arts = await artifacts();
+    const file = JSON.parse(
+      serializeModel(arts, 'logistic', META, undefined, referenceOf(arts, 'logistic', columns()))!,
+    ) as { reference: { predictions: unknown } };
+    file.reference.predictions = 'gone';
+    const imported = deserializeModel(JSON.stringify(file));
+    expect(imported.manifest.model).toBe('logistic');
+    expect(imported.manifest.reference).toBeUndefined();
+    expect(imported.manifest.referenceRejected).toBe(true);
+  });
+
+  it('loads a v4 file as before, with no reference and nothing rejected', async () => {
+    const arts = await artifacts();
+    const v4 = JSON.stringify({
+      ...(JSON.parse(serializeModel(arts, 'logistic', META)!) as Record<string, unknown>),
+      formatVersion: 4,
+    });
+    const imported = deserializeModel(v4);
+    expect(imported.manifest.reference).toBeUndefined();
+    expect(imported.manifest.referenceRejected).toBeUndefined();
+  });
+
+  it('has no reference to give for artifacts that do not say which rows trained', async () => {
+    const { trainIndices: _dropped, ...arts } = await artifacts();
+    void _dropped;
+    expect(referenceOf(arts, 'logistic', columns())).toBeNull();
+  });
+
+  it('reads the very rows it was built on as stable, from a live run and from the file', async () => {
+    const arts = await artifacts();
+    const reference = referenceOf(arts, 'logistic', columns());
+    const rawColumns = header.map((name) => data[name]);
+    const live = scoreBatch(arts, 'logistic', 'label', 'same.csv', header, rawColumns, undefined, {
+      reference,
+      testRows: arts.testY.length,
+    });
+    expect(live.check).toMatchObject({ verdict: 'stable', hasReference: true, driftedColumns: 0 });
+
+    const imported = deserializeModel(
+      serializeModel(arts, 'logistic', META, undefined, reference)!,
+    );
+    const fromFile = scoreRows(
+      {
+        model: imported.model,
+        specs: imported.specs,
+        transformRow: imported.transformRow,
+        classes: imported.manifest.classes,
+        isClassification: true,
+      },
+      'logistic',
+      imported.manifest.testMetrics,
+      'label',
+      'same.csv',
+      header,
+      rawColumns,
+      { reference: imported.manifest.reference ?? null, testRows: imported.manifest.testRows },
+    );
+    expect(fromFile.check).toEqual(live.check);
+  });
+
+  it('says « watch » on a batch whose column moved, and names the column', async () => {
+    const arts = await artifacts();
+    const reference = referenceOf(arts, 'logistic', columns());
+    // Only the upper half of f1, and no label: the inputs moved, nothing says more.
+    const rows = Array.from({ length: N }, (_, i) => i).filter((i) => i >= 80);
+    const batchHeader = ['f1', 'group'];
+    const batch = batchHeader.map((name) => rows.map((i) => data[name][i]));
+    const score = scoreBatch(arts, 'logistic', 'label', 'late.csv', batchHeader, batch, undefined, {
+      reference,
+      testRows: arts.testY.length,
+    });
+    expect(score.check?.verdict).toBe('watch');
+    expect(score.check?.columns[0]).toMatchObject({ column: 'f1', drifted: true });
+    expect(score.check?.performance).toEqual({ status: 'no-labels' });
+  });
+
+  it('checks an export with no reference on its labels alone', async () => {
+    const arts = await artifacts();
+    const rawColumns = header.map((name) => data[name]);
+    const score = scoreBatch(arts, 'logistic', 'label', 'same.csv', header, rawColumns);
+    expect(score.check).toMatchObject({ hasReference: false, columns: [], predictions: null });
+    expect(score.check?.performance.status).toBe('measured');
   });
 });
 
