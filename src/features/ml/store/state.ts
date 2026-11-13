@@ -183,6 +183,8 @@ export interface LabState {
   testMulticlassDecision: () => void;
   exportModel: () => void;
   exportPredictions: () => void;
+  /** V64: the run as a scikit-learn script. */
+  exportPython: () => void;
   clearExportedFile: () => void;
   reset: () => void;
 }

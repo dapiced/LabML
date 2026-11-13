@@ -589,6 +589,23 @@ export const useLabStore = create<LabState>((set, get) => {
       send({ kind: 'export-predictions', model: state.insights.model });
     },
 
+    exportPython() {
+      const state = get();
+      if (state.trainStatus !== 'done' || !state.summary) return;
+      send({
+        kind: 'export-python',
+        appVersion: __APP_VERSION__,
+        classWeighting: state.summary.classWeighting === 'balanced',
+        models: state.results
+          .filter((result) => result.ok)
+          .map((result) => ({
+            key: result.key,
+            metrics: result.metrics,
+            ...(result.trainedRows !== undefined && { trainedRows: result.trainedRows }),
+          })),
+      });
+    },
+
     clearExportedFile() {
       set({ exportedFile: null });
     },

@@ -13,6 +13,7 @@ import { runExploration } from '@/features/ml/unsupervised/explore';
 import { runForecast } from '@/features/ml/timeseries/run';
 import { buildPredictionsCsv, referenceOf, serializeModel } from '@/features/ml/train/serialize';
 import { explainPrediction } from '@/features/ml/train/shapley';
+import { buildPythonScript } from '@/features/ml/train/python-export';
 import { deserializeModel, type ImportedModel } from '@/features/ml/train/deserialize';
 import { scoreBatch, scoreRows } from '@/features/ml/train/score';
 import { analyzeSegments } from '@/features/ml/train/segments';
@@ -384,6 +385,35 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           request.decisionPolicy,
           referenceOf(artifacts, request.model, columnsAsMap()),
         ),
+      });
+    } else if (request.kind === 'export-python') {
+      if (!artifacts || !lastTarget || !artifacts.trainIndices) throw new Error('no-run');
+      post({
+        kind: 'python-script',
+        name: `labml-${datasetName.replace(/\.[a-z0-9]+$/i, '')}.py`,
+        content: buildPythonScript({
+          appVersion: request.appVersion,
+          source: datasetName,
+          rowCount,
+          header,
+          delimiter: readFormat?.delimiter ?? ',',
+          encoding: readFormat?.encoding.encoding ?? 'utf-8',
+          decimalColumns: (readFormat?.decimalColumns ?? []).map((format) => format.column),
+          malformedRows: readFormat?.malformedRows ?? 0,
+          target: lastTarget,
+          isClassification: artifacts.isClassification,
+          classes: artifacts.classes,
+          seed: artifacts.seed,
+          classWeighting: request.classWeighting,
+          specs: artifacts.pipeline.specs,
+          featureCount: artifacts.pipeline.featureNames.length,
+          split: {
+            train: artifacts.trainIndices,
+            validation: artifacts.validationIndices ?? [],
+            test: artifacts.testIndices,
+          },
+          models: request.models,
+        }),
       });
     } else if (request.kind === 'export-predictions') {
       if (!artifacts) throw new Error('no-run');

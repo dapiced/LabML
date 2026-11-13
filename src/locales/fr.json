@@ -658,6 +658,8 @@
       "export": {
         "model": "Modèle (JSON)",
         "predictions": "Prédictions (CSV)",
+        "python": "Script Python (scikit-learn)",
+        "pythonNote": "Le script Python refait ce run avec scikit-learn : les mêmes lignes dans chaque découpe et le même prétraitement, chaque modèle traduit vers son estimateur le plus proche. Il ne promet pas ces chiffres ; il les affiche à côté des siens, avec l’écart.",
         "report": "Rapport (HTML)",
         "share": "Copier le lien de partage",
         "copied": "Lien copié !",

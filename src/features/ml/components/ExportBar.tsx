@@ -1,4 +1,12 @@
-import { Check, Download, FileJson, FileSpreadsheet, FileText, Link2 } from 'lucide-react';
+import {
+  Check,
+  Download,
+  FileCode2,
+  FileJson,
+  FileSpreadsheet,
+  FileText,
+  Link2,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -15,6 +23,7 @@ export function ExportBar() {
   const exportedFile = useLabStore((s) => s.exportedFile);
   const exportModel = useLabStore((s) => s.exportModel);
   const exportPredictions = useLabStore((s) => s.exportPredictions);
+  const exportPython = useLabStore((s) => s.exportPython);
   const clearExportedFile = useLabStore((s) => s.clearExportedFile);
   const [copied, setCopied] = useState(false);
 
@@ -66,6 +75,16 @@ export function ExportBar() {
       <Button variant="outline" size="sm" onClick={exportPredictions}>
         <FileSpreadsheet className="h-3.5 w-3.5" aria-hidden="true" />
         {t('ml.lab.export.predictions')}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={exportPython}
+        title={t('ml.lab.export.pythonNote')}
+        data-testid="export-python"
+      >
+        <FileCode2 className="h-3.5 w-3.5" aria-hidden="true" />
+        {t('ml.lab.export.python')}
       </Button>
       <Button variant="outline" size="sm" onClick={downloadReport}>
         <FileText className="h-3.5 w-3.5" aria-hidden="true" />
