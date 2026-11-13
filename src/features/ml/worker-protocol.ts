@@ -1,3 +1,4 @@
+import type { GroupAuditOutcome } from '@/features/ml/train/group-audit';
 import type { Cell, ParseResultPayload, TargetAnalysis } from '@/features/ml/data/types';
 import type { ImportedManifest } from '@/features/ml/train/deserialize';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
@@ -79,6 +80,8 @@ export type WorkerRequest =
   | { kind: 'uncertainty-analysis' }
   /** V57: prediction sets or intervals of one model, at miscoverage `alpha`. */
   | { kind: 'conformal-analysis'; model: ModelKey; alpha: number }
+  /** V59: one column the user designates, audited group by group. */
+  | { kind: 'group-audit'; model: ModelKey; column: string; threshold?: number }
   // v22: an exported model comes back to score files, no retraining.
   | { kind: 'load-model'; text: string }
   | { kind: 'score-imported-file'; file: File }
@@ -128,6 +131,7 @@ export type WorkerResponse =
   // null = tiny test set — no interval theater.
   | { kind: 'uncertainty-result'; payload: UncertaintyAnalysis | null }
   | { kind: 'conformal-result'; payload: ConformalOutcome | null }
+  | { kind: 'group-audit-result'; payload: GroupAuditOutcome | null }
   // Dedicated channel: a bad batch file must not tear down the run state.
   | { kind: 'batch-error'; message: string }
   // v22 import flow — its errors never touch the run or dataset state.

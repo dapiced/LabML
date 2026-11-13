@@ -285,6 +285,10 @@ export const useLabStore = create<LabState>((set, get) => {
         multiclassDecisionUnavailable: false,
         segmentAnalysis: null,
         conformalAnalysis: null,
+        // V59: an audit describes one model; another model, another audit.
+        groupAudit: null,
+        groupAuditColumn: null,
+        groupAuditPending: false,
       });
       send({ kind: 'model-insights', model });
     },
@@ -404,6 +408,33 @@ export const useLabStore = create<LabState>((set, get) => {
         const id = current.id;
         void import('@/features/ml/projects/db').then(({ db }) => db.runs.update(id, { card }));
       }
+    },
+
+    // V59: nothing here runs on its own. The lab does not decide which column
+    // is sensitive, so the audit waits for the user to name one.
+    auditGroups(column) {
+      const state = get();
+      if (state.trainStatus !== 'done' || !state.insights) return;
+      if (column === null) {
+        set({ groupAudit: null, groupAuditColumn: null, groupAuditPending: false });
+        return;
+      }
+      set({ groupAudit: null, groupAuditColumn: column, groupAuditPending: true });
+      // The decision audited is the one the user set: the chosen threshold of
+      // a binary model when there is one, the model's own answer otherwise.
+      const cut =
+        state.thresholdAnalysis &&
+        !state.thresholdAnalysis.oneVsRest &&
+        state.thresholdAnalysis.model === state.insights.model &&
+        state.thresholdChoice.threshold !== 0.5
+          ? state.thresholdChoice.threshold
+          : undefined;
+      send({
+        kind: 'group-audit',
+        model: state.insights.model,
+        column,
+        ...(cut !== undefined && { threshold: cut }),
+      });
     },
 
     // V57: another coverage target is another reading of the same model.

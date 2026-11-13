@@ -12,6 +12,7 @@ import {
 } from '@/features/ml/projects/model-card';
 import type { RunRecord } from '@/features/ml/projects/types';
 import type { ConformalAnalysis } from '@/features/ml/train/conformal-analysis';
+import type { GroupAudit } from '@/features/ml/train/group-audit';
 import i18n from '@/lib/i18n';
 
 // V58: a model card must not invent what the run does not say, and must not
@@ -194,10 +195,66 @@ describe('rule 2 — what was not assessed is listed', () => {
     expect(missing).not.toContain('decision threshold');
   });
 
-  it('never lets fairness pass as checked', () => {
+  it('never lets a group audit that was not run pass as checked', () => {
     for (const record of [titanic, iris, mpg]) {
-      expect(text(card(record), 'notAssessed')).toContain('protected group: not assessed');
+      expect(text(card(record), 'notAssessed')).toContain('no group audit was run on this model');
     }
+  });
+
+  it('carries the group audit once one was run, and stops listing it as missing (V59)', () => {
+    const groupAudit: GroupAudit = {
+      model: 'knn',
+      column: 'sex',
+      inFeatures: true,
+      kind: 'binary',
+      positiveClass: '1',
+      testRows: 178,
+      minRows: 20,
+      minCases: 10,
+      rates: ['selection', 'recall', 'falseAlarm', 'accuracy'],
+      reference: 'male',
+      groups: [
+        {
+          value: 'male',
+          rows: 107,
+          rates: {
+            selection: { value: 0.07, lo: 0.03, hi: 0.13, cases: 107 },
+            recall: { value: 0.17, lo: 0.06, hi: 0.39, cases: 18 },
+            falseAlarm: { value: 0.04, lo: 0.02, hi: 0.11, cases: 89 },
+            accuracy: { value: 0.82, lo: 0.74, hi: 0.88, cases: 107 },
+          },
+        },
+        {
+          value: 'female',
+          rows: 71,
+          rates: {
+            selection: { value: 0.8, lo: 0.7, hi: 0.88, cases: 71 },
+            recall: { value: 0.9, lo: 0.79, hi: 0.96, cases: 50 },
+            falseAlarm: null,
+            accuracy: { value: 0.75, lo: 0.64, hi: 0.83, cases: 71 },
+          },
+        },
+      ],
+      gaps: [
+        { rate: 'selection', group: 'female', delta: 0.73, lo: 0.61, hi: 0.82, real: true },
+        { rate: 'accuracy', group: 'female', delta: -0.07, lo: -0.2, hi: 0.05, real: false },
+      ],
+      small: [],
+      beyondCap: 0,
+      missingRows: 0,
+    };
+    const built = card({ ...titanic, artifacts: { ...titanic.artifacts, groupAudit } });
+    expect(built.sections.map((entry) => entry.id)).toContain('groups');
+    const groups = text(built, 'groups');
+    expect(groups).toContain('the model of this card');
+    expect(groups).toContain('Audited on « sex », a column the model uses');
+    expect(groups).toContain('female (71 test rows)');
+    expect(groups).toContain('false alarms: fewer than 10 cases, not computed');
+    expect(groups).toContain('« female » is +73 points against « male »');
+    expect(groups).toContain('1 other gap(s) are inside the noise');
+    expect(text(built, 'notAssessed')).not.toContain('group audit');
+    // And a card with no audit has no such section.
+    expect(card(titanic).sections.map((entry) => entry.id)).not.toContain('groups');
   });
 
   it('moves an analysis out of the list once the run carries it', () => {

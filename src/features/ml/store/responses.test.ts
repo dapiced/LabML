@@ -46,6 +46,11 @@ const CASES: [string, WorkerResponse, Partial<LabState>][] = [
   ['tune-cancelled', { kind: 'tune-cancelled' }, { tuneStatus: 'idle', tuneProgress: null }],
   ['conformal-result', { kind: 'conformal-result', payload }, { conformalAnalysis: payload }],
   [
+    'group-audit-result',
+    { kind: 'group-audit-result', payload },
+    { groupAudit: payload, groupAuditPending: false },
+  ],
+  [
     'curve-progress',
     { kind: 'curve-progress', done: 1, total: 5 },
     { curveProgress: { done: 1, total: 5 } },
