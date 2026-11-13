@@ -65,9 +65,27 @@ other rounds that asked this row exactly the same.
 It also shows the error on the **validation rows** as the rounds add up. On the
 demos the lowest validation error came well before the last round on 17 runs out
 of 30, and on the energy demo the boosting never beat its starting point on
-three splits out of five. The lab shows this and sets nothing: it always runs
-its rounds to the end, and the curve is read on validation, never on the test
-set.
+three splits out of five.
+
+That looks like a reason to stop earlier, so it was measured (V67), on a quarter
+of the rows kept away from everything, ten splits per demo. Stopping at the
+lowest point of the curve, against the 120 rounds the lab runs:
+
+| Demo    | Accuracy or RMSE on the rows kept away | Log loss                  |
+| ------- | -------------------------------------- | ------------------------- |
+| titanic | +0.4 point (better 5, worse 4)         | better on 10 splits of 10 |
+| fraud   | no change                              | slightly worse            |
+| iris    | no change                              | slightly worse            |
+| reviews | **4 points lower** (worse 6, better 2) | better on 10 splits of 10 |
+| mpg     | no change                              | no change                 |
+| energy  | RMSE 3.5 % lower (better 9, worse 1)   | the same measure          |
+
+Fewer rounds give better probabilities, not better predictions: the classes
+predicted are no more accurate, and on reviews they are less. The one gain is on
+energy, where the boosting does no better than the mean and is never the family
+the validation rows choose. So the lab keeps its 120 rounds. The curve says
+where the error turned; it does not say that fewer rounds would predict better.
+It is read on validation, never on the test set.
 
 ## Ties in a k-NN
 

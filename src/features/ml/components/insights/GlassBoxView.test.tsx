@@ -224,7 +224,7 @@ describe('GlassBoxView', () => {
       'On the 143 validation rows, the log loss was lowest at round 22 (0.433) and is 0.449 after round 120',
     );
     expect(screen.getByTestId('glass-validation')).toHaveTextContent(
-      'never on the test set, and it sets nothing',
+      'never on the test set, and it sets nothing: the lab runs its rounds to the end, and that was measured',
     );
     expect(screen.getAllByRole('img')).toHaveLength(2);
   });

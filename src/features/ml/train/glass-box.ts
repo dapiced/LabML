@@ -32,7 +32,8 @@
  *   - the boosting's validation error was lowest well before its last round
  *     (more than 2 % under the final error) on 17 runs of 30, and on energy it
  *     never beat its starting point on three seeds of five. The replay shows
- *     it and sets nothing: stopping early is a training decision (F9).
+ *     it and sets nothing. V67 measured the obvious fix, stopping at that
+ *     round, and found it does not predict better: see `gbdt.ts`.
  *
  * Pure and deterministic.
  */

@@ -71,9 +71,29 @@ ligne.
 Il montre aussi l'erreur sur les **lignes de validation** à mesure que les tours
 s'ajoutent. Sur les démos, l'erreur de validation la plus basse arrivait bien
 avant le dernier tour sur 17 runs sur 30, et sur la démo energy le boosting n'a
-jamais battu son point de départ sur trois découpes sur cinq. Le labo le montre
-et ne règle rien : il fait toujours ses tours jusqu'au bout, et la courbe se lit
-sur la validation, jamais sur le jeu de test.
+jamais battu son point de départ sur trois découpes sur cinq.
+
+Cela ressemble à une raison de s'arrêter plus tôt, et cela a donc été mesuré
+(V67), sur un quart des lignes tenu à l'écart de tout, dix découpes par démo.
+S'arrêter au point le plus bas de la courbe, face aux 120 tours que fait le
+labo :
+
+| Démo    | Exactitude ou RMSE sur les lignes tenues à l'écart | Log loss                         |
+| ------- | -------------------------------------------------- | -------------------------------- |
+| titanic | +0,4 point (mieux 5 fois, pire 4)                  | meilleure sur 10 découpes sur 10 |
+| fraud   | aucun changement                                   | un peu moins bonne               |
+| iris    | aucun changement                                   | un peu moins bonne               |
+| reviews | **4 points de moins** (pire 6 fois, mieux 2)       | meilleure sur 10 découpes sur 10 |
+| mpg     | aucun changement                                   | aucun changement                 |
+| energy  | RMSE 3,5 % plus basse (mieux 9 fois, pire 1)       | la même mesure                   |
+
+Moins de tours donnent de meilleures probabilités, pas de meilleures
+prédictions : les classes prédites ne sont pas plus justes, et sur reviews elles
+le sont moins. Le seul gain est sur energy, où le boosting ne fait pas mieux que
+la moyenne et n'est jamais la famille que les lignes de validation choisissent.
+Le labo garde donc ses 120 tours. La courbe dit où l'erreur a tourné ; elle ne
+dit pas que moins de tours prédiraient mieux. Elle se lit sur la validation,
+jamais sur le jeu de test.
 
 ## Les ex æquo d'un k-NN
 
