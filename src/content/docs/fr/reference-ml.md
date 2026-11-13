@@ -192,6 +192,34 @@ des variables**, où des effets de proxy peuvent se cacher. Les tranches de
 moins de 8 lignes sont exclues. Un écart est une piste à examiner, pas un
 verdict.
 
+## La fiche de modèle
+
+Le rapport de run est un compte rendu technique pour celui qui a entraîné le
+modèle. La **fiche de modèle** s'adresse à celui qui doit décider de s'en servir
+ou de l'approuver : à quoi le modèle sert, sur quoi il a été construit, ce qu'il
+vaut, où il échoue, et ce qui n'a jamais été vérifié. Elle se télécharge en HTML
+ou en Markdown, depuis le run à l'écran comme depuis un run enregistré ou
+partagé.
+
+Deux règles la gouvernent :
+
+- **Rien n'est inventé.** L'usage prévu, ce pour quoi le modèle ne doit pas
+  servir et qui en répond sont saisis par vous. Laissés vides, la fiche écrit
+  « non renseigné » et annonce en tête qu'elle est incomplète. Elle ne devine
+  pas un usage.
+- **Ce qui n'a pas été évalué est listé.** Une analyse que personne n'a lancée
+  (le classement robuste, les segments, les ensembles de prédiction…) apparaît
+  sous « Non évalué » au lieu de disparaître. La performance par groupe protégé
+  y figure toujours : LabML n'a pas d'audit de ce type.
+
+Les analyses rattachées à un run décrivent le modèle qui était inspecté quand
+elles ont été calculées, qui n'est pas toujours le gagnant. Chaque section
+nomme son modèle et le dit quand ce n'est pas celui de la fiche.
+
+La fiche ne contient que des chiffres, jamais une ligne des données. Ce que
+vous saisissez est conservé avec le run dans votre navigateur et voyage dans son
+lien de partage.
+
 ## Exporter, importer, scorer
 
 Le modèle s'exporte en JSON avec son manifeste : famille, pipeline, versions.

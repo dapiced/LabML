@@ -8,6 +8,7 @@ import { ThresholdPanel } from '@/features/ml/components/ThresholdPanel';
 import { MulticlassDecisionPanel } from '@/features/ml/components/MulticlassDecisionPanel';
 import { UncertaintyPanel } from '@/features/ml/components/UncertaintyPanel';
 import { ConformalPanel } from '@/features/ml/components/ConformalPanel';
+import { ModelCardPanel } from '@/features/ml/components/ModelCardPanel';
 import { LearningCurvePanel } from '@/features/ml/components/LearningCurvePanel';
 import { TuningPanel } from '@/features/ml/components/TuningPanel';
 import { InsightsSection } from '@/features/ml/components/insights/InsightsSection';
@@ -159,6 +160,8 @@ export function TrainPanel() {
       <SegmentsPanel />
 
       <BatchScorePanel />
+
+      <ModelCardPanel />
 
       {trainStatus === 'done' && (
         <p className="text-xs text-muted">{t('ml.lab.reproducibleNote')}</p>

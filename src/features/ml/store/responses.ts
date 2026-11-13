@@ -138,6 +138,10 @@ export function createResponseHandlers({
               if (current.artifacts) {
                 void db.runs.update(id, { artifacts: current.artifacts });
               }
+              // V58: the same for a card field typed before the id came back.
+              if (current.card) {
+                void db.runs.update(id, { card: current.card });
+              }
             }
           }),
         );

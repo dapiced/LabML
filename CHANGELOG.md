@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V58 — A model card that lists what was never assessed
+
+Listed as F3 below until it shipped.
+
+_Why:_ Approved 12/11/2026. V55 and V57 had given the card something to quote; the inventory decided what it may not claim. Governance asks for this page before it asks for a better score.
+
 ## V57.1 — A coverage above the target is a promise kept
 
 Found while taking the README screenshot, the day V57 shipped.

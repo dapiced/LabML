@@ -35,12 +35,13 @@ silence.
 
 ## What can come out
 
-| Format  | Contents                                                            |
-| ------- | ------------------------------------------------------------------- |
-| CSV     | cleaned dataset, batch predictions, SQL result                      |
-| Parquet | SQL result, through `COPY … TO`                                     |
-| JSON    | trained model with its manifest; cleaning recipe; reference profile |
-| HTML    | run report, self-contained and readable offline                     |
+| Format         | Contents                                                                         |
+| -------------- | -------------------------------------------------------------------------------- |
+| CSV            | cleaned dataset, batch predictions, SQL result                                   |
+| Parquet        | SQL result, through `COPY … TO`                                                  |
+| JSON           | trained model with its manifest; cleaning recipe; reference profile              |
+| HTML           | run report, self-contained and readable offline                                  |
+| HTML, Markdown | model card of a run: what it is for, built on, worth, and what was never checked |
 
 ## The model manifest
 

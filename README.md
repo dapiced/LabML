@@ -87,6 +87,7 @@ The project follows three non-negotiable principles:
 | MLOps loop      | Score a **new batch** with honest test-vs-batch metrics; **compare two runs** side by side with cross-run uncertainty verdicts, or **up to six at once** read against the oldest of the selection; **export a model as JSON and re-import it later** — the exact predictor is rebuilt (byte-identical predictions) and scores any CSV without retraining                                                                                                                                                                                                                                                                                                                                                                                    |
 | Speed           | Heavy families train on **helper cores** (announced on the leaderboard, split by measured cost, never silent), and a model crosses back as JSON so it is rebuilt through the same path an imported model uses. Measured on a 60 000-row run: **74 s → 9.5 s**, with every leaderboard number identical. Every best-effort step that gives up is recorded in a **run journal** shown with the leaderboard and in the report: which step, which family, how many times, and the error it met                                                                                                                                                                                                                                                  |
 | Persistence     | Local run history with attached artifacts, opted-in dataset storage (compressed, explicit 50 MB budget), self-contained HTML reports, data-free share links (a damaged link is refused, never half-rendered)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| Model card      | A page for whoever must **decide to use** the model, in HTML or Markdown: intended use, data, performance with its interval, the selection gap, prediction-set coverage, the decision rule, where it fails, the run journal, and limits. The intended use is typed by the user; left empty the card says « not stated » and calls itself incomplete rather than guessing. Every analysis the run does not carry is listed under « Not assessed », and each section names the model it describes when that is not the winner                                                                                                                                                                                                                 |
 
 **What the run gives you, past the ranking:**
 
@@ -271,7 +272,7 @@ Wikimedia Commons), the portrait is NASA, public domain._
   a doc page carries its whole article, in English until the app mounts); Lighthouse
   mobile ≈ 0.99 on `/ml` under real throttling. Heavy dependencies (Dexie, SheetJS, ONNX
   Runtime) load lazily.
-- **Quality bar.** 1014 unit tests and 124 Playwright end-to-end tests across five
+- **Quality bar.** 1047 unit tests and 125 Playwright end-to-end tests across five
   projects — desktop, a phone viewport in English and in French, dark mode, and
   Cloudflare Pages' own routing emulated by `wrangler pages dev` (a real 404, the security
   headers as served) — covering offline PWA, a fake webcam, a horizontal-overflow guard on
@@ -381,10 +382,9 @@ typescript-eslint to support it).
 Cap 8 takes the lab from an honest score to a model one can defend and watch. Delivered so
 far: the decision threshold suggested where it is not graded (V53), one ingestion and one
 memory budget for every section (V54), a run journal for the fallbacks that used to be
-silent (V55), CI and supply-chain guards (V56), and prediction sets with a measured
-coverage (V57). Proposed, each with its
-launch condition and none scheduled: a test-set ledger, a
-model card, a production check, a data contract, a per-group audit, counterfactuals, and a
+silent (V55), CI and supply-chain guards (V56), prediction sets with a measured
+coverage (V57), and a model card that lists what was never assessed (V58). Proposed, each
+with its launch condition and none scheduled: a test-set ledger, a production check, a data contract, a per-group audit, counterfactuals, and a
 step-by-step view of the hand-written models. The consented generative chat (V12) stays
 postponed by product decision. No wave starts without an explicit launch command. The full plan, delivery log and design decisions live in
 [PLAN.md](PLAN.md); [CHANGELOG.md](CHANGELOG.md) is extracted from it — one entry per
