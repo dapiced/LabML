@@ -15,10 +15,12 @@
  */
 import { isMissing, inferColumnType } from '@/features/ml/data/infer';
 import {
+  gradeAgainstNoise,
   psi,
   severityOf,
   type ColumnDrift,
   type DriftSeverity,
+  type MeasuredDrift,
 } from '@/features/data/quality/drift';
 import type { Cell } from '@/features/ml/data/types';
 import { missingRatio, numbersOf, sharesOverEdges } from '@/features/data/quality/distribution';
@@ -144,6 +146,8 @@ export interface ProfileComparison {
   missingColumns: string[];
   /** Columns the new file has that the profile does not describe. */
   newColumns: string[];
+  /** V62: each column's shares and counts on both sides, for a caller's own ceilings. */
+  measured: MeasuredDrift[];
   worst: DriftSeverity;
 }
 
@@ -151,15 +155,20 @@ export interface ProfileComparison {
  * Scores a new file against a stored profile. Every number is computed the way
  * V11 computes it, so a profile comparison and a live two-file comparison give
  * the same PSI for the same pair of datasets.
+ *
+ * V62: severities are graded against each column's noise ceiling, like the
+ * live comparison. `grade: 'raw'` keeps the conventional reading of the bare
+ * PSI, for a caller that reads its own ceilings (the production check).
  */
 export function compareToProfile(
   profile: DataProfile,
   header: readonly string[],
   columns: Cell[][],
+  options: { grade?: 'noise' | 'raw' } = {},
 ): ProfileComparison {
   const index = new Map(header.map((name, i) => [name, i]));
   const described = new Set(profile.columns.map((entry) => entry.column));
-  const drifts: ColumnDrift[] = [];
+  const measured: MeasuredDrift[] = [];
   const missingColumns: string[] = [];
 
   for (const entry of profile.columns) {
@@ -171,17 +180,23 @@ export function compareToProfile(
     const values = columns[at] ?? [];
     if (entry.kind === 'numeric') {
       const numbers = numbersOf(values);
-      const value =
-        numbers.length === 0 ? 0 : psi(entry.shares, sharesOverEdges(entry.edges, numbers));
-      drifts.push({
-        column: entry.column,
-        kind: 'numeric',
-        psi: value,
-        severity: severityOf(value),
-        refMissingRatio: entry.missingRatio,
-        newMissingRatio: missingRatio(values),
-        refMean: entry.mean,
-        newMean: numbers.length > 0 ? numbers.reduce((a, v) => a + v, 0) / numbers.length : 0,
+      const numericShares = sharesOverEdges(entry.edges, numbers);
+      const value = numbers.length === 0 ? 0 : psi(entry.shares, numericShares);
+      measured.push({
+        drift: {
+          column: entry.column,
+          kind: 'numeric',
+          psi: value,
+          severity: severityOf(value),
+          refMissingRatio: entry.missingRatio,
+          newMissingRatio: missingRatio(values),
+          refMean: entry.mean,
+          newMean: numbers.length > 0 ? numbers.reduce((a, v) => a + v, 0) / numbers.length : 0,
+        },
+        shares: entry.shares,
+        newShares: numericShares,
+        refCount: Math.round(profile.rowCount * (1 - entry.missingRatio)),
+        newCount: numbers.length,
       });
       continue;
     }
@@ -204,15 +219,23 @@ export function compareToProfile(
     const referenceShares = order.map((name) => entry.shares[name] ?? 0);
     const newShares = order.map((name) => (total > 0 ? (counts.get(name) ?? 0) / total : 0));
     const value = total === 0 ? 0 : psi(referenceShares, newShares);
-    drifts.push({
-      column: entry.column,
-      kind: 'categorical',
-      psi: value,
-      severity: severityOf(value),
-      refMissingRatio: entry.missingRatio,
-      newMissingRatio: missingRatio(values),
+    measured.push({
+      drift: {
+        column: entry.column,
+        kind: 'categorical',
+        psi: value,
+        severity: severityOf(value),
+        refMissingRatio: entry.missingRatio,
+        newMissingRatio: missingRatio(values),
+      },
+      shares: referenceShares,
+      newShares,
+      refCount: Math.round(profile.rowCount * (1 - entry.missingRatio)),
+      newCount: total,
     });
   }
+  const drifts: ColumnDrift[] =
+    options.grade === 'raw' ? measured.map((item) => item.drift) : gradeAgainstNoise(measured);
 
   const newColumns = header.filter((name) => !described.has(name));
   drifts.sort((a, b) => b.psi - a.psi || a.column.localeCompare(b.column));
@@ -224,7 +247,7 @@ export function compareToProfile(
     : drifts.some((d) => d.severity === 'moderate')
       ? 'moderate'
       : 'stable';
-  return { columns: drifts, missingColumns, newColumns, worst };
+  return { columns: drifts, missingColumns, newColumns, worst, measured };
 }
 
 /**

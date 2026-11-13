@@ -1168,9 +1168,13 @@
       "severity": {
         "stable": "stable",
         "moderate": "dérive modérée",
-        "strong": "dérive forte"
+        "strong": "dérive forte",
+        "noise": "dans le bruit"
       },
-      "note": "Le PSI (Population Stability Index) mesure le déplacement de la distribution d’une colonne, sur des intervalles construits depuis la référence. Lecture conventionnelle : < 0,1 stable, 0,1–0,25 modéré, > 0,25 fort — un modèle entraîné sur la référence mérite d’être réexaminé."
+      "ceiling": "plafond de bruit {{ceiling}}",
+      "noiseCount_one": "{{count}} colonne a un PSI de 0,1 ou plus que la taille des deux fichiers explique : elle n’est pas comptée comme une dérive.",
+      "noiseCount_other": "{{count}} colonnes ont un PSI de 0,1 ou plus que la taille des deux fichiers explique : elles ne sont pas comptées comme des dérives.",
+      "note": "Le PSI (Population Stability Index) mesure le déplacement de la distribution d’une colonne, sur des intervalles construits depuis la référence. La lecture habituelle (sous 0,1 stable, de 0,1 à 0,25 modéré, au-delà de 0,25 fort) ne s’applique qu’à un PSI qui dépasse son plafond de bruit : la valeur sous laquelle il reste, 95 rapports sur 100, quand les deux fichiers sont deux tirages des mêmes données à ces tailles. Sans ce plafond, un petit fichier se lit comme une dérive : deux moitiés d’un même fichier de 120 lignes « dérivaient » dans tous les rapports."
     },
     "privacy": {
       "title": "Rien ne quitte votre navigateur",

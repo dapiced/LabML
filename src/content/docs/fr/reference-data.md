@@ -82,6 +82,28 @@ catégories apparues ou disparues, sévérités. Un **profil de référence
 rejouable** stocke bins et parts — jamais de lignes —, ce qui le rend sûr à
 committer à côté du code.
 
+Une sévérité n'est donnée qu'à un PSI qui **dépasse son plafond de bruit**.
+Deux échantillons des mêmes données ne tombent jamais dans les mêmes tranches :
+sur B tranches, leur PSI vaut en moyenne environ (B − 1) × (1/n + 1/n_réf), soit
+0,11 pour dix tranches et 100 lignes contre 500. La lecture habituelle (sous 0,1
+stable, de 0,1 à 0,25 modéré, au-delà de 0,25 fort) prend donc un petit fichier
+pour une dérive.
+
+| PSI           | Sous son plafond | Au-dessus de son plafond |
+| ------------- | ---------------- | ------------------------ |
+| sous 0,1      | stable           | stable                   |
+| de 0,1 à 0,25 | dans le bruit    | dérive modérée           |
+| 0,25 et plus  | dans le bruit    | dérive forte             |
+
+Le plafond est la valeur sous laquelle un PSI reste, 95 rapports sur 100, quand
+les deux fichiers sont deux tirages des mêmes données à leurs tailles réelles.
+Il est simulé avec une graine fixe, à partir des deux fichiers mis en commun, et
+affiché à côté du PSI. Mesuré sur deux moitiés d'un même fichier, où toute
+alerte est fausse : les seuils fixes signalaient 95 à 100 % des rapports sur des
+fichiers de 120 et 400 lignes, et encore 21 à 52 % à 640 et 890 lignes ; le
+plafond en signale 0,5 à 9,5 %. Rien ne change pour un gros fichier, dont le
+plafond est bas.
+
 ## Anomalies
 
 Isolation forest écrite à la main et seedée : 100 arbres, sous-échantillon 256,

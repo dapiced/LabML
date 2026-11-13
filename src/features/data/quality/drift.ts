@@ -3,17 +3,25 @@
  * checking that a fresh batch still looks like what a model was trained on.
  * Schema diff, Population Stability Index per shared column (bins built from
  * the reference), new/vanished categories, missing-rate shifts. Pure and
- * deterministic; the conventional PSI thresholds 0.1 / 0.25 grade severity.
+ * deterministic.
+ *
+ * V62: the conventional PSI thresholds 0.1 / 0.25 still grade severity, but
+ * only for a PSI that is above its noise ceiling (see `noise.ts`). Before,
+ * two halves of one small file were reported as drifted: the thresholds read
+ * the sample size, not the data.
  */
 import { inferColumnType, isMissing } from '@/features/ml/data/infer';
 import { quantileSorted } from '@/features/data/quality/checks';
 import { missingRatio, numbersOf, sharesOverEdges } from '@/features/data/quality/distribution';
+import { noiseCeiling, pooledShares, psi } from '@/features/data/quality/noise';
 import type { Cell, ColumnType } from '@/features/ml/data/types';
+
+export { psi };
 
 const NUMERIC_BINS = 10;
 const TOP_CATEGORIES = 10;
-/** Laplace-style smoothing so an empty bin never yields an infinite PSI. */
-const EPSILON = 1e-4;
+const MODERATE_PSI = 0.1;
+const STRONG_PSI = 0.25;
 
 export type DriftSeverity = 'stable' | 'moderate' | 'strong';
 
@@ -30,6 +38,13 @@ export interface ColumnDrift {
   /** Categorical columns only, capped for display. */
   newCategories?: string[];
   goneCategories?: string[];
+  /**
+   * V62: what this PSI stays under when nothing moved, at these two sizes.
+   * Computed only from a PSI of 0.1: under it the column is stable either way.
+   */
+  ceiling?: number;
+  /** V62: a PSI of 0.1 or more that its ceiling explains. Stable, and said so. */
+  noise?: true;
 }
 
 export interface DriftReport {
@@ -46,24 +61,60 @@ export interface DriftReport {
   severity: DriftSeverity;
 }
 
+/** The conventional reading of a raw PSI, with no regard for sample size. */
 export function severityOf(psi: number): DriftSeverity {
-  if (psi < 0.1) return 'stable';
-  if (psi < 0.25) return 'moderate';
+  if (psi < MODERATE_PSI) return 'stable';
+  if (psi < STRONG_PSI) return 'moderate';
   return 'strong';
 }
 
-/** PSI between two discrete distributions given as aligned probability arrays. */
-export function psi(reference: number[], current: number[]): number {
-  let total = 0;
-  for (let i = 0; i < reference.length; i++) {
-    const p = Math.max(reference[i], EPSILON);
-    const q = Math.max(current[i] ?? 0, EPSILON);
-    total += (q - p) * Math.log(q / p);
-  }
-  return total;
+/** V62: the conventional reading, for a PSI that its noise ceiling does not explain. */
+export function gradeDrift(value: number, ceiling: number): DriftSeverity {
+  return value <= ceiling ? 'stable' : severityOf(value);
 }
 
-function numericDrift(column: string, ref: Cell[], next: Cell[]): ColumnDrift {
+/** Chance, when nothing moved at all, that one report flags at least one column. */
+export const DRIFT_FALSE_ALERT_RATE = 0.05;
+
+/** A column's drift before its noise is known, with what the ceiling needs. */
+export interface MeasuredDrift {
+  drift: ColumnDrift;
+  /** Reference shares over the bins the PSI was computed on. */
+  shares: number[];
+  /** The new file's shares over the same bins. */
+  newShares: number[];
+  /** Non-missing values on each side. */
+  refCount: number;
+  newCount: number;
+}
+
+/**
+ * V62: grades every column of one report against its own noise ceiling. The
+ * level is shared between the columns (Bonferroni): one false alert in twenty
+ * per REPORT, however wide the file. The ceiling is simulated only where it
+ * can change the answer, from a PSI of 0.1.
+ */
+export function gradeAgainstNoise(measured: readonly MeasuredDrift[]): ColumnDrift[] {
+  const level = 1 - DRIFT_FALSE_ALERT_RATE / Math.max(1, measured.length);
+  return measured.map(({ drift, shares, newShares, refCount, newCount }) => {
+    if (drift.psi < MODERATE_PSI) return { ...drift, severity: 'stable' as const };
+    const ceiling = noiseCeiling(
+      pooledShares(shares, refCount, newShares, newCount),
+      refCount,
+      newCount,
+      level,
+    );
+    const severity = gradeDrift(drift.psi, ceiling);
+    return {
+      ...drift,
+      severity,
+      ceiling,
+      ...(severity === 'stable' && { noise: true as const }),
+    };
+  });
+}
+
+function numericDrift(column: string, ref: Cell[], next: Cell[]): MeasuredDrift {
   const refNumbers = numbersOf(ref).sort((a, b) => a - b);
   const newNumbers = numbersOf(next);
   const edges: number[] = [];
@@ -71,21 +122,26 @@ function numericDrift(column: string, ref: Cell[], next: Cell[]): ColumnDrift {
     const edge = quantileSorted(refNumbers, b / NUMERIC_BINS);
     if (edges.length === 0 || edge > edges[edges.length - 1]) edges.push(edge);
   }
-  const value =
-    refNumbers.length === 0 || newNumbers.length === 0
-      ? 0
-      : psi(sharesOverEdges(edges, refNumbers), sharesOverEdges(edges, newNumbers));
+  const refShares = sharesOverEdges(edges, refNumbers);
+  const newShares = sharesOverEdges(edges, newNumbers);
+  const value = refNumbers.length === 0 || newNumbers.length === 0 ? 0 : psi(refShares, newShares);
   const mean = (numbers: number[]) =>
     numbers.length > 0 ? numbers.reduce((a, v) => a + v, 0) / numbers.length : 0;
   return {
-    column,
-    kind: 'numeric',
-    psi: value,
-    severity: severityOf(value),
-    refMissingRatio: missingRatio(ref),
-    newMissingRatio: missingRatio(next),
-    refMean: mean(refNumbers),
-    newMean: mean(newNumbers),
+    drift: {
+      column,
+      kind: 'numeric',
+      psi: value,
+      severity: severityOf(value),
+      refMissingRatio: missingRatio(ref),
+      newMissingRatio: missingRatio(next),
+      refMean: mean(refNumbers),
+      newMean: mean(newNumbers),
+    },
+    shares: refShares,
+    newShares,
+    refCount: refNumbers.length,
+    newCount: newNumbers.length,
   };
 }
 
@@ -101,7 +157,7 @@ function categoryCounts(values: Cell[]): { counts: Map<string, number>; total: n
   return { counts, total };
 }
 
-function categoricalDrift(column: string, ref: Cell[], next: Cell[]): ColumnDrift {
+function categoricalDrift(column: string, ref: Cell[], next: Cell[]): MeasuredDrift {
   const refCounts = categoryCounts(ref);
   const newCounts = categoryCounts(next);
   // Buckets: the reference's top categories, plus OTHER for everything else.
@@ -120,8 +176,9 @@ function categoricalDrift(column: string, ref: Cell[], next: Cell[]): ColumnDrif
     shares.push((total - inTop) / total);
     return shares;
   };
-  const value =
-    refCounts.total === 0 || newCounts.total === 0 ? 0 : psi(share(refCounts), share(newCounts));
+  const refShares = share(refCounts);
+  const newShares = share(newCounts);
+  const value = refCounts.total === 0 || newCounts.total === 0 ? 0 : psi(refShares, newShares);
 
   const newCategories = [...newCounts.counts.keys()]
     .filter((category) => !refCounts.counts.has(category))
@@ -133,14 +190,20 @@ function categoricalDrift(column: string, ref: Cell[], next: Cell[]): ColumnDrif
     .slice(0, 6);
 
   return {
-    column,
-    kind: 'categorical',
-    psi: value,
-    severity: severityOf(value),
-    refMissingRatio: missingRatio(ref),
-    newMissingRatio: missingRatio(next),
-    newCategories,
-    goneCategories,
+    drift: {
+      column,
+      kind: 'categorical',
+      psi: value,
+      severity: severityOf(value),
+      refMissingRatio: missingRatio(ref),
+      newMissingRatio: missingRatio(next),
+      newCategories,
+      goneCategories,
+    },
+    shares: refShares,
+    newShares,
+    refCount: refCounts.total,
+    newCount: newCounts.total,
   };
 }
 
@@ -156,7 +219,7 @@ export function buildDriftReport(
   const added = newHeader.filter((name) => !refIndex.has(name));
   const removed = refHeader.filter((name) => !newIndex.has(name));
   const typeChanged: DriftReport['schema']['typeChanged'] = [];
-  const columns: ColumnDrift[] = [];
+  const measured: MeasuredDrift[] = [];
 
   const comparable = (type: ColumnType) =>
     type === 'numeric' || type === 'categorical' || type === 'boolean';
@@ -176,12 +239,13 @@ export function buildDriftReport(
     // above already flags those.
     if (!comparable(refType) || !comparable(newType)) continue;
     if (refType === 'numeric' && newType === 'numeric') {
-      columns.push(numericDrift(name, ref, next));
+      measured.push(numericDrift(name, ref, next));
     } else if (refType !== 'numeric' && newType !== 'numeric') {
-      columns.push(categoricalDrift(name, ref, next));
+      measured.push(categoricalDrift(name, ref, next));
     }
   }
 
+  const columns = gradeAgainstNoise(measured);
   columns.sort((a, b) => b.psi - a.psi || a.column.localeCompare(b.column));
   const driftedColumns = columns.filter((c) => c.severity !== 'stable').length;
   const worst = columns.reduce<DriftSeverity>((acc, c) => {

@@ -79,6 +79,25 @@ Two files compared: schema, per-column PSI over quantile bins, categories
 appeared or gone, severities. A **replayable reference profile** stores bins and
 shares — never rows — which is what makes it safe to commit beside the code.
 
+A severity is given only to a PSI that is **above its noise ceiling**. Two
+samples of the same data never fall into the same bins: over B bins their PSI
+averages about (B − 1) × (1/n + 1/n_ref), 0.11 for ten bins and 100 rows against 500. The usual reading (under 0.1 stable, 0.1 to 0.25 moderate, above 0.25
+strong) therefore calls a small file a drift.
+
+| PSI            | Under its ceiling | Above its ceiling |
+| -------------- | ----------------- | ----------------- |
+| under 0.1      | stable            | stable            |
+| 0.1 to 0.25    | inside the noise  | moderate drift    |
+| 0.25 and above | inside the noise  | strong drift      |
+
+The ceiling is the value a PSI stays under, 95 reports in 100, when the two
+files are two draws of the same data at their real sizes. It is simulated with a
+fixed seed, from the two files put together, and shown beside the PSI. Measured
+on two halves of one file, where every alert is false: the fixed thresholds
+flagged 95 to 100 % of reports on files of 120 and 400 rows, and still 21 to
+52 % at 640 and 890 rows; the ceiling flags 0.5 to 9.5 %. Nothing changes for a
+large file, whose ceiling is low.
+
 ## Anomalies
 
 Hand-written, seeded isolation forest: 100 trees, subsample 256, exact c(n).

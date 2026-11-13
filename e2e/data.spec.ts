@@ -97,6 +97,12 @@ test('drift check compares a new batch against the loaded reference', async ({ p
   const priceRow = result.locator('tr', { hasText: 'unit_price' });
   await expect(priceRow).toContainText('strong drift');
   await expect(priceRow).toContainText('mean');
+  // V62: a grade is given only above the column's noise ceiling, shown beside the PSI.
+  await expect(priceRow).toContainText('noise ceiling');
+  // A column that did not move is stable, and no ceiling was simulated for it.
+  const currencyRow = result.locator('tr', { hasText: 'currency' });
+  await expect(currencyRow).toContainText('stable');
+  await expect(currencyRow).not.toContainText('noise ceiling');
 
   // The new product shows up as a new category.
   const productRow = result.locator('tr', { hasText: 'product' });
