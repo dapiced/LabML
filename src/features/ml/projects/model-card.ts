@@ -25,6 +25,7 @@
  * of it, the user's words and the column names alike. A share link is input
  * from a stranger.
  */
+import { groupAuditLines } from '@/features/ml/train/group-audit';
 import type { RunRecord } from '@/features/ml/projects/types';
 import { conformalLines } from '@/features/ml/train/conformal-analysis';
 import { noteText } from '@/features/ml/train/journal';
@@ -393,6 +394,18 @@ export function buildModelCard(
     sections.push({ id: 'failures', title: t('ml.lab.card.failuresTitle'), lines: failures });
   }
 
+  // 7b. Performance by group (V59), when the user ran an audit.
+  if (artifacts.groupAudit) {
+    sections.push({
+      id: 'groups',
+      title: t('ml.lab.card.groupTitle'),
+      lines: [
+        about(artifacts.groupAudit.model),
+        ...groupAuditLines(artifacts.groupAudit, t, lang).map((text) => ({ text })),
+      ],
+    });
+  }
+
   // 8. Run journal (V55)
   const notes = [
     ...(Array.isArray(summary.notes) ? summary.notes : []),
@@ -416,9 +429,10 @@ export function buildModelCard(
   }
   if (!artifacts.learningCurve) missing.push('learningCurve');
   if (!artifacts.tuning) missing.push('tuning');
-  // Always true today: LabML has no audit by protected group, and a card that
-  // stayed silent about it would read as « checked, nothing found ».
-  missing.push('fairness');
+  // V59: the audit exists now, and waits for the user to name a column. A
+  // card that stayed silent about one never run would read as « checked,
+  // nothing found ».
+  if (!artifacts.groupAudit) missing.push('fairness');
   sections.push({
     id: 'notAssessed',
     title: t('ml.lab.card.notAssessedTitle'),

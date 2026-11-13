@@ -192,6 +192,45 @@ des variables**, où des effets de proxy peuvent se cacher. Les tranches de
 moins de 8 lignes sont exclues. Un écart est une piste à examiner, pas un
 verdict.
 
+## Le modèle traite-t-il les groupes différemment ?
+
+L'analyse par segments regarde toutes les colonnes et cherche où le modèle est
+le plus faible. L'**audit par groupe** pose une autre question, sur **une
+colonne que vous désignez** : un modèle peut être exact à 80 % partout et dire
+pourtant « oui » à la plupart d'un groupe et à peu d'un autre, ou rater plus de
+cas réels chez l'un.
+
+Pour une cible binaire, chaque groupe reçoit trois taux, chacun avec un
+intervalle :
+
+- **a dit « oui »** : la part prédite positive (l'écart entre groupes est la
+  parité démographique) ;
+- **cas réels retrouvés** : la part des vrais positifs retrouvés (égalité des
+  chances) ;
+- **fausses alertes** : la part des vrais négatifs signalés.
+
+Chaque écart est lu par rapport au groupe le plus nombreux et porte son propre
+intervalle. Quand l'intervalle contient zéro, l'écart est dans le bruit. Ce
+n'est **pas** une preuve de traitement égal : avec peu de lignes, seul un écart
+important se verrait, et le panneau le dit. Une cible multiclasse reçoit la
+part de réponses correctes par groupe ; une régression, l'erreur moyenne,
+signée et absolue.
+
+Trois règles, écrites dans le panneau :
+
+- **le laboratoire ne décide pas quelle colonne est sensible** : vous la
+  désignez, et rien ne tourne avant. Une colonne écartée des variables peut être
+  auditée aussi : un modèle peut l'atteindre par d'autres colonnes qui la
+  remplacent ;
+- **un écart est un constat, pas un verdict** : aucun seuil légal n'est
+  appliqué et rien n'est corrigé ;
+- **un groupe trop petit n'est pas comparé** : sous 20 lignes de test il est
+  listé avec son effectif, et un taux reposant sur moins de 10 cas n'est pas
+  calculé.
+
+La décision auditée est celle que vous avez réglée : le seuil choisi dans le
+panneau de décision s'il y en a un, la réponse du modèle sinon.
+
 ## La fiche de modèle
 
 Le rapport de run est un compte rendu technique pour celui qui a entraîné le
@@ -209,8 +248,8 @@ Deux règles la gouvernent :
   pas un usage.
 - **Ce qui n'a pas été évalué est listé.** Une analyse que personne n'a lancée
   (le classement robuste, les segments, les ensembles de prédiction…) apparaît
-  sous « Non évalué » au lieu de disparaître. La performance par groupe protégé
-  y figure toujours : LabML n'a pas d'audit de ce type.
+  sous « Non évalué » au lieu de disparaître. Un audit par groupe jamais lancé
+  y figure aussi : une fiche muette se lirait comme « vérifié, rien trouvé ».
 
 Les analyses rattachées à un run décrivent le modèle qui était inspecté quand
 elles ont été calculées, qui n'est pas toujours le gagnant. Chaque section

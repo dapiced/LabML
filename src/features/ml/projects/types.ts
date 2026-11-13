@@ -1,3 +1,4 @@
+import type { GroupAuditOutcome } from '@/features/ml/train/group-audit';
 import type { TaskType } from '@/features/ml/data/types';
 import type { CardFields } from '@/features/ml/projects/model-card';
 import type { BatchScore } from '@/features/ml/train/score';
@@ -61,6 +62,8 @@ export interface RunArtifacts {
   uncertainty?: UncertaintyAnalysis;
   /** V57: prediction sets or intervals of the inspected model — figures only. */
   conformal?: ConformalOutcome;
+  /** V59: the audit of one designated column, group by group — figures only. */
+  groupAudit?: GroupAuditOutcome;
   /** v26: metric vs training size, with the plain-language verdict. */
   learningCurve?: LearningCurveOutcome;
   /** v35: 5x2 CV ranking on train+validation - mean, spread, top-pair wins. */

@@ -292,6 +292,13 @@ export function createResponseHandlers({
         attachArtifact({ conformal: message.payload });
       }
     },
+    'group-audit-result': (message) => {
+      set({ groupAudit: message.payload, groupAuditPending: false });
+      // A refusal is kept with the run too: « too few to compare » is a finding.
+      if (message.payload) {
+        attachArtifact({ groupAudit: message.payload });
+      }
+    },
     'model-json': (message) => {
       if (message.json !== null) {
         set({

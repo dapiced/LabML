@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V59 — A group audit on a column the user names
+
+Listed as F6 below until it shipped.
+
+_Why:_ Approved 13/11/2026. The model card had started saying, on every run, what the lab could not do; this is the wave that sentence asked for.
+
 ## V58 — A model card that lists what was never assessed
 
 Listed as F3 below until it shipped.

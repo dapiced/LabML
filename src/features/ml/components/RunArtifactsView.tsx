@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { groupAuditLines } from '@/features/ml/train/group-audit';
 import { conformalLines } from '@/features/ml/train/conformal-analysis';
 import { RunNotes } from '@/features/ml/components/RunNotes';
 import { CurveChart } from '@/features/ml/components/LearningCurvePanel';
@@ -48,7 +49,8 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'en';
   const { tuning, explanation, exploration, forecast, batchScore, threshold, segments } = artifacts;
-  const { uncertainty, learningCurve, robustRank, multiclassDecision, conformal } = artifacts;
+  const { uncertainty, learningCurve, robustRank, multiclassDecision, conformal, groupAudit } =
+    artifacts;
   if (
     !tuning &&
     !explanation &&
@@ -61,7 +63,8 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
     !uncertainty &&
     !learningCurve &&
     !robustRank &&
-    !conformal
+    !conformal &&
+    !groupAudit
   ) {
     return null;
   }
@@ -340,6 +343,19 @@ export function RunArtifactsView({ artifacts }: { artifacts: RunArtifacts }) {
                 {t(`ml.lab.models.${conformal.model}`)}
               </p>
               {conformalLines(conformal, t, lang ?? 'en').map((line, index) => (
+                <p key={index}>{line}</p>
+              ))}
+            </div>
+          </ArtifactCard>
+        )}
+
+        {groupAudit && (
+          <ArtifactCard title={t('ml.lab.groupAudit.title')}>
+            <div className="flex flex-col gap-1 text-xs" data-testid="artifact-group-audit">
+              <p className="font-mono text-[0.68rem] text-muted">
+                {t(`ml.lab.models.${groupAudit.model}`)}
+              </p>
+              {groupAuditLines(groupAudit, t, lang ?? 'en').map((line, index) => (
                 <p key={index}>{line}</p>
               ))}
             </div>

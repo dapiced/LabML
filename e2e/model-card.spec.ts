@@ -29,7 +29,7 @@ test('iris: the model card is incomplete until its purpose is typed, then travel
   expect(empty).toContain('This card is incomplete');
   expect(empty).toContain('**Intended use:** Not stated.');
   expect(empty).toContain('## Not assessed');
-  expect(empty).toContain('protected group: not assessed');
+  expect(empty).toContain('no group audit was run on this model');
 
   await page.getByTestId('model-card-intendedUse').fill('Teaching example for a botany class.');
   await expect(page.getByTestId('model-card-status')).toContainText('intended use stated');

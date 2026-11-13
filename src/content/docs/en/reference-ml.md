@@ -176,6 +176,39 @@ The test set is sliced by each categorical column — **including those outside
 the features**, where proxy effects can hide. Slices under 8 rows are excluded.
 A gap is a lead to investigate, not a verdict.
 
+## Does the model treat groups differently?
+
+The segment analysis looks at every column and asks where the model is weakest.
+The **group audit** asks another question, about **one column you name**: a
+model can be 80 % accurate everywhere and still say « yes » to most of one group
+and few of another, or miss more real cases in one of them.
+
+For a binary target each group gets three rates, each with an interval:
+
+- **said « yes »**: the share predicted positive (the gap between groups is
+  demographic parity);
+- **real cases found**: the share of true positives found (equal opportunity);
+- **false alarms**: the share of true negatives flagged.
+
+Every gap is read against the largest group and carries its own interval. When
+the interval contains zero, the gap is inside the noise. That is **not** proof
+of equal treatment: with few rows, only a large gap would show, and the panel
+says so. A multiclass target gets the share of correct answers per group; a
+regression gets the mean error, signed and absolute.
+
+Three rules, stated on the panel:
+
+- **the lab does not decide which column is sensitive**: you name it, and
+  nothing runs until you do. A column kept out of the features can be audited
+  too: a model can reach it through other columns that stand in for it;
+- **a gap is a finding, not a verdict**: no legal threshold is applied and
+  nothing is corrected;
+- **a group too small is not compared**: under 20 test rows it is listed with
+  its size, and a rate resting on fewer than 10 cases is not computed.
+
+The decision audited is the one you set: the threshold chosen in the decision
+panel when there is one, the model's own answer otherwise.
+
 ## The model card
 
 The run report is a technical account for whoever trained the model. The
@@ -191,8 +224,8 @@ Two rules shape it:
   stated » and says on top that it is incomplete. It does not guess a purpose.
 - **What was not assessed is listed.** An analysis nobody ran (the robust
   ranking, the segments, the prediction sets…) appears under « Not assessed »
-  instead of disappearing. Performance by protected group is always there:
-  LabML has no such audit.
+  instead of disappearing. A group audit that was never run is listed there
+  too: a silent card would read as « checked, nothing found ».
 
 The analyses attached to a run describe the model that was inspected when they
 were computed, which is not always the winner. Each section names its model and

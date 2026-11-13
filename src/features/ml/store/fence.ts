@@ -34,6 +34,7 @@ const RUN_DERIVED = new Set<WorkerResponse['kind']>([
   'segments-result',
   'uncertainty-result',
   'conformal-result',
+  'group-audit-result',
   'model-json',
   'predictions-csv',
 ]);

@@ -1,5 +1,6 @@
 /// <reference lib="webworker" />
 import Papa from 'papaparse';
+import { auditGroups } from '@/features/ml/train/group-audit';
 import { profileColumn } from '@/features/ml/data/profile';
 import { analyzeTarget, baselineSuggestions } from '@/features/ml/data/suggest';
 import { computeInsights, computeWhatIf } from '@/features/ml/train/insights';
@@ -441,6 +442,38 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           lastFeatureColumns,
           request.model,
         ),
+      });
+    } else if (request.kind === 'group-audit') {
+      if (!artifacts || !lastTarget) throw new Error('no-run');
+      const model = artifacts.models.get(request.model);
+      if (!model) throw new Error('model-not-found');
+      // V59: the audit reads the decision the user would actually take. With
+      // a threshold set on a binary model, that is the cut, not the default.
+      const cut =
+        request.threshold !== undefined && artifacts.classes.length === 2 && model.predictProba
+          ? request.threshold
+          : undefined;
+      const predictions =
+        cut !== undefined
+          ? model.predictProba!(artifacts.testX).map((row) => ((row[1] ?? 0) >= cut ? 1 : 0))
+          : model.predict(artifacts.testX);
+      post({
+        kind: 'group-audit-result',
+        payload: auditGroups({
+          header,
+          columns,
+          testIndices: artifacts.testIndices,
+          testY: artifacts.testY,
+          predictions,
+          classes: artifacts.classes,
+          isClassification: artifacts.isClassification,
+          target: lastTarget,
+          featureColumns: lastFeatureColumns,
+          model: request.model,
+          column: request.column,
+          seed: artifacts.seed,
+          ...(cut !== undefined && { threshold: cut }),
+        }),
       });
     } else if (request.kind === 'load-model') {
       try {

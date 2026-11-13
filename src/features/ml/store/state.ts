@@ -2,6 +2,7 @@
  * V51 — the ML Lab store's shape and starting values, split out of
  * `lab-store.ts` so the store file holds the actions and nothing else.
  */
+import type { GroupAuditOutcome } from '@/features/ml/train/group-audit';
 import type { ReadFormat } from '@/features/ml/data/locale';
 import type { RunRecord } from '@/features/ml/projects/types';
 import type {
@@ -111,6 +112,11 @@ export interface LabState {
   conformalAnalysis: ConformalOutcome | null;
   /** V57: the miscoverage rate the user asked for (0.1 = a 90 % target). */
   conformalAlpha: number;
+  /** V59: the audit of the column the user designated, or the refusal. */
+  groupAudit: GroupAuditOutcome | null;
+  /** V59: the designated column; null until the user picks one. */
+  groupAuditColumn: string | null;
+  groupAuditPending: boolean;
   /** The auto-saved record of the current run (id set once stored). */
   currentRun: RunRecord | null;
   /** Local id of the stored copy of the CURRENT dataset — null if not kept. */
@@ -151,6 +157,8 @@ export interface LabState {
   setRankMetric: (metric: RankingMetric | null) => void;
   setThresholdClass: (index: number) => void;
   setConformalLevel: (alpha: number) => void;
+  /** V59: audit the inspected model on one column; null clears the audit. */
+  auditGroups: (column: string | null) => void;
   /** V58: one typed field of the model card, kept with the run. */
   setCardField: (field: CardField, value: string) => void;
   cancelCurve: () => void;
@@ -202,6 +210,9 @@ export const initialTraining = {
   uncertaintyAnalysis: null as UncertaintyAnalysis | null,
   conformalAnalysis: null as ConformalOutcome | null,
   conformalAlpha: DEFAULT_ALPHA,
+  groupAudit: null as GroupAuditOutcome | null,
+  groupAuditColumn: null as string | null,
+  groupAuditPending: false,
   currentRun: null,
   exportedFile: null,
 };

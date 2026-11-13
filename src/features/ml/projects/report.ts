@@ -1,3 +1,4 @@
+import { groupAuditLines, MAX_GROUPS } from '@/features/ml/train/group-audit';
 import { conformalLines } from '@/features/ml/train/conformal-analysis';
 import { noteText } from '@/features/ml/train/journal';
 import { METRIC_ROWS, metricDelta } from '@/features/ml/train/score-view';
@@ -227,6 +228,18 @@ function artifactSections(record: RunRecord, t: Translate, lang: string): string
       .map((line) => `<p>${esc(line)}</p>`)
       .join('\n')}
     <p class="meta">${esc(t('ml.lab.conformal.note'))}</p>`);
+  }
+
+  if (artifacts.groupAudit) {
+    // V59: the same sentences as the stored run, escaped like the rest.
+    const audit = artifacts.groupAudit;
+    sections.push(`<h2>${esc(t('ml.lab.groupAudit.title'))}: ${esc(
+      t(`ml.lab.models.${audit.model}`),
+    )}</h2>
+    ${groupAuditLines(audit, t, lang)
+      .map((line) => `<p>${esc(line)}</p>`)
+      .join('\n')}
+    <p class="meta">${esc(t('ml.lab.groupAudit.note', { max: MAX_GROUPS }))}</p>`);
   }
 
   if (artifacts.uncertainty) {

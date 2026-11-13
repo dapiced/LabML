@@ -1,6 +1,7 @@
 import { Loader2, Play, RotateCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { GroupAuditPanel } from '@/features/ml/components/GroupAuditPanel';
 import { Leaderboard } from '@/features/ml/components/Leaderboard';
 import { BatchScorePanel } from '@/features/ml/components/BatchScorePanel';
 import { SegmentsPanel } from '@/features/ml/components/SegmentsPanel';
@@ -158,6 +159,8 @@ export function TrainPanel() {
       <MulticlassDecisionPanel />
 
       <SegmentsPanel />
+
+      <GroupAuditPanel />
 
       <BatchScorePanel />
 
