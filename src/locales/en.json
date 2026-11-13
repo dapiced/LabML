@@ -1168,9 +1168,13 @@
       "severity": {
         "stable": "stable",
         "moderate": "moderate drift",
-        "strong": "strong drift"
+        "strong": "strong drift",
+        "noise": "inside the noise"
       },
-      "note": "PSI (Population Stability Index) measures how much a column’s distribution moved, over bins built from the reference. Conventional reading: < 0.1 stable, 0.1–0.25 moderate, > 0.25 strong — a model trained on the reference should be re-examined."
+      "ceiling": "noise ceiling {{ceiling}}",
+      "noiseCount_one": "{{count}} column has a PSI of 0.1 or above that the size of the two files explains: it is not counted as a drift.",
+      "noiseCount_other": "{{count}} columns have a PSI of 0.1 or above that the size of the two files explains: they are not counted as drifts.",
+      "note": "PSI (Population Stability Index) measures how much a column’s distribution moved, over bins built from the reference. The usual reading (under 0.1 stable, 0.1 to 0.25 moderate, above 0.25 strong) is applied only to a PSI above its noise ceiling: the value it stays under, 95 reports in 100, when the two files are two draws of the same data at these sizes. Without that ceiling a small file reads as a drift: two halves of one 120-row file « drifted » in every report."
     },
     "privacy": {
       "title": "Nothing leaves your browser",

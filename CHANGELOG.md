@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V62 — A noise ceiling under the Data Studio's drift report
+
+Not one of the features of the cap: a defect V61 measured and left open.
+
+_Why:_ Approved 13/11/2026. The second wave in a row whose first rule failed its own measurement before shipping; both times the bench was the only thing that could have said so.
+
 ## V61 — A production check
 
 Listed as F4 below until it shipped.

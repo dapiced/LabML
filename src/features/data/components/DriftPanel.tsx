@@ -8,18 +8,24 @@ import type { ColumnDrift, DriftSeverity } from '@/features/data/quality/drift';
 import { cn } from '@/lib/utils';
 import { ScrollRegion } from '@/components/ui/scroll-region';
 
-function SeverityBadge({ severity }: { severity: DriftSeverity }) {
+/**
+ * V62: `noise` marks a PSI of 0.1 or more that the size of the two files
+ * explains. It is stable, and the badge says why instead of saying « stable »
+ * next to a number that looks like a drift.
+ */
+function SeverityBadge({ severity, noise }: { severity: DriftSeverity; noise?: boolean }) {
   const { t } = useTranslation();
   return (
     <Badge
       variant="outline"
       className={cn(
-        severity === 'stable' && 'text-ok',
+        severity === 'stable' && !noise && 'text-ok',
+        severity === 'stable' && noise && 'text-muted',
         severity === 'moderate' && 'text-copper',
         severity === 'strong' && 'font-semibold text-copper',
       )}
     >
-      {t(`data.drift.severity.${severity}`)}
+      {t(`data.drift.severity.${noise ? 'noise' : severity}`)}
     </Badge>
   );
 }
@@ -66,6 +72,7 @@ export function DriftPanel() {
     }
     return parts;
   };
+  const noiseColumns = report ? report.columns.filter((column) => column.noise).length : 0;
   const schemaIssues = report
     ? report.schema.added.length + report.schema.removed.length + report.schema.typeChanged.length
     : 0;
@@ -173,9 +180,18 @@ export function DriftPanel() {
                     <td className="py-1.5 pr-3 font-mono">{column.column}</td>
                     <td className="py-1.5 pr-3 font-mono tabular-nums">
                       {column.psi.toLocaleString(lang, { maximumFractionDigits: 3 })}
+                      {column.ceiling !== undefined && (
+                        <span className="block text-[0.65rem] text-muted">
+                          {t('data.drift.ceiling', {
+                            ceiling: column.ceiling.toLocaleString(lang, {
+                              maximumFractionDigits: 3,
+                            }),
+                          })}
+                        </span>
+                      )}
                     </td>
                     <td className="py-1.5 pr-3">
-                      <SeverityBadge severity={column.severity} />
+                      <SeverityBadge severity={column.severity} noise={column.noise} />
                     </td>
                     <td className="py-1.5 text-muted">{detailOf(column).join(' · ')}</td>
                   </tr>
@@ -184,6 +200,11 @@ export function DriftPanel() {
             </table>
           </ScrollRegion>
 
+          {noiseColumns > 0 && (
+            <p className="text-xs text-muted" data-testid="drift-noise">
+              {t('data.drift.noiseCount', { count: noiseColumns })}
+            </p>
+          )}
           <p className="text-xs text-muted">{t('data.drift.note')}</p>
         </div>
       )}

@@ -35,7 +35,8 @@
  *    sizes. The ceiling is simulated (seeded), not approximated: the PSI's
  *    smoothing of empty bins makes it far heavier-tailed than a chi-square on
  *    small batches. On the same batches the rule raised a false drift on
- *    1.5 to 6.5 % of checks, at every size from 30 to 150 rows.
+ *    1.5 to 6.5 % of checks, at every size from 30 to 150 rows (1.5 to 6 %
+ *    since V62, which draws both sides from the two samples put together).
  *
  *    And it still sees a real move. On held-out rows filtered to one group
  *    (titanic third class, fraud at night, mpg from 1979 on) every check
@@ -51,6 +52,7 @@
  * Pure and deterministic.
  */
 import { psi } from '@/features/data/quality/drift';
+import { noiseCeiling, pooledShares } from '@/features/data/quality/noise';
 import { sharesOverEdges } from '@/features/data/quality/distribution';
 import {
   buildProfile,
@@ -59,19 +61,14 @@ import {
   type DataProfile,
 } from '@/features/data/quality/reference';
 import { wilsonInterval } from '@/features/ml/train/conformal';
-import { mulberry32 } from '@/features/ml/train/random';
 import type { Cell } from '@/features/ml/data/types';
+
+export { noiseCeiling };
 
 export const REFERENCE_VERSION = 1;
 
 /** Chance, under no drift at all, that one check raises at least one drift. */
 export const FALSE_ALERT_RATE = 0.05;
-
-/** Draws of the no-drift situation behind each ceiling. */
-const SIMULATIONS = 1000;
-/** Past this size the noise is negligible; simulating more rows buys nothing. */
-const SIMULATED_ROWS_CAP = 1000;
-const CEILING_SEED = 6100;
 
 /** Bins of the predicted value, in regression. */
 const PREDICTION_BINS = 10;
@@ -258,50 +255,6 @@ export function parseReference(raw: unknown): ProductionReference | null {
   return { v: REFERENCE_VERSION, rows: raw.rows, columns, predictions, performance };
 }
 
-/** Counts of `rows` draws over bins of the given shares, as shares. */
-function drawShares(cumulative: readonly number[], rows: number, rng: () => number): number[] {
-  const counts = new Array<number>(cumulative.length).fill(0);
-  const last = cumulative.length - 1;
-  for (let i = 0; i < rows; i++) {
-    const u = rng();
-    let bin = 0;
-    while (bin < last && u > cumulative[bin]) bin += 1;
-    counts[bin] += 1;
-  }
-  return counts.map((count) => count / rows);
-}
-
-/**
- * The PSI a batch of `rows` stays under, with probability `level`, when it is
- * drawn from the very population the reference of `refRows` was drawn from.
- * Both sides are redrawn: the reference is a sample too.
- */
-export function noiseCeiling(
-  shares: readonly number[],
-  refRows: number,
-  rows: number,
-  level: number,
-  seed = CEILING_SEED,
-): number {
-  const total = shares.reduce((a, b) => a + b, 0);
-  if (!(total > 0) || rows < 1 || refRows < 1) return Number.POSITIVE_INFINITY;
-  const cumulative: number[] = [];
-  let running = 0;
-  for (const share of shares) {
-    running += share / total;
-    cumulative.push(running);
-  }
-  const n = Math.min(Math.round(rows), SIMULATED_ROWS_CAP);
-  const nRef = Math.min(Math.round(refRows), SIMULATED_ROWS_CAP);
-  const rng = mulberry32(seed);
-  const values: number[] = [];
-  for (let s = 0; s < SIMULATIONS; s++) {
-    values.push(psi(drawShares(cumulative, nRef, rng), drawShares(cumulative, n, rng)));
-  }
-  values.sort((a, b) => a - b);
-  return quantile(values, level);
-}
-
 export interface DriftSignal {
   /** Column name; absent for the predictions. */
   column?: string;
@@ -422,10 +375,6 @@ function performanceSignal(
   };
 }
 
-function sharesOf(entry: ColumnProfileEntry): number[] {
-  return entry.kind === 'numeric' ? entry.shares : Object.values(entry.shares);
-}
-
 /**
  * Reads one batch against the reference its model was exported with: the
  * three signals, and one verdict with nothing hidden behind it.
@@ -447,17 +396,21 @@ export function checkProduction(
       rowCount: reference.rows,
       columns: reference.columns,
     };
-    const comparison = compareToProfile(profile, batch.header, batch.columns);
+    const comparison = compareToProfile(profile, batch.header, batch.columns, { grade: 'raw' });
     // One false alert in twenty per CHECK, not per column: the level is
     // shared between every signal read (Bonferroni).
     const signals = comparison.columns.length + 1;
     const level = 1 - FALSE_ALERT_RATE / signals;
-    const entries = new Map(reference.columns.map((entry) => [entry.column, entry]));
-    for (const drift of comparison.columns) {
-      const entry = entries.get(drift.column)!;
-      const present = Math.round(rows * (1 - drift.newMissingRatio));
-      const refPresent = Math.round(reference.rows * (1 - entry.missingRatio));
-      const ceiling = noiseCeiling(sharesOf(entry), refPresent, present, level);
+    for (const { drift, shares, newShares, refCount, newCount } of comparison.measured) {
+      const present = newCount;
+      // Both sides are drawn from the two samples put together: what « nothing
+      // moved » means (V62).
+      const ceiling = noiseCeiling(
+        pooledShares(shares, refCount, newShares, newCount),
+        refCount,
+        newCount,
+        level,
+      );
       columns.push({
         column: drift.column,
         psi: drift.psi,
@@ -482,7 +435,12 @@ export function checkProduction(
         ? classShares(batch.predictions, ref.shares.length)
         : sharesOverEdges(ref.edges, [...batch.predictions]);
     const value = rows > 0 ? psi(ref.shares, now) : 0;
-    const ceiling = noiseCeiling(ref.shares, ref.rows, rows, level);
+    const ceiling = noiseCeiling(
+      pooledShares(ref.shares, ref.rows, now, rows),
+      ref.rows,
+      rows,
+      level,
+    );
     predictions = { psi: value, ceiling, drifted: value > ceiling, rows };
   }
 
