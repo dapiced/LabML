@@ -20,6 +20,13 @@ import { fileKey, freshSeed, latestSeed, seedDealsTheTest } from '@/features/ml/
 import { thresholdArtifact } from '@/features/ml/store/artifacts';
 import { createResponseHandlers } from '@/features/ml/store/responses';
 
+/** V65: a submission belongs to one scored file and one model. */
+const noSubmission = {
+  submissionStatus: 'idle' as const,
+  submission: null,
+  submissionError: null,
+};
+
 export {
   TEST_RATIO,
   TRAIN_SEED,
@@ -301,6 +308,7 @@ export const useLabStore = create<LabState>((set, get) => {
         batchStatus: 'idle',
         batchResult: null,
         batchError: null,
+        ...noSubmission,
         thresholdAnalysis: null,
         thresholdChoice: { threshold: 0.5, costFp: 1, costFn: 1 },
         multiclassDecision: null,
@@ -506,7 +514,7 @@ export const useLabStore = create<LabState>((set, get) => {
       const state = get();
       if (state.trainStatus !== 'done' || !state.insights || state.batchStatus === 'scoring')
         return;
-      set({ batchStatus: 'scoring', batchResult: null, batchError: null });
+      set({ batchStatus: 'scoring', batchResult: null, batchError: null, ...noSubmission });
       const decisionPolicy = activeDecisionPolicy(state);
       send({
         kind: 'score-batch-file',
@@ -561,7 +569,7 @@ export const useLabStore = create<LabState>((set, get) => {
       const state = get();
       if (state.trainStatus !== 'done' || !state.insights || state.batchStatus === 'scoring')
         return;
-      set({ batchStatus: 'scoring', batchResult: null, batchError: null });
+      set({ batchStatus: 'scoring', batchResult: null, batchError: null, ...noSubmission });
       const decisionPolicy = activeDecisionPolicy(state);
       send({
         kind: 'score-batch-url',
@@ -587,6 +595,13 @@ export const useLabStore = create<LabState>((set, get) => {
       const state = get();
       if (state.trainStatus !== 'done' || !state.insights) return;
       send({ kind: 'export-predictions', model: state.insights.model });
+    },
+
+    buildSubmission(request) {
+      const state = get();
+      if (state.batchStatus !== 'done' || state.submissionStatus === 'building') return;
+      set({ submissionStatus: 'building', submission: null, submissionError: null });
+      send({ kind: 'build-submission', ...request });
     },
 
     exportPython() {

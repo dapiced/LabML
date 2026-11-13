@@ -74,6 +74,62 @@ Un modèle réimporté depuis un fichier porte sa référence avec lui (format 5
 Un export plus ancien n'en a pas : le panneau le dit, et vérifie le lot sur ses
 seules étiquettes.
 
+## Un fichier de soumission pour une compétition
+
+Une compétition fournit un fichier sans étiquette et en attend un en retour,
+avec deux colonnes sous ses propres noms, `PassengerId,Survived`. Le CSV scoré
+reprend toutes les colonnes d'origine : le bon fichier pour une jointure dans
+un système, le mauvais pour une plateforme. Sous le lot scoré, le bloc
+**Fichier de soumission** le réduit à un identifiant et une prédiction.
+
+Le labo ne connaît ni la plateforme ni ses règles : c'est vous qui nommez tout.
+
+| Vous choisissez           | Ce que c'est                                                                                                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| La colonne d'identifiant  | une colonne du fichier scoré, ou « numéroter les lignes à partir de 1 ». Le labo signale une colonne qui se lit comme un identifiant, sans la choisir à votre place |
+| Les deux noms de colonnes | exactement ce que la plateforme attend                                                                                                                              |
+| Ce qu'est une prédiction  | la classe par son nom, la probabilité de la seconde classe (binaire), une probabilité par classe (trois classes ou plus), ou la valeur (régression)                 |
+| Quel modèle prédit        | le modèle mesuré, ou la même famille réentraînée sur toutes les lignes étiquetées                                                                                   |
+
+Le fichier garde **toutes les lignes du fichier scoré, dans leur ordre**. Une
+ligne dont l'identifiant est vide ou répété est écrite et comptée, jamais
+supprimée : une plateforme la refuserait, et mieux vaut le savoir avant elle.
+
+### Réentraîner sur toutes les lignes
+
+Un run s'entraîne sur 64 % des lignes étiquetées et garde le reste pour choisir
+(16 %) et pour mesurer (20 %). Une fois ce travail fait, une prédiction sur des
+lignes sans étiquette peut se servir de toutes. Le prix : le modèle réentraîné
+n'a plus de jeu de test. Son score est celui de son frère entraîné sur moins de
+lignes.
+
+Ce que cela rapporte a été mesuré avant de construire l'option, sur les six
+démos, dix découpes chacune, avec un quart des lignes tenu à l'écart des deux
+modèles :
+
+| Démo    | Lignes étiquetées | Gain moyen sur les lignes tenues à l'écart | Mieux / pire  |
+| ------- | ----------------- | ------------------------------------------ | ------------- |
+| reviews | 180               | +5,0 points d'exactitude                   | 51 / 11 de 70 |
+| mpg     | 298               | RMSE en baisse de 3 %                      | 47 / 13 de 60 |
+| energy  | 180               | RMSE en baisse de 2 %                      | 44 / 16 de 60 |
+| titanic | 668               | +0,8 point d'exactitude                    | 41 / 20 de 70 |
+| fraud   | 480               | aucun                                      | 21 / 25 de 70 |
+| iris    | 112               | aucun                                      | 14 / 17 de 70 |
+
+Le gain suit la [courbe d'apprentissage](/docs/lire-une-courbe), pas la taille
+du fichier : iris est la plus petite démo et ne gagne rien, parce que sa courbe
+est déjà plate. Le réentraînement est donc proposé, jamais par défaut, et le
+bloc dit quel modèle a prédit le fichier. Le mélange ne se réentraîne pas : ses
+membres sont choisis sur les lignes de validation.
+
+### Ce qu'une soumission n'est pas
+
+Ce n'est pas un score. Le labo ne connaît ni la métrique de la plateforme ni ses
+lignes privées, et ne promet aucun rang. Et un classement public s'use comme un
+jeu de test : chaque soumission comparée pour garder la meilleure est un choix
+fait avec lui, le même effet que le [registre du jeu de test](/docs/reference-ml)
+compte à l'intérieur du labo.
+
 ## Les colonnes de décision
 
 Si le modèle scoré porte une règle de décision multiclasse — figée dans le

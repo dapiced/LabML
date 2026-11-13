@@ -70,6 +70,59 @@ A model re-imported from a file carries its reference with it (format 5). An
 older export has none: the panel says so, and checks the batch on its labels
 alone.
 
+## A submission file for a competition
+
+A competition hands out a file with no label and expects one back with two
+columns under its own names, `PassengerId,Survived`. The scored CSV carries
+every original column: the right file to join back into a system, the wrong one
+for a platform. Under the scored batch, the **Submission file** block reduces it
+to an identifier and a prediction.
+
+The lab knows neither the platform nor its rules, so you name everything.
+
+| You choose            | What it is                                                                                                                                           |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The identifier column | one column of the scored file, or « number the rows from 1 ». The lab points at a column that reads as an identifier, and does not choose it for you |
+| The two column names  | exactly what the platform expects                                                                                                                    |
+| What a prediction is  | the class by name, the probability of the second class (binary), one probability per class (three classes or more), or the value (regression)        |
+| Which model predicts  | the measured model, or the same family fitted again on every labelled row                                                                            |
+
+The file keeps **every row of the scored file, in its order**. A row whose
+identifier is empty or repeated is written and counted, never dropped: a
+platform would refuse it, and you should know before it does.
+
+### Fitting again on every row
+
+A run fits on 64 % of the labelled rows and keeps the rest to choose (16 %) and
+to measure (20 %). Once that is done, a prediction for unlabelled rows can use
+all of them. The price is that the refitted model has no test set left: its
+score is the one of its sibling fitted on fewer rows.
+
+Whether it pays was measured before the option was built, on the six demos, ten
+splits each, with a quarter of the rows kept away from both models:
+
+| Demo    | Labelled rows | Mean gain on the rows kept away | Better / worse |
+| ------- | ------------- | ------------------------------- | -------------- |
+| reviews | 180           | +5.0 accuracy points            | 51 / 11 of 70  |
+| mpg     | 298           | RMSE down 3 %                   | 47 / 13 of 60  |
+| energy  | 180           | RMSE down 2 %                   | 44 / 16 of 60  |
+| titanic | 668           | +0.8 accuracy point             | 41 / 20 of 70  |
+| fraud   | 480           | none                            | 21 / 25 of 70  |
+| iris    | 112           | none                            | 14 / 17 of 70  |
+
+The gain follows the [learning curve](/docs/lire-une-courbe), not the size of
+the file: iris is the smallest demo and gains nothing, because its curve is
+already flat. So the refit is offered and never the default, and the block says
+which model predicted the file. The blend cannot be refitted: its members are
+picked on the validation rows.
+
+### What a submission is not
+
+It is not a score. The lab does not know the platform's metric nor its private
+rows, and promises no rank. And a public leaderboard wears like a test set:
+each submission you compare to keep the best one is a choice made with it, the
+same effect the [test-set ledger](/docs/reference-ml) counts inside the lab.
+
 ## The decision columns
 
 If the scored model carries a multiclass decision rule — frozen in the lab, then

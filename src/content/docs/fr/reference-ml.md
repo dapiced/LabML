@@ -322,6 +322,13 @@ réponses, et la performance quand le fichier porte des étiquettes. Une dérive
 ne compte qu'au-dessus de son propre plafond de bruit, et seule une baisse
 mesurée dit « réentraîner ». Voir [scorer un lot](/docs/scorer-un-lot).
 
+Un fichier scoré sans étiquette peut repartir en **fichier de soumission** pour
+une compétition : un identifiant et une prédiction sous les noms que vous
+donnez, toutes les lignes gardées dans leur ordre. Le modèle mesuré prédit par
+défaut ; la même famille réentraînée sur toutes les lignes étiquetées est
+proposée, et annoncée comme un modèle que personne n'a mesuré. Voir
+[scorer un lot](/docs/scorer-un-lot).
+
 Un lien de partage transporte les métriques et les graphiques du run dans le
 fragment d'URL, jamais les données. Un lien coupé ou abîmé ne donne jamais une
 page à moitié lue : s'il ne se décode pas, ou si une partie du run qu'il porte

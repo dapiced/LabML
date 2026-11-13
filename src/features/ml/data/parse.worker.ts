@@ -15,7 +15,9 @@ import { buildPredictionsCsv, referenceOf, serializeModel } from '@/features/ml/
 import { explainPrediction } from '@/features/ml/train/shapley';
 import { buildPythonScript } from '@/features/ml/train/python-export';
 import { deserializeModel, type ImportedModel } from '@/features/ml/train/deserialize';
-import { scoreBatch, scoreRows } from '@/features/ml/train/score';
+import { predictRows, scoreBatch, scoreRows } from '@/features/ml/train/score';
+import { buildSubmission } from '@/features/ml/train/submission';
+import { refitOnAllRows } from '@/features/ml/train/refit';
 import { analyzeSegments } from '@/features/ml/train/segments';
 import { analyzeThresholds } from '@/features/ml/train/threshold-analysis';
 import { analyzeConformal } from '@/features/ml/train/conformal-analysis';
@@ -26,7 +28,7 @@ import {
 import { analyzeUncertainty, type ModelLosses } from '@/features/ml/train/uncertainty';
 import { detectTaskType, runTraining, type TrainArtifacts } from '@/features/ml/train/trainer';
 import type { Cell, ColumnProfile, ParseResultPayload } from '@/features/ml/data/types';
-import type { ModelKey } from '@/features/ml/train/types';
+import type { ModelKey, TrainConfig } from '@/features/ml/train/types';
 import { readTable } from '@/features/ml/data/ingest';
 import type { ReadFormat } from '@/features/ml/data/locale';
 import type { WorkerRequest, WorkerResponse } from '@/features/ml/worker-protocol';
@@ -52,6 +54,10 @@ let lastFeatureColumns: string[] = [];
 let datasetName = '';
 /** v22: a model rebuilt from an export — fully independent of any run. */
 let imported: ImportedModel | null = null;
+/** V65: the last file the live run scored, kept for its submission. Never leaves the worker. */
+let lastBatch: { name: string; header: string[]; cols: Cell[][]; model: ModelKey } | null = null;
+/** V65: the configuration the artifacts were trained with: a refit repeats it. */
+let lastConfig: TrainConfig | null = null;
 /** V38: how the current file was actually read — announced, never assumed. */
 let readFormat: ReadFormat | null = null;
 
@@ -87,6 +93,8 @@ function resetState() {
   columns = [];
   rowCount = 0;
   artifacts = null;
+  lastBatch = null;
+  lastConfig = null;
   readFormat = null;
 }
 
@@ -130,25 +138,88 @@ async function handleScoreBatch(
   try {
     if (!artifacts || !lastTarget) throw new Error('no-run');
     const batch = await parseBatch(source);
-    post({
-      kind: 'batch-scored',
-      payload: scoreBatch(
-        artifacts,
-        model,
-        lastTarget,
-        name,
-        batch.header,
-        batch.cols,
-        decisionPolicy,
-        // V61: a live run builds its reference on the spot, from its own rows.
-        {
-          reference: referenceOf(artifacts, model, columnsAsMap()),
-          testRows: artifacts.testY.length,
-        },
-      ),
-    });
+    lastBatch = null;
+    const payload = scoreBatch(
+      artifacts,
+      model,
+      lastTarget,
+      name,
+      batch.header,
+      batch.cols,
+      decisionPolicy,
+      // V61: a live run builds its reference on the spot, from its own rows.
+      {
+        reference: referenceOf(artifacts, model, columnsAsMap()),
+        testRows: artifacts.testY.length,
+      },
+    );
+    // Kept only once the file has been scored: a refused file leaves no submission.
+    lastBatch = { name, header: batch.header, cols: batch.cols, model };
+    post({ kind: 'batch-scored', payload });
   } catch (error) {
     post({ kind: 'batch-error', message: error instanceof Error ? error.message : String(error) });
+  }
+}
+
+/**
+ * V65: the last scored file as an identifier and a prediction. The measured
+ * model predicts unless `refit` asks for its sibling fitted on every labelled
+ * row, which is used for this file and kept nowhere.
+ */
+function handleSubmission(request: Extract<WorkerRequest, { kind: 'build-submission' }>) {
+  try {
+    if (!artifacts || !lastBatch) throw new Error('no-batch');
+    const batch = lastBatch;
+    const measured = artifacts.models.get(batch.model);
+    if (!measured) throw new Error('model-not-found');
+    const idAt = request.idColumn === null ? -1 : batch.header.indexOf(request.idColumn);
+    if (request.idColumn !== null && idAt < 0) throw new Error('id-not-found');
+
+    let refit: ReturnType<typeof refitOnAllRows> = null;
+    if (request.refit) {
+      if (!lastConfig) throw new Error('no-run');
+      const profiles: ColumnProfile[] = header.map((column, i) =>
+        profileColumn(column, columns[i]),
+      );
+      refit = refitOnAllRows(columnsAsMap(), profiles, lastConfig, batch.model);
+      if (!refit) throw new Error('model-not-found');
+    }
+    const pipeline = refit?.pipeline ?? artifacts.pipeline;
+    const { predictions, probabilities } = predictRows(
+      {
+        model: refit?.model ?? measured,
+        specs: pipeline.specs,
+        transformRow: pipeline.transformRow,
+        isClassification: artifacts.isClassification,
+      },
+      batch.header,
+      batch.cols,
+    );
+    const file = buildSubmission({
+      ids: idAt < 0 ? null : batch.cols[idAt],
+      idName: request.idName,
+      predictionName: request.predictionName,
+      form: request.form,
+      predictions,
+      probabilities,
+      classes: artifacts.classes,
+      isClassification: artifacts.isClassification,
+    });
+    post({
+      kind: 'submission-built',
+      payload: {
+        ...file,
+        fileName: `${batch.name.replace(/\.[a-z0-9]+$/i, '')}-submission.csv`,
+        model: batch.model,
+        form: request.form,
+        refit: refit ? { rows: refit.rows, fittedRows: refit.fittedRows } : null,
+      },
+    });
+  } catch (error) {
+    post({
+      kind: 'submission-error',
+      message: error instanceof Error ? error.message : String(error),
+    });
   }
 }
 
@@ -219,6 +290,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     } else if (request.kind === 'train') {
       cancelTraining = false;
       artifacts = null;
+      lastBatch = null;
+      lastConfig = null;
       lastTarget = request.config.target;
       const profiles: ColumnProfile[] = header.map((column, i) =>
         profileColumn(column, columns[i]),
@@ -257,6 +330,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       );
       if (outcome) {
         artifacts = outcome.artifacts;
+        lastConfig = request.config;
         lastFeatureColumns = outcome.summary.featureColumns;
         post({
           kind: 'train-complete',
@@ -527,6 +601,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           message: error instanceof Error ? error.message : String(error),
         });
       }
+    } else if (request.kind === 'build-submission') {
+      handleSubmission(request);
     } else if (request.kind === 'score-imported-file') {
       await handleScoreImported(request.file, request.file.name);
     } else if (request.kind === 'score-imported-url') {

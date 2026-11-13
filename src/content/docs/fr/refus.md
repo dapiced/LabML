@@ -123,6 +123,8 @@ Ceux-ci existent, mais un visiteur ne devrait jamais les voir : ce sont des
 invariantes vérifiées pendant l'exécution. Si l'un apparaît, c'est un bug.
 
 `model-not-found`, `no-references`, `no-model`, `no-run`, `bad-policy`,
+`no-batch`, `id-not-found`, `name-empty`, `name-clash`, `form-unavailable`,
+`rows-mismatch`,
 `no-join`, `no-data`, `no-manifest`, `not-ready`, `canvas-2d`, `grammar-too-long`,
 `grammar-atom-long`, `grammar-option-long`, `grammar-too-many-options`.
 

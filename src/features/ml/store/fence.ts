@@ -28,6 +28,8 @@ const RUN_DERIVED = new Set<WorkerResponse['kind']>([
   'robust-cancelled',
   'batch-scored',
   'batch-error',
+  'submission-built',
+  'submission-error',
   'threshold-result',
   'multiclass-decision-result',
   'multiclass-decision-tested',

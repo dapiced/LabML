@@ -245,12 +245,26 @@ export function createResponseHandlers({
       attachArtifact({ forecast: message.payload });
     },
     'batch-scored': (message) => {
-      set({ batchStatus: 'done', batchResult: message.payload, batchError: null });
+      set({
+        batchStatus: 'done',
+        batchResult: message.payload,
+        batchError: null,
+        submissionStatus: 'idle',
+        submission: null,
+        submissionError: null,
+      });
       // The record keeps the numbers, never the row-level CSV.
       const artifact = { ...message.payload } as Partial<BatchScore>;
       delete artifact.csv;
       delete artifact.preview;
+      delete artifact.header;
       attachArtifact({ batchScore: artifact as Omit<BatchScore, 'csv' | 'preview'> });
+    },
+    'submission-built': (message) => {
+      set({ submissionStatus: 'done', submission: message.payload, submissionError: null });
+    },
+    'submission-error': (message) => {
+      set({ submissionStatus: 'error', submission: null, submissionError: message.message });
     },
     'batch-error': (message) => {
       set({ batchStatus: 'error', batchResult: null, batchError: message.message });
