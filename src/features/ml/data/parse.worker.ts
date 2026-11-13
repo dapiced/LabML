@@ -16,6 +16,7 @@ import { explainPrediction } from '@/features/ml/train/shapley';
 import { buildPythonScript } from '@/features/ml/train/python-export';
 import { deserializeModel, type ImportedModel } from '@/features/ml/train/deserialize';
 import { predictRows, scoreBatch, scoreRows } from '@/features/ml/train/score';
+import { replayRow, type GlassBoxCache } from '@/features/ml/train/glass-box';
 import { buildSubmission } from '@/features/ml/train/submission';
 import { refitOnAllRows } from '@/features/ml/train/refit';
 import { analyzeSegments } from '@/features/ml/train/segments';
@@ -54,6 +55,8 @@ let lastFeatureColumns: string[] = [];
 let datasetName = '';
 /** v22: a model rebuilt from an export — fully independent of any run. */
 let imported: ImportedModel | null = null;
+/** V66: what a replay computes once per run. Emptied with every training. */
+let glassCache: GlassBoxCache = {};
 /** V65: the last file the live run scored, kept for its submission. Never leaves the worker. */
 let lastBatch: { name: string; header: string[]; cols: Cell[][]; model: ModelKey } | null = null;
 /** V65: the configuration the artifacts were trained with: a refit repeats it. */
@@ -330,6 +333,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       );
       if (outcome) {
         artifacts = outcome.artifacts;
+        glassCache = {};
         lastConfig = request.config;
         lastFeatureColumns = outcome.summary.featureColumns;
         post({
@@ -362,6 +366,19 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       post({
         kind: 'explanation',
         payload: explainPrediction(artifacts, request.model, request.values),
+      });
+    } else if (request.kind === 'replay') {
+      if (!artifacts || !lastTarget) throw new Error('no-run');
+      post({
+        kind: 'replay-result',
+        payload: replayRow(
+          artifacts,
+          request.model,
+          request.values,
+          columnsAsMap(),
+          lastTarget,
+          glassCache,
+        ),
       });
     } else if (request.kind === 'cancel-curve') {
       cancelCurve = true;

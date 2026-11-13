@@ -27,6 +27,7 @@ import type { RankingMetric, SplitChoice } from '@/features/ml/train/types';
 import type { LedgerEntry } from '@/features/ml/train/ledger';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
 import type { ForecastPayload } from '@/features/ml/timeseries/run';
+import type { GlassBoxPayload } from '@/features/ml/train/glass-box';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
 import type {
   InsightsPayload,
@@ -86,6 +87,8 @@ export interface LabState {
   whatIf: WhatIfResult | null;
   /** Shapley explanation of the latest what-if row (cleared with it). */
   explanation: ShapleyExplanation | null;
+  /** V66: the latest what-if row replayed step by step (cleared with it). */
+  replay: GlassBoxPayload | null;
   tuneStatus: 'idle' | 'running' | 'done';
   tuneProgress: { done: number; total: number; bestCv: number | null } | null;
   tuneOutcome: TuneOutcome | null;
@@ -160,6 +163,7 @@ export interface LabState {
   selectInsightModel: (model: ModelKey) => void;
   requestWhatIf: (values: Record<string, string>) => void;
   requestExplanation: (values: Record<string, string>) => void;
+  requestReplay: (values: Record<string, string>) => void;
   tune: (model: TunableKey) => void;
   cancelTune: () => void;
   learningCurve: (model: ModelKey) => void;
@@ -210,6 +214,7 @@ export const initialTraining = {
   insights: null,
   whatIf: null,
   explanation: null,
+  replay: null as GlassBoxPayload | null,
   tuneStatus: 'idle' as const,
   tuneProgress: null,
   tuneOutcome: null,

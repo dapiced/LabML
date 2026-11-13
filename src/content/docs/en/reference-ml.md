@@ -277,6 +277,15 @@ says so when it is not the one the card is about.
 The card holds figures only, never a row of the data. What you type is kept
 with the run in your browser and travels in its share link.
 
+## Replaying one row
+
+The what-if panel can **replay** its row through the inspected model: the
+questions a decision tree asked, the count of a forest's trees, the five rows a
+k-NN compared it to, the prediction a boosting builds round after round. The
+replay walks the model itself, so its last step is the prediction shown, and its
+questions are written in the units of the file. See
+[replay a prediction](/docs/rejouer-une-prediction).
+
 ## Export, import, score
 
 The model exports to JSON with its manifest: family, pipeline, versions. It

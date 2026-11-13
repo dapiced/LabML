@@ -19,6 +19,12 @@ export interface TrainedModel {
   predictWithProba?(X: number[][]): { labels: number[]; proba: number[][] };
   /** Serializable parameters for export — absent when not exportable (k-NN). */
   toJSON?(): unknown;
+  /**
+   * V66: the `count` training rows nearest to one encoded row, nearest first,
+   * for the replay. `index` is a position in the rows the family was fitted
+   * on, `distance` a Euclidean distance in the encoded space. Only k-NN.
+   */
+  neighbours?(row: number[], count: number): { index: number; distance: number; label: number }[];
 }
 
 export interface ModelContext {
@@ -40,7 +46,7 @@ export interface ModelDef {
   train(X: number[][], y: number[], ctx: ModelContext): TrainedModel;
 }
 
-const KNN_K = 5;
+export const KNN_K = 5;
 
 /**
  * V36: the ml-cart families cannot take sample weights, so class weighting
@@ -284,8 +290,30 @@ export function trainKnn(
     return bestLabel;
   }
 
+  /**
+   * V66: the same search, told in full for one row. Off the hot path on
+   * purpose: it sorts every distance, which a replay of one row can afford and
+   * a prediction of 60 000 cannot. The sort is stable, so ties keep the row
+   * seen first, exactly as `neighbors` does.
+   */
+  function neighbours(row: number[], count: number) {
+    const all: { index: number; distance: number; label: number }[] = [];
+    for (let i = 0; i < rowCount; i++) {
+      const base = i * width;
+      let sum = 0;
+      for (let j = 0; j < width; j++) {
+        const diff = row[j] - flat[base + j];
+        sum += diff * diff;
+      }
+      all.push({ index: i, distance: sum, label: trainY[i] });
+    }
+    all.sort((a, b) => a.distance - b.distance);
+    return all.slice(0, count).map((item) => ({ ...item, distance: Math.sqrt(item.distance) }));
+  }
+
   if (ctx.task === 'regression') {
     return {
+      neighbours,
       predict: (rows) =>
         rows.map((row) => {
           const near = neighbors(row);
@@ -307,6 +335,7 @@ export function trainKnn(
     probabilities.map((p) => p.indexOf(Math.max(...p)));
 
   return {
+    neighbours,
     predict: (rows) => labelsOf(proba(rows)),
     predictProba: proba,
     // V37: a scorer wants both, and for k-NN both come out of the same

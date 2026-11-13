@@ -305,6 +305,16 @@ La fiche ne contient que des chiffres, jamais une ligne des données. Ce que
 vous saisissez est conservé avec le run dans votre navigateur et voyage dans son
 lien de partage.
 
+## Rejouer une ligne
+
+Le panneau « Et si… » peut **rejouer** sa ligne à travers le modèle inspecté :
+les questions posées par un arbre de décision, le décompte des arbres d'une
+forêt, les cinq lignes auxquelles un k-NN l'a comparée, la prédiction qu'un
+boosting construit tour après tour. Le rejeu parcourt le modèle lui-même : sa
+dernière étape est la prédiction affichée, et ses questions sont écrites dans
+les unités du fichier. Voir
+[rejouer une prédiction](/docs/rejouer-une-prediction).
+
 ## Exporter, importer, scorer
 
 Le modèle s'exporte en JSON avec son manifeste : famille, pipeline, versions.

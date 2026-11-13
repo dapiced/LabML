@@ -40,5 +40,6 @@ beyond what was measured is a guess, and LabML does not offer one.
 
 ## Where to go next
 
+- [Replay a prediction](/docs/rejouer-une-prediction) to read what the model did on one row.
 - [Compare two runs](/docs/comparer-deux-runs) to measure a change of features.
 - [The method choices](/docs/methode) on why the baseline comes first.

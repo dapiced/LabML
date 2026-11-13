@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V66 — The glass box: one row, replayed through the model
+
+The third and last part of F8.
+
+_Why:_ Approved 13/11/2026. A learner who trains here should be able to carry the run to a notebook and see, in figures, what changed on the way.
+
 ## V65 — An unlabelled file becomes a submission
 
 The second part of F8; the glass box stays proposed below.

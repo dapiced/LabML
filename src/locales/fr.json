@@ -696,6 +696,78 @@
         "wordsSaturated": "Ce modèle ne peut pas répondre à la question des mots : ses probabilités sont saturées — il ne renvoie presque que 0 ou 1 — donc effacer un mot déplace la réponse d'exactement zéro.",
         "wordsSaturatedAdvice": "C'est une propriété du modèle, pas des mots. Choisissez un autre modèle dans le leaderboard (la régression logistique et le gradient boosting donnent des probabilités nuancées) pour lire les effets par mot."
       },
+      "glass": {
+        "button": "Le rejouer pas à pas",
+        "none": {
+          "linear": "Rien à rejouer pas à pas : ce modèle est une seule somme pondérée, et l'explication ci-dessus la lit déjà.",
+          "logistic": "Rien à rejouer pas à pas : ce modèle est une seule somme pondérée, et l'explication ci-dessus la lit déjà.",
+          "naiveBayes": "Rien à rejouer pas à pas : ce modèle multiplie une probabilité par colonne, sans ordre entre elles.",
+          "mlp": "Rien à rejouer pas à pas : un réseau mélange toutes les colonnes à la fois, et ses couches ne se lisent pas comme des questions.",
+          "ensemble": "Rien à rejouer pas à pas : le mélange fait la moyenne d'autres modèles. Inspectez l'un d'eux pour le rejouer.",
+          "baseline": "Rien à rejouer : la référence répond la même chose pour toutes les lignes."
+        },
+        "title": {
+          "tree": "Les questions que l'arbre a posées à cette ligne",
+          "forest": "Ce que chaque arbre de la forêt a répondu",
+          "knn": "Les lignes d'entraînement auxquelles cette ligne a été comparée",
+          "gbdt": "Comment le boosting a construit cette prédiction"
+        },
+        "yes": "oui",
+        "no": "non",
+        "step": {
+          "numeric": "{{column}} {{operator}} {{threshold}} ? {{answer}} (cette ligne : {{value}})",
+          "category": "{{column}} vaut « {{category}} » ? {{answer}}",
+          "word": "poids de {{feature}} {{operator}} {{threshold}} ? {{answer}} (cette ligne : {{value}})",
+          "rank": "{{column}}, par son rang de fréquence, {{operator}} {{threshold}} ? {{answer}} (cette ligne : {{value}})",
+          "rows_one": "· question posée à {{rows}} ligne d'entraînement",
+          "rows_other": "· question posée à {{rows}} lignes d'entraînement"
+        },
+        "tree": {
+          "noQuestion": "L'arbre ne pose aucune question : c'est une seule feuille.",
+          "leafClasses_one": "{{rows}} ligne d'entraînement finit dans la même feuille ({{detail}}). L'arbre répond {{answer}}.",
+          "leafClasses_other": "{{rows}} lignes d'entraînement finissent dans la même feuille ({{detail}}). L'arbre répond {{answer}}.",
+          "leafValue_one": "{{rows}} ligne d'entraînement finit dans la même feuille. L'arbre répond sa valeur : {{answer}}.",
+          "leafValue_other": "{{rows}} lignes d'entraînement finissent dans la même feuille. L'arbre répond leur moyenne : {{answer}}.",
+          "leafBare": "L'arbre répond {{answer}}."
+        },
+        "forest": {
+          "votes": "{{trees}} arbres ont voté ({{detail}}). La forêt répond {{answer}}.",
+          "spread": "{{trees}} arbres ont répondu entre {{min}} et {{max}}. La forêt répond leur moyenne : {{answer}}.",
+          "tie": "Deux classes ont reçu le même nombre d'arbres. La forêt garde la première à atteindre ce compte, dans l'ordre de ses arbres.",
+          "note": "Quarante arbres ne se racontent pas un à un : le décompte de leurs réponses est ce dont la forêt tire sa prédiction. Inspectez l'arbre de décision pour lire un chemin."
+        },
+        "knn": {
+          "row": "ligne",
+          "distance": "distance",
+          "target": "cible",
+          "votes": "Les {{k}} lignes les plus proches ont voté ({{detail}}). Le modèle répond {{answer}}.",
+          "mean": "Le modèle répond la moyenne des {{k}} lignes les plus proches : {{answer}}.",
+          "edgeTie": "La ligne suivante est exactement aussi loin que la dernière gardée. Un autre ordre des lignes, ou une autre bibliothèque, aurait gardé l'autre, et la réponse peut changer avec elle.",
+          "voteTie": "Deux classes ont reçu le même nombre de votes. Le modèle garde la première dans l'ordre des classes.",
+          "note": "Le numéro de ligne compte les lignes de données du fichier à partir de 1. La distance se mesure sur les colonnes encodées (nombres standardisés, catégories en 0/1), pas dans les unités du fichier."
+        },
+        "gbdt": {
+          "curveClass": "Toutes les lignes partent de {{from}}, la part de « {{class}} » dont le modèle part. Après {{rounds}} tours, cette ligne est à {{to}}. 90 % du chemin était fait au tour {{settled}}.",
+          "curveValue": "Toutes les lignes partent de {{from}}, la moyenne des lignes d'entraînement. Après {{rounds}} tours, cette ligne est à {{to}}. 90 % du chemin était fait au tour {{settled}}.",
+          "curveLabel": "La prédiction pour cette ligne, tour après tour",
+          "toldTitle": "Les tours qui ont le plus déplacé cette ligne, parmi ceux qui posent des questions différentes :",
+          "round": "Tour {{round}} : de {{from}} à {{to}}.",
+          "metric": {
+            "rmse": "RMSE",
+            "logLoss": "log loss"
+          },
+          "validation": {
+            "never": "Sur les {{rows}} lignes de validation, la {{metric}} était la plus basse avant le premier tour ({{start}}) et vaut {{lastValue}} après le tour {{last}} : sur ces lignes, le boosting n'a jamais battu son point de départ.",
+            "early": "Sur les {{rows}} lignes de validation, la {{metric}} était la plus basse au tour {{best}} ({{bestValue}}) et vaut {{lastValue}} après le tour {{last}} : les tours suivants ont collé aux lignes d'entraînement sans aider celles-ci.",
+            "late": "Sur les {{rows}} lignes de validation, la {{metric}} est passée de {{start}} à {{lastValue}} après le tour {{last}}, son plus bas étant {{bestValue}} au tour {{best}} : les tours ont continué d'aider, ou n'ont rien coûté."
+          },
+          "validationLabel": "L'erreur sur les lignes de validation, tour après tour",
+          "validationNote": "Ceci se lit sur les lignes de validation, jamais sur le jeu de test, et ne règle rien : le labo fait toujours ses tours jusqu'au bout. Mesuré sur les démos, l'erreur de validation la plus basse arrivait bien avant le dernier tour sur 17 runs sur 30.",
+          "same_one": "{{count}} autre tour a posé les mêmes questions à cette ligne.",
+          "same_other": "{{count}} autres tours ont posé les mêmes questions à cette ligne."
+        },
+        "note": "Un rejeu parcourt le modèle lui-même : sa dernière étape est la prédiction ci-dessus, pas une approximation. Une trace n'est pas une cause : elle dit quelles étapes ont été suivies pour cette ligne, pas qu'une colonne fait la réponse."
+      },
       "export": {
         "model": "Modèle (JSON)",
         "predictions": "Prédictions (CSV)",

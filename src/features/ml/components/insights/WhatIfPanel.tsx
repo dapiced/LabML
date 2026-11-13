@@ -1,9 +1,10 @@
-import { Sparkles } from 'lucide-react';
+import { Footprints, Sparkles } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/eyebrow';
+import { GlassBoxView, isReplayable } from '@/features/ml/components/insights/GlassBoxView';
 import { useLabStore } from '@/features/ml/lab-store';
 
 /** Interactive single-row prediction against the inspected model. */
@@ -16,6 +17,8 @@ export function WhatIfPanel() {
   const requestWhatIf = useLabStore((s) => s.requestWhatIf);
   const explanation = useLabStore((s) => s.explanation);
   const requestExplanation = useLabStore((s) => s.requestExplanation);
+  const replay = useLabStore((s) => s.replay);
+  const requestReplay = useLabStore((s) => s.requestReplay);
 
   const featureProfiles = useMemo(
     () => (summary?.featureColumns ?? []).map((name) => profiles.find((p) => p.name === name)!),
@@ -103,6 +106,17 @@ export function WhatIfPanel() {
               {t('ml.lab.insights.explainButton')}
             </Button>
           )}
+          {!replay && isReplayable(insights.model) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => requestReplay(values)}
+              data-testid="replay-button"
+            >
+              <Footprints className="h-3.5 w-3.5" aria-hidden="true" />
+              {t('ml.lab.glass.button')}
+            </Button>
+          )}
           {whatIf.probabilities && (
             <div className="flex flex-1 flex-col gap-1">
               {whatIf.probabilities.slice(0, 3).map(({ label, p }) => (
@@ -175,6 +189,13 @@ export function WhatIfPanel() {
             })}
           </p>
         </div>
+      )}
+
+      {replay && replay.model === insights.model && <GlassBoxView payload={replay} />}
+      {whatIf && whatIf.model === insights.model && !isReplayable(insights.model) && (
+        <p className="text-[0.68rem] text-muted" data-testid="glass-none">
+          {t(`ml.lab.glass.none.${insights.model}`)}
+        </p>
       )}
     </div>
   );
