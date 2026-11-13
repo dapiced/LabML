@@ -392,4 +392,24 @@ describe('two renderings, one set of facts', () => {
       }
     }
   });
+
+  it('V60: lists among the limits how many runs the test set had scored', () => {
+    // A run stored before the ledger says nothing of it.
+    expect(text(card(titanic), 'limits')).not.toContain('Test-set ledger');
+
+    const third = card({ ...titanic, ledger: { reads: 3, splits: 1 } });
+    expect(text(third, 'limits')).toContain(
+      'this run was distinct configuration no. 3 scored on its test set (split 1 of this file)',
+    );
+    expect(text(third, 'limits')).not.toContain('the best score seen is optimistic');
+
+    const worn = card({ ...titanic, ledger: { reads: 9, splits: 2 } });
+    expect(text(worn, 'limits')).toContain('configuration no. 9');
+    expect(text(worn, 'limits')).toContain('the best score seen is optimistic');
+
+    const first = card({ ...titanic, ledger: { reads: 1, splits: 1 } }, fr, 'fr');
+    expect(text(first, 'limits')).toContain(
+      'ce run était la première configuration notée par son jeu de test',
+    );
+  });
 });

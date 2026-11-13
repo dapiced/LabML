@@ -5,6 +5,7 @@ import { METRIC_ROWS, metricDelta } from '@/features/ml/train/score-view';
 import type { RunRecord } from '@/features/ml/projects/types';
 import type { ClusterTrait } from '@/features/ml/unsupervised/explore';
 import { championGap, sortResults } from '@/features/ml/train/ranking';
+import { ledgerLines } from '@/features/ml/train/ledger';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
@@ -557,6 +558,9 @@ export function buildReportHtml(record: RunRecord, t: Translate, lang: string): 
  · ${esc(t(`ml.lab.task.${record.taskType}`, { count: record.insights.classes?.length ?? 0 }))}
  · seed ${record.seed} · ${new Date(record.createdAt).toLocaleString(lang)}</p>
 ${read ? `<div class="read">${esc(read)}</div>` : ''}
+${ledgerLines(record.ledger, t)
+  .map((line) => `<p class="meta">${esc(line)}</p>`)
+  .join('\n')}
 <h2>Leaderboard</h2>
 <table>
 <tr><th>#</th><th>${esc(t('ml.lab.leaderboard.model'))}</th>${metricKeys

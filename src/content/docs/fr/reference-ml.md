@@ -86,6 +86,52 @@ sont légitimes. Ces intervalles mesurent la sensibilité au tirage du test —
 
 Un intervalle large est une information, pas un défaut.
 
+## Ce jeu de test a-t-il trop servi ?
+
+Dans un run, la validation choisit le gagnant et le jeu de test ne fait que le
+mesurer. Entre les runs, rien ne faisait respecter cette règle : entraîner,
+lire le score de test, retirer une colonne, réentraîner, garder le meilleur des
+deux, et c'est le jeu de test qui vient de choisir. Le score qui reste est le
+plus chanceux.
+
+Le **registre du jeu de test** compte, pour le fichier et la cible en cours,
+combien de **configurations distinctes** le jeu de test actuel a notées. Une
+configuration est un ensemble de colonnes, plus la pondération de classes.
+Réentraîner la même ne compte pas : le labo est déterministe, les chiffres sont
+les mêmes, et lire deux fois un chiffre ne choisit rien.
+
+| Runs notés | Ce que dit le panneau                                                      |
+| ---------- | -------------------------------------------------------------------------- |
+| 1          | une mesure : rien n'a été choisi avec lui                                  |
+| 2 à 4      | comparer, c'est déjà choisir ; l'effet reste faible                        |
+| 5 à 9      | **usé** : lire le meilleur score comme optimiste                           |
+| 10 et plus | **épuisé** : le jeu de test ne distingue plus le meilleur du plus chanceux |
+
+Les deux seuils ont été mesurés, pas tirés d'une formule. Sur les trois démos,
+un utilisateur qui garde le meilleur score de test de 5 configurations le voit
+dépasser de 0,2 à 0,8 fois le bruit entre deux découpes ce que la même
+configuration obtient sur une autre découpe, et jusqu'à ce bruit lui-même à
+partir de 10. Sur titanic, cela fait +1,7 point d'exactitude à 5 runs. Plus les
+configurations se valent vraiment, plus la meilleure n'est que la plus
+chanceuse.
+
+À partir du seuil « usé », le panneau propose une **nouvelle découpe** : la
+graine suivante, un jeu de test que ce fichier n'a jamais eu. Entraînez une
+seule fois la configuration retenue, et lisez ce score. Trois choses à savoir :
+
+- une nouvelle découpe redistribue **les mêmes lignes**. Ce ne sont pas de
+  nouvelles données, et le panneau compte les découpes déjà tirées ;
+- la proposition attend le seuil « usé » à dessein : une découpe qu'on retire
+  à volonté est une chose de plus avec laquelle chercher le bon chiffre ;
+- une découpe **chronologique** n'a qu'un jeu de test, les lignes les plus
+  récentes. Aucun autre tirage n'existe, et le panneau dit que seules des
+  données plus récentes peuvent le remplacer.
+
+Le registre est tenu dans ce navigateur, à part des runs : supprimer un run ne
+dé-lit pas son jeu de test. Il garde une empreinte de chaque configuration,
+jamais un nom de colonne ni une ligne. Le compte, tel qu'il était, rejoint le
+run, son rapport et les limites de sa fiche de modèle.
+
 ## Le classement est-il réel ?
 
 À la demande : 5 répétitions × 2 moitiés, dix ajustements par famille, avec

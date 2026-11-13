@@ -15,6 +15,7 @@ import { bestResult } from '@/features/ml/train/ranking';
 import { evaluateMulticlassPolicy } from '@/features/ml/train/multiclass-decision';
 import { receiveMulticlassDecisionTest } from '@/features/ml/train/multiclass-decision-state';
 import { thresholdArtifact } from '@/features/ml/store/artifacts';
+import { configKey, fileKey, readLedger, testSetKey } from '@/features/ml/train/ledger';
 import { initialTraining, type LabState } from '@/features/ml/store/state';
 
 export interface ResponseContext {
@@ -127,6 +128,51 @@ export function createResponseHandlers({
           ...(state.savedDatasetId !== null ? { datasetId: state.savedDatasetId } : {}),
         };
         set({ currentRun: record });
+        // V60: this run read its test set. Written apart from the run, so
+        // deleting the run later does not un-read it; the same configuration
+        // on the same split is one reading however often it is trained.
+        const split = state.summary.split
+          ? { mode: state.summary.split.mode, column: state.summary.split.column }
+          : null;
+        const file = fileKey(record.dataset, record.target);
+        void import('@/features/ml/projects/ledger-db')
+          .then(({ recordReading }) =>
+            recordReading({
+              file,
+              testSet: testSetKey(record.dataset, record.target, record.seed, split),
+              seed: record.seed,
+              config: configKey(
+                state.summary?.featureColumns ?? [],
+                state.summary?.classWeighting === 'balanced',
+              ),
+              at: createdAt,
+            }),
+          )
+          .then((entries) => {
+            const now = get();
+            if (now.meta && now.target && fileKey(now.meta, now.target) === file) {
+              set({ ledgerEntries: entries });
+            }
+            // The run keeps the count as it stood when it was scored: its
+            // report and its card must not change when later runs are made.
+            const reading = readLedger(
+              entries,
+              testSetKey(record.dataset, record.target, record.seed, split),
+            );
+            const ledger = { reads: reading.reads, splits: reading.splits };
+            const current = get().currentRun;
+            if (current && current.createdAt === record.createdAt) {
+              set({ currentRun: { ...current, ledger } });
+              if (current.id !== undefined) {
+                const id = current.id;
+                void import('@/features/ml/projects/db').then(({ db }) =>
+                  db.runs.update(id, { ledger }),
+                );
+              }
+            }
+          })
+          // No IndexedDB: the run is shown all the same, without its ledger.
+          .catch(() => undefined);
         // Dexie is loaded on demand so /ml renders without it.
         void import('@/features/ml/projects/db').then(({ db }) =>
           db.runs.add(record).then((id) => {
@@ -141,6 +187,10 @@ export function createResponseHandlers({
               // V58: the same for a card field typed before the id came back.
               if (current.card) {
                 void db.runs.update(id, { card: current.card });
+              }
+              // V60: and for the ledger count, when it came back first.
+              if (current.ledger) {
+                void db.runs.update(id, { ledger: current.ledger });
               }
             }
           }),

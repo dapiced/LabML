@@ -19,6 +19,8 @@ export function encodeShareFragment(record: RunRecord): string {
     summary: record.summary,
     insights: trimInsights(record.insights),
     artifacts: trimArtifacts(record.artifacts),
+    // V60: two counts, no data: a shared score says how worn its test set was.
+    ...(record.ledger !== undefined && { ledger: record.ledger }),
   };
   return compressToEncodedURIComponent(JSON.stringify(payload));
 }
@@ -66,6 +68,13 @@ function isRenderable(payload: Record<string, unknown>): boolean {
   );
 }
 
+const isCount = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isInteger(value) && value >= 1;
+
+function isLedger(value: unknown): boolean {
+  return isObject(value) && isCount(value.reads) && isCount(value.splits);
+}
+
 export function decodeShareFragment(fragment: string): SharePayload | null {
   try {
     const json = decompressFromEncodedURIComponent(fragment);
@@ -75,6 +84,8 @@ export function decodeShareFragment(fragment: string): SharePayload | null {
     // v1 links predate run artifacts and must keep working.
     if (payload.v !== 1 && payload.v !== 2) return null;
     if (!isRenderable(payload)) return null;
+    // V60: the ledger counts are optional; a malformed pair is dropped, not trusted.
+    if ('ledger' in payload && !isLedger(payload.ledger)) delete payload.ledger;
     return payload as unknown as SharePayload;
   } catch {
     return null;

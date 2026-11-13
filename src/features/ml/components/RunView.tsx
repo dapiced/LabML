@@ -20,6 +20,7 @@ import { RocCurve } from '@/features/ml/components/insights/RocCurve';
 import { RunArtifactsView } from '@/features/ml/components/RunArtifactsView';
 import { buildPlainRead } from '@/features/ml/projects/report';
 import type { RunRecord } from '@/features/ml/projects/types';
+import { ledgerLines } from '@/features/ml/train/ledger';
 
 /** Read-only rendering of a saved or shared run — metrics only, never data. */
 export function RunView({ record }: { record: RunRecord }) {
@@ -72,6 +73,15 @@ export function RunView({ record }: { record: RunRecord }) {
             {t('ml.lab.insights.readTitle')}
           </Eyebrow>
           <p className="max-w-3xl text-sm leading-relaxed">{read}</p>
+        </div>
+      )}
+
+      {/* V60: how worn the test set was when this run was scored. */}
+      {ledgerLines(record.ledger, t).length > 0 && (
+        <div data-testid="run-ledger" className="flex max-w-3xl flex-col gap-1 text-xs text-muted">
+          {ledgerLines(record.ledger, t).map((line) => (
+            <p key={line}>{line}</p>
+          ))}
         </div>
       )}
 

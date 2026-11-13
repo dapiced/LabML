@@ -95,6 +95,13 @@ export interface RunRecord {
    */
   card?: CardFields;
   /**
+   * V60: what the test-set ledger said when this run was scored. `reads` is
+   * the number of distinct configurations its test set had scored, this one
+   * included; `splits` the number of test sets dealt for this file and
+   * target. Absent on runs stored before V60 and where IndexedDB is missing.
+   */
+  ledger?: { reads: number; splits: number };
+  /**
    * Local id of the dataset copy kept in the browser (v19), when the user
    * opted in — never part of share links, meaningless outside this browser.
    */

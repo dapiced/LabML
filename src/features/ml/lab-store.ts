@@ -16,6 +16,7 @@ import {
   type LabState,
 } from '@/features/ml/store/state';
 import { isStaleResponse, isTrainingBusy } from '@/features/ml/store/fence';
+import { fileKey, freshSeed, latestSeed, seedDealsTheTest } from '@/features/ml/train/ledger';
 import { thresholdArtifact } from '@/features/ml/store/artifacts';
 import { createResponseHandlers } from '@/features/ml/store/responses';
 
@@ -222,9 +223,31 @@ export const useLabStore = create<LabState>((set, get) => {
         task: null,
         targetUnsupported: null,
         leaks: [],
+        // V60: another target is another ledger, and starts on the first split
+        // until its own ledger says which split was dealt last.
+        seed: TRAIN_SEED,
+        ledgerEntries: [],
         ...initialTraining,
       });
-      if (column) send({ kind: 'analyze-target', target: column });
+      if (column) {
+        send({ kind: 'analyze-target', target: column });
+        const meta = get().meta;
+        if (meta) {
+          const file = fileKey(meta, column);
+          void import('@/features/ml/projects/ledger-db')
+            .then(({ loadLedger }) => loadLedger(file))
+            .then((entries) => {
+              const now = get();
+              // The answer is for the file and target it was asked for, and it
+              // must not move the split under a run that already started.
+              if (!now.meta || now.target !== column || fileKey(now.meta, column) !== file) return;
+              if (now.trainStatus !== 'idle') return;
+              set({ ledgerEntries: entries, seed: latestSeed(entries, TRAIN_SEED) });
+            })
+            // No IndexedDB (private mode, a test): the lab trains without a ledger.
+            .catch(() => undefined);
+        }
+      }
     },
 
     toggleColumn(column) {
@@ -253,7 +276,7 @@ export const useLabStore = create<LabState>((set, get) => {
         config: {
           target: state.target,
           features,
-          seed: TRAIN_SEED,
+          seed: state.seed,
           testRatio: TEST_RATIO,
           ...(state.splitChoice !== null && { split: state.splitChoice }),
           ...(state.classWeighting && { classWeighting: 'balanced' as const }),
@@ -318,7 +341,7 @@ export const useLabStore = create<LabState>((set, get) => {
         config: {
           target: state.target,
           features,
-          seed: TRAIN_SEED,
+          seed: state.seed,
           testRatio: TEST_RATIO,
           ...(state.splitChoice !== null && { split: state.splitChoice }),
           ...(state.classWeighting && { classWeighting: 'balanced' as const }),
@@ -344,7 +367,7 @@ export const useLabStore = create<LabState>((set, get) => {
         config: {
           target: state.target,
           features,
-          seed: TRAIN_SEED,
+          seed: state.seed,
           testRatio: TEST_RATIO,
           ...(state.splitChoice !== null && { split: state.splitChoice }),
           ...(state.classWeighting && { classWeighting: 'balanced' as const }),
@@ -369,7 +392,7 @@ export const useLabStore = create<LabState>((set, get) => {
         config: {
           target: state.target,
           features,
-          seed: TRAIN_SEED,
+          seed: state.seed,
           testRatio: TEST_RATIO,
           ...(state.splitChoice !== null && { split: state.splitChoice }),
           ...(state.classWeighting && { classWeighting: 'balanced' as const }),
@@ -385,6 +408,12 @@ export const useLabStore = create<LabState>((set, get) => {
     setSplitChoice(choice) {
       if (get().trainStatus === 'training') return;
       set({ splitChoice: choice });
+    },
+
+    drawFreshSplit() {
+      const state = get();
+      if (isTrainingBusy(state) || !seedDealsTheTest(state.splitChoice)) return;
+      set({ seed: freshSeed(state.ledgerEntries, state.seed), ...initialTraining });
     },
 
     setClassWeighting(on) {

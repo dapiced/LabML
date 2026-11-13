@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V60 — A test-set ledger
+
+Listed as F2 below until it shipped.
+
+_Why:_ Approved 13/11/2026. Five waves had moved choices off the test set inside a run; the comparison between runs was the last place it still chose.
+
 ## V59 — A group audit on a column the user names
 
 Listed as F6 below until it shipped.

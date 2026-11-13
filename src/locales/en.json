@@ -155,7 +155,7 @@
       },
       "storage": {
         "title": "Open local storage",
-        "body": "Application tab → IndexedDB → labml. You see exactly what you chose to keep: your past runs, and your datasets only if you asked for them. The Data Studio's « forget » button empties that database in front of you."
+        "body": "Application tab → IndexedDB → labml. You see exactly what you chose to keep: your past runs, the ledger of the test sets those runs have read (counts and fingerprints, no row and no column name), and your datasets only if you asked for them. The Data Studio's « forget » button empties that database in front of you."
       }
     },
     "figure": {
@@ -809,6 +809,25 @@
         "limitDrift": "The figures describe data like the data of this run. They stop holding when new data drift away from it.",
         "reproduceTitle": "Reproduce",
         "reproduce": "Load {{name}}, predict « {{target}} » from the {{features}} columns listed above, seed {{seed}}. The same inputs give the same figures."
+      },
+      "ledger": {
+        "title": "Test-set ledger",
+        "badge_one": "{{count}} run scored",
+        "badge_other": "{{count}} distinct runs scored",
+        "splitBadge": "split {{splits}} of this file · seed {{seed}}",
+        "first": "This test set has scored one configuration of this file. Its score is a measurement: nothing was chosen with it.",
+        "reused": "This test set has scored {{reads}} distinct configurations of this file. Keeping the better of them is choosing with the test set, and the score kept is the luckier one. At this count the effect is small.",
+        "worn": "This test set has scored {{reads}} distinct configurations of this file. Measured on the lab's demos, the best of 5 runs sits 0.2 to 0.8 times the split-to-split noise above what the same configuration gets on another split, and the closer the runs really are, the more the best one is only the luckiest. Read the best score as optimistic.",
+        "spent": "This test set has scored {{reads}} distinct configurations of this file. Measured on the lab's demos, from 10 runs the luck in the best score reaches the noise between two splits: this test set no longer tells a better configuration from a luckier one.",
+        "before": "Counted before this training: the ledger is kept in this browser, and deleting a run does not un-read its test set.",
+        "redeal": "A fresh split deals the same rows again. It is not new data: the configurations you kept were chosen on rows that are now back in the deck. Only rows no run has scored measure a model cleanly.",
+        "fresh": "Draw a fresh split (seed {{seed}})",
+        "freshHint": "Deals a test set this file never had, and clears the current run. Train the configuration you settled on once, and read that score.",
+        "chronological": "A chronological split has one test set, the newest rows: no other draw exists. Only newer data can replace it.",
+        "counted": "A run counts when its columns or its class weighting differ from every run already scored on this split. Training the same configuration again reads nothing new. The score of a tuning is not counted.",
+        "runLine_one": "Test-set ledger: this run was the first configuration its test set scored (split {{splits}} of this file).",
+        "runLine_other": "Test-set ledger: this run was distinct configuration no. {{count}} scored on its test set (split {{splits}} of this file).",
+        "runWorn": "From 5 distinct runs on one test set, the best score seen is optimistic: 0.2 to 0.8 times the split-to-split noise on the lab's demos, and up to that noise itself from 10."
       },
       "groupAudit": {
         "title": "Does the model treat these groups differently?",
