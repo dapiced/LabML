@@ -63,6 +63,14 @@ export interface BatchScore {
   }[];
   /** Full predictions: every original column + predicted (+ probabilities). */
   csv: string;
+  /** V65: the columns of the scored file, for the submission to pick its identifier. */
+  header?: string[];
+  /** V65: whether the model gives probabilities, which decides the forms offered. */
+  hasProbabilities?: boolean;
+  classCount?: number;
+  /** V65: the class a binary probability speaks of: the second one. */
+  positiveClass?: string;
+  isClassification?: boolean;
 }
 
 /**
@@ -125,20 +133,24 @@ export function scoreBatch(
   );
 }
 
-/** Scores a parsed file with any RowScorer; `referenceMetrics` fills the
- * honest comparison column (held-out test of the live or exporting run). */
-export function scoreRows(
-  scorer: RowScorer,
-  modelKey: ModelKey,
-  referenceMetrics: MetricMap,
-  target: string,
-  fileName: string,
+/**
+ * The rows of a parsed file through a scorer: the encoded matrix, the
+ * predictions, and the probabilities when the family gives them. Shared by
+ * the batch score and the submission (V65), so both read a file the same way.
+ */
+export function predictRows(
+  scorer: Pick<RowScorer, 'model' | 'specs' | 'transformRow' | 'isClassification'>,
   header: string[],
   columns: Cell[][],
-  production?: ProductionContext,
-): BatchScore {
-  const { model, classes, isClassification } = scorer;
-
+): {
+  index: Map<string, number>;
+  required: string[];
+  rowCount: number;
+  X: number[][];
+  predictions: number[];
+  probabilities: number[][] | null;
+} {
+  const { model, isClassification } = scorer;
   const index = new Map(header.map((name, i) => [name, i]));
   const missing = requiredColumnsOf(scorer.specs).filter((name) => !index.has(name));
   if (missing.length > 0) throw new Error(`missing-columns:${missing.join(', ')}`);
@@ -162,6 +174,28 @@ export function scoreRows(
   const predictions = both?.labels ?? model.predict(X);
   const probabilities =
     isClassification && model.predictProba ? (both?.proba ?? model.predictProba(X)) : null;
+  return { index, required, rowCount, X, predictions, probabilities };
+}
+
+/** Scores a parsed file with any RowScorer; `referenceMetrics` fills the
+ * honest comparison column (held-out test of the live or exporting run). */
+export function scoreRows(
+  scorer: RowScorer,
+  modelKey: ModelKey,
+  referenceMetrics: MetricMap,
+  target: string,
+  fileName: string,
+  header: string[],
+  columns: Cell[][],
+  production?: ProductionContext,
+): BatchScore {
+  const { model, classes, isClassification } = scorer;
+
+  const { index, required, rowCount, X, predictions, probabilities } = predictRows(
+    scorer,
+    header,
+    columns,
+  );
   const label = (value: number): string =>
     isClassification ? (classes[value] ?? String(value)) : String(value);
 
@@ -306,5 +340,10 @@ export function scoreRows(
     ...(check ? { check } : {}),
     preview,
     csv: lines.join('\n'),
+    header,
+    hasProbabilities: probabilities !== null,
+    classCount: classes.length,
+    ...(isClassification && classes.length === 2 && { positiveClass: classes[1] }),
+    isClassification,
   };
 }

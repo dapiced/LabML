@@ -12,6 +12,7 @@ import type {
   TaskInfo,
 } from '@/features/ml/data/types';
 import type { BatchScore } from '@/features/ml/train/score';
+import type { Submission, SubmissionForm } from '@/features/ml/train/submission';
 import type { ImportedManifest } from '@/features/ml/train/deserialize';
 import type { SegmentAnalysis } from '@/features/ml/train/segments';
 import type { ThresholdAnalysis } from '@/features/ml/train/threshold-analysis';
@@ -102,6 +103,10 @@ export interface LabState {
   batchStatus: 'idle' | 'scoring' | 'done' | 'error';
   batchResult: BatchScore | null;
   batchError: string | null;
+  /** V65: the submission built from the last scored file. */
+  submissionStatus: 'idle' | 'building' | 'done' | 'error';
+  submission: Submission | null;
+  submissionError: string | null;
   /** Binary + probabilistic models only — null otherwise. */
   thresholdAnalysis: ThresholdAnalysis | null;
   thresholdChoice: { threshold: number; costFp: number; costFn: number };
@@ -185,6 +190,14 @@ export interface LabState {
   exportPredictions: () => void;
   /** V64: the run as a scikit-learn script. */
   exportPython: () => void;
+  /** V65: `idColumn` null numbers the rows from 1. */
+  buildSubmission: (request: {
+    idColumn: string | null;
+    idName: string;
+    predictionName: string;
+    form: SubmissionForm;
+    refit: boolean;
+  }) => void;
   clearExportedFile: () => void;
   reset: () => void;
 }
@@ -213,6 +226,9 @@ export const initialTraining = {
   batchStatus: 'idle' as const,
   batchResult: null,
   batchError: null,
+  submissionStatus: 'idle' as const,
+  submission: null as Submission | null,
+  submissionError: null as string | null,
   thresholdAnalysis: null as ThresholdAnalysis | null,
   thresholdChoice: { threshold: 0.5, costFp: 1, costFn: 1 },
   multiclassDecision: null as LabState['multiclassDecision'],

@@ -466,6 +466,47 @@
         "noDecision": "aucune décision",
         "note": "Une baisse par rapport au jeu de test est un signal, pas un bug : le monde a bougé. La vérification en production ci-dessus dit quelles colonnes ont glissé, et si la baisse se distingue du tirage."
       },
+      "submission": {
+        "title": "Fichier de soumission",
+        "hint": "Pour une compétition : le fichier scoré ci-dessus, réduit à un identifiant et une prédiction, sous les noms que la plateforme attend. Le labo ne connaît ni la plateforme ni ses règles : c'est vous qui nommez tout. Le fichier garde toutes les lignes du fichier scoré, dans leur ordre.",
+        "idColumn": "Colonne d'identifiant",
+        "idChoose": "choisir une colonne…",
+        "idRowNumber": "aucune colonne : numéroter les lignes à partir de 1",
+        "idName": "Son nom dans la soumission",
+        "predictionName": "Nom de la colonne de prédiction",
+        "suggestion": "« {{column}} » se lit comme un identifiant dans le fichier d'entraînement. Le choix reste le vôtre.",
+        "clash": "Les deux colonnes doivent porter des noms différents.",
+        "formTitle": "Ce qu'est une prédiction",
+        "form": {
+          "label": "la classe prédite, par son nom (exactitude, F1)",
+          "probability": "la probabilité de « {{positive}} » (AUC, log loss)",
+          "probabilities": "une probabilité par classe, chaque colonne au nom de sa classe (log loss multiclasse)",
+          "value": "la valeur prédite (RMSE, MAE)"
+        },
+        "modelTitle": "Quel modèle prédit",
+        "model": {
+          "measured": "{{model}} tel que mesuré : entraîné sur 64 % des lignes étiquetées, noté sur le jeu de test",
+          "refit": "la même famille réentraînée sur toutes les lignes étiquetées : plus de données, et plus aucun jeu de test pour la mesurer"
+        },
+        "refitNote": "Mesuré sur les démos du labo, sur des lignes tenues à l'écart des deux modèles : réentraîner sur tout a gagné 5 points d'exactitude sur reviews (180 lignes), 0,8 sur titanic, 2 à 3 % de RMSE sur mpg et energy, et rien sur fraud et iris. Même là où il rapporte, il perd une fois sur cinq à une fois sur trois. La courbe d'apprentissage dit dans quel cas vous êtes : une courbe qui monte encore est une raison de réentraîner, une courbe plate n'en est pas une.",
+        "refitUnavailable": "Le mélange ne peut pas être réentraîné sur toutes les lignes : ses membres sont choisis sur les lignes de validation, et un entraînement sur tout n'en laisse aucune pour choisir. Inspectez une famille pour la réentraîner.",
+        "build": "Construire la soumission",
+        "building": "Construction…",
+        "refitting": "Réentraînement sur toutes les lignes étiquetées…",
+        "error": "La soumission n'a pas pu être construite ({{detail}}).",
+        "summary_one": "{{rows}} ligne, colonnes : {{columns}}.",
+        "summary_other": "{{rows}} lignes, les mêmes que le fichier scoré et dans son ordre. Colonnes : {{columns}}.",
+        "byMeasured": "Prédit par {{model}}, le modèle que le jeu de test a mesuré.",
+        "byRefit": "Prédit par {{model}} réentraîné sur les {{rows}} lignes étiquetées. Personne n'a mesuré ce modèle : le score de test ci-dessus est celui de son frère entraîné sur moins de lignes.",
+        "byRefitCapped": "Prédit par {{model}} réentraîné sur {{fitted}} des {{rows}} lignes étiquetées, son plafond annoncé. Personne n'a mesuré ce modèle : le score de test ci-dessus est celui de son frère entraîné sur moins de lignes.",
+        "missingIds_one": "{{count}} ligne n'a pas d'identifiant : elle est écrite avec un identifiant vide, et une plateforme la refusera sans doute.",
+        "missingIds_other": "{{count}} lignes n'ont pas d'identifiant : elles sont écrites avec un identifiant vide, et une plateforme les refusera sans doute.",
+        "duplicateIds_one": "{{count}} ligne répète un identifiant déjà utilisé.",
+        "duplicateIds_other": "{{count}} lignes répètent un identifiant déjà utilisé.",
+        "range": "Valeurs écrites : de {{min}} à {{max}}, moyenne {{mean}}.",
+        "download": "Télécharger la soumission (CSV)",
+        "note": "Une soumission n'est pas un score. Le labo ne connaît ni la métrique de la plateforme ni ses lignes privées, et ne promet aucun rang. Et un classement public s'use comme un jeu de test : chaque soumission que vous comparez pour garder la meilleure est un choix fait avec lui."
+      },
       "threshold": {
         "title": "Seuil de décision & déséquilibre",
         "hint": "Seulement {{rate}} % des lignes sont « {{positive}} » : ici, l’accuracy flatte n’importe quel modèle. La courbe précision-rappel dit la vérité, la courbe de calibration dit si les probabilités sont fiables — et le seuil est VOTRE décision, chiffrée par vos coûts.",

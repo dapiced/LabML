@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/eyebrow';
+import { SubmissionPanel } from '@/features/ml/components/SubmissionPanel';
 import { ProductionCheckView } from '@/features/ml/components/ProductionCheckView';
 import { useLabStore } from '@/features/ml/lab-store';
 import { METRIC_ROWS, metricDelta } from '@/features/ml/train/score-view';
@@ -194,6 +195,8 @@ export function BatchScorePanel() {
           </div>
 
           {result.check && <ProductionCheckView check={result.check} />}
+
+          <SubmissionPanel key={`${result.fileName}:${result.model}`} />
 
           <p className="text-xs text-muted">{t('ml.lab.batch.note')}</p>
         </div>

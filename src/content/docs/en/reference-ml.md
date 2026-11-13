@@ -293,6 +293,12 @@ the columns, the answers, and the performance when the file carries labels. A
 drift counts only above its own noise ceiling, and only a measured drop says
 « retrain ». See [score a batch](/docs/scorer-un-lot).
 
+A scored file with no label can leave as a **submission file** for a
+competition: an identifier and a prediction under the names you give, every row
+kept in its order. The measured model predicts by default; the same family
+fitted again on every labelled row is offered, and announced as a model nobody
+measured. See [score a batch](/docs/scorer-un-lot).
+
 A share link carries the run's metrics and charts in the URL fragment, never
 the data. A cut or damaged link never yields a half-read page: if it does not
 decode, or if part of the run it carries does not have the shape LabML writes,

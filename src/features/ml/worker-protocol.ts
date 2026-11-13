@@ -4,6 +4,7 @@ import type { ImportedManifest } from '@/features/ml/train/deserialize';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
 import type { ForecastPayload } from '@/features/ml/timeseries/run';
 import type { BatchScore } from '@/features/ml/train/score';
+import type { Submission, SubmissionForm } from '@/features/ml/train/submission';
 import type { SegmentAnalysis } from '@/features/ml/train/segments';
 import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
 import type { LearningCurveOutcome } from '@/features/ml/train/learning-curve';
@@ -76,6 +77,19 @@ export type WorkerRequest =
       model: ModelKey;
       decisionPolicy?: MulticlassDecisionPolicy;
     }
+  /**
+   * V65: the last file scored by the live run, as a file a platform accepts.
+   * `idColumn` null numbers the rows from 1; `refit` fits the family again on
+   * every labelled row first.
+   */
+  | {
+      kind: 'build-submission';
+      idColumn: string | null;
+      idName: string;
+      predictionName: string;
+      form: SubmissionForm;
+      refit: boolean;
+    }
   | { kind: 'threshold-analysis'; model: ModelKey; focusClass?: number }
   | { kind: 'multiclass-decision-analysis'; model: ModelKey }
   | {
@@ -123,6 +137,9 @@ export type WorkerResponse =
   | { kind: 'predictions-csv'; model: ModelKey; csv: string }
   | { kind: 'python-script'; name: string; content: string }
   | { kind: 'batch-scored'; payload: BatchScore }
+  | { kind: 'submission-built'; payload: Submission }
+  // Dedicated channel: a refused submission leaves the scored batch in place.
+  | { kind: 'submission-error'; message: string }
   // The current dataset rebuilt as CSV, for local persistence.
   | { kind: 'dataset-csv'; csv: string }
   // null = not applicable (multiclass, regression, or no probabilities).

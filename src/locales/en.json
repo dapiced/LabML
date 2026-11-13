@@ -466,6 +466,47 @@
         "noDecision": "no decision",
         "note": "A drop against the test set is a signal, not a bug: the world moved. The production check above says which columns shifted, and whether the drop can be told from the draw."
       },
+      "submission": {
+        "title": "Submission file",
+        "hint": "For a competition: the file scored above, reduced to an identifier and a prediction under the names the platform expects. The lab knows neither the platform nor its rules, so you name everything. The file keeps every row of the scored file, in its order.",
+        "idColumn": "Identifier column",
+        "idChoose": "choose a column…",
+        "idRowNumber": "no column: number the rows from 1",
+        "idName": "Its name in the submission",
+        "predictionName": "Name of the prediction column",
+        "suggestion": "\"{{column}}\" reads as an identifier in the training file. The choice stays yours.",
+        "clash": "The two columns need different names.",
+        "formTitle": "What a prediction is",
+        "form": {
+          "label": "the predicted class, by name (accuracy, F1)",
+          "probability": "the probability of \"{{positive}}\" (AUC, log loss)",
+          "probabilities": "one probability per class, each column named after its class (multiclass log loss)",
+          "value": "the predicted value (RMSE, MAE)"
+        },
+        "modelTitle": "Which model predicts",
+        "model": {
+          "measured": "{{model}} as measured: fitted on 64 % of the labelled rows, scored on the test set",
+          "refit": "the same family fitted again on every labelled row: more data, and no test set left to measure it"
+        },
+        "refitNote": "Measured on the lab's demos, on rows kept away from both models: fitting again on everything gained 5 accuracy points on reviews (180 rows), 0.8 on titanic, 2 to 3 % of RMSE on mpg and energy, and nothing on fraud and iris. Even where it pays it loses one time in five to one time in three. The learning curve says which case yours is: a curve still climbing is a reason to refit, a flat one is not.",
+        "refitUnavailable": "The blend cannot be fitted again on every row: its members are picked on the validation rows, and a fit on everything leaves none to pick with. Inspect one family to refit it.",
+        "build": "Build the submission",
+        "building": "Building…",
+        "refitting": "Fitting again on every labelled row…",
+        "error": "The submission could not be built ({{detail}}).",
+        "summary_one": "{{rows}} row, columns: {{columns}}.",
+        "summary_other": "{{rows}} rows, the same as the scored file and in its order. Columns: {{columns}}.",
+        "byMeasured": "Predicted by {{model}}, the model the test set measured.",
+        "byRefit": "Predicted by {{model}} fitted again on the {{rows}} labelled rows. Nobody measured this model: the test score above belongs to its sibling fitted on fewer rows.",
+        "byRefitCapped": "Predicted by {{model}} fitted again on {{fitted}} of the {{rows}} labelled rows, its announced cap. Nobody measured this model: the test score above belongs to its sibling fitted on fewer rows.",
+        "missingIds_one": "{{count}} row has no identifier: it is written with an empty one, and a platform will likely refuse it.",
+        "missingIds_other": "{{count}} rows have no identifier: they are written with an empty one, and a platform will likely refuse them.",
+        "duplicateIds_one": "{{count}} row repeats an identifier already used.",
+        "duplicateIds_other": "{{count}} rows repeat an identifier already used.",
+        "range": "Written values: from {{min}} to {{max}}, mean {{mean}}.",
+        "download": "Download the submission (CSV)",
+        "note": "A submission is not a score. The lab does not know the platform's metric nor its private rows, and promises no rank. And a public leaderboard wears like a test set: each submission you compare and keep the best of is a choice made with it."
+      },
       "threshold": {
         "title": "Decision threshold & imbalance",
         "hint": "Only {{rate}} % of rows are “{{positive}}”: accuracy flatters any model here. The precision-recall curve tells the truth, the calibration curve says whether the probabilities can be trusted — and the threshold is YOUR decision, priced by your costs.",

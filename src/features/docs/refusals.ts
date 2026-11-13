@@ -51,6 +51,13 @@ export const REFUSALS: Refusal[] = [
   { code: 'no-model', audience: 'internal', area: 'ml' },
   { code: 'no-run', audience: 'internal', area: 'ml' },
   { code: 'bad-policy', audience: 'internal', area: 'ml' },
+  // V65: the submission panel only sends what these guard against.
+  { code: 'no-batch', audience: 'internal', area: 'ml' },
+  { code: 'id-not-found', audience: 'internal', area: 'ml' },
+  { code: 'name-empty', audience: 'internal', area: 'ml' },
+  { code: 'name-clash', audience: 'internal', area: 'ml' },
+  { code: 'form-unavailable', audience: 'internal', area: 'ml' },
+  { code: 'rows-mismatch', audience: 'internal', area: 'ml' },
 
   // --- Importing a model: five named reasons instead of one « invalid file » ---
   { code: 'invalid-json', audience: 'visitor', area: 'import' },
