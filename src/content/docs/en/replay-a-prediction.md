@@ -102,6 +102,7 @@ ask other questions and often agree on the prediction.
 
 ## Where to go next
 
+- [Find what would change a prediction](/docs/chercher-un-contrefactuel), the question after « what happened ».
 - [Read a learning curve](/docs/lire-une-courbe) to see whether more rows would help.
 - [The ML Lab reference](/docs/reference-ml) for what each family is.
 - [The limits](/docs/limites) for what the replay does not do.

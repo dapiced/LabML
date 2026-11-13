@@ -198,7 +198,11 @@ export function createResponseHandlers({
       }
     },
     'what-if-result': (message) => {
-      set({ whatIf: message.payload, explanation: null, replay: null });
+      set({ whatIf: message.payload, explanation: null, replay: null, counterfactual: null });
+    },
+    'counterfactual-result': (message) => {
+      // Row-level and tied to the screen, like the replay: shown, saved nowhere.
+      set({ counterfactual: message.payload });
     },
     'replay-result': (message) => {
       // Row-level and tied to the screen: it is shown, and saved nowhere.

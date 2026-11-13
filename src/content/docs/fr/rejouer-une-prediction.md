@@ -111,6 +111,7 @@ découpe, poserait d'autres questions et tomberait souvent sur la même prédict
 
 ## Et ensuite ?
 
+- [Chercher ce qui changerait une prédiction](/docs/chercher-un-contrefactuel), la question d'après « que s'est-il passé ».
 - [Lire une courbe d'apprentissage](/docs/lire-une-courbe) pour voir si plus de lignes aideraient.
 - [La référence du ML Lab](/docs/reference-ml) pour ce qu'est chaque famille.
 - [Les limites](/docs/limites) pour ce que le rejeu ne fait pas.

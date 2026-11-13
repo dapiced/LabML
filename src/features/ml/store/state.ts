@@ -27,6 +27,7 @@ import type { RankingMetric, SplitChoice } from '@/features/ml/train/types';
 import type { LedgerEntry } from '@/features/ml/train/ledger';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
 import type { ForecastPayload } from '@/features/ml/timeseries/run';
+import type { CounterfactualPayload } from '@/features/ml/train/counterfactual';
 import type { GlassBoxPayload } from '@/features/ml/train/glass-box';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
 import type {
@@ -89,6 +90,8 @@ export interface LabState {
   explanation: ShapleyExplanation | null;
   /** V66: the latest what-if row replayed step by step (cleared with it). */
   replay: GlassBoxPayload | null;
+  /** V68: what would have to change for that row (cleared with it). */
+  counterfactual: CounterfactualPayload | null;
   tuneStatus: 'idle' | 'running' | 'done';
   tuneProgress: { done: number; total: number; bestCv: number | null } | null;
   tuneOutcome: TuneOutcome | null;
@@ -164,6 +167,11 @@ export interface LabState {
   requestWhatIf: (values: Record<string, string>) => void;
   requestExplanation: (values: Record<string, string>) => void;
   requestReplay: (values: Record<string, string>) => void;
+  requestCounterfactual: (
+    values: Record<string, string>,
+    locked: string[],
+    target: number | null,
+  ) => void;
   tune: (model: TunableKey) => void;
   cancelTune: () => void;
   learningCurve: (model: ModelKey) => void;
@@ -215,6 +223,7 @@ export const initialTraining = {
   whatIf: null,
   explanation: null,
   replay: null as GlassBoxPayload | null,
+  counterfactual: null as CounterfactualPayload | null,
   tuneStatus: 'idle' as const,
   tuneProgress: null,
   tuneOutcome: null,

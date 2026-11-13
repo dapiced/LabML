@@ -40,9 +40,14 @@ const CASES: [string, WorkerResponse, Partial<LabState>][] = [
   [
     'what-if-result',
     { kind: 'what-if-result', payload },
-    { whatIf: payload, explanation: null, replay: null },
+    { whatIf: payload, explanation: null, replay: null, counterfactual: null },
   ],
   ['replay-result', { kind: 'replay-result', payload }, { replay: payload }],
+  [
+    'counterfactual-result',
+    { kind: 'counterfactual-result', payload },
+    { counterfactual: payload },
+  ],
   [
     'tune-progress',
     { kind: 'tune-progress', done: 3, total: 12, bestCv: 0.8 },

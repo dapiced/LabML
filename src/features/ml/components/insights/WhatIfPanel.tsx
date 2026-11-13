@@ -1,9 +1,10 @@
-import { Footprints, Sparkles } from 'lucide-react';
+import { Footprints, Shuffle, Sparkles } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/eyebrow';
+import { CounterfactualView } from '@/features/ml/components/insights/CounterfactualView';
 import { GlassBoxView, isReplayable } from '@/features/ml/components/insights/GlassBoxView';
 import { useLabStore } from '@/features/ml/lab-store';
 
@@ -19,6 +20,8 @@ export function WhatIfPanel() {
   const requestExplanation = useLabStore((s) => s.requestExplanation);
   const replay = useLabStore((s) => s.replay);
   const requestReplay = useLabStore((s) => s.requestReplay);
+  const counterfactual = useLabStore((s) => s.counterfactual);
+  const requestCounterfactual = useLabStore((s) => s.requestCounterfactual);
 
   const featureProfiles = useMemo(
     () => (summary?.featureColumns ?? []).map((name) => profiles.find((p) => p.name === name)!),
@@ -38,6 +41,9 @@ export function WhatIfPanel() {
   // The parent remounts this panel (via `key`) when the inspected model or the
   // feature set changes, so initializing from the defaults once is enough.
   const [values, setValues] = useState(defaults);
+  // V68: the columns the search for a change must leave alone, and the class wanted.
+  const [locked, setLocked] = useState<string[]>([]);
+  const [target, setTarget] = useState<number | null>(null);
 
   const model = insights?.model;
   useEffect(() => {
@@ -47,6 +53,8 @@ export function WhatIfPanel() {
   }, [values, model, requestWhatIf]);
 
   if (!summary || !insights) return null;
+  const classes = insights.classes ?? [];
+  const isClassification = classes.length > 0;
 
   return (
     <div
@@ -60,10 +68,40 @@ export function WhatIfPanel() {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {featureProfiles.map((profile) => (
-          <label key={profile.name} className="flex flex-col gap-1">
-            <span className="truncate font-mono text-[0.68rem] text-muted">{profile.name}</span>
+          // V68: the lock is a control of its own, beside the field's label and
+          // not inside it: a label names one control.
+          <div key={profile.name} className="flex min-w-0 flex-col gap-1">
+            <span className="flex items-center justify-between gap-2">
+              <label
+                htmlFor={`what-if-${profile.name}`}
+                className="truncate font-mono text-[0.68rem] text-muted"
+              >
+                {profile.name}
+              </label>
+              {isClassification && profile.type !== 'text' && (
+                <label
+                  className="flex shrink-0 items-center gap-1 text-[0.62rem] text-muted"
+                  title={t('ml.lab.counterfactual.lockTitle')}
+                >
+                  <input
+                    type="checkbox"
+                    data-testid={`lock-${profile.name}`}
+                    checked={locked.includes(profile.name)}
+                    onChange={(e) =>
+                      setLocked((list) =>
+                        e.target.checked
+                          ? [...list, profile.name]
+                          : list.filter((name) => name !== profile.name),
+                      )
+                    }
+                  />
+                  {t('ml.lab.counterfactual.lock')}
+                </label>
+              )}
+            </span>
             {profile.numeric ? (
               <input
+                id={`what-if-${profile.name}`}
                 type="number"
                 step="any"
                 value={values[profile.name] ?? ''}
@@ -72,18 +110,27 @@ export function WhatIfPanel() {
               />
             ) : (
               <select
+                id={`what-if-${profile.name}`}
                 value={values[profile.name] ?? ''}
                 onChange={(e) => setValues((v) => ({ ...v, [profile.name]: e.target.value }))}
                 className="h-9 rounded-lg border border-line bg-surface px-2 font-mono text-sm"
               >
-                {(profile.topValues ?? []).map(({ value }) => (
+                {/* V68: a value loaded from a counterfactual may be rarer than the top ones. */}
+                {[
+                  ...(profile.topValues ?? []),
+                  ...((profile.topValues ?? []).some(
+                    ({ value }) => value === values[profile.name],
+                  ) || !values[profile.name]
+                    ? []
+                    : [{ value: values[profile.name] }]),
+                ].map(({ value }) => (
                   <option key={value} value={value}>
                     {value}
                   </option>
                 ))}
               </select>
             )}
-          </label>
+          </div>
         ))}
       </div>
 
@@ -116,6 +163,39 @@ export function WhatIfPanel() {
               <Footprints className="h-3.5 w-3.5" aria-hidden="true" />
               {t('ml.lab.glass.button')}
             </Button>
+          )}
+          {!counterfactual && isClassification && (
+            <span className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => requestCounterfactual(values, locked, target)}
+                data-testid="counterfactual-button"
+              >
+                <Shuffle className="h-3.5 w-3.5" aria-hidden="true" />
+                {t('ml.lab.counterfactual.button')}
+              </Button>
+              {classes.length > 2 && (
+                <label className="flex items-center gap-1 text-[0.68rem] text-muted">
+                  {t('ml.lab.counterfactual.target')}
+                  <select
+                    data-testid="counterfactual-target"
+                    value={target === null ? '' : String(target)}
+                    onChange={(e) =>
+                      setTarget(e.target.value === '' ? null : Number(e.target.value))
+                    }
+                    className="h-7 rounded-lg border border-line bg-surface px-1 font-mono text-xs"
+                  >
+                    <option value="">{t('ml.lab.counterfactual.targetAny')}</option>
+                    {classes.map((label, index) => (
+                      <option key={label} value={index}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </span>
           )}
           {whatIf.probabilities && (
             <div className="flex flex-1 flex-col gap-1">
@@ -191,6 +271,18 @@ export function WhatIfPanel() {
         </div>
       )}
 
+      {counterfactual && counterfactual.model === insights.model && (
+        <CounterfactualView
+          payload={counterfactual}
+          onApply={(changes) =>
+            setValues((current) => {
+              const next = { ...current };
+              for (const change of changes) next[change.column] = change.to;
+              return next;
+            })
+          }
+        />
+      )}
       {replay && replay.model === insights.model && <GlassBoxView payload={replay} />}
       {whatIf && whatIf.model === insights.model && !isReplayable(insights.model) && (
         <p className="text-[0.68rem] text-muted" data-testid="glass-none">
