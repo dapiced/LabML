@@ -139,6 +139,12 @@ reproducible by pressing train._
   ceiling**. Two halves of one 120-row file « drifted » in every report under the fixed
   thresholds (0.1 and 0.25), which read a small file as a drift; with the ceiling,
   simulated at the real sizes of the two files, they do in 3 to 9.5 %.
+- **Data contract**: freeze what a reference file looks like (columns and how they read,
+  missing values, the rules that applied, each distribution) and read the next file against
+  it, clause by clause. A fact breaks a clause outright, an estimate counts only beyond its
+  noise, a drift is a warning. It says what the quality report cannot: the report's rules
+  stop applying once a fifth of a column is impossible, so 178 ages of 999 go unreported
+  where 134 are flagged. Names, bounds, shares and counts; never a row.
 - **One reader for every section**: a drift or join file is read exactly like the main
   one, decimals included, and the Studio stops at the same named memory budget as the ML
   Lab instead of letting the tab die.
@@ -278,7 +284,7 @@ Wikimedia Commons), the portrait is NASA, public domain._
   a doc page carries its whole article, in English until the app mounts); Lighthouse
   mobile ≈ 0.99 on `/ml` under real throttling. Heavy dependencies (Dexie, SheetJS, ONNX
   Runtime) load lazily.
-- **Quality bar.** 1175 unit tests and 129 Playwright end-to-end tests across five
+- **Quality bar.** 1204 unit tests and 130 Playwright end-to-end tests across five
   projects — desktop, a phone viewport in English and in French, dark mode, and
   Cloudflare Pages' own routing emulated by `wrangler pages dev` (a real 404, the security
   headers as served) — covering offline PWA, a fake webcam, a horizontal-overflow guard on
@@ -393,9 +399,9 @@ coverage (V57), a model card that lists what was never assessed (V58), a group a
 on a column the user names (V59), a test-set ledger that counts the runs a test set
 has arbitrated (V60), a production check that reads a new batch against a reference
 carried by the model export (V61), and a noise ceiling under the Data Studio's drift
-report, which had been calling small files drifted (V62). Proposed, each with its launch condition and none
-scheduled: a data contract, counterfactuals, and a step-by-step view of the hand-written
-models. The consented generative chat (V12) stays
+report, which had been calling small files drifted (V62), and a data contract that
+requires of the next file what was found on a reference (V63). Proposed, each with its launch condition and none
+scheduled: counterfactuals, and a step-by-step view of the hand-written models. The consented generative chat (V12) stays
 postponed by product decision. No wave starts without an explicit launch command. The full plan, delivery log and design decisions live in
 [PLAN.md](PLAN.md); [CHANGELOG.md](CHANGELOG.md) is extracted from it — one entry per
 wave, newest first — by `npm run changelog`, and a test fails when the two disagree.

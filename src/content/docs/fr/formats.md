@@ -35,13 +35,13 @@ annoncée plutôt que tranchée en silence.
 
 ## Ce qui peut sortir
 
-| Format         | Contenu                                                                                        |
-| -------------- | ---------------------------------------------------------------------------------------------- |
-| CSV            | dataset nettoyé, prédictions d'un lot, résultat SQL                                            |
-| Parquet        | résultat SQL, via `COPY … TO`                                                                  |
-| JSON           | modèle entraîné avec son manifeste ; recette de nettoyage ; profil de référence                |
-| HTML           | rapport de run, autonome et lisible hors ligne                                                 |
-| HTML, Markdown | fiche de modèle d'un run : son usage, ses données, sa valeur, et ce qui n'a jamais été vérifié |
+| Format         | Contenu                                                                                              |
+| -------------- | ---------------------------------------------------------------------------------------------------- |
+| CSV            | dataset nettoyé, prédictions d'un lot, résultat SQL                                                  |
+| Parquet        | résultat SQL, via `COPY … TO`                                                                        |
+| JSON           | modèle entraîné avec son manifeste ; recette de nettoyage ; profil de référence ; contrat de données |
+| HTML           | rapport de run, autonome et lisible hors ligne                                                       |
+| HTML, Markdown | fiche de modèle d'un run : son usage, ses données, sa valeur, et ce qui n'a jamais été vérifié       |
 
 ## Le manifeste de modèle
 
@@ -142,6 +142,56 @@ quand la règle s'abstient — et `decision_status`, qui vaut `decided` ou
 Un profil de dérive stocke **des bins et des parts, jamais des lignes**. Le
 profil d'un fichier de paie décrit la forme de la distribution des salaires et
 le salaire de personne — c'est ce qui le rend sûr à committer à côté du code.
+
+## Le contrat de données
+
+Un contrat est un JSON exporté depuis le Data Studio, et relu par lui :
+
+```json
+{
+  "format": "labml-data-contract/1",
+  "source": "cafe-sales.csv",
+  "createdAt": "2026-11-13T15:00:00.000Z",
+  "rowCount": 118,
+  "columns": [
+    {
+      "name": "quantity",
+      "type": "numeric",
+      "reading": "number",
+      "missingRatio": 0.017,
+      "profile": {
+        "kind": "numeric",
+        "column": "quantity",
+        "missingRatio": 0.017,
+        "mean": 2.55,
+        "edges": [1, 2, 3, 4],
+        "shares": [0.22, 0.28, 0.25, 0.17, 0.08]
+      }
+    }
+  ],
+  "rules": [
+    {
+      "kind": "validity",
+      "rule": "negativeAmount",
+      "columns": ["quantity"],
+      "bound": { "min": 0 },
+      "failures": 0,
+      "tested": 116
+    }
+  ]
+}
+```
+
+`reading` est ce que le contrat exige d'une colonne ; `type` est le type que le
+labo a inféré, gardé pour le lecteur. `profile` est présent là où une
+distribution veut dire quelque chose : une colonne numérique, catégorielle ou
+booléenne. Chaque règle garde son nombre d'échecs à la référence, puisqu'une
+règle qui y échouait déjà n'est pas rompue par le même taux.
+
+Un fichier qui n'est pas un contrat entier est **refusé, pas appliqué en
+partie** : un format inconnu, une colonne sans lecture, une règle inconnue, une
+règle qui nomme une colonne que le contrat ne décrit pas. Une clause écartée en
+silence serait une vérification sautée en silence.
 
 ## Les limites
 

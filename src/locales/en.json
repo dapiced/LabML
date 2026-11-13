@@ -1150,6 +1150,59 @@
       "csv": "Download the cleaned CSV",
       "recipe": "Download the recipe (JSON)"
     },
+    "contract": {
+      "title": "Data contract",
+      "hint": "A contract freezes what {{name}} looks like: its columns and how they read, how much is missing, the rules that apply and how often they fail, the shape of each distribution. The next file is then read against it, clause by clause. Nothing is uploaded.",
+      "export": "Export the contract of this file",
+      "check": "Check this file against a contract…",
+      "checking": "Checking…",
+      "refused": "{{name}} is not a LabML data contract, or is not a whole one. Nothing was checked: a contract that cannot state all its clauses is not applied in part.",
+      "verdict": {
+        "kept": "contract kept",
+        "warning": "kept, with warnings",
+        "broken": "contract broken"
+      },
+      "outcome": {
+        "kept": "kept",
+        "warning": "warning",
+        "broken": "broken"
+      },
+      "summary": "{{file}} read against the contract drawn from {{source}} on {{date}}: {{broken}} broken, {{warning}} warnings, {{kept}} kept, over {{rows}} rows.",
+      "family": {
+        "schema": "Columns",
+        "missing": "Missing values",
+        "rule": "Rules",
+        "distribution": "Distributions"
+      },
+      "reading": {
+        "number": "numbers",
+        "date": "dates",
+        "words": "words",
+        "empty": "nothing"
+      },
+      "rule": {
+        "ageRange": "age between 0 and 120",
+        "futureDate": "no date in the future",
+        "percentRange": "percentage between 0 and 100",
+        "negativeAmount": "no negative amount",
+        "postcodeShape": "postcode of the expected shape",
+        "dateOrder": "end not before start",
+        "productMismatch": "total equal to quantity × price"
+      },
+      "clause": {
+        "absent": "« {{column}} » is absent from this file.",
+        "reading": "« {{column}} » read as {{expected}} at the reference; it reads as {{found}} here.",
+        "missing": "« {{column}} »: {{found}} % missing, against {{reference}} % at the reference. The difference is at least {{lo}} points.",
+        "ruleBroken": "{{rule}}, on « {{columns}} »: {{failures}} of {{tested}} values fail, against {{refFailures}} of {{refTested}} at the reference.",
+        "ruleExamples": "Rows {{rows}}: {{examples}}.",
+        "ruleUnreadable": "{{rule}}, on « {{columns}} »: this rule found nothing it can read in this file.",
+        "distribution": "« {{column}} » has moved: PSI {{psi}}, above its noise ceiling of {{ceiling}}."
+      },
+      "keptCount_one": "{{count}} clause kept.",
+      "keptCount_other": "{{count}} clauses kept.",
+      "extra": "Columns of this file the contract does not describe, noted and not broken: {{list}}.",
+      "note": "A fact breaks a clause outright: a column that is gone, values that no longer read as numbers, an impossible value. An estimate counts only beyond its noise: a share of missing values, a distribution. A distribution that moved is a warning, not a break. The quality report does not replace a contract: its rules decide whether they apply, and stop applying once a fifth of a column is impossible. The contract holds names, bounds, shares and counts, never a row."
+    },
     "drift": {
       "title": "Drift check",
       "hint": "Compare a new batch against {{name}} (the loaded reference): schema differences, distribution shifts (PSI), new or vanished categories. The new file is parsed in your browser too — nothing is uploaded.",

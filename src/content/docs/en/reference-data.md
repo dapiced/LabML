@@ -98,6 +98,51 @@ flagged 95 to 100 % of reports on files of 120 and 400 rows, and still 21 to
 52 % at 640 and 890 rows; the ceiling flags 0.5 to 9.5 %. Nothing changes for a
 large file, whose ceiling is low.
 
+## Data contract
+
+The quality report asks whether a file looks clean. A **contract** asks whether
+it is still the file that was agreed on: it freezes what a reference file looks
+like, and the next file is read against it clause by clause.
+
+The report cannot do this on its own, by design. Its rules decide whether they
+apply: a column named `age` holding 20 000 is a duration, not a crowd of
+impossible people. The price of that guard was measured: once a fifth of a
+column is impossible, the rule stops applying and the report says nothing. On
+the titanic demo, 134 ages of 999 are flagged; 178 are not.
+
+| Clause         | What it requires                                  | When it does not hold |
+| -------------- | ------------------------------------------------- | --------------------- |
+| Column present | every column of the reference is there            | **broken**            |
+| Reading        | values still read as numbers, dates or words      | **broken**            |
+| Missing values | no measurably higher share than at the reference  | **broken**            |
+| Rule           | a rule that applied at the reference still passes | **broken**            |
+| Distribution   | the column has not moved beyond its noise ceiling | **warning**           |
+
+Two rules, stated on the panel:
+
+- **a fact is not an estimate.** A column that is gone, values that no longer
+  read as numbers, an impossible value break a clause outright. A share of
+  missing values and a distribution are estimates: they count only beyond their
+  noise, at a level shared between the columns;
+- **moving is not breaking.** A distribution that drifted is a warning.
+
+A rule that was clean at the reference is broken by its first failure; a rule
+that already failed there is broken only by a measurably higher rate. A column
+the contract does not describe is noted, not broken.
+
+The clause tests how values **read**, not the type the lab infers. The inferred
+type (categorical or text, number or identifier) depends on how many distinct
+values a file happens to hold: on two halves of one 118-row file it changed for
+one column in every two checks.
+
+Measured on two halves of one file, where nothing changed: no broken clause on
+three demos out of five, 2 % of checks on titanic, and drift warnings on 0.5 to
+7.5 %. The fifth demo holds one negative price, and the half that does not hold
+it yields a contract the other half breaks: a true finding.
+
+The contract holds names, bounds, shares and counts, never a row. Checking is
+not cleaning: nothing is repaired, and nothing is blocked.
+
 ## Anomalies
 
 Hand-written, seeded isolation forest: 100 trees, subsample 256, exact c(n).
