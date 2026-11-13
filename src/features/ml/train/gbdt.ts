@@ -3,6 +3,29 @@
  * LightGBM/XGBoost: features are bucketed into quantile bins once, trees are
  * grown depth-wise on second-order gradients (XGBoost-style gain), and leaves
  * take Newton values. Deterministic by construction — no randomness at all.
+ *
+ * V67: why the rounds are run to the end. V66 showed the validation error of
+ * the boosting lowest well before round 120 on 17 runs of 30, which reads as a
+ * case for early stopping. Measured before building it: six demos, ten splits
+ * each, a quarter of the rows kept away from everything, the 120 rounds
+ * against a stop at the lowest validation error (and against a stop chosen on
+ * rows held out inside the training rows, with or without a refit on all of
+ * them). On the metric the leaderboard ranks on:
+ *
+ *   titanic  +0.4 accuracy point (better 5, worse 4)      log loss better 10/10
+ *   fraud    no change                                    log loss slightly worse
+ *   iris     no change                                    log loss slightly worse
+ *   reviews  -4.0 accuracy points (worse 6, better 2)     log loss better 10/10
+ *   mpg      no change in RMSE
+ *   energy   RMSE 3.5 % lower (better 9, worse 1)
+ *
+ * Fewer rounds give better probabilities and no better predictions; the one
+ * gain is on energy, where the boosting does no better than the mean and is
+ * never the family the validation rows choose. Stops chosen on inner held-out
+ * rows did no better than the validation stop on five demos of six. And a stop chosen on
+ * the validation rows flatters the boosting on the rows that choose the
+ * family: its validation score rose above its private score by 0.9 accuracy
+ * point on titanic and 6 on reviews. So nothing stops early here.
  */
 
 export interface GbdtParams {

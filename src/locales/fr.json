@@ -758,11 +758,11 @@
           },
           "validation": {
             "never": "Sur les {{rows}} lignes de validation, la {{metric}} était la plus basse avant le premier tour ({{start}}) et vaut {{lastValue}} après le tour {{last}} : sur ces lignes, le boosting n'a jamais battu son point de départ.",
-            "early": "Sur les {{rows}} lignes de validation, la {{metric}} était la plus basse au tour {{best}} ({{bestValue}}) et vaut {{lastValue}} après le tour {{last}} : les tours suivants ont collé aux lignes d'entraînement sans aider celles-ci.",
+            "early": "Sur les {{rows}} lignes de validation, la {{metric}} était la plus basse au tour {{best}} ({{bestValue}}) et vaut {{lastValue}} après le tour {{last}} : passé ce tour, cette erreur est remontée sur ces lignes.",
             "late": "Sur les {{rows}} lignes de validation, la {{metric}} est passée de {{start}} à {{lastValue}} après le tour {{last}}, son plus bas étant {{bestValue}} au tour {{best}} : les tours ont continué d'aider, ou n'ont rien coûté."
           },
           "validationLabel": "L'erreur sur les lignes de validation, tour après tour",
-          "validationNote": "Ceci se lit sur les lignes de validation, jamais sur le jeu de test, et ne règle rien : le labo fait toujours ses tours jusqu'au bout. Mesuré sur les démos, l'erreur de validation la plus basse arrivait bien avant le dernier tour sur 17 runs sur 30.",
+          "validationNote": "Ceci se lit sur les lignes de validation, jamais sur le jeu de test, et ne règle rien : le labo fait ses tours jusqu'au bout, et c'est mesuré. Sur les démos, face à des lignes tenues à l'écart de tout, s'arrêter au point le plus bas de cette courbe n'a pas rendu les prédictions plus justes sur quatre démos sur six, et les a rendues moins justes de 4 points sur reviews ; cela n'a aidé que sur energy, où le boosting ne fait pas mieux que la moyenne. Ce qui s'améliore, ce sont les probabilités (log loss), pas les classes prédites. La courbe dit où l'erreur a tourné, pas que moins de tours prédiraient mieux.",
           "same_one": "{{count}} autre tour a posé les mêmes questions à cette ligne.",
           "same_other": "{{count}} autres tours ont posé les mêmes questions à cette ligne."
         },

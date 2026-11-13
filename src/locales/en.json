@@ -758,11 +758,11 @@
           },
           "validation": {
             "never": "On the {{rows}} validation rows, the {{metric}} was lowest before the first round ({{start}}) and is {{lastValue}} after round {{last}}: on these rows the boosting never beat its starting point.",
-            "early": "On the {{rows}} validation rows, the {{metric}} was lowest at round {{best}} ({{bestValue}}) and is {{lastValue}} after round {{last}}: the later rounds fitted the training rows and did not help these.",
+            "early": "On the {{rows}} validation rows, the {{metric}} was lowest at round {{best}} ({{bestValue}}) and is {{lastValue}} after round {{last}}: past that round this error grew again on these rows.",
             "late": "On the {{rows}} validation rows, the {{metric}} went from {{start}} to {{lastValue}} after round {{last}}, its lowest being {{bestValue}} at round {{best}}: the rounds kept helping, or cost nothing."
           },
           "validationLabel": "The error on the validation rows, round after round",
-          "validationNote": "This is read on the validation rows, never on the test set, and it sets nothing: the lab always runs its rounds to the end. Measured on the demos, the lowest validation error came well before the last round on 17 runs out of 30.",
+          "validationNote": "Read on the validation rows, never on the test set, and it sets nothing: the lab runs its rounds to the end, and that was measured. On the demos, against rows kept away from everything, stopping at the lowest point of this curve made the predictions no more accurate on four demos of six and 4 points less accurate on reviews; it helped only on energy, where the boosting does no better than the mean. What it improves is the probabilities (log loss), not the classes predicted. The curve says where the error turned, not that fewer rounds would predict better.",
           "same_one": "{{count}} other round asked this row the same questions.",
           "same_other": "{{count}} other rounds asked this row the same questions."
         },
