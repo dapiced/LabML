@@ -114,34 +114,70 @@ function build(
   };
 }
 
-export function checkConsistency(
+const cell = (values: Cell[], row: number): string | null =>
+  isMissing(values[row]) ? null : (values[row] as string).trim();
+
+/**
+ * V63: one rule applied to its columns WITHOUT asking whether it applies.
+ * `cells` holds the rule's columns in the rule's own order. A row is tested
+ * when every value it needs can be read; a missing endpoint is a MISSING
+ * value, already reported as one.
+ */
+export function applyConsistency(
+  rule: ConsistencyRule,
+  cells: Cell[][],
+): { failures: { row: number; example: string }[]; tested: number } {
+  const rows = cells[0]?.length ?? 0;
+  const failures: { row: number; example: string }[] = [];
+  let tested = 0;
+  if (rule === 'dateOrder') {
+    const [start, end] = cells;
+    for (let row = 0; row < rows; row++) {
+      const fromText = cell(start, row);
+      const toText = cell(end, row);
+      const from = fromText === null ? null : parseDate(fromText);
+      const to = toText === null ? null : parseDate(toText);
+      if (from === null || to === null) continue;
+      tested += 1;
+      if (to < from) failures.push({ row, example: `${String(start[row])} → ${String(end[row])}` });
+    }
+    return { failures, tested };
+  }
+  const [qty, unit, total] = cells;
+  for (let row = 0; row < rows; row++) {
+    const number = (values: Cell[]) => {
+      const text = cell(values, row);
+      return text === null ? null : parseNumber(text);
+    };
+    const q = number(qty);
+    const u = number(unit);
+    const t = number(total);
+    if (q === null || u === null || t === null) continue;
+    tested += 1;
+    const expected = q * u;
+    // Relative tolerance, because a rounded total is not a wrong total.
+    const slack = Math.max(Math.abs(expected) * PRODUCT_TOLERANCE, 0.01);
+    if (Math.abs(t - expected) > slack) failures.push({ row, example: `${q} × ${u} ≠ ${t}` });
+  }
+  return { failures, tested };
+}
+
+/**
+ * The rules that apply to a file, with the columns each one reads: names make
+ * a rule a candidate, the values decide. Exactly the guards `checkConsistency`
+ * has always used.
+ */
+export function applicableConsistency(
   header: readonly string[],
   columns: Cell[][],
-): ConsistencyFinding[] {
-  const found: ConsistencyFinding[] = [];
+): { rule: ConsistencyRule; columns: string[] }[] {
+  const rules: { rule: ConsistencyRule; columns: string[] }[] = [];
 
   const startAt = findColumn(header, START_HINTS);
   const endAt = findColumn(header, END_HINTS);
   if (startAt >= 0 && endAt >= 0 && startAt !== endAt) {
-    const start = asDates(columns[startAt] ?? []);
-    const end = asDates(columns[endAt] ?? []);
-    if (start && end) {
-      const failures: { row: number; example: string }[] = [];
-      for (let row = 0; row < start.length; row++) {
-        const from = start[row];
-        const to = end[row];
-        // A missing endpoint is a MISSING value, already reported as one:
-        // counting it here too would charge the same row twice.
-        if (from === null || to === null) continue;
-        if (to < from) {
-          failures.push({
-            row,
-            example: `${String(columns[startAt][row])} → ${String(columns[endAt][row])}`,
-          });
-        }
-      }
-      const finding = build('dateOrder', [header[startAt], header[endAt]], failures);
-      if (finding) found.push(finding);
+    if (asDates(columns[startAt] ?? []) && asDates(columns[endAt] ?? [])) {
+      rules.push({ rule: 'dateOrder', columns: [header[startAt], header[endAt]] });
     }
   }
 
@@ -149,39 +185,33 @@ export function checkConsistency(
   const unitAt = findColumn(header, UNIT_PRICE_HINTS);
   const totalAt = findColumn(header, TOTAL_HINTS);
   if (qtyAt >= 0 && unitAt >= 0 && totalAt >= 0 && totalAt !== unitAt) {
-    const qty = asNumbers(columns[qtyAt] ?? []);
-    const unit = asNumbers(columns[unitAt] ?? []);
-    const total = asNumbers(columns[totalAt] ?? []);
-    if (qty && unit && total) {
-      const failures: { row: number; example: string }[] = [];
-      let comparable = 0;
-      for (let row = 0; row < qty.length; row++) {
-        const q = qty[row];
-        const u = unit[row];
-        const t = total[row];
-        if (q === null || u === null || t === null) continue;
-        comparable += 1;
-        const expected = q * u;
-        // Relative tolerance, because a rounded total is not a wrong total.
-        const slack = Math.max(Math.abs(expected) * PRODUCT_TOLERANCE, 0.01);
-        if (Math.abs(t - expected) > slack) {
-          failures.push({ row, example: `${q} × ${u} ≠ ${t}` });
-        }
-      }
+    const cells = [columns[qtyAt] ?? [], columns[unitAt] ?? [], columns[totalAt] ?? []];
+    if (asNumbers(cells[0]) && asNumbers(cells[1]) && asNumbers(cells[2])) {
+      const { failures, tested } = applyConsistency('productMismatch', cells);
       // If most rows disagree, these three columns are not quantity, price and
       // total — the rule has misread the file and says nothing rather than
       // flagging every row of it.
-      if (comparable > 0 && failures.length / comparable <= 1 - APPLICABILITY) {
-        const finding = build(
-          'productMismatch',
-          [header[qtyAt], header[unitAt], header[totalAt]],
-          failures,
-        );
-        if (finding) found.push(finding);
+      if (tested > 0 && failures.length / tested <= 1 - APPLICABILITY) {
+        rules.push({
+          rule: 'productMismatch',
+          columns: [header[qtyAt], header[unitAt], header[totalAt]],
+        });
       }
     }
   }
+  return rules;
+}
 
+export function checkConsistency(
+  header: readonly string[],
+  columns: Cell[][],
+): ConsistencyFinding[] {
+  const found: ConsistencyFinding[] = [];
+  for (const { rule, columns: names } of applicableConsistency(header, columns)) {
+    const cells = names.map((name) => columns[header.indexOf(name)] ?? []);
+    const finding = build(rule, names, applyConsistency(rule, cells).failures);
+    if (finding) found.push(finding);
+  }
   return found.sort((a, b) => b.count - a.count);
 }
 

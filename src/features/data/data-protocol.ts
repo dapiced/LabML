@@ -2,6 +2,7 @@ import type { DatasetMeta } from '@/features/ml/data/types';
 import type { CleanStats, QualityReport, RecipeOptions } from '@/features/data/quality/types';
 import type { DriftReport } from '@/features/data/quality/drift';
 import type { JoinStats } from '@/features/data/quality/join';
+import type { ContractCheck } from '@/features/data/quality/contract';
 
 export type DataWorkerRequest =
   | { kind: 'parse-file'; file: File }
@@ -12,7 +13,11 @@ export type DataWorkerRequest =
   | { kind: 'parse-compare-url'; url: string; name: string }
   | { kind: 'parse-join-file'; file: File }
   | { kind: 'parse-join-url'; url: string; name: string }
-  | { kind: 'apply-join'; key: string };
+  | { kind: 'apply-join'; key: string }
+  /** V63: freeze what the loaded file looks like, as a contract to download. */
+  | { kind: 'export-contract' }
+  /** V63: read the loaded file against a contract, given as its JSON text. */
+  | { kind: 'check-contract'; text: string };
 
 export interface DataParsePayload {
   meta: DatasetMeta;
@@ -38,4 +43,14 @@ export type DataWorkerResponse =
   | { kind: 'join-ready'; name: string; rows: number; candidates: string[] }
   // The merge happened: the joined data IS the dataset now.
   | { kind: 'joined'; stats: JoinStats; payload: DataParsePayload }
+  | { kind: 'contract'; name: string; content: string }
+  | {
+      kind: 'contract-checked';
+      /** The file the contract was drawn from, and when. */
+      source: string;
+      createdAt: string;
+      payload: ContractCheck;
+    }
+  // Not an error of the page: the text given is not a contract, and says so.
+  | { kind: 'contract-refused' }
   | { kind: 'error'; message: string };

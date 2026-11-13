@@ -99,6 +99,7 @@ export function RecipePanel() {
             type="file"
             accept=".json,application/json"
             className="sr-only"
+            data-testid="recipe-input"
             aria-label={t('data.recipe.import')}
             onChange={(e) => {
               const file = e.target.files?.[0];

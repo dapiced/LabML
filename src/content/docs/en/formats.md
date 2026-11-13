@@ -35,13 +35,13 @@ silence.
 
 ## What can come out
 
-| Format         | Contents                                                                         |
-| -------------- | -------------------------------------------------------------------------------- |
-| CSV            | cleaned dataset, batch predictions, SQL result                                   |
-| Parquet        | SQL result, through `COPY … TO`                                                  |
-| JSON           | trained model with its manifest; cleaning recipe; reference profile              |
-| HTML           | run report, self-contained and readable offline                                  |
-| HTML, Markdown | model card of a run: what it is for, built on, worth, and what was never checked |
+| Format         | Contents                                                                           |
+| -------------- | ---------------------------------------------------------------------------------- |
+| CSV            | cleaned dataset, batch predictions, SQL result                                     |
+| Parquet        | SQL result, through `COPY … TO`                                                    |
+| JSON           | trained model with its manifest; cleaning recipe; reference profile; data contract |
+| HTML           | run report, self-contained and readable offline                                    |
+| HTML, Markdown | model card of a run: what it is for, built on, worth, and what was never checked   |
 
 ## The model manifest
 
@@ -141,6 +141,56 @@ a policy, neither column appears.
 A drift profile stores **bins and shares, never rows**. The profile of a payroll
 file describes the shape of the salary distribution and nobody's salary — which
 is what makes it safe to commit beside the code.
+
+## The data contract
+
+A contract is JSON exported from the Data Studio and read back by it:
+
+```json
+{
+  "format": "labml-data-contract/1",
+  "source": "cafe-sales.csv",
+  "createdAt": "2026-11-13T15:00:00.000Z",
+  "rowCount": 118,
+  "columns": [
+    {
+      "name": "quantity",
+      "type": "numeric",
+      "reading": "number",
+      "missingRatio": 0.017,
+      "profile": {
+        "kind": "numeric",
+        "column": "quantity",
+        "missingRatio": 0.017,
+        "mean": 2.55,
+        "edges": [1, 2, 3, 4],
+        "shares": [0.22, 0.28, 0.25, 0.17, 0.08]
+      }
+    }
+  ],
+  "rules": [
+    {
+      "kind": "validity",
+      "rule": "negativeAmount",
+      "columns": ["quantity"],
+      "bound": { "min": 0 },
+      "failures": 0,
+      "tested": 116
+    }
+  ]
+}
+```
+
+`reading` is what the contract requires of a column; `type` is the type the lab
+inferred, kept for the reader. `profile` is present where a distribution means
+something: a numeric, categorical or boolean column. Each rule keeps how often
+it failed at the reference, since a rule already failing there is not broken by
+the same rate.
+
+A file that is not a whole contract is **refused, not applied in part**: an
+unknown format, a column with no reading, an unknown rule, a rule naming a
+column the contract does not describe. A clause silently dropped would be a
+check silently skipped.
 
 ## The limits
 

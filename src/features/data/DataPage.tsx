@@ -6,6 +6,7 @@ import { Eyebrow } from '@/components/ui/eyebrow';
 import { DataDropZone } from '@/features/data/components/DataDropZone';
 import { DataExportBar } from '@/features/data/components/DataExportBar';
 import { DataPreview } from '@/features/data/components/DataPreview';
+import { ContractPanel } from '@/features/data/components/ContractPanel';
 import { DriftPanel } from '@/features/data/components/DriftPanel';
 import { JoinPanel } from '@/features/data/components/JoinPanel';
 import { SqlPanel } from '@/features/data/SqlPanel';
@@ -90,6 +91,7 @@ export function DataPage() {
           <RecipePanel />
           <DataExportBar />
           <DriftPanel />
+          <ContractPanel />
           <section className="pb-12">
             <SqlPanel />
           </section>

@@ -8,6 +8,7 @@ import Papa from 'papaparse';
 import { buildQualityReport } from '@/features/data/quality/checks';
 import { inferColumnType } from '@/features/ml/data/infer';
 import { applyRecipe } from '@/features/data/quality/clean';
+import { buildContract, checkContract, parseContract } from '@/features/data/quality/contract';
 import { buildDriftReport } from '@/features/data/quality/drift';
 import { joinDatasets } from '@/features/data/quality/join';
 import { DEFAULT_RECIPE } from '@/features/data/quality/types';
@@ -210,6 +211,28 @@ self.onmessage = async (event: MessageEvent<DataWorkerRequest>) => {
           stats: result.stats,
         },
       });
+    } else if (request.kind === 'export-contract') {
+      if (header.length === 0) throw new Error('no-data');
+      const base = sourceName.replace(/\.(csv|tsv|txt|xlsx|xls)$/i, '');
+      post({
+        kind: 'contract',
+        name: `${base}.contract.json`,
+        // The file as it was read, before the recipe: what a new export looks like.
+        content: JSON.stringify(buildContract(header, columns, sourceName), null, 2),
+      });
+    } else if (request.kind === 'check-contract') {
+      if (header.length === 0) throw new Error('no-data');
+      const contract = parseContract(request.text);
+      if (!contract) {
+        post({ kind: 'contract-refused' });
+      } else {
+        post({
+          kind: 'contract-checked',
+          source: contract.source,
+          createdAt: contract.createdAt,
+          payload: checkContract(contract, header, columns),
+        });
+      }
     } else if (request.kind === 'export-csv') {
       if (header.length === 0) throw new Error('no-data');
       const base = sourceName.replace(/\.(csv|tsv|txt|xlsx|xls)$/i, '');

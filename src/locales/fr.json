@@ -1150,6 +1150,59 @@
       "csv": "Télécharger le CSV nettoyé",
       "recipe": "Télécharger la recette (JSON)"
     },
+    "contract": {
+      "title": "Contrat de données",
+      "hint": "Un contrat fige ce à quoi ressemble {{name}} : ses colonnes et la façon dont elles se lisent, la part de valeurs manquantes, les règles qui s’appliquent et leur taux d’échec, la forme de chaque distribution. Le fichier suivant est ensuite lu contre lui, clause par clause. Rien n’est envoyé.",
+      "export": "Exporter le contrat de ce fichier",
+      "check": "Vérifier ce fichier contre un contrat…",
+      "checking": "Vérification…",
+      "refused": "{{name}} n’est pas un contrat de données LabML, ou n’en est pas un entier. Rien n’a été vérifié : un contrat qui ne peut pas énoncer toutes ses clauses n’est pas appliqué en partie.",
+      "verdict": {
+        "kept": "contrat respecté",
+        "warning": "respecté, avec avertissements",
+        "broken": "contrat rompu"
+      },
+      "outcome": {
+        "kept": "respectée",
+        "warning": "avertissement",
+        "broken": "rompue"
+      },
+      "summary": "{{file}} lu contre le contrat tiré de {{source}} le {{date}} : {{broken}} rompues, {{warning}} avertissements, {{kept}} respectées, sur {{rows}} lignes.",
+      "family": {
+        "schema": "Colonnes",
+        "missing": "Valeurs manquantes",
+        "rule": "Règles",
+        "distribution": "Distributions"
+      },
+      "reading": {
+        "number": "des nombres",
+        "date": "des dates",
+        "words": "des mots",
+        "empty": "rien"
+      },
+      "rule": {
+        "ageRange": "âge entre 0 et 120",
+        "futureDate": "aucune date dans le futur",
+        "percentRange": "pourcentage entre 0 et 100",
+        "negativeAmount": "aucun montant négatif",
+        "postcodeShape": "code postal de la forme attendue",
+        "dateOrder": "fin pas avant le début",
+        "productMismatch": "total égal à quantité × prix"
+      },
+      "clause": {
+        "absent": "« {{column}} » est absente de ce fichier.",
+        "reading": "« {{column}} » se lisait comme {{expected}} à la référence ; elle se lit comme {{found}} ici.",
+        "missing": "« {{column}} » : {{found}} % de manquants, contre {{reference}} % à la référence. L’écart est d’au moins {{lo}} points.",
+        "ruleBroken": "{{rule}}, sur « {{columns}} » : {{failures}} valeurs sur {{tested}} échouent, contre {{refFailures}} sur {{refTested}} à la référence.",
+        "ruleExamples": "Lignes {{rows}} : {{examples}}.",
+        "ruleUnreadable": "{{rule}}, sur « {{columns}} » : cette règle n’a rien trouvé qu’elle puisse lire dans ce fichier.",
+        "distribution": "« {{column}} » a bougé : PSI {{psi}}, au-dessus de son plafond de bruit de {{ceiling}}."
+      },
+      "keptCount_one": "{{count}} clause respectée.",
+      "keptCount_other": "{{count}} clauses respectées.",
+      "extra": "Colonnes de ce fichier que le contrat ne décrit pas, notées et non rompues : {{list}}.",
+      "note": "Un fait rompt une clause tout net : une colonne disparue, des valeurs qui ne se lisent plus comme des nombres, une valeur impossible. Une estimation ne compte qu’au-delà de son bruit : une part de valeurs manquantes, une distribution. Une distribution qui a bougé est un avertissement, pas une rupture. Le rapport de qualité ne remplace pas un contrat : ses règles décident si elles s’appliquent, et cessent de s’appliquer dès qu’un cinquième d’une colonne est impossible. Le contrat contient des noms, des bornes, des parts et des effectifs, jamais une ligne."
+    },
     "drift": {
       "title": "Contrôle de dérive",
       "hint": "Comparez un nouveau lot à {{name}} (la référence chargée) : différences de schéma, glissements de distribution (PSI), catégories nouvelles ou disparues. Le nouveau fichier est aussi analysé dans votre navigateur — rien n’est envoyé.",

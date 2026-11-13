@@ -104,6 +104,57 @@ fichiers de 120 et 400 lignes, et encore 21 à 52 % à 640 et 890 lignes ; le
 plafond en signale 0,5 à 9,5 %. Rien ne change pour un gros fichier, dont le
 plafond est bas.
 
+## Contrat de données
+
+Le rapport de qualité demande si un fichier a l'air propre. Un **contrat**
+demande s'il est encore le fichier sur lequel on s'était entendus : il fige ce à
+quoi ressemble un fichier de référence, et le fichier suivant est lu contre
+lui, clause par clause.
+
+Le rapport ne peut pas le faire seul, par construction. Ses règles décident si
+elles s'appliquent : une colonne nommée `age` qui contient 20 000 est une
+durée, pas une foule de personnes impossibles. Le prix de cette garde a été
+mesuré : dès qu'un cinquième d'une colonne est impossible, la règle cesse de
+s'appliquer et le rapport ne dit plus rien. Sur la démo titanic, 134 âges à
+999 sont signalés ; 178 ne le sont pas.
+
+| Clause             | Ce qu'elle exige                                                      | Quand elle ne tient pas |
+| ------------------ | --------------------------------------------------------------------- | ----------------------- |
+| Colonne présente   | chaque colonne de la référence est là                                 | **rompue**              |
+| Lecture            | les valeurs se lisent encore comme des nombres, des dates ou des mots | **rompue**              |
+| Valeurs manquantes | pas de part mesurablement plus élevée qu'à la référence               | **rompue**              |
+| Règle              | une règle qui s'appliquait à la référence passe encore                | **rompue**              |
+| Distribution       | la colonne n'a pas dépassé son plafond de bruit                       | **avertissement**       |
+
+Deux règles, écrites sur le panneau :
+
+- **un fait n'est pas une estimation.** Une colonne disparue, des valeurs qui
+  ne se lisent plus comme des nombres, une valeur impossible rompent une clause
+  tout net. Une part de valeurs manquantes et une distribution sont des
+  estimations : elles ne comptent qu'au-delà de leur bruit, à un niveau partagé
+  entre les colonnes ;
+- **bouger n'est pas rompre.** Une distribution qui a dérivé est un
+  avertissement.
+
+Une règle propre à la référence est rompue par son premier échec ; une règle
+qui y échouait déjà n'est rompue que par un taux mesurablement plus élevé. Une
+colonne que le contrat ne décrit pas est notée, pas rompue.
+
+La clause teste la façon dont les valeurs **se lisent**, pas le type que le
+labo infère. Le type inféré (catégoriel ou texte, nombre ou identifiant) dépend
+du nombre de valeurs distinctes qu'un fichier se trouve contenir : sur deux
+moitiés d'un même fichier de 118 lignes, il changeait pour une colonne dans une
+vérification sur deux.
+
+Mesuré sur deux moitiés d'un même fichier, où rien n'a changé : aucune clause
+rompue sur trois démos sur cinq, 2 % des vérifications sur titanic, et des
+avertissements de dérive dans 0,5 à 7,5 % des cas. La cinquième démo contient un
+prix négatif, et la moitié qui ne le contient pas donne un contrat que l'autre
+moitié rompt : un constat exact.
+
+Le contrat contient des noms, des bornes, des parts et des effectifs, jamais une
+ligne. Vérifier n'est pas nettoyer : rien n'est réparé, et rien n'est bloqué.
+
 ## Anomalies
 
 Isolation forest écrite à la main et seedée : 100 arbres, sous-échantillon 256,

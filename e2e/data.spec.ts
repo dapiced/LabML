@@ -77,7 +77,8 @@ test('recipes are replayable: derive dates, force a type, export, re-import', as
   await page.getByRole('checkbox', { name: /Expand date columns/ }).uncheck();
   await expect(page.getByTestId('recipe-result')).toContainText('112 rows · 8 columns');
 
-  await page.locator('input[accept*="json"]').setInputFiles(recipePath!);
+  // By its own id: the contract panel (V63) accepts JSON too.
+  await page.getByTestId('recipe-input').setInputFiles(recipePath!);
   await expect(page.getByTestId('recipe-imported')).toContainText('cafe-sales.csv');
   await expect(page.getByTestId('recipe-result')).toContainText('112 rows · 11 columns');
 });

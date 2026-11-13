@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { DEFAULT_RECIPE, parseRecipeFile } from '@/features/data/quality/types';
 import type { CleanStats, QualityReport, RecipeOptions } from '@/features/data/quality/types';
 import type { DriftReport } from '@/features/data/quality/drift';
+import type { ContractCheck } from '@/features/data/quality/contract';
 import type { JoinStats } from '@/features/data/quality/join';
 import type { DatasetMeta } from '@/features/ml/data/types';
 import type { DataWorkerRequest, DataWorkerResponse } from '@/features/data/data-protocol';
@@ -47,6 +48,13 @@ interface DataState {
   driftStatus: 'idle' | 'parsing' | 'done';
   driftReport: DriftReport | null;
   compareMeta: DatasetMeta | null;
+  /** V63: the loaded file read against a contract. `refused`: the text was not a contract. */
+  contractStatus: 'idle' | 'checking' | 'done' | 'refused';
+  contractCheck: ContractCheck | null;
+  /** The contract that was applied: its file name, and where and when it was drawn. */
+  contractInfo: { name: string; source: string; createdAt: string } | null;
+  exportContract: () => void;
+  checkContract: (file: File) => void;
   joinStatus: 'idle' | 'parsing' | 'ready' | 'done';
   /** Second file parsed and waiting for a key: name, rows, candidate keys. */
   joinCandidate: { name: string; rows: number; candidates: string[] } | null;
@@ -101,6 +109,9 @@ const initialData = {
   joinStatus: 'idle' as const,
   joinCandidate: null,
   joinStats: null,
+  contractStatus: 'idle' as const,
+  contractCheck: null,
+  contractInfo: null,
 };
 
 export const useDataStore = create<DataState>((set, get) => {
@@ -130,6 +141,26 @@ export const useDataStore = create<DataState>((set, get) => {
             cleanedPreview: message.payload.preview,
             stats: message.payload.stats,
           });
+        } else if (message.kind === 'contract') {
+          set({
+            exportedFile: {
+              name: message.name,
+              mime: 'application/json',
+              content: message.content,
+            },
+          });
+        } else if (message.kind === 'contract-checked') {
+          set({
+            contractStatus: 'done',
+            contractCheck: message.payload,
+            contractInfo: {
+              name: get().contractInfo?.name ?? '',
+              source: message.source,
+              createdAt: message.createdAt,
+            },
+          });
+        } else if (message.kind === 'contract-refused') {
+          set({ contractStatus: 'refused', contractCheck: null });
         } else if (message.kind === 'drift') {
           set({ driftStatus: 'done', driftReport: message.payload, compareMeta: message.meta });
         } else if (message.kind === 'join-ready') {
@@ -158,6 +189,10 @@ export const useDataStore = create<DataState>((set, get) => {
             driftStatus: 'idle',
             driftReport: null,
             compareMeta: null,
+            // A check read the file as it was before the join.
+            contractStatus: 'idle',
+            contractCheck: null,
+            contractInfo: null,
           });
           send({ kind: 'apply', options: get().options });
         } else if (message.kind === 'csv') {
@@ -271,6 +306,21 @@ export const useDataStore = create<DataState>((set, get) => {
 
     exportCsv() {
       send({ kind: 'export-csv', purpose: 'download' });
+    },
+
+    exportContract() {
+      if (get().status !== 'ready') return;
+      send({ kind: 'export-contract' });
+    },
+
+    checkContract(file) {
+      if (get().status !== 'ready') return;
+      set({
+        contractStatus: 'checking',
+        contractCheck: null,
+        contractInfo: { name: file.name, source: '', createdAt: '' },
+      });
+      void file.text().then((text) => send({ kind: 'check-contract', text }));
     },
 
     exportRecipe() {
