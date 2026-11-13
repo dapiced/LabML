@@ -213,7 +213,8 @@ _The index is built at compile time and queried in the tab — typing here sends
   no correct answer is lost.
 - **Analytical SQL** (`/data`): a real OLAP engine — DuckDB-Wasm, MIT, self-hosted and
   single-threaded — queries the loaded file in the browser, plus any CSV, **Parquet** or
-  JSON attached in the session. Results export to CSV or move to the ML Lab in one click;
+  JSON attached in the session. A result exports to CSV or Parquet, or moves to the ML Lab,
+  in one click, written by the engine itself: every row of it, not the 200 the console paints;
   SQL errors show DuckDB's own message. The engine is pinned to 1.28.0 for a measured
   reason: from 1.29 its binaries exceed Cloudflare's 25 MiB per-file limit.
 - **Data assistant** (`/ai/chat`): plain French or English questions about a loaded
@@ -288,7 +289,7 @@ Wikimedia Commons), the portrait is NASA, public domain._
   a doc page carries its whole article, in English until the app mounts); Lighthouse
   mobile ≈ 0.99 on `/ml` under real throttling. Heavy dependencies (Dexie, SheetJS, ONNX
   Runtime) load lazily.
-- **Quality bar.** 1320 unit tests and 134 Playwright end-to-end tests across five
+- **Quality bar.** 1330 unit tests and 134 Playwright end-to-end tests across five
   projects — desktop, a phone viewport in English and in French, dark mode, and
   Cloudflare Pages' own routing emulated by `wrangler pages dev` (a real 404, the security
   headers as served) — covering offline PWA, a fake webcam, a horizontal-overflow guard on
@@ -407,8 +408,11 @@ report, which had been calling small files drifted (V62), a data contract that
 requires of the next file what was found on a reference (V63), and a scikit-learn script
 that redoes a run outside the browser and measures its own gap (V64), a submission file
 for a competition (V65), a step-by-step replay of one row through the model (V66), early
-stopping for the boosting, measured and not built (V67), and counterfactuals (V68). No
-feature is proposed at the moment. The consented generative chat (V12) stays
+stopping for the boosting, measured and not built (V67), counterfactuals (V68), and a SQL
+result that reaches the lab whole instead of its first 200 rows (V69). Proposed, none
+scheduled: nine items from a new reading of the repository, listed in PLAN.md (duplicate
+columns, a count of filled cells, ranking on probabilities, an honest forecast band, and
+others). The consented generative chat (V12) stays
 postponed by product decision. No wave starts without an explicit launch command. The full plan, delivery log and design decisions live in
 [PLAN.md](PLAN.md); [CHANGELOG.md](CHANGELOG.md) is extracted from it — one entry per
 wave, newest first — by `npm run changelog`, and a test fails when the two disagree.

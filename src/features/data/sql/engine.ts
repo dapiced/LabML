@@ -33,6 +33,13 @@ export interface SqlEngine {
    * leave the tab: the caller turns them into a download.
    */
   toParquet(sql: string): Promise<Uint8Array>;
+  /**
+   * V69: the WHOLE result of a query as CSV text, written by DuckDB itself.
+   * The table the console paints holds 200 rows; an export built from it
+   * carried 200 rows, whatever the query returned. A NULL is an empty cell
+   * here, as in any file, and not the mark the console shows for it.
+   */
+  toCsv(sql: string): Promise<string>;
   close(): Promise<void>;
 }
 
@@ -93,6 +100,16 @@ export async function openEngine(): Promise<SqlEngine> {
       } finally {
         // Registered files live in the Wasm heap: dropping it keeps a session
         // of repeated exports — failed ones included — from growing without bound.
+        await db.dropFile(name).catch(() => undefined);
+      }
+    },
+    async toCsv(sql) {
+      exports += 1;
+      const name = `export-${exports}.csv`;
+      try {
+        await connection.query(`COPY (${sql}) TO '${name}' (FORMAT CSV, HEADER)`);
+        return new TextDecoder().decode(await db.copyFileToBuffer(name));
+      } finally {
         await db.dropFile(name).catch(() => undefined);
       }
     },

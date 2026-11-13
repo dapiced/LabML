@@ -1386,9 +1386,14 @@
       "addFile": "Add a file (CSV, Parquet, JSON)",
       "rows": "{{total}} rows.",
       "rowsTruncated": "First {{shown}} rows shown out of {{total}}.",
-      "capNote": "The display is capped to stay responsive; the CSV export and the ML Lab handoff carry the rows shown. Add a LIMIT or a filter to frame the result.",
+      "capNote": "The display is capped to stay responsive. The exports and the ML Lab handoff are not: they carry all {{total}} rows, written by the engine itself.",
       "exportCsv": "Export as CSV",
-      "toLab": "Open in the ML Lab"
+      "toLab": "Open in the ML Lab",
+      "exportNote": "The exports and the ML Lab handoff are written by the engine itself: an empty value stays an empty cell.",
+      "exportParquet": "Export as Parquet",
+      "exporting": "Writing {{total}} rows…",
+      "exportFailed": "The result could not be exported ({{reason}}).",
+      "tooLarge": "This result has {{rows}} rows and {{columns}} columns: more cells than the {{budget}} the lab reads. Aggregate or filter the query, then export."
     }
   },
   "ai": {

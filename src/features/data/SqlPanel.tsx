@@ -7,7 +7,14 @@ import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { useDataStore } from '@/features/data/data-store';
 import { BUNDLE_BYTES, type SqlEngine } from '@/features/data/sql/engine';
-import { readerFor, tableNameFor, tableToCsv, type SqlTable } from '@/features/data/sql/table';
+import {
+  exportableQuery,
+  queryFileName,
+  readerFor,
+  tableNameFor,
+  type SqlTable,
+} from '@/features/data/sql/table';
+import { MAX_CELLS } from '@/features/ml/data/limits';
 import { ScrollRegion } from '@/components/ui/scroll-region';
 import { downloadFile } from '@/lib/download';
 
@@ -36,6 +43,11 @@ export function SqlPanel() {
   const [tables, setTables] = useState<string[]>([]);
   const [sql, setSql] = useState(`SELECT * FROM ${MAIN_VIEW} LIMIT 20`);
   const [result, setResult] = useState<SqlTable | null>(null);
+  // V69: the query behind the result on screen. An export runs THIS, not the
+  // text of the box, which may have been edited since.
+  const [resultSql, setResultSql] = useState('');
+  const [exporting, setExporting] = useState<'csv' | 'parquet' | 'lab' | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [queryError, setQueryError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
 
@@ -129,7 +141,9 @@ export function SqlPanel() {
     setRunning(true);
     setQueryError(null);
     try {
+      setExportError(null);
       setResult(await engine.run(sql, DISPLAY_CAP));
+      setResultSql(sql);
     } catch (error) {
       // DuckDB's own message names the line and the token — far more useful
       // than anything we could paraphrase.
@@ -140,16 +154,60 @@ export function SqlPanel() {
     }
   }, [sql]);
 
-  const download = useCallback(() => {
-    if (!result) return;
-    downloadFile('query.csv', tableToCsv(result), 'text/csv');
-  }, [result]);
-
-  const toLab = useCallback(() => {
-    if (!result) return;
-    sendSqlToLab('query.csv', tableToCsv(result));
-    void navigate('/ml');
-  }, [navigate, result, sendSqlToLab]);
+  /**
+   * V69: an export is the query, not the screen. The console paints 200 rows;
+   * the engine writes every row the query returns, under the lab's own cell
+   * budget (V54) so a result the lab would refuse is not built at all.
+   */
+  const exportResult = useCallback(
+    async (kind: 'csv' | 'parquet' | 'lab') => {
+      const engine = engineRef.current;
+      if (!engine || !result || exporting) return;
+      if (result.totalRows * result.columns.length > MAX_CELLS) {
+        setExportError(
+          t('data.sql.tooLarge', {
+            rows: result.totalRows.toLocaleString(lang),
+            columns: result.columns.length,
+            budget: MAX_CELLS.toLocaleString(lang),
+          }),
+        );
+        return;
+      }
+      setExporting(kind);
+      setExportError(null);
+      try {
+        const query = exportableQuery(resultSql);
+        if (kind === 'parquet') {
+          const bytes = await engine.toParquet(query);
+          downloadFile(
+            queryFileName(resultSql, 'parquet'),
+            bytes as BlobPart,
+            'application/vnd.apache.parquet',
+          );
+          return;
+        }
+        const csv = await engine.toCsv(query);
+        const name = queryFileName(resultSql, 'csv');
+        if (kind === 'csv') {
+          downloadFile(name, csv, 'text/csv');
+        } else if (mountedRef.current) {
+          sendSqlToLab(name, csv);
+          void navigate('/ml');
+        }
+      } catch (error) {
+        if (mountedRef.current) {
+          setExportError(
+            t('data.sql.exportFailed', {
+              reason: error instanceof Error ? error.message : String(error),
+            }),
+          );
+        }
+      } finally {
+        if (mountedRef.current) setExporting(null);
+      }
+    },
+    [exporting, lang, navigate, result, resultSql, sendSqlToLab, t],
+  );
 
   return (
     <Card className="flex flex-col gap-4" data-testid="sql-panel">
@@ -261,15 +319,50 @@ export function SqlPanel() {
                   </tbody>
                 </table>
               </ScrollRegion>
-              <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={download}>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={exporting !== null}
+                  onClick={() => void exportResult('csv')}
+                  data-testid="sql-export-csv"
+                >
                   {t('data.sql.exportCsv')}
                 </Button>
-                <Button variant="outline" size="sm" onClick={toLab} data-testid="sql-to-lab">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={exporting !== null}
+                  onClick={() => void exportResult('parquet')}
+                  data-testid="sql-export-parquet"
+                >
+                  {t('data.sql.exportParquet')}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={exporting !== null}
+                  onClick={() => void exportResult('lab')}
+                  data-testid="sql-to-lab"
+                >
                   {t('data.sql.toLab')}
                 </Button>
+                {exporting !== null && (
+                  <span className="text-xs text-muted" aria-live="polite">
+                    {t('data.sql.exporting', { total: result.totalRows.toLocaleString(lang) })}
+                  </span>
+                )}
               </div>
-              {result.truncated && <p className="text-xs text-muted">{t('data.sql.capNote')}</p>}
+              {exportError && (
+                <p className="text-xs text-[var(--copper)]" data-testid="sql-export-error">
+                  {exportError}
+                </p>
+              )}
+              <p className="text-xs text-muted" data-testid="sql-export-note">
+                {t(result.truncated ? 'data.sql.capNote' : 'data.sql.exportNote', {
+                  total: result.totalRows.toLocaleString(lang),
+                })}
+              </p>
             </div>
           )}
         </div>

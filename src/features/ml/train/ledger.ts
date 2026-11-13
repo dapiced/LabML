@@ -42,6 +42,7 @@
  * Pure functions only. The table lives in `projects/ledger-db.ts`.
  */
 import type { SplitChoice } from '@/features/ml/train/types';
+import { fingerprint } from '@/lib/fingerprint';
 
 /**
  * From this many distinct runs, the best test score seen carries a visible
@@ -112,16 +113,6 @@ export function testSetKey(
   const parts = [fileKey(dataset, target), dealt];
   if (seedDealsTheTest(split)) parts.push(String(seed));
   return parts.join('\u001f');
-}
-
-/** FNV-1a, 32 bits: enough to tell configurations apart, and it names no column. */
-function fingerprint(text: string): string {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) {
-    hash ^= text.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0).toString(16).padStart(8, '0');
 }
 
 /** What makes two runs on the same test set different: the columns and the weighting. */
