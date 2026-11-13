@@ -13,6 +13,11 @@ import type { Cell } from '@/features/ml/data/types';
 import type { MetricMap, ModelKey } from '@/features/ml/train/types';
 import { csvCell } from '@/lib/csv';
 import {
+  checkProduction,
+  type ProductionCheck,
+  type ProductionReference,
+} from '@/features/ml/train/production-check';
+import {
   applyMulticlassPolicy,
   evaluateMulticlassPolicy,
   type MulticlassDecisionMetrics,
@@ -20,6 +25,14 @@ import {
 } from '@/features/ml/train/multiclass-decision';
 
 const PREVIEW_ROWS = 8;
+
+/** V61: what a batch is read against, beyond the test metrics. */
+export interface ProductionContext {
+  /** Null when the export predates format 5, or the run cannot build one. */
+  reference: ProductionReference | null;
+  /** Test rows behind the reference metrics, for an export with no reference. */
+  testRows?: number | null;
+}
 
 export interface BatchScore {
   fileName: string;
@@ -38,6 +51,8 @@ export interface BatchScore {
   decisionSummary?: { rows: number; decided: number; abstained: number; coverage: number };
   /** Policy metrics on known labeled rows; absent when labels are unavailable. */
   decision?: MulticlassDecisionMetrics;
+  /** V61: the three production signals and their verdict. */
+  check?: ProductionCheck;
   preview: {
     predicted: string;
     actual?: string;
@@ -80,6 +95,7 @@ export function scoreBatch(
   header: string[],
   columns: Cell[][],
   decisionPolicy?: MulticlassDecisionPolicy,
+  production?: ProductionContext,
 ): BatchScore {
   const model = artifacts.models.get(modelKey);
   if (!model) throw new Error('model-not-found');
@@ -105,6 +121,7 @@ export function scoreBatch(
     fileName,
     header,
     columns,
+    production ?? { reference: null, testRows: artifacts.testY.length },
   );
 }
 
@@ -118,6 +135,7 @@ export function scoreRows(
   fileName: string,
   header: string[],
   columns: Cell[][],
+  production?: ProductionContext,
 ): BatchScore {
   const { model, classes, isClassification } = scorer;
 
@@ -154,11 +172,14 @@ export function scoreRows(
   let unknownLabels = 0;
   let metrics: MetricMap | undefined;
   const actuals: (string | null)[] = [];
+  const labelledAt: number[] = [];
+  let labelledTruth: number[] = [];
   if (hasTarget) {
     const classIndex = new Map(classes.map((name, i) => [name, i]));
     const subX: number[][] = [];
     const subY: number[] = [];
     for (let r = 0; r < rowCount; r++) {
+      labelledAt.push(-1);
       const raw = columns[targetAt!][r];
       actuals.push(isMissing(raw) ? null : (raw as string).trim());
       if (isMissing(raw)) continue;
@@ -171,18 +192,41 @@ export function scoreRows(
         }
         subX.push(X[r]);
         subY.push(encoded);
+        labelledAt[r] = r;
       } else {
         const parsed = parseNumber(value);
         if (parsed === null) continue;
         subX.push(X[r]);
         subY.push(parsed);
+        labelledAt[r] = r;
       }
     }
     labeledRows = subY.length;
+    labelledTruth = subY;
     if (labeledRows > 0) {
       metrics = scoreModel(model, subX, subY, isClassification, classes.length).metrics;
     }
   }
+
+  // V61: the batch read against what the model was exported with.
+  const check = production
+    ? checkProduction(production.reference, {
+        header: required,
+        columns: required.map((name) => columns[index.get(name)!]),
+        predictions,
+        ...(labelledTruth.length > 0 && {
+          labelled: {
+            predictions: labelledAt.filter((row) => row >= 0).map((row) => predictions[row]),
+            truth: labelledTruth,
+          },
+        }),
+        isClassification,
+        fallback: {
+          rows: production.testRows ?? null,
+          ...(referenceMetrics.accuracy !== undefined && { accuracy: referenceMetrics.accuracy }),
+        },
+      })
+    : undefined;
 
   const testMetrics = referenceMetrics;
   const policyDecisions =
@@ -259,6 +303,7 @@ export function scoreRows(
     testMetrics,
     ...(decisionSummary ? { decisionSummary } : {}),
     ...(decision ? { decision } : {}),
+    ...(check ? { check } : {}),
     preview,
     csv: lines.join('\n'),
   };

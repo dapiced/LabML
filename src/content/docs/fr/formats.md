@@ -52,7 +52,7 @@ contient la famille, ses paramètres appris, le pipeline complet (encodages,
 ```json
 {
   "app": "LabML",
-  "formatVersion": 4,
+  "formatVersion": 5,
   "model": "logistic",
   "task": "classification",
   "target": "survived",
@@ -70,13 +70,52 @@ contient la famille, ses paramètres appris, le pipeline complet (encodages,
 
 `app` et `formatVersion` sont vérifiés avant toute autre chose : un JSON qui
 n'est pas un export LabML est refusé par son nom (`not-labml`), pas par un
-plantage. Les versions 2, 3 et 4 se réimportent ; une version plus ancienne ou
+plantage. Les versions 2 à 5 se réimportent ; une version plus ancienne ou
 plus récente est refusée en la nommant (`unsupported-version:N`). Un manifeste
 incomplet est refusé (`bad-manifest`) plutôt que complété par des suppositions —
 un export auquel on ne peut pas se fier pour prédire ne doit pas prédire.
 
 `testMetrics` et `testRows` conservent le score de test du run qui a produit
 l'export : c'est la référence honnête à laquelle comparer un lot futur.
+
+### La référence de production
+
+Depuis le format 5, un export porte une clé `reference` : ce à quoi
+ressemblaient les colonnes et les réponses du modèle au moment de l'export,
+pour qu'un lot ultérieur puisse leur être comparé.
+
+```json
+{
+  "reference": {
+    "v": 1,
+    "rows": 570,
+    "columns": [
+      {
+        "kind": "numeric",
+        "column": "age",
+        "missingRatio": 0.2,
+        "mean": 29.6,
+        "edges": [14, 19, 22, 25, 28, 31, 36, 41, 50],
+        "shares": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+      },
+      { "kind": "categorical", "column": "sex", "missingRatio": 0, "shares": { "male": 0.65 } }
+    ],
+    "predictions": { "kind": "classes", "rows": 321, "shares": [0.62, 0.38] },
+    "performance": { "rows": 178, "accuracy": 0.82 }
+  }
+}
+```
+
+Elle contient des bornes de tranches, des parts et des effectifs, jamais une
+ligne. Les colonnes sont profilées sur les lignes d'entraînement ; les réponses
+sont lues sur les lignes que le modèle n'a pas vues à l'ajustement. Une
+régression garde les tranches de ses valeurs prédites, son erreur quadratique
+moyenne et la dispersion de ses erreurs au carré.
+
+Une référence incomplète est **écartée, pas fatale** : le modèle se charge sans
+elle, le panneau dit que le bloc n'a pas pu être lu, et un lot est alors
+vérifié sur ses seules étiquettes. Les exports des formats 2 à 4 n'en portent
+pas et se chargent comme avant.
 
 ### La politique de décision multiclasse
 
@@ -88,7 +127,7 @@ dans l'ordre de `classes` :
 ```
 
 Elle n'est acceptée que si les quatre conditions tiennent : `formatVersion` vaut
-4, la tâche est une classification, `classes` compte plus de deux entrées, et
+4 ou 5, la tâche est une classification, `classes` compte plus de deux entrées, et
 `thresholds` est un tableau de même longueur dont chaque valeur est un nombre
 fini entre 0 et 1. Sinon l'import est refusé (`bad-manifest`) — une règle de
 décision à moitié lisible est une règle de décision fausse.

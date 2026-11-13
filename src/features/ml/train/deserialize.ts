@@ -22,6 +22,7 @@ import type { TrainedModel } from '@/features/ml/train/models';
 import type { Cell } from '@/features/ml/data/types';
 import type { MetricMap, ModelKey } from '@/features/ml/train/types';
 import type { MulticlassDecisionPolicy } from '@/features/ml/train/multiclass-decision';
+import { parseReference, type ProductionReference } from '@/features/ml/train/production-check';
 
 export interface ImportedManifest {
   model: ModelKey;
@@ -37,6 +38,14 @@ export interface ImportedManifest {
   /** Source columns the pipeline needs on any file to score. */
   featureColumns: string[];
   decisionPolicy?: MulticlassDecisionPolicy;
+  /**
+   * V61: what the columns and the answers looked like at export. Absent on
+   * exports before format 5, and when the block in the file is not a complete
+   * reference: the model then loads without it, and says so.
+   */
+  reference?: ProductionReference;
+  /** V61: the file carried a reference block that could not be read. */
+  referenceRejected?: boolean;
 }
 
 export interface ImportedModel {
@@ -213,7 +222,8 @@ export function deserializeModel(text: string): ImportedModel {
   if (data.app !== 'LabML') throw new Error('not-labml');
   // v2 (v22) and v3 (v24, adds TF-IDF text specs) both carry a full pipeline
   // manifest, so both stay importable; v1 predates it and cannot score a CSV.
-  if (data.formatVersion !== 2 && data.formatVersion !== 3 && data.formatVersion !== 4) {
+  // v5 (V61) adds an optional production reference and changes nothing else.
+  if (![2, 3, 4, 5].includes(data.formatVersion as number)) {
     throw new Error(`unsupported-version:${String(data.formatVersion ?? '?')}`);
   }
   const parameters = data.parameters as { kind?: string } | undefined;
@@ -235,7 +245,7 @@ export function deserializeModel(text: string): ImportedModel {
     if (typeof rawPolicy !== 'object' || rawPolicy === null) throw new Error('bad-manifest');
     const thresholds = rawPolicy.thresholds;
     if (
-      data.formatVersion !== 4 ||
+      (data.formatVersion !== 4 && data.formatVersion !== 5) ||
       !isClassification ||
       classes.length <= 2 ||
       !Array.isArray(thresholds) ||
@@ -280,6 +290,10 @@ export function deserializeModel(text: string): ImportedModel {
     throw new Error('bad-manifest', { cause: error });
   }
 
+  // V61: a reference that cannot be trusted is dropped, not fatal. The model
+  // is whole without it; only the drift signals need it.
+  const reference = data.reference === undefined ? null : parseReference(data.reference);
+
   return {
     manifest: {
       model: data.model as ModelKey,
@@ -296,6 +310,8 @@ export function deserializeModel(text: string): ImportedModel {
       testMetrics: (data.testMetrics as MetricMap) ?? {},
       testRows: typeof data.testRows === 'number' ? data.testRows : null,
       featureColumns: [...new Set(specs.map((spec) => spec.name))],
+      ...(reference ? { reference } : {}),
+      ...(data.reference !== undefined && !reference ? { referenceRejected: true } : {}),
     },
     model,
     specs,

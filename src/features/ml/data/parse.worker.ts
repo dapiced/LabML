@@ -11,7 +11,7 @@ import { trainInParallel } from '@/features/ml/train/parallel-run';
 import { runSearch } from '@/features/ml/train/search';
 import { runExploration } from '@/features/ml/unsupervised/explore';
 import { runForecast } from '@/features/ml/timeseries/run';
-import { buildPredictionsCsv, serializeModel } from '@/features/ml/train/serialize';
+import { buildPredictionsCsv, referenceOf, serializeModel } from '@/features/ml/train/serialize';
 import { explainPrediction } from '@/features/ml/train/shapley';
 import { deserializeModel, type ImportedModel } from '@/features/ml/train/deserialize';
 import { scoreBatch, scoreRows } from '@/features/ml/train/score';
@@ -139,6 +139,11 @@ async function handleScoreBatch(
         batch.header,
         batch.cols,
         decisionPolicy,
+        // V61: a live run builds its reference on the spot, from its own rows.
+        {
+          reference: referenceOf(artifacts, model, columnsAsMap()),
+          testRows: artifacts.testY.length,
+        },
       ),
     });
   } catch (error) {
@@ -169,6 +174,11 @@ async function handleScoreImported(source: File | string, name: string) {
         name,
         batch.header,
         batch.cols,
+        // V61: the reference the export carried, or none for an older file.
+        {
+          reference: imported.manifest.reference ?? null,
+          testRows: imported.manifest.testRows,
+        },
       ),
     });
   } catch (error) {
@@ -372,6 +382,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
             rowCount,
           },
           request.decisionPolicy,
+          referenceOf(artifacts, request.model, columnsAsMap()),
         ),
       });
     } else if (request.kind === 'export-predictions') {

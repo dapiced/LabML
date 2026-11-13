@@ -464,7 +464,7 @@
         "downloadCsv": "Télécharger les prédictions (CSV)",
         "decisionCoverage": "Politique : {{decided}} décisions, {{abstained}} sans décision — couverture {{coverage}} %.",
         "noDecision": "aucune décision",
-        "note": "Une baisse par rapport au jeu de test est un signal, pas un bug : le monde a bougé. Vérifiez la dérive des entrées dans le Data Studio (PSI) pour voir quelles colonnes ont glissé."
+        "note": "Une baisse par rapport au jeu de test est un signal, pas un bug : le monde a bougé. La vérification en production ci-dessus dit quelles colonnes ont glissé, et si la baisse se distingue du tirage."
       },
       "threshold": {
         "title": "Seuil de décision & déséquilibre",
@@ -809,6 +809,46 @@
         "limitDrift": "Les chiffres décrivent des données semblables à celles de ce run. Ils cessent de valoir quand les nouvelles données s'en éloignent.",
         "reproduceTitle": "Reproduire",
         "reproduce": "Chargez {{name}}, prédisez « {{target}} » à partir des {{features}} colonnes listées plus haut, graine {{seed}}. Les mêmes entrées donnent les mêmes chiffres."
+      },
+      "production": {
+        "title": "Vérification en production",
+        "verdict": {
+          "stable": "Stable",
+          "watch": "Surveiller",
+          "retrain": "Réentraîner"
+        },
+        "why": {
+          "retrain": "Sur {{rows}} lignes étiquetées, le modèle est mesurablement moins bon que sur son jeu de test. C'est une perte, pas une alerte : réentraînez sur des données qui ressemblent à ce lot.",
+          "watchNoLabels": "Ce lot s'est éloigné de ce sur quoi le modèle a été entraîné, et rien ici ne dit si le modèle se trompe davantage : le fichier ne porte pas d'étiquettes utilisables. Étiquetez une partie de ce lot pour trancher.",
+          "watchHolds": "Ce lot s'est éloigné de ce sur quoi le modèle a été entraîné, et sur ses {{rows}} lignes étiquetées la performance n'a pas mesurablement baissé. Une dérive est une raison de regarder, pas une raison de réentraîner.",
+          "stableLabels": "Rien dans ce lot ne se distingue du tirage : ni ses colonnes, ni les réponses du modèle, ni la performance sur ses {{rows}} lignes étiquetées.",
+          "stableNoLabels": "Les colonnes et les réponses du modèle ressemblent à la référence. Le fichier ne porte pas d'étiquettes utilisables : la performance elle-même n'a pas été mesurée.",
+          "stableNoReference": "Sur {{rows}} lignes étiquetées, la performance n'a pas mesurablement baissé. Les colonnes et les réponses n'ont pas pu être lues : voir plus bas.",
+          "nothing": "Rien n'a pu être lu sur ce lot : pas de référence dans l'export, et pas d'étiquettes utilisables dans le fichier."
+        },
+        "noReference": "Cet export ne porte pas de référence (il a été écrit avant le format 5) : les colonnes et les réponses d'un lot ne peuvent pas lui être comparées. Exportez de nouveau le modèle depuis son run pour en obtenir une.",
+        "referenceRejected": "Le bloc de référence de ce fichier n'a pas pu être lu et a été écarté. Le modèle lui-même est entier : il score comme avant, et seules ses étiquettes peuvent dire s'il tient.",
+        "columnsTitle": "Colonnes",
+        "columnsNone": "Aucune des {{total}} colonnes utilisées par le modèle n'a dépassé son plafond de bruit.",
+        "columnsSome_one": "{{count}} des {{total}} colonnes utilisées par le modèle a dépassé son plafond de bruit :",
+        "columnsSome_other": "{{count}} des {{total}} colonnes utilisées par le modèle ont dépassé leur plafond de bruit :",
+        "columnLine": "{{column}} : PSI {{psi}}, plafond {{ceiling}}",
+        "columnMeans": " (moyenne {{from}} → {{to}})",
+        "answersTitle": "Réponses",
+        "answersDrift": "Le modèle ne répond plus comme avant : PSI {{psi}}, au-dessus de son plafond de {{ceiling}}.",
+        "answersNoise": "Le modèle répond comme avant : PSI {{psi}}, sous son plafond de {{ceiling}}.",
+        "performanceTitle": "Performance",
+        "perf": {
+          "noLabels": "Non mesurée : le fichier n'a pas de colonne cible, ou aucune ligne avec une étiquette utilisable.",
+          "tooFew": "Non mesurée : {{rows}} lignes étiquetées, et une erreur en demande au moins {{min}} pour avoir un intervalle.",
+          "noSpread": "{{rows}} lignes étiquetées, mais cet export ne porte pas ce qu'un intervalle demande. Les chiffres bruts sont dans le tableau ci-dessus.",
+          "accuracy": "Exactitude {{reference}} % sur le jeu de test, {{batch}} % sur ce lot : {{delta}} points, intervalle {{lo}} à {{hi}}.",
+          "rmse": "RMSE {{reference}} sur le jeu de test, {{batch}} sur ce lot. Différence des erreurs quadratiques moyennes : {{delta}}, intervalle {{lo}} à {{hi}}.",
+          "drop": "L'intervalle exclut zéro : la baisse est réelle.",
+          "gain": "L'intervalle exclut zéro : le modèle fait mieux ici.",
+          "noise": "L'intervalle contient zéro : l'écart est dans le bruit."
+        },
+        "method": "Un PSI se lit contre son propre plafond : la valeur sous laquelle il reste, 95 vérifications sur 100, quand le lot et la référence sont deux tirages des mêmes données à ces tailles. Les seuils fixes habituels (0,1 et 0,25) liraient un petit lot comme une dérive : sur les démos du labo, ils levaient une alerte forte sur 8 à 78 % des lots de 100 lignes où rien n'avait bougé."
       },
       "ledger": {
         "title": "Registre du jeu de test",

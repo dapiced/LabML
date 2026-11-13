@@ -35,8 +35,40 @@ Then LabML does not merely predict: it compares, and shows the same metrics as
 the leaderboard.
 
 This is the most useful production gesture — checking that a model still holds
-on data it has never seen. A clear gap against the test score is a drift
-signal, to investigate in the [Data Studio](/docs/reference-data).
+on data it has never seen. Whether a gap against the test score is a real drop
+or the draw of a small batch is what the production check below settles.
+
+## The production check
+
+Every scored batch is read against what the model was trained on, and the panel
+gives one verdict with its three signals.
+
+| Signal      | Question                                         | Needs                         |
+| ----------- | ------------------------------------------------ | ----------------------------- |
+| Columns     | do the inputs still look like the training rows? | nothing more                  |
+| Answers     | does the model still answer the way it did?      | nothing more                  |
+| Performance | is it wrong more often?                          | the target column in the file |
+
+| Verdict     | When                                                                                            |
+| ----------- | ----------------------------------------------------------------------------------------------- |
+| **Stable**  | nothing can be told from the draw                                                               |
+| **Watch**   | columns or answers moved, and the performance did not measurably drop, or could not be measured |
+| **Retrain** | on the labelled rows, the drop is outside its interval                                          |
+
+Two rules, stated on the panel:
+
+- **a drift is a reason to look, a measured drop is a reason to retrain.**
+  Without labels the verdict stops at « watch », and asks for labels;
+- **a drift counts only when it can be told from the draw.** Each PSI is read
+  against its own noise ceiling: the value it stays under, 95 checks in 100,
+  when the batch and the reference are two draws of the same data at these
+  sizes. The usual fixed thresholds (0.1 and 0.25) read a small batch as a
+  drift: on the lab's demos they raised a strong alert on 8 to 78 % of 100-row
+  batches in which nothing had moved, and on nearly all 30-row ones.
+
+A model re-imported from a file carries its reference with it (format 5). An
+older export has none: the panel says so, and checks the batch on its labels
+alone.
 
 ## The decision columns
 

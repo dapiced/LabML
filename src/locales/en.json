@@ -464,7 +464,7 @@
         "downloadCsv": "Download the predictions (CSV)",
         "decisionCoverage": "Policy: {{decided}} decisions, {{abstained}} with no decision — {{coverage}}% coverage.",
         "noDecision": "no decision",
-        "note": "A drop against the test set is a signal, not a bug: the world moved. Check the input drift in the Data Studio (PSI) to see which columns shifted."
+        "note": "A drop against the test set is a signal, not a bug: the world moved. The production check above says which columns shifted, and whether the drop can be told from the draw."
       },
       "threshold": {
         "title": "Decision threshold & imbalance",
@@ -809,6 +809,46 @@
         "limitDrift": "The figures describe data like the data of this run. They stop holding when new data drift away from it.",
         "reproduceTitle": "Reproduce",
         "reproduce": "Load {{name}}, predict « {{target}} » from the {{features}} columns listed above, seed {{seed}}. The same inputs give the same figures."
+      },
+      "production": {
+        "title": "Production check",
+        "verdict": {
+          "stable": "Stable",
+          "watch": "Watch",
+          "retrain": "Retrain"
+        },
+        "why": {
+          "retrain": "On {{rows}} labelled rows the model is measurably worse than on its test set. That is a loss, not a warning: retrain on data that looks like this batch.",
+          "watchNoLabels": "This batch has moved away from what the model was trained on, and nothing here says whether the model is wrong more often: the file carries no usable labels. Label part of this batch to settle it.",
+          "watchHolds": "This batch has moved away from what the model was trained on, and on its {{rows}} labelled rows the performance has not measurably dropped. A drift is a reason to look, not a reason to retrain.",
+          "stableLabels": "Nothing in this batch can be told from the draw: neither its columns, nor the model's answers, nor the performance on its {{rows}} labelled rows.",
+          "stableNoLabels": "The columns and the model's answers look like the reference. The file carries no usable labels, so the performance itself was not measured.",
+          "stableNoReference": "On {{rows}} labelled rows the performance has not measurably dropped. Columns and answers could not be read: see below.",
+          "nothing": "Nothing could be read on this batch: no reference in the export, and no usable labels in the file."
+        },
+        "noReference": "This export carries no reference (it was written before format 5): the columns and the answers of a batch cannot be read against it. Export the model again from its run to get one.",
+        "referenceRejected": "The reference block of this file could not be read and was set aside. The model itself is whole: it scores as before, and only its labels can say how it holds.",
+        "columnsTitle": "Columns",
+        "columnsNone": "None of the {{total}} columns the model uses has moved beyond its noise ceiling.",
+        "columnsSome_one": "{{count}} of the {{total}} columns the model uses has moved beyond its noise ceiling:",
+        "columnsSome_other": "{{count}} of the {{total}} columns the model uses have moved beyond their noise ceiling:",
+        "columnLine": "{{column}}: PSI {{psi}}, ceiling {{ceiling}}",
+        "columnMeans": " (mean {{from}} → {{to}})",
+        "answersTitle": "Answers",
+        "answersDrift": "The model no longer answers the way it did: PSI {{psi}}, above its ceiling of {{ceiling}}.",
+        "answersNoise": "The model answers the way it did: PSI {{psi}}, under its ceiling of {{ceiling}}.",
+        "performanceTitle": "Performance",
+        "perf": {
+          "noLabels": "Not measured: the file has no target column, or no row with a usable label.",
+          "tooFew": "Not measured: {{rows}} labelled rows, and an error needs at least {{min}} to have an interval.",
+          "noSpread": "{{rows}} labelled rows, but this export does not carry what an interval needs. The raw figures are in the table above.",
+          "accuracy": "Accuracy {{reference}} % on the test set, {{batch}} % on this batch: {{delta}} points, interval {{lo}} to {{hi}}.",
+          "rmse": "RMSE {{reference}} on the test set, {{batch}} on this batch. Difference of the mean squared errors: {{delta}}, interval {{lo}} to {{hi}}.",
+          "drop": "The interval excludes zero: the drop is real.",
+          "gain": "The interval excludes zero: the model does better here.",
+          "noise": "The interval contains zero: the difference is inside the noise."
+        },
+        "method": "A PSI is read against its own ceiling: the value it stays under, 95 checks in 100, when the batch and the reference are two draws of the same data at these sizes. The usual fixed thresholds (0.1 and 0.25) would read a small batch as a drift: on the lab's demos they raised a strong alert on 8 to 78 % of 100-row batches in which nothing had moved."
       },
       "ledger": {
         "title": "Test-set ledger",

@@ -36,8 +36,43 @@ Alors LabML ne se contente pas de prédire : il compare, et affiche les mêmes
 métriques que le classement.
 
 C'est le geste de production le plus utile — vérifier qu'un modèle tient encore
-sur des données qu'il n'a jamais vues. Un écart net avec le score de test est
-un signal de dérive, à instruire dans le [Data Studio](/docs/reference-data).
+sur des données qu'il n'a jamais vues. Savoir si un écart avec le score de test
+est une vraie baisse ou le tirage d'un petit lot, c'est ce que tranche la
+vérification en production ci-dessous.
+
+## La vérification en production
+
+Chaque lot scoré est comparé à ce sur quoi le modèle a été entraîné, et le
+panneau rend un verdict avec ses trois signaux.
+
+| Signal      | Question                                                         | Ce qu'il demande                 |
+| ----------- | ---------------------------------------------------------------- | -------------------------------- |
+| Colonnes    | les entrées ressemblent-elles encore aux lignes d'entraînement ? | rien de plus                     |
+| Réponses    | le modèle répond-il encore comme avant ?                         | rien de plus                     |
+| Performance | se trompe-t-il davantage ?                                       | la colonne cible dans le fichier |
+
+| Verdict         | Quand                                                                                                              |
+| --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **Stable**      | rien ne se distingue du tirage                                                                                     |
+| **Surveiller**  | des colonnes ou les réponses ont bougé, et la performance n'a pas mesurablement baissé, ou n'a pas pu être mesurée |
+| **Réentraîner** | sur les lignes étiquetées, la baisse sort de son intervalle                                                        |
+
+Deux règles, écrites sur le panneau :
+
+- **une dérive est une raison de regarder, une baisse mesurée est une raison de
+  réentraîner.** Sans étiquettes, le verdict s'arrête à « surveiller », et
+  demande des étiquettes ;
+- **une dérive ne compte que si elle se distingue du tirage.** Chaque PSI se
+  lit contre son propre plafond de bruit : la valeur sous laquelle il reste,
+  95 vérifications sur 100, quand le lot et la référence sont deux tirages des
+  mêmes données à ces tailles. Les seuils fixes habituels (0,1 et 0,25) lisent
+  un petit lot comme une dérive : sur les démos du labo, ils levaient une
+  alerte forte sur 8 à 78 % des lots de 100 lignes où rien n'avait bougé, et
+  sur presque tous ceux de 30 lignes.
+
+Un modèle réimporté depuis un fichier porte sa référence avec lui (format 5).
+Un export plus ancien n'en a pas : le panneau le dit, et vérifie le lot sur ses
+seules étiquettes.
 
 ## Les colonnes de décision
 

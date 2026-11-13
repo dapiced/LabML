@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/eyebrow';
+import { ProductionCheckView } from '@/features/ml/components/ProductionCheckView';
 import { useLabStore } from '@/features/ml/lab-store';
 import { METRIC_ROWS, metricDelta } from '@/features/ml/train/score-view';
 import { ScrollRegion } from '@/components/ui/scroll-region';
@@ -191,6 +192,8 @@ export function BatchScorePanel() {
               {result.rowCount > 4 ? ' · …' : ''}
             </span>
           </div>
+
+          {result.check && <ProductionCheckView check={result.check} />}
 
           <p className="text-xs text-muted">{t('ml.lab.batch.note')}</p>
         </div>
