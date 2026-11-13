@@ -306,6 +306,7 @@ export const useLabStore = create<LabState>((set, get) => {
         whatIf: null,
         explanation: null,
         replay: null,
+        counterfactual: null,
         batchStatus: 'idle',
         batchResult: null,
         batchError: null,
@@ -335,6 +336,12 @@ export const useLabStore = create<LabState>((set, get) => {
       const state = get();
       if (state.trainStatus !== 'done' || !state.insights) return;
       send({ kind: 'explain', model: state.insights.model, values });
+    },
+
+    requestCounterfactual(values, locked, target) {
+      const state = get();
+      if (state.trainStatus !== 'done' || !state.insights) return;
+      send({ kind: 'counterfactual', model: state.insights.model, values, locked, target });
     },
 
     requestReplay(values) {

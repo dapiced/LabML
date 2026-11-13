@@ -18,6 +18,7 @@ const RUN_DERIVED = new Set<WorkerResponse['kind']>([
   'what-if-result',
   'explanation',
   'replay-result',
+  'counterfactual-result',
   'tune-progress',
   'tune-complete',
   'tune-cancelled',

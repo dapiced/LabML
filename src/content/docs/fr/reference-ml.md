@@ -315,6 +315,17 @@ dernière étape est la prédiction affichée, et ses questions sont écrites da
 les unités du fichier. Voir
 [rejouer une prédiction](/docs/rejouer-une-prediction).
 
+## Ce qui changerait la réponse
+
+Sur une classification, le même panneau peut chercher un **contrefactuel** : le
+plus petit changement de la ligne, sur une ou deux colonnes, qui fait répondre
+une autre classe au modèle inspecté. Seules des valeurs observées dans les lignes
+d'entraînement sont essayées, les colonnes que vous verrouillez sont laissées
+telles quelles, et chaque changement vient avec deux lectures : la ligne modifiée
+ressemble-t-elle encore à une ligne d'entraînement, et combien des autres modèles
+entraînés suivent. Voir
+[chercher ce qui changerait une prédiction](/docs/chercher-un-contrefactuel).
+
 ## Exporter, importer, scorer
 
 Le modèle s'exporte en JSON avec son manifeste : famille, pipeline, versions.

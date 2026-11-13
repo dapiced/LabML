@@ -286,6 +286,16 @@ replay walks the model itself, so its last step is the prediction shown, and its
 questions are written in the units of the file. See
 [replay a prediction](/docs/rejouer-une-prediction).
 
+## What would change the answer
+
+On a classification, the same panel can look for a **counterfactual**: the
+smallest change of the row, one column or two, that makes the inspected model
+answer another class. Only values observed in the training rows are tried, the
+columns you lock are left alone, and each change comes with two readings: whether
+the changed row still looks like a training row, and how many of the other
+trained models follow. See
+[find what would change a prediction](/docs/chercher-un-contrefactuel).
+
 ## Export, import, score
 
 The model exports to JSON with its manifest: family, pipeline, versions. It
