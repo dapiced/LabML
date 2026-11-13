@@ -35,13 +35,14 @@ annoncée plutôt que tranchée en silence.
 
 ## Ce qui peut sortir
 
-| Format         | Contenu                                                                                              |
-| -------------- | ---------------------------------------------------------------------------------------------------- |
-| CSV            | dataset nettoyé, prédictions d'un lot, résultat SQL                                                  |
-| Parquet        | résultat SQL, via `COPY … TO`                                                                        |
-| JSON           | modèle entraîné avec son manifeste ; recette de nettoyage ; profil de référence ; contrat de données |
-| HTML           | rapport de run, autonome et lisible hors ligne                                                       |
-| HTML, Markdown | fiche de modèle d'un run : son usage, ses données, sa valeur, et ce qui n'a jamais été vérifié       |
+| Format         | Contenu                                                                                                      |
+| -------------- | ------------------------------------------------------------------------------------------------------------ |
+| CSV            | dataset nettoyé, prédictions d'un lot, résultat SQL                                                          |
+| Parquet        | résultat SQL, via `COPY … TO`                                                                                |
+| JSON           | modèle entraîné avec son manifeste ; recette de nettoyage ; profil de référence ; contrat de données         |
+| HTML           | rapport de run, autonome et lisible hors ligne                                                               |
+| HTML, Markdown | fiche de modèle d'un run : son usage, ses données, sa valeur, et ce qui n'a jamais été vérifié               |
+| Python         | une exécution en script scikit-learn : les lignes de chaque découpe, le prétraitement, chaque modèle traduit |
 
 ## Le manifeste de modèle
 

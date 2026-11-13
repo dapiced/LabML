@@ -19,6 +19,7 @@ import type { UncertaintyAnalysis } from '@/features/ml/train/uncertainty';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
 import type {
   InsightsPayload,
+  MetricMap,
   ModelKey,
   ModelResult,
   TrainConfig,
@@ -55,6 +56,13 @@ export type WorkerRequest =
       decisionPolicy?: MulticlassDecisionPolicy;
     }
   | { kind: 'export-predictions'; model: ModelKey }
+  /** V64: the run as a scikit-learn script. The store sends what the worker does not keep. */
+  | {
+      kind: 'export-python';
+      appVersion: string;
+      classWeighting: boolean;
+      models: { key: ModelKey; metrics: MetricMap; trainedRows?: number }[];
+    }
   | {
       kind: 'score-batch-file';
       file: File;
@@ -113,6 +121,7 @@ export type WorkerResponse =
   | { kind: 'forecast-result'; payload: ForecastPayload }
   | { kind: 'model-json'; model: ModelKey; json: string | null }
   | { kind: 'predictions-csv'; model: ModelKey; csv: string }
+  | { kind: 'python-script'; name: string; content: string }
   | { kind: 'batch-scored'; payload: BatchScore }
   // The current dataset rebuilt as CSV, for local persistence.
   | { kind: 'dataset-csv'; csv: string }

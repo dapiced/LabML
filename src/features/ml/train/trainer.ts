@@ -53,6 +53,8 @@ export interface TrainArtifacts {
    * the columns the model was fitted on. Absent on hand-built artifacts.
    */
   trainIndices?: number[];
+  /** V64: the rows held out for selection, so an export can name all three splits. */
+  validationIndices?: number[];
   classes: string[];
   isClassification: boolean;
   seed: number;
@@ -638,6 +640,7 @@ export async function runTraining(
       testY,
       testIndices: test,
       trainIndices: train,
+      validationIndices: validation,
       classes,
       isClassification,
       seed: config.seed,

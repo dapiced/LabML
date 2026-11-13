@@ -658,6 +658,8 @@
       "export": {
         "model": "Model (JSON)",
         "predictions": "Predictions (CSV)",
+        "python": "Python script (scikit-learn)",
+        "pythonNote": "The Python script redoes this run with scikit-learn: the same rows in each split and the same preprocessing, each model translated to its nearest estimator. It does not promise these figures; it prints them next to its own, with the gap.",
         "report": "Report (HTML)",
         "share": "Copy share link",
         "copied": "Link copied!",

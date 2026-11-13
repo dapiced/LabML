@@ -372,6 +372,11 @@ export function createResponseHandlers({
         },
       });
     },
+    'python-script': (message) => {
+      set({
+        exportedFile: { name: message.name, mime: 'text/x-python', content: message.content },
+      });
+    },
     error: (message) => {
       set({ status: 'error', error: message.message, ...initialTraining });
     },

@@ -37,6 +37,7 @@ const RUN_DERIVED = new Set<WorkerResponse['kind']>([
   'group-audit-result',
   'model-json',
   'predictions-csv',
+  'python-script',
 ]);
 
 /**
