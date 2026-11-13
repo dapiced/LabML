@@ -18,6 +18,7 @@ import type {
 import type { MulticlassDecisionPolicy } from '@/features/ml/train/multiclass-decision';
 import type { UncertaintyAnalysis } from '@/features/ml/train/uncertainty';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
+import type { GlassBoxPayload } from '@/features/ml/train/glass-box';
 import type {
   InsightsPayload,
   MetricMap,
@@ -41,6 +42,8 @@ export type WorkerRequest =
   | { kind: 'model-insights'; model: ModelKey }
   | { kind: 'what-if'; model: ModelKey; values: Record<string, Cell> }
   | { kind: 'explain'; model: ModelKey; values: Record<string, Cell> }
+  /** V66: the same row, replayed step by step through the inspected model. */
+  | { kind: 'replay'; model: ModelKey; values: Record<string, Cell> }
   | { kind: 'tune'; model: TunableKey; config: TrainConfig }
   | { kind: 'cancel-tune' }
   // v26: learning curve — retrain on growing seeded prefixes of the train split.
@@ -121,6 +124,7 @@ export type WorkerResponse =
   | { kind: 'insights'; payload: InsightsPayload }
   | { kind: 'what-if-result'; payload: WhatIfResult }
   | { kind: 'explanation'; payload: ShapleyExplanation }
+  | { kind: 'replay-result'; payload: GlassBoxPayload }
   | { kind: 'tune-progress'; done: number; total: number; bestCv: number | null }
   | { kind: 'tune-complete'; payload: TuneOutcome }
   | { kind: 'tune-cancelled' }

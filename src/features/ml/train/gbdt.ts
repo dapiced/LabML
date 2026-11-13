@@ -23,7 +23,7 @@ export const GBDT_DEFAULTS: GbdtParams = {
   maxBins: 32,
 };
 
-interface TreeNode {
+export interface GbdtNode {
   /** Feature index of the split; -1 for leaves. */
   feature: number;
   /** Rows whose bin ≤ threshold go left. */
@@ -34,7 +34,7 @@ interface TreeNode {
 }
 
 export interface GbdtTree {
-  nodes: TreeNode[];
+  nodes: GbdtNode[];
 }
 
 interface Binning {
@@ -62,7 +62,8 @@ function computeBinning(X: number[][], maxBins: number): Binning {
   return { edges };
 }
 
-function binValue(edges: number[], value: number): number {
+/** The bin a raw value falls in: the first edge at or above it. Exported for the replay (V66). */
+export function binValue(edges: number[], value: number): number {
   // Binary search: first edge ≥ value.
   let lo = 0;
   let hi = edges.length - 1;
@@ -90,7 +91,7 @@ function growTree(
   h: Float64Array,
   params: GbdtParams,
 ): GbdtTree {
-  const nodes: TreeNode[] = [];
+  const nodes: GbdtNode[] = [];
   const d = binning.edges.length;
 
   function leafValue(rows: number[]): number {

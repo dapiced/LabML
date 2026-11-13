@@ -37,7 +37,12 @@ const CASES: [string, WorkerResponse, Partial<LabState>][] = [
     { kind: 'model-start', key: 'tree', index: 2, total: 9 },
     { trainStatus: 'training', modelProgress: { key: 'tree', index: 2, total: 9 } },
   ],
-  ['what-if-result', { kind: 'what-if-result', payload }, { whatIf: payload, explanation: null }],
+  [
+    'what-if-result',
+    { kind: 'what-if-result', payload },
+    { whatIf: payload, explanation: null, replay: null },
+  ],
+  ['replay-result', { kind: 'replay-result', payload }, { replay: payload }],
   [
     'tune-progress',
     { kind: 'tune-progress', done: 3, total: 12, bestCv: 0.8 },

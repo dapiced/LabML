@@ -42,5 +42,6 @@ propose pas.
 
 ## Et ensuite ?
 
+- [Rejouer une prédiction](/docs/rejouer-une-prediction) pour lire ce que le modèle a fait sur une ligne.
 - [Comparer deux runs](/docs/comparer-deux-runs) pour mesurer un changement de variables.
 - [Les choix de méthode](/docs/methode) sur pourquoi la baseline vient d'abord.

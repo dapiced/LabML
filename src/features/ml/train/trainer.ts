@@ -55,6 +55,12 @@ export interface TrainArtifacts {
   trainIndices?: number[];
   /** V64: the rows held out for selection, so an export can name all three splits. */
   validationIndices?: number[];
+  /**
+   * V66: for a family fitted under its announced cap (V25), the original row
+   * index of each row it was fitted on. A family absent from here was fitted
+   * on `trainIndices`. The replay needs it to name a k-NN neighbour's row.
+   */
+  fitIndices?: Partial<Record<ModelKey, number[]>>;
   classes: string[];
   isClassification: boolean;
   seed: number;
@@ -464,6 +470,15 @@ export async function runTraining(
     return sampleOrder.slice(0, cap).sort((a, b) => a - b);
   };
 
+  // V66: which rows each capped family was fitted on, whoever fitted it (the
+  // helpers of V37 draw the same nested sample from the same seed).
+  const fitIndices: Partial<Record<ModelKey, number[]>> = {};
+  for (const [key, cap] of Object.entries(MODEL_TRAIN_CAPS) as [ModelKey, number][]) {
+    if (train.length > cap) {
+      fitIndices[key] = cappedTrainPositions(cap).map((position) => train[position]);
+    }
+  }
+
   // V36: class weights, only when asked for and only on classification.
   // Off by default — on a balanced target weighting changes nothing.
   const weights =
@@ -641,6 +656,7 @@ export async function runTraining(
       testIndices: test,
       trainIndices: train,
       validationIndices: validation,
+      fitIndices,
       classes,
       isClassification,
       seed: config.seed,

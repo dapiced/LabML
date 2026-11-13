@@ -305,6 +305,7 @@ export const useLabStore = create<LabState>((set, get) => {
         insights: null,
         whatIf: null,
         explanation: null,
+        replay: null,
         batchStatus: 'idle',
         batchResult: null,
         batchError: null,
@@ -334,6 +335,12 @@ export const useLabStore = create<LabState>((set, get) => {
       const state = get();
       if (state.trainStatus !== 'done' || !state.insights) return;
       send({ kind: 'explain', model: state.insights.model, values });
+    },
+
+    requestReplay(values) {
+      const state = get();
+      if (state.trainStatus !== 'done' || !state.insights) return;
+      send({ kind: 'replay', model: state.insights.model, values });
     },
 
     tune(model) {
