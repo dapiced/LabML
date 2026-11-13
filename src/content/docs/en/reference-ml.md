@@ -79,6 +79,49 @@ sensitivity to the test draw — **not** training variance, and the panel says s
 
 A wide interval is information, not a defect.
 
+## Has this test set been used too much?
+
+Inside one run, validation chooses the winner and the test set only measures
+it. Across runs nothing enforced that rule: train, read the test score, drop a
+column, train again, keep the better of the two, and the test set has just
+chosen. The score that survives is the luckier one.
+
+The **test-set ledger** counts, for the file and target you are working on, how
+many **distinct configurations** the current test set has scored. A
+configuration is a set of columns plus the class weighting. Training the same
+one again counts for nothing: the lab is deterministic, the numbers are the
+same, and reading a number twice chooses nothing.
+
+| Runs scored | What the panel says                                         |
+| ----------- | ----------------------------------------------------------- |
+| 1           | a measurement: nothing was chosen with it                   |
+| 2 to 4      | comparing is already choosing; the effect is small          |
+| 5 to 9      | **worn**: read the best score as optimistic                 |
+| 10 and more | **spent**: the test set no longer tells better from luckier |
+
+The two marks were measured, not taken from a formula. On the three demos, a
+user who keeps the best test score of 5 configurations sees it 0.2 to 0.8 times
+the split-to-split noise above what the same configuration gets on another
+split, and up to that noise itself from 10. On titanic that is +1.7 accuracy
+points at 5 runs. The closer the configurations really are, the more the best
+one is only the luckiest.
+
+From the worn mark the panel offers a **fresh split**: the next seed, a test
+set this file never had. Train once the configuration you settled on, and read
+that score. Three things to know:
+
+- a fresh split deals **the same rows** again. It is not new data, and the
+  panel counts how many splits the file has been dealt;
+- the offer waits for the worn mark on purpose: a split redrawn at will is one
+  more thing to shop with;
+- a **chronological** split has one test set, the newest rows. No other draw
+  exists, and the panel says that only newer data can replace it.
+
+The ledger is kept in this browser, apart from the runs: deleting a run does
+not un-read its test set. It stores a fingerprint of each configuration, never
+a column name or a row. The count as it stood joins the run, its report and the
+limits of its model card.
+
 ## Is the ranking real?
 
 On demand: 5 repetitions × 2 halves, ten fits per family, with a mean, a spread,

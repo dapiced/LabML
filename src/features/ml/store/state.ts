@@ -23,6 +23,7 @@ import type { TunableKey, TuneOutcome } from '@/features/ml/train/search';
 import type { LearningCurveOutcome } from '@/features/ml/train/learning-curve';
 import type { RobustRankResult } from '@/features/ml/train/robust';
 import type { RankingMetric, SplitChoice } from '@/features/ml/train/types';
+import type { LedgerEntry } from '@/features/ml/train/ledger';
 import type { ExplorationPayload } from '@/features/ml/unsupervised/explore';
 import type { ForecastPayload } from '@/features/ml/timeseries/run';
 import type { ShapleyExplanation } from '@/features/ml/train/shapley';
@@ -62,6 +63,13 @@ export interface LabState {
   overrides: Record<string, 'include' | 'exclude'>;
   /** V35: announced non-random split, chosen in the UI. Null = seeded random. */
   splitChoice: SplitChoice | null;
+  /**
+   * V60: the seed that deals the split. 42 until the user draws a fresh split
+   * because the test set is worn; a returning user resumes on the last one.
+   */
+  seed: number;
+  /** V60: every test-set reading recorded for this file and target, all splits. */
+  ledgerEntries: LedgerEntry[];
   /** V36: class weighting, off by default — a knob that does nothing is worse than none. */
   classWeighting: boolean;
   /** V36: which metric the leaderboard ranks on. Null = the task's default. */
@@ -153,6 +161,8 @@ export interface LabState {
   robustRank: () => void;
   cancelRobust: () => void;
   setSplitChoice: (choice: SplitChoice | null) => void;
+  /** V60: deal a test set this file and target never had. Resets the run. */
+  drawFreshSplit: () => void;
   setClassWeighting: (on: boolean) => void;
   setRankMetric: (metric: RankingMetric | null) => void;
   setThresholdClass: (index: number) => void;
@@ -220,6 +230,8 @@ export const initialTraining = {
 export const initialData = {
   status: 'idle' as LabStatus,
   splitChoice: null as SplitChoice | null,
+  seed: TRAIN_SEED,
+  ledgerEntries: [] as LedgerEntry[],
   classWeighting: false,
   rankMetric: null as RankingMetric | null,
   thresholdClass: 0,

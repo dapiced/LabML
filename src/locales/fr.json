@@ -155,7 +155,7 @@
       },
       "storage": {
         "title": "Ouvrez le stockage local",
-        "body": "Onglet Application → IndexedDB → labml. Vous y voyez exactement ce que vous avez choisi de garder : vos analyses passées, et vos jeux de données seulement si vous l'avez demandé. Le bouton « oublier » du Data Studio vide cette base sous vos yeux."
+        "body": "Onglet Application → IndexedDB → labml. Vous y voyez exactement ce que vous avez choisi de garder : vos analyses passées, le registre des jeux de test que ces analyses ont lus (des comptes et des empreintes, aucune ligne ni nom de colonne), et vos jeux de données seulement si vous l'avez demandé. Le bouton « oublier » du Data Studio vide cette base sous vos yeux."
       }
     },
     "figure": {
@@ -809,6 +809,25 @@
         "limitDrift": "Les chiffres décrivent des données semblables à celles de ce run. Ils cessent de valoir quand les nouvelles données s'en éloignent.",
         "reproduceTitle": "Reproduire",
         "reproduce": "Chargez {{name}}, prédisez « {{target}} » à partir des {{features}} colonnes listées plus haut, graine {{seed}}. Les mêmes entrées donnent les mêmes chiffres."
+      },
+      "ledger": {
+        "title": "Registre du jeu de test",
+        "badge_one": "{{count}} run noté",
+        "badge_other": "{{count}} runs distincts notés",
+        "splitBadge": "découpe {{splits}} de ce fichier · graine {{seed}}",
+        "first": "Ce jeu de test a noté une seule configuration de ce fichier. Son score est une mesure : rien n'a été choisi avec lui.",
+        "reused": "Ce jeu de test a noté {{reads}} configurations distinctes de ce fichier. Garder la meilleure, c'est choisir avec le jeu de test, et le score gardé est le plus chanceux. À ce compte, l'effet reste faible.",
+        "worn": "Ce jeu de test a noté {{reads}} configurations distinctes de ce fichier. Mesuré sur les démos du labo, le meilleur de 5 runs dépasse de 0,2 à 0,8 fois le bruit entre deux découpes ce que la même configuration obtient sur une autre découpe, et plus les runs se valent vraiment, plus le meilleur n'est que le plus chanceux. Lisez le meilleur score comme optimiste.",
+        "spent": "Ce jeu de test a noté {{reads}} configurations distinctes de ce fichier. Mesuré sur les démos du labo, à partir de 10 runs la chance contenue dans le meilleur score atteint le bruit entre deux découpes : ce jeu de test ne distingue plus une meilleure configuration d'une configuration plus chanceuse.",
+        "before": "Compté avant cet entraînement : le registre est tenu dans ce navigateur, et supprimer un run ne dé-lit pas son jeu de test.",
+        "redeal": "Une nouvelle découpe redistribue les mêmes lignes. Ce ne sont pas de nouvelles données : les configurations gardées ont été choisies sur des lignes qui retournent dans le paquet. Seules des lignes qu'aucun run n'a notées mesurent proprement un modèle.",
+        "fresh": "Tirer une nouvelle découpe (graine {{seed}})",
+        "freshHint": "Distribue un jeu de test que ce fichier n'a jamais eu, et efface le run en cours. Entraînez une seule fois la configuration retenue, et lisez ce score.",
+        "chronological": "Une découpe chronologique n'a qu'un jeu de test, les lignes les plus récentes : aucun autre tirage n'existe. Seules des données plus récentes peuvent le remplacer.",
+        "counted": "Un run compte quand ses colonnes ou sa pondération de classes diffèrent de tous les runs déjà notés sur cette découpe. Réentraîner la même configuration ne lit rien de nouveau. Le score d'un réglage d'hyperparamètres n'est pas compté.",
+        "runLine_one": "Registre du jeu de test : ce run était la première configuration notée par son jeu de test (découpe {{splits}} de ce fichier).",
+        "runLine_other": "Registre du jeu de test : ce run était la configuration distincte n° {{count}} notée par son jeu de test (découpe {{splits}} de ce fichier).",
+        "runWorn": "À partir de 5 runs distincts sur un même jeu de test, le meilleur score vu est optimiste : 0,2 à 0,8 fois le bruit entre deux découpes sur les démos du labo, et jusqu'à ce bruit lui-même à partir de 10."
       },
       "groupAudit": {
         "title": "Le modèle traite-t-il ces groupes différemment ?",

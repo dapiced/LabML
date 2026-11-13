@@ -5,6 +5,7 @@ import { GroupAuditPanel } from '@/features/ml/components/GroupAuditPanel';
 import { Leaderboard } from '@/features/ml/components/Leaderboard';
 import { BatchScorePanel } from '@/features/ml/components/BatchScorePanel';
 import { SegmentsPanel } from '@/features/ml/components/SegmentsPanel';
+import { TestLedgerPanel } from '@/features/ml/components/TestLedgerPanel';
 import { ThresholdPanel } from '@/features/ml/components/ThresholdPanel';
 import { MulticlassDecisionPanel } from '@/features/ml/components/MulticlassDecisionPanel';
 import { UncertaintyPanel } from '@/features/ml/components/UncertaintyPanel';
@@ -14,7 +15,7 @@ import { LearningCurvePanel } from '@/features/ml/components/LearningCurvePanel'
 import { TuningPanel } from '@/features/ml/components/TuningPanel';
 import { InsightsSection } from '@/features/ml/components/insights/InsightsSection';
 import { RobustRankPanel } from '@/features/ml/components/RobustRankPanel';
-import { TEST_RATIO, TRAIN_SEED, useLabStore } from '@/features/ml/lab-store';
+import { TEST_RATIO, useLabStore } from '@/features/ml/lab-store';
 import { VALIDATION_RATIO } from '@/features/ml/train/trainer';
 import type { SplitChoice } from '@/features/ml/train/types';
 
@@ -32,6 +33,7 @@ export function TrainPanel() {
   const classWeighting = useLabStore((s) => s.classWeighting);
   const setClassWeighting = useLabStore((s) => s.setClassWeighting);
   const summary = useLabStore((s) => s.summary);
+  const seed = useLabStore((s) => s.seed);
   if (!task) return null;
 
   // V35: the split is now three-way — validation is carved from the train
@@ -87,7 +89,7 @@ export function TrainPanel() {
           </Button>
         )}
         <span className="font-mono text-[0.68rem] text-muted">
-          {t('ml.lab.trainConfig', { seed: TRAIN_SEED, split: splitLabel })}
+          {t('ml.lab.trainConfig', { seed, split: splitLabel })}
         </span>
         {task.type !== 'regression' && trainStatus !== 'training' && (
           <label
@@ -139,6 +141,8 @@ export function TrainPanel() {
           </label>
         )}
       </div>
+
+      <TestLedgerPanel />
 
       <Leaderboard />
 

@@ -31,6 +31,7 @@ import { conformalLines } from '@/features/ml/train/conformal-analysis';
 import { noteText } from '@/features/ml/train/journal';
 import { bestResult, championGap } from '@/features/ml/train/ranking';
 import type { MetricMap, ModelKey } from '@/features/ml/train/types';
+import { ledgerLines } from '@/features/ml/train/ledger';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
@@ -451,7 +452,10 @@ export function buildModelCard(
   if ((summary.leakWarnings ?? []).length > 0) limits.push(say('limitLeak'));
   if (subjectKey === 'knn') limits.push(say('limitNotExportable'));
   if (!complete) limits.push(say('limitNoIntendedUse'));
-  limits.push(say('limitOneSplit', { seed: record.seed }), say('limitDrift'));
+  limits.push(say('limitOneSplit', { seed: record.seed }));
+  // V60: how many distinct runs the test set had scored when this one was.
+  for (const text of ledgerLines(record.ledger, t)) limits.push({ text });
+  limits.push(say('limitDrift'));
   sections.push({ id: 'limits', title: t('ml.lab.card.limitsTitle'), lines: limits });
 
   // 11. Reproduce

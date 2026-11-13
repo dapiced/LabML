@@ -254,6 +254,39 @@ describe('share link codec', () => {
     expect(decoded.insights.confusion).toEqual(record.insights.confusion);
   });
 
+  it('V60: carries the ledger counts, and drops a pair that is not two counts', async () => {
+    const record = { ...(await makeRecord()), ledger: { reads: 8, splits: 2 } };
+    expect(decodeShareFragment(encodeShareFragment(record))!.ledger).toEqual({
+      reads: 8,
+      splits: 2,
+    });
+    // Runs stored before V60 have none, and their links carry none.
+    expect(decodeShareFragment(encodeShareFragment(await makeRecord()))!.ledger).toBeUndefined();
+
+    const base = JSON.parse(JSON.stringify({ v: 2, ...record })) as Record<string, unknown>;
+    for (const forged of [{ reads: 'many', splits: 1 }, { reads: 0, splits: 1 }, { reads: 2 }, 7]) {
+      const fragment = compressToEncodedURIComponent(JSON.stringify({ ...base, ledger: forged }));
+      const decoded = decodeShareFragment(fragment);
+      // The run still opens: only the forged counts are left out.
+      expect(decoded).not.toBeNull();
+      expect(decoded!.ledger).toBeUndefined();
+    }
+  });
+
+  it('V60: the report says how many runs the test set had scored', async () => {
+    const t = ((key: string, options?: Record<string, unknown>) =>
+      `${key}${options ? ` ${JSON.stringify(options)}` : ''}`) as never;
+    const plain = buildReportHtml(await makeRecord(), t, 'en');
+    expect(plain).not.toContain('ml.lab.ledger');
+    const worn = buildReportHtml(
+      { ...(await makeRecord()), ledger: { reads: 9, splits: 1 } },
+      t,
+      'en',
+    );
+    expect(worn).toContain('ml.lab.ledger.runLine');
+    expect(worn).toContain('ml.lab.ledger.runWorn');
+  });
+
   it('rejects garbage fragments without throwing', () => {
     expect(decodeShareFragment('definitely-not-a-payload')).toBeNull();
     expect(decodeShareFragment('')).toBeNull();
