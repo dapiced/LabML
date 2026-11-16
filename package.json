@@ -52,7 +52,7 @@
     "ml-cart": "^2.1.1",
     "ml-random-forest": "^2.1.0",
     "onnxruntime-web": "^1.30.0",
-    "papaparse": "^5.7.0",
+    "papaparse": "^5.7.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-i18next": "^17.0.16",
