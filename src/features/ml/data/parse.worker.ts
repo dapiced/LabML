@@ -2,7 +2,11 @@
 import Papa from 'papaparse';
 import { auditGroups } from '@/features/ml/train/group-audit';
 import { profileColumn } from '@/features/ml/data/profile';
-import { analyzeTarget, baselineSuggestions } from '@/features/ml/data/suggest';
+import {
+  analyzeTarget,
+  baselineSuggestions,
+  redundancySuggestions,
+} from '@/features/ml/data/suggest';
 import { computeInsights, computeWhatIf } from '@/features/ml/train/insights';
 import { runLearningCurve } from '@/features/ml/train/learning-curve';
 import { robustRank } from '@/features/ml/train/robust';
@@ -86,6 +90,7 @@ function buildResult(name: string, bytes: number): ParseResultPayload {
     profiles,
     preview,
     suggestions: baselineSuggestions(profiles),
+    redundancies: redundancySuggestions(columnsAsMap(), profiles),
     ...(readFormat !== null && { readFormat }),
   };
 }

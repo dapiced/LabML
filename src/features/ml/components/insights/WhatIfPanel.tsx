@@ -22,6 +22,7 @@ export function WhatIfPanel() {
   const requestReplay = useLabStore((s) => s.requestReplay);
   const counterfactual = useLabStore((s) => s.counterfactual);
   const requestCounterfactual = useLabStore((s) => s.requestCounterfactual);
+  const redundancies = useLabStore((s) => s.redundancies);
 
   const featureProfiles = useMemo(
     () => (summary?.featureColumns ?? []).map((name) => profiles.find((p) => p.name === name)!),
@@ -53,6 +54,11 @@ export function WhatIfPanel() {
   }, [values, model, requestWhatIf]);
 
   if (!summary || !insights) return null;
+  // V70: twins among the columns this run was trained on.
+  const twins = redundancies.filter(
+    (pair) =>
+      summary.featureColumns.includes(pair.column) && summary.featureColumns.includes(pair.of),
+  );
   const classes = insights.classes ?? [];
   const isClassification = classes.length > 0;
 
@@ -274,6 +280,7 @@ export function WhatIfPanel() {
       {counterfactual && counterfactual.model === insights.model && (
         <CounterfactualView
           payload={counterfactual}
+          twins={twins}
           onApply={(changes) =>
             setValues((current) => {
               const next = { ...current };

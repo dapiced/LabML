@@ -42,13 +42,14 @@ export function createResponseHandlers({
       set({ rowsParsed: message.rows });
     },
     parsed: (message) => {
-      const { meta, profiles, preview, suggestions, readFormat } = message.payload;
+      const { meta, profiles, preview, suggestions, redundancies, readFormat } = message.payload;
       set({
         status: 'ready',
         meta,
         profiles,
         preview,
         baseline: suggestions,
+        redundancies: redundancies ?? [],
         readFormat: readFormat ?? null,
         rowsParsed: meta.rowCount,
       });

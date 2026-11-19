@@ -2,7 +2,12 @@ import { Crosshair } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { MiniDistribution } from '@/features/ml/components/MiniDistribution';
-import { effectiveExclusion, isTrainingBusy, useLabStore } from '@/features/ml/lab-store';
+import {
+  activeTwins,
+  effectiveExclusion,
+  isTrainingBusy,
+  useLabStore,
+} from '@/features/ml/lab-store';
 import type { ColumnProfile } from '@/features/ml/data/types';
 import { cn } from '@/lib/utils';
 
@@ -16,6 +21,7 @@ export function ColumnCard({ profile }: { profile: ColumnProfile }) {
   const baseline = useLabStore((s) => s.baseline);
   const leaks = useLabStore((s) => s.leaks);
   const overrides = useLabStore((s) => s.overrides);
+  const redundancies = useLabStore((s) => s.redundancies);
   const setTarget = useLabStore((s) => s.setTarget);
   const toggleColumn = useLabStore((s) => s.toggleColumn);
   // V47: same rule as the target picker — no edit while a run answers for it.
@@ -23,6 +29,7 @@ export function ColumnCard({ profile }: { profile: ColumnProfile }) {
 
   const isTarget = target === profile.name;
   const exclusion = effectiveExclusion({ baseline, leaks, overrides, target }, profile.name);
+  const twins = activeTwins({ baseline, leaks, overrides, target, redundancies }, profile.name);
   const missingPercent = profile.rowCount
     ? Math.round((profile.missingCount / profile.rowCount) * 100)
     : 0;
@@ -73,6 +80,15 @@ export function ColumnCard({ profile }: { profile: ColumnProfile }) {
           </span>
         )}
       </p>
+
+      {twins.length > 0 && (
+        <p className="text-[0.68rem] text-copper" data-testid={`redundant-${profile.name}`}>
+          {twins
+            .map((pair) => t(`ml.lab.redundant.${pair.relation}`, { column: pair.of }))
+            .join(' ')}{' '}
+          {t('ml.lab.redundant.keepOne')}
+        </p>
+      )}
 
       <div className="mt-auto flex items-center gap-2">
         {!isTarget && (

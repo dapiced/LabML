@@ -71,10 +71,14 @@ pas. Sur iris, environ la moitié des réponses restent signalées quoi qu'on
 essaie : ses quatre colonnes bougent ensemble, et en changer une seule fait sortir
 du nuage.
 
-Le labo ne sait pas non plus que deux colonnes disent la même chose. Sur titanic,
-`sex`, `who` et `adult_male` décrivent un seul fait ; changer `adult_male` seul
-décrit un passager qui ne peut pas exister. Verrouillez les colonnes qui en
-doublent une autre, ou mieux, retirez-les des variables.
+Deux colonnes qui disent la même chose sont l'autre façon de construire une
+ligne qui ne peut pas exister : changer `pclass` alors que `class` ne bouge pas.
+Mesuré sur titanic avec toutes les colonnes, **43 % des premières réponses
+changeaient une seule colonne d'une telle paire**. Depuis V70 le labo signale
+ces jumelles sur leurs cartes avant l'entraînement, et une réponse qui touche
+l'une sans l'autre le dit. Excluez l'une des deux et réentraînez : sur les mêmes
+lignes, plus aucune réponse ne le faisait. Ce que le signalement ne voit pas,
+c'est un fait réparti sur trois colonnes : `sex`, `age` et `who` ensemble.
 
 ## Seconde lecture : les autres modèles suivent-ils ?
 

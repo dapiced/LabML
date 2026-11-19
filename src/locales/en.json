@@ -301,6 +301,14 @@
         "leak": "target leak",
         "manual": "excluded"
       },
+      "redundant": {
+        "same": "Says the same thing as \"{{column}}\".",
+        "determined": "Can be read off \"{{column}}\".",
+        "keepOne": "Keeping both splits their weight between them; excluding one loses nothing.",
+        "summary_one": "{{count}} column says the same thing as another",
+        "summary_other": "{{count}} columns say the same thing as another",
+        "counterfactual": "\"{{column}}\" says the same thing as \"{{twin}}\", which this change leaves as it is: such a row cannot exist. Exclude one of the two and train again."
+      },
       "setTarget": "Set as target",
       "include": "Include",
       "exclude": "Exclude",

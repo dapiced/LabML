@@ -146,6 +146,42 @@ describe('CounterfactualView', () => {
     expect(screen.getByTestId('counterfactual-none')).toHaveTextContent('Every column is locked');
   });
 
+  it('says when a change touches one column of a pair of twins alone', () => {
+    const twins = [
+      { column: 'pclass', of: 'class', relation: 'same' as const },
+      { column: 'class', of: 'pclass', relation: 'same' as const },
+    ];
+    const { unmount } = render(
+      <CounterfactualView payload={payload()} onApply={() => undefined} twins={twins} />,
+    );
+    expect(screen.getAllByTestId('counterfactual-twin')).toHaveLength(1);
+    expect(screen.getByTestId('counterfactual-twin')).toHaveTextContent(
+      '"pclass" says the same thing as "class", which this change leaves as it is: such a row cannot exist.',
+    );
+    unmount();
+    // Both twins changed together: nothing to say.
+    render(
+      <CounterfactualView
+        payload={payload({
+          found: [
+            {
+              changes: [
+                { column: 'pclass', from: '3', to: '1' },
+                { column: 'class', from: 'Third', to: 'First' },
+              ],
+              prediction: 1,
+              distance: 2,
+              followed: { by: 0, of: 0 },
+            },
+          ],
+        })}
+        onApply={() => undefined}
+        twins={twins}
+      />,
+    );
+    expect(screen.queryByTestId('counterfactual-twin')).toBeNull();
+  });
+
   it('speaks French', async () => {
     await i18n.changeLanguage('fr');
     render(<CounterfactualView payload={payload()} onApply={() => undefined} />);

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { MAX_FIELD_LENGTH } from '@/features/ml/projects/model-card';
 import type { RunArtifacts } from '@/features/ml/projects/types';
-import type { ExclusionReason } from '@/features/ml/data/types';
+import type { ColumnRedundancy, ExclusionReason } from '@/features/ml/data/types';
 import type { WorkerRequest, WorkerResponse } from '@/features/ml/worker-protocol';
 import { evaluateMulticlassPolicy } from '@/features/ml/train/multiclass-decision';
 import {
@@ -650,6 +650,24 @@ export const useLabStore = create<LabState>((set, get) => {
  * Why a column is currently excluded: a manual choice, a baseline suggestion,
  * or a target-leak flag — null when the column is part of the training set.
  */
+/**
+ * V70: the twins of a column that are still in the training set with it. A
+ * pair stops being worth a flag once one of the two is excluded, or is the
+ * target (that case is a leak, and is flagged as one).
+ */
+export function activeTwins(
+  state: Pick<LabState, 'baseline' | 'leaks' | 'overrides' | 'target' | 'redundancies'>,
+  column: string,
+): ColumnRedundancy[] {
+  if (column === state.target || effectiveExclusion(state, column) !== null) return [];
+  return state.redundancies.filter(
+    (pair) =>
+      pair.column === column &&
+      pair.of !== state.target &&
+      effectiveExclusion(state, pair.of) === null,
+  );
+}
+
 export function effectiveExclusion(
   state: Pick<LabState, 'baseline' | 'leaks' | 'overrides' | 'target'>,
   column: string,

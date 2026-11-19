@@ -2,6 +2,7 @@ import { isMissing, parseNumber } from '@/features/ml/data/infer';
 import type {
   Cell,
   ColumnProfile,
+  ColumnRedundancy,
   ColumnSuggestion,
   TargetAnalysis,
   TaskInfo,
@@ -145,6 +146,152 @@ export function leakSuggestions(
     }
   }
   return suggestions;
+}
+
+/** A column counts as discrete, for the twin test, up to this many distinct values. */
+export const REDUNDANCY_MAX_VALUES = 50;
+/** And only when a value is seen this many times on average: fewer, and purity is luck. */
+export const REDUNDANCY_ROWS_PER_VALUE = 5;
+/** Rows where both columns hold a value, below which a pair is not judged. */
+export const REDUNDANCY_MIN_ROWS = 30;
+/** Rows read per pair: enough to judge, and a wide file stays quick to open. */
+export const REDUNDANCY_SAMPLE = 20_000;
+
+/** Columns compared at most, discrete ones first: the pairs grow as the square. */
+export const REDUNDANCY_MAX_COLUMNS = 80;
+
+/**
+ * Does every value of `from` go with one single value of `to`? Both columns
+ * are given as codes (-1 for a missing cell), read once per column, so a pair
+ * costs one pass over two integer arrays.
+ */
+function determines(from: Int32Array, to: Int32Array, fromValues: number): boolean {
+  const mapping = new Int32Array(fromValues).fill(-1);
+  for (let i = 0; i < from.length; i++) {
+    const key = from[i];
+    const value = to[i];
+    if (key < 0 || value < 0) continue;
+    if (mapping[key] === -1) mapping[key] = value;
+    else if (mapping[key] !== value) return false;
+  }
+  return true;
+}
+
+/**
+ * V70: pairs of columns that say the same thing, the class/pclass case. The
+ * functional-dependency test `leakSuggestions` runs from a column to the
+ * target, run here between columns, and for two continuous numbers the same
+ * near-perfect correlation.
+ *
+ * Target-independent, so it is computed when the file is read. It flags and
+ * excludes nothing: twins split the importance between them and let a
+ * counterfactual change one without the other (V68), but which one to keep is
+ * the user's call.
+ *
+ * Measured before the panel (PLAN.md, V70): on titanic it finds pclass/class,
+ * embarked/embark_town, adult_male from who, and the alive/survived leak, and
+ * nothing on the nine other demo files. Removing the twins moves no score
+ * (0.813 against 0.814 of mean accuracy over ten seeds): this is about reading
+ * a model, not about its performance.
+ */
+export function redundancySuggestions(
+  columns: Map<string, Cell[]>,
+  profiles: ColumnProfile[],
+): ColumnRedundancy[] {
+  const isDiscrete = (profile: ColumnProfile) =>
+    profile.cardinality <= REDUNDANCY_MAX_VALUES &&
+    profile.cardinality * REDUNDANCY_ROWS_PER_VALUE <= profile.rowCount - profile.missingCount;
+  const usable = profiles
+    .filter(
+      (profile) =>
+        profile.cardinality >= 2 &&
+        profile.type !== 'id' &&
+        profile.type !== 'text' &&
+        profile.type !== 'date' &&
+        columns.has(profile.name) &&
+        (isDiscrete(profile) || profile.type === 'numeric'),
+    )
+    .slice(0, REDUNDANCY_MAX_COLUMNS);
+
+  // Each column is read once: codes for a discrete one, numbers for the others.
+  const rows = columns.get(usable[0]?.name ?? '')?.length ?? 0;
+  const step = Math.max(1, Math.ceil(rows / REDUNDANCY_SAMPLE));
+  const read = usable.map((profile) => {
+    const cells = columns.get(profile.name)!;
+    const size = Math.ceil(rows / step);
+    if (isDiscrete(profile)) {
+      const codes = new Int32Array(size).fill(-1);
+      const known = new Map<string, number>();
+      for (let i = 0, at = 0; i < rows; i += step, at++) {
+        if (isMissing(cells[i])) continue;
+        const text = (cells[i] as string).trim();
+        let code = known.get(text);
+        if (code === undefined) {
+          code = known.size;
+          known.set(text, code);
+        }
+        codes[at] = code;
+      }
+      return { name: profile.name, codes, values: known.size, numbers: null };
+    }
+    const numbers = new Float64Array(size).fill(Number.NaN);
+    for (let i = 0, at = 0; i < rows; i += step, at++) {
+      if (isMissing(cells[i])) continue;
+      const value = parseNumber(cells[i] as string);
+      if (value !== null) numbers[at] = value;
+    }
+    return { name: profile.name, codes: null, values: 0, numbers };
+  });
+
+  const found: ColumnRedundancy[] = [];
+  for (let a = 0; a < read.length; a++) {
+    for (let b = a + 1; b < read.length; b++) {
+      const first = read[a];
+      const second = read[b];
+
+      if (first.codes && second.codes) {
+        let shared = 0;
+        const seenLeft = new Set<number>();
+        const seenRight = new Set<number>();
+        for (let i = 0; i < first.codes.length; i++) {
+          if (first.codes[i] < 0 || second.codes[i] < 0) continue;
+          shared += 1;
+          seenLeft.add(first.codes[i]);
+          seenRight.add(second.codes[i]);
+        }
+        // A column that is constant on the shared rows is determined by anything.
+        if (shared < REDUNDANCY_MIN_ROWS || seenLeft.size < 2 || seenRight.size < 2) continue;
+        const forward = determines(first.codes, second.codes, first.values);
+        const backward = determines(second.codes, first.codes, second.values);
+        if (forward && backward) {
+          found.push({ column: first.name, of: second.name, relation: 'same' });
+          found.push({ column: second.name, of: first.name, relation: 'same' });
+        } else if (forward) {
+          found.push({ column: second.name, of: first.name, relation: 'determined' });
+        } else if (backward) {
+          found.push({ column: first.name, of: second.name, relation: 'determined' });
+        }
+        continue;
+      }
+
+      if (first.numbers && second.numbers) {
+        const xs: number[] = [];
+        const ys: number[] = [];
+        for (let i = 0; i < first.numbers.length; i++) {
+          const x = first.numbers[i];
+          const y = second.numbers[i];
+          if (Number.isNaN(x) || Number.isNaN(y)) continue;
+          xs.push(x);
+          ys.push(y);
+        }
+        if (xs.length >= REDUNDANCY_MIN_ROWS && Math.abs(pearson(xs, ys)) >= LEAK_CORRELATION) {
+          found.push({ column: first.name, of: second.name, relation: 'same' });
+          found.push({ column: second.name, of: first.name, relation: 'same' });
+        }
+      }
+    }
+  }
+  return found;
 }
 
 export function analyzeTarget(

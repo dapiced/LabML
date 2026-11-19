@@ -44,6 +44,18 @@ export interface DatasetMeta {
 
 export type ExclusionReason = 'id' | 'constant' | 'nearEmpty' | 'leak' | 'unsupported';
 
+/**
+ * V70: two columns that carry the same information. Not an exclusion: the lab
+ * flags the pair and leaves both in, the user decides which one to keep.
+ * - `same`: each value of one goes with exactly one value of the other, both ways;
+ * - `determined`: `column` can be read off `of`, and not the other way round.
+ */
+export interface ColumnRedundancy {
+  column: string;
+  of: string;
+  relation: 'same' | 'determined';
+}
+
 export interface ColumnSuggestion {
   column: string;
   reason: ExclusionReason;
@@ -69,6 +81,8 @@ export interface ParseResultPayload {
   preview: Record<string, string>[];
   /** Columns suggested for exclusion independently of the target. */
   suggestions: ColumnSuggestion[];
+  /** V70: pairs of columns that say the same thing. Flagged, never excluded. */
+  redundancies?: ColumnRedundancy[];
   /**
    * V38: how the file was actually read — encoding, delimiter, and any column
    * rewritten from the French decimal form, each with the count that proved
