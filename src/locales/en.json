@@ -309,6 +309,22 @@
         "summary_other": "{{count}} columns say the same thing as another",
         "counterfactual": "\"{{column}}\" says the same thing as \"{{twin}}\", which this change leaves as it is: such a row cannot exist. Exclude one of the two and train again."
       },
+      "filled": {
+        "title": {
+          "run": "Cells the lab filled in before training",
+          "batch": "Cells the lab filled in before scoring this file"
+        },
+        "line": "{{column}}: {{what}} of {{rows}} ({{percent}} %).",
+        "empty_one": "{{cells}} cell was empty",
+        "empty_other": "{{cells}} cells were empty",
+        "unreadable_one": "{{cells}} cell could not be read as a number",
+        "unreadable_other": "{{cells}} cells could not be read as a number",
+        "both": "{{empty}} cells were empty and {{unreadable}} could not be read as a number,",
+        "filledWith": "Filled with \"{{value}}\".",
+        "leftEmpty": "Left with no word: a missing text is not filled.",
+        "mostly": "Most of what the models read in this column is that value, which nobody recorded.",
+        "note": "A missing number becomes the median of the training rows, a missing category the most frequent one. Nothing else is done to them, and this count is the whole of it."
+      },
       "setTarget": "Set as target",
       "include": "Include",
       "exclude": "Exclude",
@@ -949,6 +965,7 @@
         "limitImbalanced": "The classes are imbalanced ({{share}} % in the largest): accuracy flatters, read recall and the precision-recall curve.",
         "limitNoValidation": "There was no validation split, so the model was chosen on the rows that measure it.",
         "limitLeak": "A column predicts the target almost alone. Until that is explained, treat the score as a symptom, not a result.",
+        "limitFilled": "More than half of these columns was filled in by the lab, not recorded: {{columns}}. Read their importance and their effect as those of a mostly constant column.",
         "limitNotExportable": "This model family cannot be exported: it has to be retrained to be used elsewhere.",
         "limitNoIntendedUse": "No intended use is stated, so no fitness for a purpose is claimed.",
         "limitOneSplit": "Every figure comes from one split of the data, drawn with seed {{seed}}. Another draw would give other figures.",

@@ -1,3 +1,4 @@
+import type { FilledColumn } from '@/features/ml/train/pipeline';
 import type { TaskInfo, TaskType } from '@/features/ml/data/types';
 import type { RunNote } from '@/features/ml/train/journal';
 
@@ -170,6 +171,11 @@ export interface TrainSummary {
    * warning, never as a victory.
    */
   leakWarnings?: { column: string; score: number }[];
+  /**
+   * V71: the columns in which the encoder filled cells, over every row of the
+   * run. Absent when nothing was filled, and on runs stored before V71.
+   */
+  filled?: FilledColumn[];
   /**
    * V55: what the run fell back from (an ensemble that could not be built, a
    * helper worker that gave up). Absent when nothing did, and on runs stored

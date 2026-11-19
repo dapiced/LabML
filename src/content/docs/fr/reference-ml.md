@@ -75,6 +75,28 @@ prédictions. Une classe absente des deux ne compte pas comme un zéro ; une
 classe prédite mais jamais vraie compte, parce que ces prédictions sont toutes
 fausses.
 
+## Ce qui tient lieu d'une cellule manquante
+
+Un modèle ne sait pas lire une cellule vide. Avant l'entraînement, un nombre
+manquant ou illisible devient la **médiane** des lignes d'entraînement, une
+catégorie manquante la **plus fréquente**, et un texte manquant reste sans aucun
+mot. Les valeurs de remplissage sont ajustées sur les seules lignes
+d'entraînement.
+
+Depuis V71, c'est compté. Sous le classement, dans le rapport et dans la fiche de
+modèle, chaque colonne remplie dit combien de cellules étaient vides, combien
+contenaient quelque chose d'illisible comme nombre (plus souvent un problème de
+lecture qu'un trou), et ce qui les a remplacées. Un fichier scoré dit la même
+chose pour ses propres lignes. Les marqueurs habituels d'une valeur manquante
+(`NA`, `n/a` et semblables) comptent comme vides.
+
+Une colonne remplie à plus de **la moitié** est dite « surtout sa valeur de
+remplissage ». C'est une règle de lecture, pas un seuil tiré des scores : sur
+titanic, `deck` est vide à 77 %, et la garder, la retirer ou la recoder en
+connu/inconnu donne 0,813, 0,818 et 0,817 d'exactitude moyenne sur dix découpes,
+ce qui est du bruit. Ce qui change, c'est la lecture de son importance : celle
+d'une colonne presque constante.
+
 ## Le journal du run
 
 Certaines étapes d'un run sont facultatives : l'ensemble est optionnel, les

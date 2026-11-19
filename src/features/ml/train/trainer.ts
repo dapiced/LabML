@@ -2,7 +2,7 @@ import { isMissing, parseNumber } from '@/features/ml/data/infer';
 import { detectTask } from '@/features/ml/data/suggest';
 import { accuracy, logLoss, macroPrf, mae, r2, rmse, rocAuc } from '@/features/ml/train/metrics';
 import { MODEL_TRAIN_CAPS, modelZoo, type TrainedModel } from '@/features/ml/train/models';
-import { fitPipeline, splitIndices, usableRows } from '@/features/ml/train/pipeline';
+import { countFilled, fitPipeline, splitIndices, usableRows } from '@/features/ml/train/pipeline';
 import { mulberry32, nestedSampleOrder, shuffleInPlace } from '@/features/ml/train/random';
 import { leakScan } from '@/features/ml/train/leakage';
 import {
@@ -446,6 +446,12 @@ export async function runTraining(
   // V35: the predictive leak scan — a lone column reading the target at 99%
   // is a warning, not a victory. Fitted on train, scored on validation, so
   // the detector cannot leak either; refused (empty) when validation is.
+  // V71: what the encoder fills, counted on every row the run uses.
+  const filled = countFilled(pipeline.specs, (column) => columns.get(column), [
+    ...train,
+    ...validation,
+    ...test,
+  ]);
   const leakWarnings = leakScan(
     columns,
     profiles,
@@ -638,6 +644,7 @@ export async function runTraining(
       ...(validation.length > 0 && { validationRows: validation.length }),
       ...(prepared.splitInfo !== undefined && { split: prepared.splitInfo }),
       ...(leakWarnings.length > 0 && { leakWarnings }),
+      ...(filled.length > 0 && { filled }),
       ...(isClassification && {
         majorityShare: majorityShare(trainY, classes.length),
         imbalanced: majorityShare(trainY, classes.length) >= IMBALANCE_THRESHOLD,

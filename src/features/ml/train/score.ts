@@ -8,7 +8,7 @@
 import { isMissing, parseNumber } from '@/features/ml/data/infer';
 import { scoreModel, type TrainArtifacts } from '@/features/ml/train/trainer';
 import type { TrainedModel } from '@/features/ml/train/models';
-import type { FittedPipeline } from '@/features/ml/train/pipeline';
+import { countFilled, type FilledColumn, type FittedPipeline } from '@/features/ml/train/pipeline';
 import type { Cell } from '@/features/ml/data/types';
 import type { MetricMap, ModelKey } from '@/features/ml/train/types';
 import { csvCell } from '@/lib/csv';
@@ -53,6 +53,8 @@ export interface BatchScore {
   decision?: MulticlassDecisionMetrics;
   /** V61: the three production signals and their verdict. */
   check?: ProductionCheck;
+  /** V71: the cells the encoder filled in this file, per column. */
+  filled?: FilledColumn[];
   preview: {
     predicted: string;
     actual?: string;
@@ -262,6 +264,9 @@ export function scoreRows(
       })
     : undefined;
 
+  // V71: a scored file is filled like the training rows were, and says so.
+  const filled = countFilled(scorer.specs, (column) => columns[index.get(column) ?? -1], null);
+
   const testMetrics = referenceMetrics;
   const policyDecisions =
     scorer.decisionPolicy && probabilities
@@ -338,6 +343,7 @@ export function scoreRows(
     ...(decisionSummary ? { decisionSummary } : {}),
     ...(decision ? { decision } : {}),
     ...(check ? { check } : {}),
+    ...(filled.length > 0 ? { filled } : {}),
     preview,
     csv: lines.join('\n'),
     header,

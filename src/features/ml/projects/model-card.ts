@@ -25,6 +25,7 @@
  * of it, the user's words and the column names alike. A share link is input
  * from a stranger.
  */
+import { filledLines, filledShare, MOSTLY_FILLED, readFilled } from '@/features/ml/train/filled';
 import { groupAuditLines } from '@/features/ml/train/group-audit';
 import type { RunRecord } from '@/features/ml/projects/types';
 import { conformalLines } from '@/features/ml/train/conformal-analysis';
@@ -221,6 +222,10 @@ export function buildModelCard(
   }
   for (const leak of summary.leakWarnings ?? []) {
     data.push(say('leak', { column: leak.column, score: pct(leak.score) }));
+  }
+  // V71: what the model read in the place of cells nobody filled.
+  for (const line of filledLines(readFilled(summary.filled), t, lang)) {
+    data.push({ text: line.text });
   }
   data.push(say('noRows'));
   sections.push({ id: 'data', title: t('ml.lab.card.dataTitle'), lines: data });
@@ -450,6 +455,14 @@ export function buildModelCard(
   }
   if (summary.validationRows === undefined) limits.push(say('limitNoValidation'));
   if ((summary.leakWarnings ?? []).length > 0) limits.push(say('limitLeak'));
+  const mostlyFilled = readFilled(summary.filled).filter(
+    (item) => filledShare(item) > MOSTLY_FILLED,
+  );
+  if (mostlyFilled.length > 0) {
+    limits.push(
+      say('limitFilled', { columns: mostlyFilled.map((item) => item.column).join(', ') }),
+    );
+  }
   if (subjectKey === 'knn') limits.push(say('limitNotExportable'));
   if (!complete) limits.push(say('limitNoIntendedUse'));
   limits.push(say('limitOneSplit', { seed: record.seed }));

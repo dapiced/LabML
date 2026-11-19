@@ -69,6 +69,25 @@ over the classes present in the true labels or in the predictions. A class
 absent from both does not count as a zero; a class that is predicted but never
 true does, because those predictions are all wrong.
 
+## What stands in for a missing cell
+
+A model cannot read an empty cell. Before training, a missing or unreadable
+number becomes the **median** of the training rows, a missing category the
+**most frequent** one, and a missing text is left with no word at all. The fill
+values are fitted on the training rows only.
+
+Since V71 this is counted. Under the leaderboard, in the report and in the model
+card, each filled column says how many cells were empty, how many held something
+that could not be read as a number (more often a reading problem than a gap),
+and what stood in for them. A scored file says the same for its own rows. The
+usual markers of a missing value (`NA`, `n/a`, and the like) count as empty.
+
+A column filled past **one half** is said to be mostly its fill value. That is a
+reading rule, not a threshold drawn from scores: on titanic, `deck` is 77 %
+empty, and keeping it, dropping it or recoding it as known/unknown gives 0.813,
+0.818 and 0.817 of mean accuracy over ten splits, which is noise. What changes
+is how to read its importance: it is that of a mostly constant column.
+
 ## The run journal
 
 Some steps of a run are best-effort: the ensemble is optional, the helper

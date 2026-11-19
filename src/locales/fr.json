@@ -309,6 +309,22 @@
         "summary_other": "{{count}} colonnes disent la même chose qu'une autre",
         "counterfactual": "« {{column}} » dit la même chose que « {{twin}} », que ce changement laisse telle quelle : une telle ligne ne peut pas exister. Excluez l'une des deux et réentraînez."
       },
+      "filled": {
+        "title": {
+          "run": "Cellules que le labo a remplies avant l'entraînement",
+          "batch": "Cellules que le labo a remplies avant de scorer ce fichier"
+        },
+        "line": "{{column}} : {{what}} sur {{rows}} ({{percent}} %).",
+        "empty_one": "{{cells}} cellule était vide",
+        "empty_other": "{{cells}} cellules étaient vides",
+        "unreadable_one": "{{cells}} cellule n'a pas pu être lue comme un nombre",
+        "unreadable_other": "{{cells}} cellules n'ont pas pu être lues comme un nombre",
+        "both": "{{empty}} cellules étaient vides et {{unreadable}} n'ont pas pu être lues comme un nombre,",
+        "filledWith": "Remplies par « {{value}} ».",
+        "leftEmpty": "Laissées sans mot : un texte manquant n'est pas rempli.",
+        "mostly": "L'essentiel de ce que les modèles lisent dans cette colonne est cette valeur, que personne n'a relevée.",
+        "note": "Un nombre manquant devient la médiane des lignes d'entraînement, une catégorie manquante la plus fréquente. Rien d'autre ne leur est fait, et ce décompte dit tout."
+      },
       "setTarget": "Définir comme cible",
       "include": "Réintégrer",
       "exclude": "Écarter",
@@ -949,6 +965,7 @@
         "limitImbalanced": "Les classes sont déséquilibrées ({{share}} % pour la plus fréquente) : l'exactitude flatte, lisez le rappel et la courbe précision-rappel.",
         "limitNoValidation": "Il n'y avait pas de jeu de validation : le modèle a été choisi sur les lignes qui le mesurent.",
         "limitLeak": "Une colonne prédit la cible presque seule. Tant que ce n'est pas expliqué, le score est un symptôme, pas un résultat.",
+        "limitFilled": "Plus de la moitié de ces colonnes a été remplie par le labo, pas relevée : {{columns}}. Lisez leur importance et leur effet comme ceux d'une colonne presque constante.",
         "limitNotExportable": "Cette famille de modèle ne s'exporte pas : il faut la réentraîner pour l'utiliser ailleurs.",
         "limitNoIntendedUse": "Aucun usage prévu n'est renseigné : aucune aptitude à un usage n'est donc affirmée.",
         "limitOneSplit": "Tous les chiffres viennent d'une seule découpe des données, tirée avec la graine {{seed}}. Un autre tirage donnerait d'autres chiffres.",

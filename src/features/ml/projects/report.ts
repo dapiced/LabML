@@ -1,4 +1,5 @@
 import { groupAuditLines, MAX_GROUPS } from '@/features/ml/train/group-audit';
+import { filledLines, readFilled } from '@/features/ml/train/filled';
 import { conformalLines } from '@/features/ml/train/conformal-analysis';
 import { noteText } from '@/features/ml/train/journal';
 import { METRIC_ROWS, metricDelta } from '@/features/ml/train/score-view';
@@ -483,6 +484,17 @@ export function buildReportHtml(record: RunRecord, t: Translate, lang: string): 
           .join(' ')} ${esc(t('ml.lab.leaderboard.leakAdvice'))}</p>`
       : '';
 
+  // V71: the cells the encoder filled. Column names and fill values can come
+  // from a share link: escaped like everything else here.
+  const filledNote = (() => {
+    const lines = filledLines(readFilled(summary.filled), t, lang);
+    return lines.length > 0
+      ? `<p class="warn">${esc(t('ml.lab.filled.title.run'))}</p><ul>${lines
+          .map((line) => `<li>${esc(line.text)}</li>`)
+          .join('')}</ul>`
+      : '';
+  })();
+
   // V55: what the run fell back from. `detail` can come from a share link, so
   // every sentence is escaped like the rest of this page.
   const notes = Array.isArray(summary.notes) ? summary.notes : [];
@@ -569,7 +581,7 @@ ${ledgerLines(record.ledger, t)
 ${leaderboardRows}
 </table>
 ${leakNote}
-${journalNote}
+${filledNote}${journalNote}
 ${championNote}
 ${sampledNote}
 ${confusion}
