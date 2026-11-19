@@ -10,7 +10,7 @@ import { TargetPicker } from '@/features/ml/components/TargetPicker';
 import { ExplorePanel } from '@/features/ml/components/ExplorePanel';
 import { ForecastPanel } from '@/features/ml/components/ForecastPanel';
 import { TrainPanel } from '@/features/ml/components/TrainPanel';
-import { effectiveExclusion, useLabStore } from '@/features/ml/lab-store';
+import { activeTwins, effectiveExclusion, useLabStore } from '@/features/ml/lab-store';
 import { ScrollRegion } from '@/components/ui/scroll-region';
 
 // Split out of LabSection so the whole post-load lab (training, insights,
@@ -23,6 +23,7 @@ export function DatasetView() {
   const baseline = useLabStore((s) => s.baseline);
   const leaks = useLabStore((s) => s.leaks);
   const overrides = useLabStore((s) => s.overrides);
+  const redundancies = useLabStore((s) => s.redundancies);
   const target = useLabStore((s) => s.target);
   const reset = useLabStore((s) => s.reset);
   if (!meta) return null;
@@ -31,6 +32,10 @@ export function DatasetView() {
     (p) => effectiveExclusion({ baseline, leaks, overrides, target }, p.name) !== null,
   ).length;
   const included = profiles.length - excludedCount - (target ? 1 : 0);
+  // V70: columns still in the training set next to a twin of theirs.
+  const twinCount = profiles.filter(
+    (p) => activeTwins({ baseline, leaks, overrides, target, redundancies }, p.name).length > 0,
+  ).length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -67,6 +72,11 @@ export function DatasetView() {
           <span className="text-xs text-muted">
             {t('ml.lab.includedSummary', { included, total: profiles.length })}
           </span>
+          {twinCount > 0 && (
+            <span className="text-xs text-copper" data-testid="redundant-summary">
+              {t('ml.lab.redundant.summary', { count: twinCount })}
+            </span>
+          )}
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {profiles.map((profile) => (

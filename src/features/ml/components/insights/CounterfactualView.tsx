@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import type { ColumnRedundancy } from '@/features/ml/data/types';
 import type { Change, CounterfactualPayload } from '@/features/ml/train/counterfactual';
 
 /**
@@ -10,9 +11,12 @@ import type { Change, CounterfactualPayload } from '@/features/ml/train/counterf
 export function CounterfactualView({
   payload,
   onApply,
+  twins = [],
 }: {
   payload: CounterfactualPayload;
   onApply: (changes: Change[]) => void;
+  /** V70: the pairs of columns still trained together that say the same thing. */
+  twins?: ColumnRedundancy[];
 }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.resolvedLanguage ?? 'en';
@@ -81,6 +85,26 @@ export function CounterfactualView({
                     </span>
                   )}
                 </span>
+                {item.changes
+                  .flatMap((change) =>
+                    twins.filter(
+                      (pair) =>
+                        pair.column === change.column &&
+                        !item.changes.some((other) => other.column === pair.of),
+                    ),
+                  )
+                  .map((pair) => (
+                    <span
+                      key={`${pair.column}:${pair.of}`}
+                      className="text-copper"
+                      data-testid="counterfactual-twin"
+                    >
+                      {t('ml.lab.redundant.counterfactual', {
+                        column: pair.column,
+                        twin: pair.of,
+                      })}
+                    </span>
+                  ))}
                 {item.far && (
                   <span className="text-copper" data-testid="counterfactual-far">
                     {t('ml.lab.counterfactual.far')}

@@ -33,6 +33,17 @@ et ses extrêmes. Choisir une cible déclenche la détection de tâche
 une colonne qui reflète presque parfaitement la cible est exclue
 automatiquement et nommée.
 
+Les **colonnes jumelles** sont signalées aussi, dès la lecture du fichier : deux
+colonnes en correspondance un pour un (`class` et `pclass`), ou une colonne qui
+se déduit d'une autre (`adult_male` de `who`). Contrairement à une fuite, une
+jumelle n'est **pas exclue** : sa carte le dit et vous laisse le choix. Des
+jumelles se partagent l'importance et les valeurs de Shapley, et laissent un
+contrefactuel changer l'une sans l'autre. Mesuré sur titanic sur dix découpes,
+les retirer ne déplace aucun score (0,813 contre 0,814 d'exactitude moyenne) :
+c'est une affaire de lecture du modèle, pas de performance. Le test est exact,
+sur des valeurs vues assez souvent pour en juger : il a trouvé les trois paires
+de titanic et rien sur les neuf autres fichiers de démonstration.
+
 Pendant un entraînement, et pendant tout calcul qui en dépend (recherche
 d'hyperparamètres, courbe d'apprentissage, classement robuste, scoring d'un
 lot), la cible et les colonnes sont **verrouillées**. Les changer à ce

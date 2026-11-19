@@ -65,10 +65,14 @@ the cloud of training rows, and flags the ones that do not. On iris about half
 the answers stay flagged whatever is tried: its four columns move together, and
 changing one alone leaves the cloud.
 
-The lab also does not know that two columns say the same thing. On titanic,
-`sex`, `who` and `adult_male` describe one fact; changing `adult_male` alone
-describes a passenger who cannot exist. Lock the columns that duplicate another,
-or better, leave them out of the features.
+Two columns that say the same thing are the other way to build a row that
+cannot exist: changing `pclass` while `class` stays put. Measured on titanic
+with every column in, **43 % of the first answers changed one column of such a
+pair alone**. Since V70 the lab flags these twins on their cards before
+training, and an answer that touches one without the other says so. Exclude one
+of the two and train again: on the same rows, none of the answers did it any
+more. What the flag does not see is a fact spread over three columns: `sex`,
+`age` and `who` together.
 
 ## Reading two: do the other models follow?
 

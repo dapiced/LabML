@@ -301,6 +301,14 @@
         "leak": "fuite de cible",
         "manual": "écartée"
       },
+      "redundant": {
+        "same": "Dit la même chose que « {{column}} ».",
+        "determined": "Se déduit de « {{column}} ».",
+        "keepOne": "Garder les deux partage leur poids entre elles ; en exclure une ne fait rien perdre.",
+        "summary_one": "{{count}} colonne dit la même chose qu'une autre",
+        "summary_other": "{{count}} colonnes disent la même chose qu'une autre",
+        "counterfactual": "« {{column}} » dit la même chose que « {{twin}} », que ce changement laisse telle quelle : une telle ligne ne peut pas exister. Excluez l'une des deux et réentraînez."
+      },
       "setTarget": "Définir comme cible",
       "include": "Réintégrer",
       "exclude": "Écarter",

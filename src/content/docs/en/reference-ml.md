@@ -31,6 +31,16 @@ triggers task detection (binary, multi-class, regression) and **leak
 detection**: a column that almost perfectly mirrors the target is excluded
 automatically and named.
 
+**Twin columns** are flagged too, as soon as the file is read: two columns that
+map one to one (`class` and `pclass`), or one that can be read off another
+(`adult_male` off `who`). Unlike a leak, a twin is **not excluded**: its card
+says so and leaves the choice to you. Twins split the importance and the
+Shapley values between them, and let a counterfactual change one without the
+other. Measured on titanic over ten splits, removing them moves no score (0.813
+against 0.814 of mean accuracy): it is about reading the model, not about its
+performance. The test is exact, on values seen often enough to judge: it found
+the three pairs of titanic and nothing on the nine other demo files.
+
 While a run trains, and while anything computed from it is running
 (hyperparameter search, learning curve, robust ranking, batch scoring), the
 target and the columns are **locked**. Changing them at that moment would file

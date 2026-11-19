@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { profileColumn } from '@/features/ml/data/profile';
-import { analyzeTarget, baselineSuggestions, detectTask } from '@/features/ml/data/suggest';
+import {
+  analyzeTarget,
+  baselineSuggestions,
+  detectTask,
+  redundancySuggestions,
+} from '@/features/ml/data/suggest';
 import type { Cell } from '@/features/ml/data/types';
 
 function makeColumns(data: Record<string, Cell[]>) {
@@ -74,5 +79,75 @@ describe('analyzeTarget', () => {
     const analysis = analyzeTarget('row_id', columns, profiles);
     expect(analysis.task).toBeNull();
     expect(analysis.unsupportedReason).toBe('type');
+  });
+});
+
+// V70: two columns that say the same thing are flagged, both ways or one, and
+// never on the strength of a coincidence.
+describe('redundancySuggestions', () => {
+  const N = 120;
+  const pclass = Array.from({ length: N }, (_, i) => String((i % 3) + 1));
+  const klass = pclass.map((value) => ['First', 'Second', 'Third'][Number(value) - 1]);
+  const who = Array.from({ length: N }, (_, i) => ['man', 'woman', 'child'][(i * 7) % 3]);
+  const adultMale = who.map((value) => (value === 'man' ? 'True' : 'False'));
+  const noise = Array.from({ length: N }, (_, i) => ['a', 'b', 'c', 'd'][(i * 5 + (i % 7)) % 4]);
+  const find = (data: Record<string, Cell[]>) => {
+    const columns = new Map(Object.entries(data));
+    const profiles = Object.entries(data).map(([name, cells]) => profileColumn(name, cells));
+    return redundancySuggestions(columns, profiles);
+  };
+
+  it('flags two columns that map one to one, on both, whatever their type', () => {
+    expect(find({ pclass, class: klass, noise })).toEqual([
+      { column: 'pclass', of: 'class', relation: 'same' },
+      { column: 'class', of: 'pclass', relation: 'same' },
+    ]);
+  });
+
+  it('flags only the column that can be read off the other when it goes one way', () => {
+    expect(find({ who, adult_male: adultMale, noise })).toEqual([
+      { column: 'adult_male', of: 'who', relation: 'determined' },
+    ]);
+  });
+
+  it('judges a pair on the rows where both hold a value', () => {
+    const holes = klass.map((value, i) => (i % 4 === 0 ? '' : value));
+    expect(find({ pclass, class: holes }).map((pair) => pair.relation)).toEqual(['same', 'same']);
+  });
+
+  it('flags nothing between columns that merely go together often', () => {
+    const almost = klass.map((value, i) => (i === 17 ? 'First' : value));
+    expect(find({ pclass, class: almost, noise })).toEqual([]);
+  });
+
+  it('does not take a near-unique column for a twin of everything', () => {
+    // An identifier determines every column: that says nothing about them.
+    const id = Array.from({ length: N }, (_, i) => `row-${i}`);
+    const code = Array.from({ length: N }, (_, i) => `c${i % 40}`);
+    expect(find({ id, code, pclass })).toEqual([]);
+  });
+
+  it('does not judge a pair on a handful of shared rows', () => {
+    const few = klass.map((value, i) => (i < 20 ? value : ''));
+    expect(find({ pclass, class: few })).toEqual([]);
+  });
+
+  it('flags two numbers that move together almost perfectly, and not two that do not', () => {
+    const metres = Array.from({ length: N }, (_, i) => String(1 + i * 0.37));
+    const feet = metres.map((value) => String(Number(value) * 3.28084));
+    const other = Array.from({ length: N }, (_, i) => String((i * 37) % 101));
+    expect(find({ metres, feet, other })).toEqual([
+      { column: 'metres', of: 'feet', relation: 'same' },
+      { column: 'feet', of: 'metres', relation: 'same' },
+    ]);
+  });
+
+  it('leaves text, dates and constants out', () => {
+    const constant = Array.from({ length: N }, () => 'x');
+    const day = Array.from(
+      { length: N },
+      (_, i) => `2026-01-${String((i % 28) + 1).padStart(2, '0')}`,
+    );
+    expect(find({ pclass, constant, day })).toEqual([]);
   });
 });

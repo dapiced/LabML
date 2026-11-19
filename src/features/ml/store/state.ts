@@ -6,6 +6,7 @@ import type { GroupAuditOutcome } from '@/features/ml/train/group-audit';
 import type { ReadFormat } from '@/features/ml/data/locale';
 import type { RunRecord } from '@/features/ml/projects/types';
 import type {
+  ColumnRedundancy,
   ColumnSuggestion,
   DatasetMeta,
   ColumnProfile,
@@ -57,6 +58,8 @@ export interface LabState {
   readFormat: ReadFormat | null;
   /** Target-independent suggestions computed at parse time. */
   baseline: ColumnSuggestion[];
+  /** V70: pairs of columns that say the same thing. They flag, they exclude nothing. */
+  redundancies: ColumnRedundancy[];
   target: string | null;
   task: TaskInfo | null;
   targetUnsupported: 'type' | 'tooManyClasses' | 'empty' | null;
@@ -274,6 +277,7 @@ export const initialData = {
   preview: [],
   readFormat: null,
   baseline: [],
+  redundancies: [] as ColumnRedundancy[],
   target: null,
   task: null,
   targetUnsupported: null,
