@@ -139,6 +139,13 @@ abstained row is a case to route to human review, not a model error.
 
 With no rule attached to the model, these columns do not appear at all.
 
+## Cells filled in the scored file
+
+A scored file is filled the way the training rows were: a missing number takes
+the training median, a missing category the most frequent training one. The
+result says how many cells of each column that was, so a file that arrives half
+empty in a column the model relies on does not pass in silence.
+
 ## Labels never seen
 
 If your batch contains a class absent from training, LabML still predicts it

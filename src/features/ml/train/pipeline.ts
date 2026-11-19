@@ -173,6 +173,64 @@ function encodeInto(row: number[], spec: FeatureSpec, raw: string | null): void 
 }
 
 /**
+ * V71: what the encoder put in the place of a cell it could not use.
+ * `empty` cells held nothing; `unreadable` ones held something a numeric
+ * column could not parse, which is more often a reading problem than a gap.
+ */
+export interface FilledColumn {
+  column: string;
+  /** Rows counted: the rows of the run, or of a scored file. */
+  rows: number;
+  empty: number;
+  unreadable: number;
+  /**
+   * What stood in for them: the training median of a number, the most
+   * frequent training category. Null for free text, where a missing cell is
+   * left as no word at all.
+   */
+  fill: string | null;
+}
+
+/**
+ * V71: counts, per column, the cells the encoder fills on the rows given.
+ * Nothing about the filling changes; it was done in silence and is now
+ * counted. Columns with nothing filled are left out.
+ */
+export function countFilled(
+  specs: FeatureSpec[],
+  cellsOf: (column: string) => readonly Cell[] | undefined,
+  indices: readonly number[] | null,
+): FilledColumn[] {
+  const filled: FilledColumn[] = [];
+  for (const spec of specs) {
+    const cells = cellsOf(spec.name);
+    if (!cells) continue;
+    const rows = indices === null ? cells.length : indices.length;
+    let empty = 0;
+    let unreadable = 0;
+    for (let at = 0; at < rows; at++) {
+      const raw = cellString(cells[indices === null ? at : indices[at]] ?? null);
+      if (raw === null) empty += 1;
+      else if (spec.kind === 'numeric' && parseNumber(raw) === null) unreadable += 1;
+    }
+    if (empty + unreadable === 0) continue;
+    filled.push({
+      column: spec.name,
+      rows,
+      empty,
+      unreadable,
+      fill:
+        spec.kind === 'numeric'
+          ? String(Number(spec.median.toFixed(4)))
+          : spec.kind === 'text'
+            ? null
+            : spec.mode,
+    });
+  }
+  return filled;
+}
+
+/**
  * Row encoder from fitted parameters alone — shared by training and by the
  * v22 import path, so an imported model encodes EXACTLY like its run did.
  */

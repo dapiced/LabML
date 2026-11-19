@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { SubmissionPanel } from '@/features/ml/components/SubmissionPanel';
+import { FilledNotice } from '@/features/ml/components/FilledNotice';
 import { ProductionCheckView } from '@/features/ml/components/ProductionCheckView';
 import { useLabStore } from '@/features/ml/lab-store';
 import { METRIC_ROWS, metricDelta } from '@/features/ml/train/score-view';
@@ -193,6 +194,8 @@ export function BatchScorePanel() {
               {result.rowCount > 4 ? ' · …' : ''}
             </span>
           </div>
+
+          <FilledNotice filled={result.filled} scope="batch" />
 
           {result.check && <ProductionCheckView check={result.check} />}
 

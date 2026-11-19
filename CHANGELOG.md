@@ -6,6 +6,12 @@ entry per wave, newest first; the first six waves (V1–V6, the MVP) predate the
 are recorded in PLAN.md §B and §J. Each entry carries the opening sentence of its row and
 the reason the wave was built.
 
+## V71 — What stood in for a missing cell is counted
+
+G3.
+
+_Why:_ Approved 13/11/2026. A learner who trains here should be able to carry the run to a notebook and see, in figures, what changed on the way.
+
 ## V70 — Twin columns are flagged, not removed
 
 G2.

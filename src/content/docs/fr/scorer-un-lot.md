@@ -147,6 +147,14 @@ pas une erreur du modèle.
 
 Sans règle attachée au modèle, ces colonnes n'apparaissent pas du tout.
 
+## Les cellules remplies dans le fichier scoré
+
+Un fichier scoré est rempli comme les lignes d'entraînement l'ont été : un nombre
+manquant prend la médiane d'entraînement, une catégorie manquante la plus
+fréquente à l'entraînement. Le résultat dit combien de cellules de chaque colonne
+cela représente : un fichier qui arrive à moitié vide dans une colonne dont le
+modèle dépend ne passe pas en silence.
+
 ## Les étiquettes jamais vues
 
 Si votre lot contient une classe absente de l'entraînement, LabML la prédit
